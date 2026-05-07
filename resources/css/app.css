@@ -1,0 +1,270 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --pd-void: #080808;
+    --pd-ink: #0c0a0b;
+    --pd-panel: #130f12;
+    --pd-panel-strong: #1a1218;
+    --pd-dark: #140e12;
+    --pd-gold: #c9a96e;
+    --pd-gold-light: #e8c88a;
+    --pd-gold-hover: #b89058;
+    --pd-rose: #c4687a;
+    --pd-pink: #f7d6e0;
+    --pd-cream: #f5ede6;
+    --pd-muted: #fafaf8;
+    --pd-ivory: #f0ede8;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background: var(--pd-muted);
+}
+
+::selection {
+    background: rgba(201, 169, 110, 0.35);
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+@layer components {
+    .pd-kicker {
+        color: var(--pd-gold);
+        font-size: 0.68rem;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+    }
+
+    .pd-heading {
+        font-family: "Playfair Display", Georgia, serif;
+        line-height: 1.1;
+        letter-spacing: 0;
+    }
+
+    .pd-text-gradient {
+        background: linear-gradient(135deg, var(--pd-ivory) 20%, var(--pd-gold-light) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .pd-dark-surface {
+        background:
+            radial-gradient(ellipse 70% 42% at 50% -10%, rgba(201, 169, 110, 0.09), transparent 70%),
+            radial-gradient(ellipse 50% 35% at 92% 30%, rgba(196, 104, 122, 0.06), transparent 70%),
+            var(--pd-void);
+        color: var(--pd-ivory);
+    }
+
+    .pd-panel {
+        background: var(--pd-panel);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        box-shadow: 0 22px 60px rgba(0, 0, 0, 0.18);
+    }
+
+    .pd-panel-strong {
+        background: var(--pd-panel-strong);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+    }
+
+    .pd-card-light {
+        background: #fff;
+        border: 1px solid rgba(247, 214, 224, 0.75);
+        border-radius: 0.5rem;
+        box-shadow: 0 16px 45px rgba(20, 14, 18, 0.06);
+    }
+
+    .pd-stat {
+        background: var(--pd-panel-strong);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+    }
+
+    .pd-btn-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, var(--pd-gold), var(--pd-gold-light));
+        color: #07070c;
+        border: 1px solid rgba(201, 169, 110, 0.35);
+        border-radius: 0.7rem;
+        padding: 0.85rem 1.15rem;
+        font-size: 0.74rem;
+        font-weight: 600;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        box-shadow: 0 12px 34px rgba(201, 169, 110, 0.18);
+        transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+    }
+
+    .pd-btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 16px 44px rgba(201, 169, 110, 0.25);
+    }
+
+    .pd-btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(240, 237, 232, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 0.7rem;
+        padding: 0.75rem 1rem;
+        font-size: 0.74rem;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
+    }
+
+    .pd-btn-secondary:hover {
+        border-color: rgba(201, 169, 110, 0.35);
+        color: var(--pd-gold-light);
+        background: rgba(201, 169, 110, 0.08);
+    }
+
+    .pd-btn-danger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: rgba(239, 68, 68, 0.12);
+        color: rgb(252, 165, 165);
+        border: 1px solid rgba(239, 68, 68, 0.24);
+        border-radius: 0.7rem;
+        padding: 0.75rem 1rem;
+        font-size: 0.74rem;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        transition: background 180ms ease, color 180ms ease;
+    }
+
+    .pd-btn-danger:hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fff;
+    }
+
+    .pd-input {
+        width: 100%;
+        border-radius: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.045);
+        color: var(--pd-ivory);
+        font-size: 0.9rem;
+        padding: 0.9rem 1rem;
+        outline: none;
+        transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+    }
+
+    .pd-input::placeholder {
+        color: rgba(240, 237, 232, 0.24);
+    }
+
+    .pd-input:focus {
+        border-color: rgba(201, 169, 110, 0.42);
+        box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.08);
+        background: rgba(255, 255, 255, 0.065);
+    }
+
+    .pd-input-light {
+        width: 100%;
+        border: 1px solid rgba(247, 214, 224, 0.9);
+        background: var(--pd-muted);
+        color: #1a1a1a;
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+        padding: 0.9rem 1rem;
+        outline: none;
+        transition: border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .pd-input-light:focus {
+        border-color: var(--pd-gold);
+        box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.12);
+    }
+
+    .pd-label {
+        display: block;
+        color: rgba(240, 237, 232, 0.48);
+        font-size: 0.67rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+    }
+
+    .pd-label-light {
+        display: block;
+        color: rgba(26, 26, 26, 0.68);
+        font-size: 0.67rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+    }
+
+    .pd-progress-track {
+        height: 0.4rem;
+        width: 100%;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    .pd-progress-bar {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--pd-gold), var(--pd-gold-light));
+        transition: width 350ms ease;
+    }
+
+    .pd-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.86rem;
+    }
+
+    .pd-table thead {
+        color: rgba(240, 237, 232, 0.35);
+        font-size: 0.66rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }
+
+    .pd-table th,
+    .pd-table td {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+    }
+
+    .pd-table tbody tr {
+        transition: background 180ms ease;
+    }
+
+    .pd-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.025);
+    }
+
+    .pd-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        border-radius: 999px;
+        padding: 0.25rem 0.65rem;
+        font-size: 0.66rem;
+        font-weight: 500;
+        border: 1px solid rgba(201, 169, 110, 0.22);
+        background: rgba(201, 169, 110, 0.1);
+        color: var(--pd-gold-light);
+    }
+}
