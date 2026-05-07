@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'bunny' => [
+        'library_id' => env('BUNNY_LIBRARY_ID'),
+        'api_key' => env('BUNNY_API_KEY'),
+        'cdn_hostname' => env('BUNNY_CDN_HOSTNAME'),
+        'upload_signature_ttl' => (int) env('BUNNY_UPLOAD_SIGNATURE_TTL', 86400),
+    ],
+
 ];

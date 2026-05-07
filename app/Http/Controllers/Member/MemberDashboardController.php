@@ -16,8 +16,8 @@ class MemberDashboardController extends Controller
 
         $courses = Course::query()
             ->where('is_published', true)
-            ->with(['lessons' => fn ($query) => $query->orderBy('sort_order')])
-            ->withCount('lessons')
+            ->with(['lessons' => fn ($query) => $query->publishedForMembers()->orderBy('sort_order')])
+            ->withCount(['publishedLessons as lessons_count'])
             ->orderBy('sort_order')
             ->orderBy('title')
             ->get();

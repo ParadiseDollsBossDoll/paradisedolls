@@ -5,22 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class CourseChatMessage extends Model
+class CourseEnrollment extends Model
 {
     protected $fillable = [
         'course_id',
         'user_id',
-        'body',
+        'enrolled_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'enrolled_at' => 'datetime',
+        ];
+    }
 
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
-    }
-
-    public function chatRoom(): BelongsTo
-    {
-        return $this->belongsTo(ChatRoom::class, 'course_id', 'course_id');
     }
 
     public function user(): BelongsTo

@@ -8,14 +8,16 @@
 
     $coursesForLayout = \App\Models\Course::query()
         ->where('is_published', true)
-        ->withCount('lessons')
+        ->withCount(['publishedLessons as lessons_count'])
         ->get();
 
     $layoutTotalLessons = $coursesForLayout->sum('lessons_count');
     $layoutCompletedLessons = \App\Models\LessonProgress::query()
         ->where('user_id', $user->id)
         ->whereNotNull('completed_at')
-        ->whereHas('lesson.course', fn ($query) => $query->where('is_published', true))
+        ->whereHas('lesson', fn ($query) => $query
+            ->where('is_published', true)
+            ->whereHas('course', fn ($courseQuery) => $courseQuery->where('is_published', true)))
         ->count();
     $layoutProgress = $layoutTotalLessons > 0 ? (int) round(($layoutCompletedLessons / $layoutTotalLessons) * 100) : 0;
 
