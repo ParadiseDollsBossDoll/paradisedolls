@@ -1,4 +1,6 @@
-@php($user = Auth::user())
+@php
+    $user = Auth::user();
+@endphp
 
 <nav x-data="{ open: false }" class="border-b border-white/[0.06] bg-boss-dark/95 backdrop-blur">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

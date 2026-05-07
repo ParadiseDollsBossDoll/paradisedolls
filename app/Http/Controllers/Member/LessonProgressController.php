@@ -13,7 +13,7 @@ class LessonProgressController extends Controller
     public function update(Request $request, Lesson $lesson): RedirectResponse
     {
         $course = $lesson->course;
-        abort_unless($course->is_published, 404);
+        abort_unless($course->is_published && $lesson->is_published, 404);
 
         $completed = $request->boolean('completed');
 

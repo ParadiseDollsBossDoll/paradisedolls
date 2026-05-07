@@ -36,7 +36,9 @@
                                     </div>
                                 </td>
                                 @foreach ($courses as $course)
-                                    @php($pct = $matrix[$model->id][$course->id] ?? 0)
+                                    @php
+                                        $pct = $matrix[$model->id][$course->id] ?? 0;
+                                    @endphp
                                     <td>
                                         <div class="mb-2 flex items-center gap-2">
                                             <span class="font-display text-[1rem] text-boss-gold">{{ $pct }}%</span>

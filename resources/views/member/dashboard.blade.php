@@ -100,8 +100,10 @@
                 </div>
                 <div class="grid gap-4 md:grid-cols-2">
                     @foreach ($continueCourses as $course)
-                        @php($progress = $courseProgress[$course->id])
-                        <a href="{{ route('member.courses.show', $course->slug) }}" class="group pd-panel-strong overflow-hidden transition-all duration-300 hover:border-boss-gold/30 hover:shadow-glow">
+                        @php
+                            $progress = $courseProgress[$course->id];
+                        @endphp
+                        <a href="{{ route('member.courses.learn.show', $course->slug) }}" class="group pd-panel-strong overflow-hidden transition-all duration-300 hover:border-boss-gold/30 hover:shadow-glow">
                             <div class="h-1 bg-boss-gold/30">
                                 <div class="h-full bg-gradient-to-r from-boss-gold to-boss-gold-light" style="width: {{ $progress['percent'] }}%"></div>
                             </div>
@@ -111,7 +113,7 @@
                                     <span class="text-[0.65rem] text-boss-ivory/30">{{ $progress['completed'] }}/{{ $progress['total'] }} {{ __('lessons') }}</span>
                                 </div>
                                 <h3 class="pd-heading text-[1.25rem] text-boss-ivory transition-colors group-hover:text-boss-gold-light">{{ $course->title }}</h3>
-                                <p class="mt-3 line-clamp-2 text-[0.78rem] leading-relaxed text-boss-ivory/40">{{ $course->description }}</p>
+                                <p class="mt-3 line-clamp-2 text-[0.78rem] leading-relaxed text-boss-ivory/40">{{ $course->short_description ?: $course->description }}</p>
                                 <div class="mt-5 flex items-center justify-between">
                                     <span class="text-[0.75rem] font-medium text-boss-gold">{{ __('Continue') }}</span>
                                     <span class="font-display text-boss-gold">{{ $progress['percent'] }}%</span>
@@ -134,7 +136,9 @@
 
             <div class="overflow-hidden rounded-2xl border border-white/[0.05] bg-boss-panel">
                 @forelse ($courses as $course)
-                    @php($progress = $courseProgress[$course->id] ?? ['completed' => 0, 'total' => $course->lessons_count, 'percent' => 0])
+                    @php
+                        $progress = $courseProgress[$course->id] ?? ['completed' => 0, 'total' => $course->lessons_count, 'percent' => 0];
+                    @endphp
                     <a href="{{ route('member.courses.show', $course->slug) }}" class="group flex items-center gap-4 border-t border-white/[0.04] px-5 py-4 transition-colors first:border-t-0 hover:bg-white/[0.025]">
                         <span class="h-2 w-2 shrink-0 rounded-full bg-boss-gold shadow-glow"></span>
                         <div class="min-w-0 flex-1">

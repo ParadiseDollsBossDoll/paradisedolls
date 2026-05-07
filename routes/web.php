@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminLessonController;
 use App\Http\Controllers\Admin\AdminModelProgressController;
 use App\Http\Controllers\Admin\AdminOnboardingController;
 use App\Http\Controllers\Admin\AdminTestimonialController;
+use App\Http\Controllers\Admin\BunnyVideoController;
 use App\Http\Controllers\ApplyController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Member\CourseChatController;
@@ -53,12 +54,21 @@ Route::middleware(['auth', 'verified', 'model'])->prefix('member')->name('member
         ->name('verification.store');
     Route::get('/courses', [MemberCourseController::class, 'index'])->name('courses.index');
     Route::get('/courses/{slug}', [MemberCourseController::class, 'show'])->name('courses.show');
-    Route::patch('/lessons/{lesson}/progress', [LessonProgressController::class, 'update'])
+    Route::post('/courses/{slug}/learn', [MemberCourseController::class, 'learn'])
         ->middleware('throttle:member-progress')
-        ->name('lessons.progress');
-    Route::post('/courses/{slug}/chat', [CourseChatController::class, 'store'])
-        ->middleware('throttle:30,1')
-        ->name('courses.chat.store');
+        ->name('courses.learn');
+
+    Route::middleware('course.enrolled')->group(function () {
+        Route::get('/courses/{slug}/learn', [MemberCourseController::class, 'learnShow'])->name('courses.learn.show');
+        Route::get('/courses/{slug}/lessons/{lesson}', [MemberCourseController::class, 'lesson'])->name('courses.lessons.show');
+        Route::get('/courses/{slug}/community', [MemberCourseController::class, 'community'])->name('courses.community');
+        Route::patch('/lessons/{lesson}/progress', [LessonProgressController::class, 'update'])
+            ->middleware('throttle:member-progress')
+            ->name('lessons.progress');
+        Route::post('/courses/{slug}/chat', [CourseChatController::class, 'store'])
+            ->middleware('throttle:30,1')
+            ->name('courses.chat.store');
+    });
 });
 
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -93,6 +103,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
             ->name('onboarding.community-role-assigned');
         Route::patch('/testimonials/{testimonial}/visibility', [AdminTestimonialController::class, 'visibility'])->name('testimonials.visibility');
         Route::resource('testimonials', AdminTestimonialController::class)->except(['show']);
+        Route::get('/bunny/videos', [BunnyVideoController::class, 'index'])->name('bunny.videos.index');
+        Route::post('/bunny/videos/upload-intent', [BunnyVideoController::class, 'uploadIntent'])->name('bunny.videos.upload-intent');
+        Route::get('/bunny/videos/{videoId}', [BunnyVideoController::class, 'show'])->name('bunny.videos.show');
         Route::patch('/courses/{course}/visibility', [AdminCourseController::class, 'visibility'])->name('courses.visibility');
         Route::resource('courses', AdminCourseController::class)->except(['show']);
 

@@ -36,11 +36,12 @@
                     $progress = $courseProgress[$course->id] ?? ['completed' => 0, 'total' => $course->lessons_count, 'percent' => 0, 'status' => 'new'];
                     $isCompleted = $progress['status'] === 'completed';
                     $isStarted = $progress['status'] === 'in-progress';
+                    $isEnrolled = in_array($course->id, $enrolledCourseIds, true);
                     $color = $course->displayColor();
                     $bg = $course->displayColorBackground();
                 @endphp
 
-                <a href="{{ route('member.courses.show', $course->slug) }}" class="group flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-boss-ink transition-all duration-300 hover:shadow-glow" style="--platform-color: {{ $color }};">
+                <article class="group flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-boss-ink transition-all duration-300 hover:shadow-glow" style="--platform-color: {{ $color }};">
                     <div class="h-1 w-full shrink-0 transition-opacity duration-300 group-hover:opacity-100" style="background: linear-gradient(90deg, {{ $color }}, {{ $color }}44); opacity: .72;"></div>
 
                     <div class="flex flex-1 flex-col gap-3 p-5">
@@ -48,16 +49,20 @@
                             <span class="rounded-full border px-2.5 py-0.5 text-[0.65rem] font-medium" style="background-color: {{ $bg }}; color: {{ $color }}; border-color: {{ $color }}20;">
                                 {{ $course->displayPlatform() }}
                             </span>
-                            @if ($isCompleted)
+                            @if (! $isEnrolled)
+                                <span class="rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/35">{{ __('Not Enrolled') }}</span>
+                            @elseif ($isCompleted)
                                 <span class="rounded-full border border-boss-gold/20 bg-boss-gold/10 px-2 py-0.5 text-[0.62rem] text-boss-gold">{{ __('Completed') }}</span>
                             @elseif ($isStarted)
                                 <span class="rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/35">{{ __('In Progress') }}</span>
+                            @else
+                                <span class="rounded-full border border-boss-gold/20 bg-boss-gold/10 px-2 py-0.5 text-[0.62rem] text-boss-gold">{{ __('Enrolled') }}</span>
                             @endif
                             <span class="ml-auto text-[0.62rem] text-boss-ivory/28">{{ trans_choice(':count lesson|:count lessons', $course->lessons_count, ['count' => $course->lessons_count]) }}</span>
                         </div>
 
                         <h2 class="pd-heading line-clamp-2 text-[1.15rem] text-boss-ivory transition-colors group-hover:text-boss-gold-light">{{ $course->title }}</h2>
-                        <p class="line-clamp-2 flex-1 text-[0.78rem] leading-relaxed text-boss-ivory/38">{{ $course->description }}</p>
+                        <p class="line-clamp-2 flex-1 text-[0.78rem] leading-relaxed text-boss-ivory/38">{{ $course->short_description ?: $course->description }}</p>
 
                         <div class="space-y-2 pt-1">
                             <div class="flex items-center justify-between">
@@ -72,7 +77,9 @@
                         @if ($course->lessons->isNotEmpty())
                             <div class="flex flex-wrap items-center gap-1 pt-1">
                                 @foreach ($course->lessons as $lesson)
-                                    @php($done = in_array($lesson->id, $completedLessonIds, true))
+                                    @php
+                                        $done = in_array($lesson->id, $completedLessonIds, true);
+                                    @endphp
                                     <span
                                         title="{{ $lesson->title }}"
                                         class="flex h-4 w-4 items-center justify-center rounded-full border text-[0.45rem]"
@@ -85,13 +92,15 @@
                         @endif
                     </div>
 
-                    <div class="flex shrink-0 items-center justify-between border-t border-white/[0.04] px-5 py-4 text-[0.75rem] transition-all duration-300 group-hover:bg-boss-gold/[0.04]">
-                        <span class="text-boss-ivory/35 transition-colors group-hover:text-boss-gold">
-                            {{ $isStarted ? __('Continue Learning') : ($isCompleted ? __('Review Course') : __('Start Course')) }}
-                        </span>
-                        <span class="text-boss-ivory/20 transition-all group-hover:translate-x-1 group-hover:text-boss-gold">-></span>
+                    <div class="shrink-0 border-t border-white/[0.04] px-5 py-4 transition-all duration-300 group-hover:bg-boss-gold/[0.04]">
+                        <a href="{{ route('member.courses.show', $course->slug) }}" class="flex items-center justify-between text-[0.75rem]">
+                            <span class="{{ $isEnrolled ? 'text-boss-ivory/35' : 'font-semibold text-boss-gold' }} transition-colors group-hover:text-boss-gold">
+                                {{ $isEnrolled ? __('View Course Overview') : __('Preview Course') }}
+                            </span>
+                            <span class="text-boss-gold/50 transition-all group-hover:translate-x-1 group-hover:text-boss-gold">-></span>
+                        </a>
                     </div>
-                </a>
+                </article>
             @empty
                 <div class="col-span-full rounded-2xl border border-white/[0.05] bg-boss-ink px-6 py-16 text-center">
                     <p class="text-[0.9rem] text-boss-ivory/35">

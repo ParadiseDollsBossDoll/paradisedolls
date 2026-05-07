@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\CourseModule;
 use App\Models\LessonProgress;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -62,27 +63,20 @@ class AdminCourseController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validateCourse($request, validateLessons: true);
-        $validated['course']['is_published'] = $request->boolean('is_published');
+        $courseData = $this->normalizedCourseData($request, $validated['course']);
 
-        $slug = $this->uniqueSlug($validated['course']['slug'] ?? Str::slug($validated['course']['title']));
+        $slug = $this->uniqueSlug($courseData['slug'] ?? Str::slug($courseData['title']));
 
-        DB::transaction(function () use ($validated, $slug): void {
+        DB::transaction(function () use ($validated, $courseData, $slug): void {
             $course = Course::create([
-                ...collect($validated['course'])->except('slug')->all(),
+                ...collect($courseData)->except('slug')->all(),
                 'slug' => $slug,
             ]);
 
+            $moduleMap = $this->syncModules($course, $validated['modules'] ?? [], $validated['lessons'] ?? []);
+
             foreach ($validated['lessons'] ?? [] as $index => $lesson) {
-                $course->lessons()->create([
-                    'title' => $lesson['title'],
-                    'body' => $lesson['body'] ?? null,
-                    'video_url' => $lesson['video_url'] ?? null,
-                    'duration' => $lesson['duration'] ?? null,
-                    'has_pdf' => (bool) ($lesson['has_pdf'] ?? false),
-                    'pdf_url' => $lesson['pdf_url'] ?? null,
-                    'presentation_url' => $lesson['presentation_url'] ?? null,
-                    'sort_order' => $lesson['sort_order'] ?? ($index + 1),
-                ]);
+                $course->lessons()->create($this->normalizedLessonData($lesson, $index, $moduleMap));
             }
         });
 
@@ -91,7 +85,10 @@ class AdminCourseController extends Controller
 
     public function edit(Course $course): View
     {
-        $course->load(['lessons' => fn ($q) => $q->orderBy('sort_order')]);
+        $course->load([
+            'modules' => fn ($q) => $q->orderBy('sort_order'),
+            'lessons' => fn ($q) => $q->with('module')->orderBy('sort_order'),
+        ]);
 
         return view('admin.courses.edit', [
             'course' => $course,
@@ -101,20 +98,26 @@ class AdminCourseController extends Controller
 
     public function update(Request $request, Course $course): RedirectResponse
     {
-        $validated = $this->validateCourse($request, $course->id);
-        $validated['course']['is_published'] = $request->boolean('is_published');
+        $validated = $this->validateCourse($request, $course->id, validateLessons: true);
+        $courseData = $this->normalizedCourseData($request, $validated['course']);
 
-        $slugInput = $validated['course']['slug'] ?? null;
+        $slugInput = $courseData['slug'] ?? null;
         $slug = $slugInput !== null && $slugInput !== ''
             ? $this->uniqueSlug(Str::slug($slugInput), $course->id)
-            : $this->uniqueSlug(Str::slug($validated['course']['title']), $course->id);
+            : $this->uniqueSlug(Str::slug($courseData['title']), $course->id);
 
-        $course->update([
-            ...collect($validated['course'])->except('slug')->all(),
-            'slug' => $slug,
-        ]);
+        DB::transaction(function () use ($course, $validated, $courseData, $slug): void {
+            $course->update([
+                ...collect($courseData)->except('slug')->all(),
+                'slug' => $slug,
+            ]);
 
-        return redirect()->route('admin.courses.edit', $course)->with('status', __('Course updated.'));
+            $moduleMap = $this->syncModules($course, $validated['modules'] ?? [], $validated['lessons'] ?? []);
+
+            $this->syncLessons($course, $validated['lessons'] ?? [], $moduleMap);
+        });
+
+        return redirect()->route('admin.courses.index')->with('status', __('Course updated.'));
     }
 
     public function visibility(Request $request, Course $course): RedirectResponse
@@ -141,15 +144,66 @@ class AdminCourseController extends Controller
             'platform_label' => ['required', 'string', 'max:255'],
             'platform_color' => ['nullable', 'string', 'max:32', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'description' => ['required', 'string', 'max:10000'],
+            'short_description' => ['nullable', 'string', 'max:1200'],
+            'thumbnail_url' => ['nullable', 'string', 'max:2000'],
+            'difficulty_level' => ['nullable', 'string', 'max:64'],
+            'estimated_duration' => ['nullable', 'string', 'max:64'],
+            'what_you_will_learn' => ['nullable', 'string', 'max:50000'],
+            'requirements' => ['nullable', 'string', 'max:50000'],
+            'has_course_outline' => ['nullable', 'boolean'],
+            'course_outline_url' => ['nullable', 'string', 'max:2000'],
+            'has_intro' => ['nullable', 'boolean'],
+            'intro_title' => ['nullable', 'string', 'max:255'],
+            'intro_video_url' => ['nullable', 'string', 'max:2000'],
+            'intro_bunny_video_id' => ['nullable', 'string', 'max:64'],
+            'intro_bunny_library_id' => ['nullable', 'string', 'max:64'],
+            'intro_bunny_video_title' => ['nullable', 'string', 'max:255'],
+            'intro_bunny_thumbnail_url' => ['nullable', 'string', 'max:2000'],
+            'intro_bunny_upload_fingerprint' => ['nullable', 'string', 'max:255'],
+            'intro_bunny_status' => ['nullable', 'integer', 'min:0', 'max:255'],
+            'intro_duration' => ['nullable', 'string', 'max:64'],
+            'intro_body' => ['nullable', 'string', 'max:50000'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
         ];
 
         if ($validateLessons) {
+            $lessonIdRule = ['nullable', 'integer'];
+            $moduleIdRule = ['nullable', 'integer'];
+            if ($courseId !== null) {
+                $lessonIdRule[] = Rule::exists('lessons', 'id')
+                    ->where(fn ($query) => $query->where('course_id', $courseId));
+                $moduleIdRule[] = Rule::exists('course_modules', 'id')
+                    ->where(fn ($query) => $query->where('course_id', $courseId));
+            }
+
             $rules += [
+                'modules' => ['nullable', 'array'],
+                'modules.*.id' => $moduleIdRule,
+                'modules.*.client_key' => ['required_with:modules', 'string', 'max:80'],
+                'modules.*.title' => ['required_with:modules', 'string', 'max:255'],
+                'modules.*.description' => ['nullable', 'string', 'max:50000'],
+                'modules.*.is_published' => ['nullable', 'boolean'],
+                'modules.*.sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
                 'lessons' => ['required', 'array', 'min:1'],
+                'lessons.*.id' => $lessonIdRule,
+                'lessons.*.course_module_id' => $moduleIdRule,
+                'lessons.*.module_key' => ['nullable', 'string', 'max:80'],
                 'lessons.*.title' => ['required', 'string', 'max:255'],
+                'lessons.*.module_title' => ['nullable', 'string', 'max:255'],
                 'lessons.*.body' => ['nullable', 'string', 'max:50000'],
+                'lessons.*.overview' => ['nullable', 'string', 'max:50000'],
+                'lessons.*.steps' => ['nullable', 'string', 'max:50000'],
+                'lessons.*.tips' => ['nullable', 'string', 'max:50000'],
+                'lessons.*.safety_notes' => ['nullable', 'string', 'max:50000'],
+                'lessons.*.resource_links' => ['nullable', 'string', 'max:50000'],
+                'lessons.*.is_published' => ['nullable', 'boolean'],
                 'lessons.*.video_url' => ['nullable', 'string', 'max:2000'],
+                'lessons.*.bunny_video_id' => ['nullable', 'string', 'max:64'],
+                'lessons.*.bunny_library_id' => ['nullable', 'string', 'max:64'],
+                'lessons.*.bunny_video_title' => ['nullable', 'string', 'max:255'],
+                'lessons.*.bunny_thumbnail_url' => ['nullable', 'string', 'max:2000'],
+                'lessons.*.bunny_upload_fingerprint' => ['nullable', 'string', 'max:255'],
+                'lessons.*.bunny_status' => ['nullable', 'integer', 'min:0', 'max:255'],
                 'lessons.*.duration' => ['nullable', 'string', 'max:64'],
                 'lessons.*.has_pdf' => ['nullable', 'boolean'],
                 'lessons.*.pdf_url' => ['nullable', 'string', 'max:2000'],
@@ -167,10 +221,275 @@ class AdminCourseController extends Controller
                 'platform_label',
                 'platform_color',
                 'description',
+                'short_description',
+                'thumbnail_url',
+                'difficulty_level',
+                'estimated_duration',
+                'what_you_will_learn',
+                'requirements',
+                'has_course_outline',
+                'course_outline_url',
+                'has_intro',
+                'intro_title',
+                'intro_video_url',
+                'intro_bunny_video_id',
+                'intro_bunny_library_id',
+                'intro_bunny_video_title',
+                'intro_bunny_thumbnail_url',
+                'intro_bunny_upload_fingerprint',
+                'intro_bunny_status',
+                'intro_duration',
+                'intro_body',
                 'sort_order',
             ])->all(),
+            'modules' => $validated['modules'] ?? [],
             'lessons' => $validated['lessons'] ?? [],
         ];
+    }
+
+    private function normalizedCourseData(Request $request, array $course): array
+    {
+        $course += [
+            'course_outline_url' => null,
+            'short_description' => null,
+            'thumbnail_url' => null,
+            'difficulty_level' => null,
+            'estimated_duration' => null,
+            'what_you_will_learn' => null,
+            'requirements' => null,
+            'intro_title' => null,
+            'intro_video_url' => null,
+            'intro_bunny_video_id' => null,
+            'intro_bunny_library_id' => null,
+            'intro_bunny_video_title' => null,
+            'intro_bunny_thumbnail_url' => null,
+            'intro_bunny_upload_fingerprint' => null,
+            'intro_bunny_status' => null,
+            'intro_duration' => null,
+            'intro_body' => null,
+        ];
+
+        $course['is_published'] = $request->boolean('is_published');
+        $course['has_course_outline'] = $request->boolean('has_course_outline');
+        $course['has_intro'] = $request->boolean('has_intro');
+
+        if (! $course['has_course_outline']) {
+            $course['course_outline_url'] = null;
+        }
+
+        if (! $course['has_intro']) {
+            $course['intro_title'] = null;
+            $course['intro_video_url'] = null;
+            $course['intro_bunny_video_id'] = null;
+            $course['intro_bunny_library_id'] = null;
+            $course['intro_bunny_video_title'] = null;
+            $course['intro_bunny_thumbnail_url'] = null;
+            $course['intro_bunny_upload_fingerprint'] = null;
+            $course['intro_bunny_status'] = null;
+            $course['intro_duration'] = null;
+            $course['intro_body'] = null;
+        } elseif (blank($course['intro_title'])) {
+            $course['intro_title'] = 'Course Orientation';
+        }
+
+        if (filled($course['intro_bunny_video_id']) && filled($course['intro_bunny_library_id'])) {
+            $course['intro_video_url'] = 'https://iframe.mediadelivery.net/embed/'.$course['intro_bunny_library_id'].'/'.$course['intro_bunny_video_id'].'?autoplay=false&loop=false&muted=false&preload=true&responsive=true';
+        }
+
+        return $course;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $lessons
+     */
+    private function syncLessons(Course $course, array $lessons, array $moduleMap = []): void
+    {
+        $existingLessons = $course->lessons()->get()->values();
+        $existingLessonsById = $existingLessons->keyBy('id');
+        $submittedIds = collect($lessons)
+            ->pluck('id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->all();
+        $hasSubmittedIds = $submittedIds !== [];
+        $syncedExistingIds = [];
+
+        foreach ($lessons as $index => $lesson) {
+            $lessonData = $this->normalizedLessonData($lesson, $index, $moduleMap);
+
+            $existingLesson = ! empty($lesson['id'])
+                ? $existingLessonsById->get((int) $lesson['id'])
+                : null;
+
+            // Keep lesson IDs stable if a course edit arrives without hidden IDs.
+            if ($existingLesson === null && ! $hasSubmittedIds) {
+                $existingLesson = $existingLessons->get($index);
+            }
+
+            if ($existingLesson !== null) {
+                $existingLesson->update($lessonData);
+                $syncedExistingIds[] = $existingLesson->id;
+
+                continue;
+            }
+
+            $createdLesson = $course->lessons()->create($lessonData);
+            $syncedExistingIds[] = $createdLesson->id;
+        }
+
+        if ($hasSubmittedIds) {
+            $course->lessons()
+                ->whereNotIn('id', array_unique($syncedExistingIds))
+                ->delete();
+        }
+    }
+
+    private function normalizedLessonData(array $lesson, int $index, array $moduleMap = []): array
+    {
+        $bunnyVideoId = $lesson['bunny_video_id'] ?? null;
+        $bunnyLibraryId = $lesson['bunny_library_id'] ?? null;
+        $videoUrl = $lesson['video_url'] ?? null;
+        $moduleId = $this->moduleIdForLesson($lesson, $moduleMap);
+
+        if (filled($bunnyVideoId) && filled($bunnyLibraryId)) {
+            $videoUrl = 'https://iframe.mediadelivery.net/embed/'.$bunnyLibraryId.'/'.$bunnyVideoId.'?autoplay=false&loop=false&muted=false&preload=true&responsive=true';
+        }
+
+        return [
+            'course_module_id' => $moduleId,
+            'title' => $lesson['title'],
+            'body' => $lesson['body'] ?? null,
+            'overview' => $lesson['overview'] ?? null,
+            'steps' => $lesson['steps'] ?? null,
+            'tips' => $lesson['tips'] ?? null,
+            'safety_notes' => $lesson['safety_notes'] ?? null,
+            'resource_links' => $lesson['resource_links'] ?? null,
+            'is_published' => array_key_exists('is_published', $lesson) ? (bool) $lesson['is_published'] : true,
+            'video_url' => $videoUrl,
+            'bunny_video_id' => $bunnyVideoId,
+            'bunny_library_id' => $bunnyLibraryId,
+            'bunny_video_title' => $lesson['bunny_video_title'] ?? null,
+            'bunny_thumbnail_url' => $lesson['bunny_thumbnail_url'] ?? null,
+            'bunny_upload_fingerprint' => $lesson['bunny_upload_fingerprint'] ?? null,
+            'bunny_status' => $lesson['bunny_status'] ?? null,
+            'duration' => $lesson['duration'] ?? null,
+            'has_pdf' => array_key_exists('has_pdf', $lesson) ? (bool) $lesson['has_pdf'] : filled($lesson['pdf_url'] ?? null),
+            'pdf_url' => $lesson['pdf_url'] ?? null,
+            'presentation_url' => $lesson['presentation_url'] ?? null,
+            'sort_order' => $lesson['sort_order'] ?? ($index + 1),
+        ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $modules
+     * @param  array<int, array<string, mixed>>  $lessons
+     * @return array<string, int>
+     */
+    private function syncModules(Course $course, array $modules, array $lessons): array
+    {
+        if ($modules === []) {
+            $modules = $this->modulesFromLessons($lessons);
+        }
+
+        $existing = $course->modules()
+            ->get()
+            ->keyBy('id');
+        $existingByTitle = $existing->keyBy(fn (CourseModule $module) => $this->moduleKey($module->title));
+        $moduleMap = [];
+        $usedIds = [];
+
+        foreach (array_values($modules) as $index => $moduleData) {
+            $title = $this->moduleTitle($moduleData['title'] ?? null);
+            $clientKey = $moduleData['client_key'] ?? $this->moduleKey($title);
+            $module = ! empty($moduleData['id'])
+                ? $existing->get((int) $moduleData['id'])
+                : null;
+            $module ??= $existingByTitle->get($this->moduleKey($title));
+            $module ??= new CourseModule(['course_id' => $course->id]);
+
+            $module->fill([
+                'course_id' => $course->id,
+                'title' => $title,
+                'description' => $moduleData['description'] ?? null,
+                'is_published' => array_key_exists('is_published', $moduleData) ? (bool) $moduleData['is_published'] : true,
+                'sort_order' => $moduleData['sort_order'] ?? ($index + 1),
+            ]);
+            $module->save();
+
+            $moduleMap[$clientKey] = $module->id;
+            $moduleMap[$this->moduleKey($title)] = $module->id;
+            $moduleMap['id:'.$module->id] = $module->id;
+            $usedIds[] = $module->id;
+        }
+
+        $course->modules()
+            ->whereNotIn('id', $usedIds)
+            ->update(['is_published' => false]);
+
+        return $moduleMap;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $lessons
+     * @return array<int, array<string, mixed>>
+     */
+    private function modulesFromLessons(array $lessons): array
+    {
+        $modules = [];
+
+        foreach ($lessons as $index => $lesson) {
+            $title = $this->moduleTitle($lesson['module_title'] ?? null);
+            $key = $this->moduleKey($title);
+
+            $modules[$key] ??= [
+                'client_key' => $lesson['module_key'] ?? $key,
+                'title' => $title,
+                'description' => null,
+                'is_published' => true,
+                'sort_order' => $index + 1,
+            ];
+        }
+
+        return array_values($modules ?: [[
+            'client_key' => $this->moduleKey(null),
+            'title' => $this->moduleTitle(null),
+            'description' => null,
+            'is_published' => true,
+            'sort_order' => 1,
+        ]]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $lesson
+     * @param  array<string, int>  $moduleMap
+     */
+    private function moduleIdForLesson(array $lesson, array $moduleMap): ?int
+    {
+        $moduleKey = $lesson['module_key'] ?? null;
+        if (is_string($moduleKey) && isset($moduleMap[$moduleKey])) {
+            return $moduleMap[$moduleKey];
+        }
+
+        $moduleId = $lesson['course_module_id'] ?? null;
+        if ($moduleId !== null && isset($moduleMap['id:'.(int) $moduleId])) {
+            return $moduleMap['id:'.(int) $moduleId];
+        }
+
+        $titleKey = $this->moduleKey($lesson['module_title'] ?? null);
+
+        return $moduleMap[$titleKey] ?? null;
+    }
+
+    private function moduleTitle(?string $title): string
+    {
+        $title = trim((string) $title);
+
+        return $title !== '' ? $title : 'Core Training';
+    }
+
+    private function moduleKey(?string $title): string
+    {
+        return Str::lower($this->moduleTitle($title));
     }
 
     private function uniqueSlug(string $base, ?int $ignoreCourseId = null): string
