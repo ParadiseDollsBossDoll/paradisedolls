@@ -139,6 +139,24 @@ class AdminOnboardingController extends Controller
 
     public function downloadDocument(ModelProfile $profile, string $document): StreamedResponse
     {
+        $path = $this->resolveDocumentPath($profile, $document);
+
+        abort_unless(filled($path) && Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->download($path);
+    }
+
+    public function viewDocument(ModelProfile $profile, string $document): StreamedResponse
+    {
+        $path = $this->resolveDocumentPath($profile, $document);
+
+        abort_unless(filled($path) && Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->response($path);
+    }
+
+    private function resolveDocumentPath(ModelProfile $profile, string $document): ?string
+    {
         $field = match ($document) {
             'id' => 'id_document_path',
             'selfie' => 'selfie_with_id_path',
@@ -146,11 +164,7 @@ class AdminOnboardingController extends Controller
             default => abort(404),
         };
 
-        $path = $profile->{$field};
-
-        abort_unless(filled($path) && Storage::disk('local')->exists($path), 404);
-
-        return Storage::disk('local')->download($path);
+        return $profile->{$field};
     }
 
     private function sendMail(ModelProfile $profile, mixed $mail): void

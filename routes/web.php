@@ -92,6 +92,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/onboarding', [AdminOnboardingController::class, 'index'])->name('onboarding.index');
     Route::get('/onboarding/{profile}/documents/{document}', [AdminOnboardingController::class, 'downloadDocument'])
         ->name('onboarding.documents.show');
+    Route::get('/onboarding/{profile}/documents/{document}/view', [AdminOnboardingController::class, 'viewDocument'])
+        ->name('onboarding.documents.view');
 
     Route::middleware('throttle:admin-actions')->group(function () {
         Route::post('/onboarding/{profile}/request-verification', [AdminOnboardingController::class, 'requestVerification'])
