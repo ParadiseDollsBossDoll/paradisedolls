@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -61,6 +62,21 @@ class User extends Authenticatable
         return $this->role === 'model';
     }
 
+    public function isModerator(): bool
+    {
+        return $this->role === 'moderator';
+    }
+
+    public function canModerateCommunity(): bool
+    {
+        return $this->isAdmin() || $this->isModerator();
+    }
+
+    public function canManageCommunityChannels(): bool
+    {
+        return $this->isAdmin();
+    }
+
     public function lessonProgress(): HasMany
     {
         return $this->hasMany(LessonProgress::class);
@@ -86,5 +102,71 @@ class User extends Authenticatable
         return $this->belongsToMany(Course::class, 'course_enrollments')
             ->withPivot('enrolled_at')
             ->withTimestamps();
+    }
+
+    public function communityMessages(): HasMany
+    {
+        return $this->hasMany(CommunityMessage::class);
+    }
+
+    public function communityMessageReads(): HasMany
+    {
+        return $this->hasMany(CommunityMessageRead::class);
+    }
+
+    public function communityTimeouts(): HasMany
+    {
+        return $this->hasMany(CommunityMemberTimeout::class);
+    }
+
+    public function activeCommunityTimeoutFor(?CommunityChannel $channel = null): ?CommunityMemberTimeout
+    {
+        return $this->communityTimeouts()
+            ->active()
+            ->when($channel, function ($query) use ($channel) {
+                $query->where(function ($builder) use ($channel) {
+                    $builder
+                        ->whereNull('channel_id')
+                        ->orWhere('channel_id', $channel->id);
+                });
+            })
+            ->orderByDesc('channel_id')
+            ->orderByDesc('expires_at')
+            ->first();
+    }
+
+    public function initials(): string
+    {
+        $initials = Str::of($this->name)
+            ->explode(' ')
+            ->filter()
+            ->take(2)
+            ->map(fn (string $segment) => Str::upper(Str::substr($segment, 0, 1)))
+            ->implode('');
+
+        return $initials !== '' ? $initials : 'PD';
+    }
+
+    public function communityAccent(): string
+    {
+        $palette = [
+            '#C9A96E', '#D7B27F', '#8E5E3B', '#B1704A',
+            '#6E90C9', '#A2678A', '#3EAF7C', '#9C7AE3',
+        ];
+
+        return $palette[$this->id % count($palette)];
+    }
+
+    public function toCommunityMemberArray(bool $online, bool $isSelf = false): array
+    {
+        return [
+            'id'       => $this->id,
+            'name'     => $this->name,
+            'initials' => $this->initials(),
+            'accent'   => $this->communityAccent(),
+            'role'     => $this->role,
+            'online'   => $online,
+            'is_self'  => $isSelf,
+        ];
     }
 }
