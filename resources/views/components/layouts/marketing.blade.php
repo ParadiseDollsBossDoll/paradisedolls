@@ -2,6 +2,13 @@
     'transparentNav' => false,
     'title' => null,
 ])
+@php
+    try {
+        $marketingUser = auth()->user();
+    } catch (\Illuminate\Database\QueryException) {
+        $marketingUser = null;
+    }
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
@@ -18,12 +25,12 @@
         x-data="{ scrolled: false, navOpen: false, transparent: {{ $transparentNav ? 'true' : 'false' }} }"
         @scroll.window="scrolled = (window.pageYOffset || document.documentElement.scrollTop) > 60"
     >
-        <x-marketing-navbar />
+        <x-marketing-navbar :user="$marketingUser" />
 
         <main>
             {{ $slot }}
         </main>
 
-        <x-marketing-footer />
+        <x-marketing-footer :user="$marketingUser" />
     </body>
 </html>

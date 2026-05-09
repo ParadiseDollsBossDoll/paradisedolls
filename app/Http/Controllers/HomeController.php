@@ -11,14 +11,18 @@ class HomeController extends Controller
 {
     public function __invoke(): View
     {
-        $testimonials = Schema::hasTable('testimonials')
-            ? Testimonial::query()
-                ->where('is_published', true)
-                ->orderBy('sort_order')
-                ->orderByDesc('created_at')
-                ->take(3)
-                ->get()
-            : Collection::make();
+        try {
+            $testimonials = Schema::hasTable('testimonials')
+                ? Testimonial::query()
+                    ->where('is_published', true)
+                    ->orderBy('sort_order')
+                    ->orderByDesc('created_at')
+                    ->take(3)
+                    ->get()
+                : Collection::make();
+        } catch (\Exception $e) {
+            $testimonials = Collection::make();
+        }
 
         return view('home', compact('testimonials'));
     }

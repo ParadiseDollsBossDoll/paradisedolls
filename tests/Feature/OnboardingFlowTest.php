@@ -29,7 +29,8 @@ class OnboardingFlowTest extends TestCase
         $this->post(route('apply.store'), [
             'name' => 'Kayla Test',
             'email' => 'kayla@example.com',
-            'phone' => '+447700900123',
+            'phone_country' => 'PH',
+            'phone_number' => '912 345 6789',
             'experience_level' => 'beginner',
             'social_handle' => '@kayla',
             'message' => 'I want to build remote income.',
@@ -42,9 +43,44 @@ class OnboardingFlowTest extends TestCase
         $application = ModelApplication::first();
 
         $this->assertNotNull($application);
+        $this->assertSame('+639123456789', $application->phone);
         $this->assertCount(1, $application->photo_paths);
         Storage::disk('local')->assertExists($application->photo_paths[0]);
         Mail::assertSent(ApplicationSubmittedMail::class);
+    }
+
+    public function test_application_submission_rejects_invalid_phone_numbers(): void
+    {
+        Mail::fake();
+
+        $this->post(route('apply.store'), [
+            'name' => 'Kayla Test',
+            'email' => 'kayla@example.com',
+            'phone_country' => 'PH',
+            'phone_number' => 'call me maybe',
+            'experience_level' => 'beginner',
+            'age_confirmed' => '1',
+        ])->assertSessionHasErrors('phone_number');
+
+        $this->assertDatabaseCount('model_applications', 0);
+        Mail::assertNothingSent();
+    }
+
+    public function test_application_submission_rejects_invalid_email_addresses(): void
+    {
+        Mail::fake();
+
+        $this->post(route('apply.store'), [
+            'name' => 'Kayla Test',
+            'email' => 'not-an-email',
+            'phone_country' => 'PH',
+            'phone_number' => '912 345 6789',
+            'experience_level' => 'beginner',
+            'age_confirmed' => '1',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertDatabaseCount('model_applications', 0);
+        Mail::assertNothingSent();
     }
 
     public function test_admin_approval_creates_member_profile_and_sends_application_email(): void

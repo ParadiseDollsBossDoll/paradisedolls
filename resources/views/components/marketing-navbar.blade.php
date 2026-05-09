@@ -1,6 +1,8 @@
+@props([
+    'user' => null,
+])
 @php
-    $user = auth()->user();
-
+    $isAuthenticated = $user !== null;
     $memberRoute = $user?->isAdmin()
         ? 'admin.dashboard'
         : 'member.dashboard';
@@ -33,7 +35,7 @@
 
             <div class="hidden items-center gap-7 lg:flex">
                 @foreach ($links as $link)
-                    @if (($link['auth'] ?? false) && ! auth()->check())
+                    @if (($link['auth'] ?? false) && ! $isAuthenticated)
                         @continue
                     @endif
 
@@ -48,7 +50,7 @@
             </div>
 
             <div class="flex items-center gap-3">
-                @guest
+                @unless ($isAuthenticated)
                     <a
                         href="{{ route('login') }}"
                         class="hidden border border-current px-6 py-2.5 text-[0.65rem] uppercase tracking-[0.14em] transition-all duration-300 hover:border-boss-gold hover:bg-boss-gold hover:text-white md:inline-flex"
@@ -56,7 +58,7 @@
                     >
                         {{ __('Log in') }}
                     </a>
-                @endguest
+                @endunless
 
                 <a
                     href="{{ route('home') }}#apply"
@@ -86,7 +88,7 @@
 
         <div x-cloak x-show="navOpen" x-transition class="border-t border-boss-pink bg-white py-4 lg:hidden">
             @foreach ($links as $link)
-                @if (($link['auth'] ?? false) && ! auth()->check())
+                @if (($link['auth'] ?? false) && ! $isAuthenticated)
                     @continue
                 @endif
 
@@ -99,8 +101,8 @@
                 </a>
             @endforeach
 
-            <div @class(['grid gap-3 px-4 pt-4', 'sm:grid-cols-2' => auth()->guest()])>
-                @guest
+            <div @class(['grid gap-3 px-4 pt-4', 'sm:grid-cols-2' => ! $isAuthenticated])>
+                @unless ($isAuthenticated)
                     <a
                         href="{{ route('login') }}"
                         class="block w-full border border-boss-gold py-3 text-center text-[0.7rem] uppercase tracking-[0.14em] text-boss-gold transition-colors hover:bg-boss-gold hover:text-white"
@@ -108,7 +110,7 @@
                     >
                         {{ __('Log in') }}
                     </a>
-                @endguest
+                @endunless
 
                 <a
                     href="{{ route('home') }}#apply"

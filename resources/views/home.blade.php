@@ -5,6 +5,16 @@
         $villaImg = 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&q=85&w=1200';
         $academyImg = 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=85&w=1200';
         $communityImg = 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=85&w=1200';
+        $countryCallingCodes = config('country_calling_codes', []);
+        $selectedPhoneCountry = old('phone_country', 'PH');
+        $phoneCountries = collect($countryCallingCodes)
+            ->map(fn (array $country, string $countryCode) => [
+                'value' => $countryCode,
+                'name' => $country['name'],
+                'code' => $country['code'],
+                'flag' => 'https://flagcdn.com/w40/'.strtolower($countryCode).'.png',
+            ])
+            ->values();
     @endphp
 
     <section class="relative flex min-h-screen items-center overflow-hidden">
@@ -280,30 +290,106 @@
                     <p class="text-[0.95rem] leading-relaxed text-boss-dark/60">{{ __('Thank you for applying. The onboarding team will review your details and contact you with the next step.') }}</p>
                 </div>
             @else
-                <form method="POST" action="{{ route('apply.store') }}" enctype="multipart/form-data" class="space-y-5">
+                <form method="POST" action="{{ route('apply.store') }}" enctype="multipart/form-data" class="space-y-5" data-application-form>
                     @csrf
                     <div class="grid gap-5 md:grid-cols-2">
                         <div>
-                            <label class="pd-label-light">{{ __('Full Name') }} *</label>
-                            <input type="text" name="name" value="{{ old('name') }}" required placeholder="{{ __('Your full name') }}" class="pd-input-light mt-2">
+                            <label for="application-name" class="pd-label-light">{{ __('Full Name') }} *</label>
+                            <input id="application-name" type="text" name="name" value="{{ old('name') }}" required autocomplete="name" placeholder="{{ __('Your full name') }}" class="pd-input-light mt-2">
                             <x-input-error class="mt-1.5" :messages="$errors->get('name')" />
                         </div>
                         <div>
-                            <label class="pd-label-light">{{ __('Email Address') }} *</label>
-                            <input type="email" name="email" value="{{ old('email') }}" required placeholder="your@email.com" class="pd-input-light mt-2">
+                            <label for="application-email" class="pd-label-light">{{ __('Email Address') }} *</label>
+                            <input id="application-email" type="email" name="email" value="{{ old('email') }}" required autocomplete="email" placeholder="your@email.com" class="pd-input-light mt-2" data-email-address aria-describedby="application-email-feedback">
+                            <p id="application-email-feedback" class="mt-1.5 hidden text-[0.76rem] leading-relaxed text-red-600" data-email-feedback></p>
                             <x-input-error class="mt-1.5" :messages="$errors->get('email')" />
                         </div>
                     </div>
 
                     <div class="grid gap-5 md:grid-cols-2">
+                        <fieldset>
+                            <legend class="sr-only">{{ __('Phone') }}</legend>
+                            <div class="grid grid-cols-[8rem_minmax(0,1fr)] gap-2">
+                                <div
+                                    class="relative"
+                                    x-data="{
+                                        open: false,
+                                        selected: @js($selectedPhoneCountry),
+                                        countries: @js($phoneCountries),
+                                        get current() {
+                                            return this.countries.find((country) => country.value === this.selected) || this.countries[0];
+                                        },
+                                        selectCountry(value) {
+                                            this.selected = value;
+                                            this.open = false;
+                                        },
+                                    }"
+                                    @keydown.escape.window="open = false"
+                                    @click.outside="open = false"
+                                >
+                                    <label id="application-phone-country-label" class="pd-label-light normal-case tracking-normal leading-[1.5]">{{ __('Country code') }}</label>
+                                    <input type="hidden" name="phone_country" x-model="selected" data-phone-country>
+                                    <button
+                                        type="button"
+                                        class="pd-input-light mt-2 flex h-[3.35rem] items-center gap-2 px-3 text-left"
+                                        aria-labelledby="application-phone-country-label"
+                                        aria-haspopup="listbox"
+                                        :aria-expanded="open.toString()"
+                                        @click="open = ! open"
+                                    >
+                                        <img :src="current.flag" :alt="current.name" class="h-3.5 w-5 rounded-[2px] object-cover shadow-sm">
+                                        <span class="min-w-0 flex-1 text-[0.86rem]" x-text="current.code"></span>
+                                        <span class="text-[0.62rem] text-boss-dark/35" aria-hidden="true">v</span>
+                                    </button>
+
+                                    <div
+                                        x-cloak
+                                        x-show="open"
+                                        x-transition
+                                        class="absolute left-0 top-full z-50 mt-1 max-h-64 w-40 overflow-y-auto rounded-md border border-boss-pink bg-white py-1 shadow-luxe"
+                                        role="listbox"
+                                        aria-labelledby="application-phone-country-label"
+                                    >
+                                        <template x-for="country in countries" :key="country.value">
+                                            <button
+                                                type="button"
+                                                class="flex w-full items-center gap-2 px-3 py-2 text-left text-[0.84rem] text-boss-dark transition-colors hover:bg-boss-cream"
+                                                :class="selected === country.value ? 'bg-boss-cream text-boss-gold' : ''"
+                                                role="option"
+                                                :aria-selected="(selected === country.value).toString()"
+                                                :title="country.name"
+                                                @click="selectCountry(country.value)"
+                                            >
+                                                <img :src="country.flag" :alt="country.name" class="h-3.5 w-5 rounded-[2px] object-cover shadow-sm">
+                                                <span x-text="country.code"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="application-phone-number" class="pd-label-light normal-case tracking-normal leading-[1.5]">{{ __('Phone number') }}</label>
+                                    <input
+                                        id="application-phone-number"
+                                        type="tel"
+                                        name="phone_number"
+                                        value="{{ old('phone_number') }}"
+                                        inputmode="tel"
+                                        autocomplete="tel-national"
+                                        placeholder="201-555-5555"
+                                        pattern="[0-9\s().-]{6,24}"
+                                        title="{{ __('Use 6 to 15 digits after the country code.') }}"
+                                        class="pd-input-light mt-2 h-[3.35rem]"
+                                        data-phone-number
+                                    >
+                                </div>
+                            </div>
+                            <p class="mt-2 text-[0.72rem] leading-relaxed text-boss-dark/38">{{ __('Choose your country code, then enter the local number without the + sign.') }}</p>
+                            <x-input-error class="mt-1.5" :messages="$errors->get('phone_country')" />
+                            <x-input-error class="mt-1.5" :messages="$errors->get('phone_number')" />
+                        </fieldset>
                         <div>
-                            <label class="pd-label-light">{{ __('Phone') }}</label>
-                            <input type="text" name="phone" value="{{ old('phone') }}" placeholder="+44..." class="pd-input-light mt-2">
-                            <x-input-error class="mt-1.5" :messages="$errors->get('phone')" />
-                        </div>
-                        <div>
-                            <label class="pd-label-light">{{ __('Experience Level') }} *</label>
-                            <select name="experience_level" required class="pd-input-light mt-2">
+                            <label for="application-experience" class="pd-label-light">{{ __('Experience Level') }} *</label>
+                            <select id="application-experience" name="experience_level" required class="pd-input-light mt-2">
                                 <option value="">{{ __('Select your experience level') }}</option>
                                 <option value="none" {{ old('experience_level') === 'none' ? 'selected' : '' }}>{{ __('No Experience') }}</option>
                                 <option value="beginner" {{ old('experience_level') === 'beginner' ? 'selected' : '' }}>{{ __('Beginner') }}</option>
@@ -315,22 +401,36 @@
                     </div>
 
                     <div>
-                        <label class="pd-label-light">{{ __('Instagram / TikTok Handle') }}</label>
-                        <input type="text" name="social_handle" value="{{ old('social_handle') }}" placeholder="@yourhandle" class="pd-input-light mt-2">
+                        <label for="application-social-handle" class="pd-label-light">{{ __('Instagram / TikTok Handle') }}</label>
+                        <input id="application-social-handle" type="text" name="social_handle" value="{{ old('social_handle') }}" autocomplete="off" placeholder="@yourhandle" class="pd-input-light mt-2">
                         <x-input-error class="mt-1.5" :messages="$errors->get('social_handle')" />
                     </div>
 
                     <div>
-                        <label class="pd-label-light">{{ __('Application photos') }}</label>
-                        <input type="file" name="photos[]" multiple accept=".jpg,.jpeg,.png,.webp" class="pd-input-light mt-2">
+                        <label for="application-photos" class="pd-label-light">{{ __('Application photos') }}</label>
+                        <div class="mt-2">
+                            <input id="application-photos" type="file" name="photos[]" multiple accept=".jpg,.jpeg,.png,.webp" class="sr-only" data-photo-input>
+                            <label
+                                for="application-photos"
+                                class="flex min-h-36 cursor-pointer flex-col items-center justify-center border border-dashed border-boss-pink bg-boss-muted px-4 py-8 text-center transition-colors hover:border-boss-gold hover:bg-boss-cream"
+                                data-photo-dropzone
+                            >
+                                <span class="text-[0.68rem] uppercase tracking-[0.16em] text-boss-gold">{{ __('Drop photos here') }}</span>
+                                <span class="mt-2 text-[0.9rem] font-medium text-boss-dark">{{ __('Drag and drop, or click to browse') }}</span>
+                                <span class="mt-1 text-[0.72rem] text-boss-dark/42" data-photo-summary>{{ __('No photos selected') }}</span>
+                            </label>
+
+                            <p class="mt-2 hidden text-[0.76rem] leading-relaxed text-red-600" data-photo-error></p>
+                            <div class="mt-3 grid gap-3 sm:grid-cols-2" data-photo-preview></div>
+                        </div>
                         <p class="mt-2 text-[0.72rem] text-boss-dark/38">{{ __('Upload up to 6 clear photos. JPG, PNG, or WEBP.') }}</p>
                         <x-input-error class="mt-1.5" :messages="$errors->get('photos')" />
                         <x-input-error class="mt-1.5" :messages="$errors->get('photos.*')" />
                     </div>
 
                     <div>
-                        <label class="pd-label-light">{{ __('Message') }}</label>
-                        <textarea name="message" rows="4" class="pd-input-light mt-2" placeholder="{{ __('Tell us what kind of freedom, income, or lifestyle you want to build.') }}">{{ old('message') }}</textarea>
+                        <label for="application-message" class="pd-label-light">{{ __('Message') }}</label>
+                        <textarea id="application-message" name="message" rows="4" class="pd-input-light mt-2" placeholder="{{ __('Tell us what kind of freedom, income, or lifestyle you want to build.') }}">{{ old('message') }}</textarea>
                         <x-input-error class="mt-1.5" :messages="$errors->get('message')" />
                     </div>
 

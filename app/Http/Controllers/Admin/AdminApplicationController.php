@@ -160,4 +160,13 @@ class AdminApplicationController extends Controller
 
         return Storage::disk('local')->download($path);
     }
+
+    public function viewPhoto(ModelApplication $application, int $index): StreamedResponse
+    {
+        $path = $application->photo_paths[$index] ?? null;
+
+        abort_unless(filled($path) && Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->response($path);
+    }
 }
