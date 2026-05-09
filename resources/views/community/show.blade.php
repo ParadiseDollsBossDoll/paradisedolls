@@ -1,0 +1,659 @@
+@php
+    $user = auth()->user();
+    $dashboardRoute = $user->isAdmin() ? route('admin.dashboard') : route('member.dashboard');
+    $academyRoute = $user->isAdmin() ? route('admin.courses.index') : route('member.courses.index');
+    $secondaryRoute = $user->isAdmin() ? route('admin.models.progress') : route('profile.edit');
+    $secondaryLabel = $user->isAdmin() ? __('Members') : __('Profile');
+    $serverInitials = collect(explode(' ', $communityState['server']['name']))->map(fn ($part) => strtoupper(substr($part, 0, 1)))->take(2)->implode('');
+@endphp
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <title>{{ __('Community').' - '.config('app.name') }}</title>
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    </head>
+    <body class="min-h-screen overflow-hidden bg-[#080808] text-[#f0ede8] font-['DM_Sans',sans-serif]">
+        <div x-data="communityChat(@js($communityState))" x-init="init()" class="flex h-screen min-h-0">
+            <aside class="elysian-sidebar" :class="shellDrawerOpen ? 'is-open' : ''">
+                <div class="elysian-brand">
+                    <div>
+                        <div class="elysian-brand-title">&#10022; PARADISEDOLLZ &#10022;</div>
+                        <div class="elysian-brand-sub">{{ __('Members Area') }}</div>
+                    </div>
+                </div>
+
+                <div class="elysian-side-profile">
+                    <div class="elysian-side-profile-inner">
+                        <div class="elysian-side-profile-row">
+                            <div class="elysian-avatar-wrap">
+                                <div class="elysian-avatar">{{ $user->initials() }}</div>
+                                <div class="elysian-online-dot"></div>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="elysian-side-name">{{ $user->name }}</div>
+                                <div class="elysian-side-sub">{{ __('ParadiseDollz Member') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <nav class="elysian-nav">
+                    <a href="{{ $dashboardRoute }}" class="elysian-nav-item">
+                        <svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1"></rect><rect x="9" y="1" width="6" height="6" rx="1"></rect><rect x="1" y="9" width="6" height="6" rx="1"></rect><rect x="9" y="9" width="6" height="6" rx="1"></rect></svg>
+                        <span>{{ __('Dashboard') }}</span>
+                    </a>
+                    <a href="{{ $academyRoute }}" class="elysian-nav-item">
+                        <svg viewBox="0 0 16 16"><path d="M2 12V6l6-4 6 4v6"></path><path d="M6 16v-5h4v5"></path><rect x="5" y="7" width="6" height="4" rx="0.5"></rect></svg>
+                        <span>{{ __('Academy') }}</span>
+                    </a>
+                    <a href="{{ route('community.show') }}" class="elysian-nav-item active">
+                        <svg viewBox="0 0 16 16"><path d="M14 10c0 1.1-.9 2-2 2H4l-3 3V4c0-1.1.9-2 2-2h9c1.1 0 2 .9 2 2v6z"></path></svg>
+                        <span>{{ __('Community') }}</span>
+                    </a>
+                    <a href="{{ $secondaryRoute }}" class="elysian-nav-item">
+                        <svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"></circle><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"></path></svg>
+                        <span>{{ $secondaryLabel }}</span>
+                    </a>
+                </nav>
+
+                <div class="elysian-side-footer">
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="elysian-side-footer-btn">
+                            <svg viewBox="0 0 16 16"><path d="M10 3l3 5-3 5M3 8h10"></path></svg>
+                            <span>{{ __('Sign Out') }}</span>
+                        </button>
+                    </form>
+                </div>
+            </aside>
+
+            <div x-show="shellDrawerOpen" x-cloak class="elysian-sidebar-backdrop" @click="shellDrawerOpen = false"></div>
+
+            <main class="flex min-w-0 flex-1 flex-col overflow-hidden">
+                <header class="elysian-topbar">
+                    <button type="button" class="elysian-mobile-toggle" @click="shellDrawerOpen = true" aria-label="{{ __('Open menu') }}">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    <span class="elysian-breadcrumb">{{ __('Members') }} / {{ __('Community') }}</span>
+                    <div class="elysian-topbar-right">
+                        <div class="elysian-topbar-greeting">
+                            <p>{{ __('Welcome back,') }}</p>
+                            <p>{{ $user->name }}</p>
+                        </div>
+                        <div class="elysian-topbar-avatar">{{ $user->initials() }}</div>
+                    </div>
+                </header>
+
+                <div class="flex min-h-0 flex-1 overflow-hidden">
+                    <div x-show="channelDrawerOpen" x-cloak class="fixed inset-0 z-40 bg-black/70 xl:hidden" @click="channelDrawerOpen = false"></div>
+                    <div x-show="membersDrawerOpen" x-cloak class="fixed inset-0 z-40 bg-black/70 xl:hidden" @click="membersDrawerOpen = false"></div>
+
+                    <section class="fixed inset-y-0 left-0 z-50 flex w-[90vw] max-w-[360px] shrink-0 -translate-x-full border-r border-white/5 bg-[#100c0f] transition-transform xl:static xl:z-auto xl:w-[270px] xl:translate-x-0" :class="channelDrawerOpen ? 'translate-x-0' : '-translate-x-full xl:translate-x-0'">
+                        <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
+                            <div class="border-b border-black/40 px-4 py-4">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <div class="font-display text-[1.42rem] font-semibold leading-[1.12] text-[#f0ede8] whitespace-normal break-words" x-text="server.name"></div>
+                                        <span class="mt-2 inline-flex rounded-full bg-[#2a211b] px-3 py-1 text-[0.62rem] uppercase tracking-[0.14em] text-[#c9a96e]" x-text="server.subtitle"></span>
+                                    </div>
+                                    <button type="button" class="rounded-lg p-2 text-white/40 transition hover:bg-white/5 hover:text-white xl:hidden" @click="channelDrawerOpen = false">
+                                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8">
+                                            <path d="m6 9 6 6 6-6"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="community-scroll flex-1 overflow-y-auto px-3 py-4">
+                                <div class="flex items-center justify-between gap-3 px-2 pb-3">
+                                    <div class="text-[0.58rem] uppercase tracking-[0.14em] text-white/25">{{ __('Channels') }}</div>
+                                    <button
+                                        x-show="features.can_manage_channels"
+                                        x-cloak
+                                        type="button"
+                                        class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#c9a96e]/18 bg-white/[0.03] text-[#e7cfaa] transition hover:border-[#c9a96e]/35 hover:bg-[#2a211b] hover:text-[#f4dfb8]"
+                                        @click="openChannelModal()"
+                                        aria-label="{{ __('Add channel') }}"
+                                    >
+                                        <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 stroke-current fill-none stroke-[1.8]">
+                                            <path d="M8 3v10M3 8h10"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="space-y-1">
+                                    <template x-for="channel in filteredChannels()" :key="channel.id">
+                                        <div class="group flex items-center gap-1">
+                                            <button
+                                                type="button"
+                                                class="flex min-w-0 flex-1 items-start gap-3 rounded-lg px-3 py-2 text-left text-[0.82rem] transition"
+                                                :class="selectedChannel?.slug === channel.slug ? 'bg-white/8 text-[#f0ede8] font-semibold' : channel.can_access ? 'text-white/40 hover:bg-white/5 hover:text-white/70' : 'text-white/28 hover:bg-white/[0.03] hover:text-white/45'"
+                                                @click="handleChannelClick(channel)"
+                                            >
+                                                <span class="shrink-0 font-display text-[1rem] leading-none text-white/55">#</span>
+                                                <div class="min-w-0 flex-1">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="truncate" x-text="channel.name"></span>
+                                                        <span x-show="channel.unread_count" x-cloak class="rounded-full bg-[#ef4444] px-1.5 py-0.5 text-[0.48rem] font-bold text-white" x-text="channel.unread_count"></span>
+                                                    </div>
+                                                    <div class="mt-0.5 truncate text-[0.58rem] uppercase tracking-[0.12em]" :class="channel.can_access ? 'text-white/25' : 'text-[#c9a96e]/65'" x-text="channel.permission_summary"></div>
+                                                </div>
+                                                <div x-show="channel.is_locked || !channel.can_access" x-cloak class="group/lock relative ml-auto mt-0.5 shrink-0">
+                                                    <svg viewBox="0 0 12 12" class="h-3.5 w-3.5 stroke-white/30 fill-none stroke-[1.8]">
+                                                        <rect x="2" y="5" width="8" height="6" rx="1"></rect>
+                                                        <path d="M4 5V3.5a2 2 0 0 1 4 0V5"></path>
+                                                    </svg>
+                                                    <span class="pointer-events-none absolute bottom-full right-0 mb-2 rounded-full border border-[#c9a96e]/18 bg-[#161114] px-2.5 py-1 text-[0.52rem] uppercase tracking-[0.14em] text-[#e7cfaa] opacity-0 shadow-[0_10px_24px_rgba(0,0,0,0.28)] transition duration-150 group-hover/lock:opacity-100">
+                                                        {{ __('Lock') }}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                            <div x-show="channel.can_manage" x-cloak class="hidden items-center gap-1 group-hover:flex">
+                                                <div x-show="features.can_manage_channels" class="group/up relative">
+                                                    <button type="button" class="rounded p-1 text-white/30 transition hover:bg-white/5 hover:text-white" @click.stop="moveChannel(channel, 'up')" aria-label="{{ __('Move up') }}">
+                                                        &#8593;
+                                                    </button>
+                                                    <span class="pointer-events-none absolute bottom-full right-0 mb-2 rounded-full border border-[#c9a96e]/18 bg-[#161114] px-2.5 py-1 text-[0.52rem] uppercase tracking-[0.14em] text-[#e7cfaa] opacity-0 shadow-[0_10px_24px_rgba(0,0,0,0.28)] transition duration-150 group-hover/up:opacity-100">
+                                                        {{ __('Move up') }}
+                                                    </span>
+                                                </div>
+                                                <div x-show="features.can_manage_channels" class="group/down relative">
+                                                    <button type="button" class="rounded p-1 text-white/30 transition hover:bg-white/5 hover:text-white" @click.stop="moveChannel(channel, 'down')" aria-label="{{ __('Move down') }}">
+                                                        &#8595;
+                                                    </button>
+                                                    <span class="pointer-events-none absolute bottom-full right-0 mb-2 rounded-full border border-[#c9a96e]/18 bg-[#161114] px-2.5 py-1 text-[0.52rem] uppercase tracking-[0.14em] text-[#e7cfaa] opacity-0 shadow-[0_10px_24px_rgba(0,0,0,0.28)] transition duration-150 group-hover/down:opacity-100">
+                                                        {{ __('Move down') }}
+                                                    </span>
+                                                </div>
+                                                <div class="group/edit relative">
+                                                    <button type="button" class="rounded p-1 text-white/30 transition hover:bg-white/5 hover:text-[#c9a96e]" @click.stop="openChannelModal(channel)" aria-label="{{ __('Edit') }}">
+                                                        &#9998;
+                                                    </button>
+                                                    <span class="pointer-events-none absolute bottom-full right-0 mb-2 rounded-full border border-[#c9a96e]/18 bg-[#161114] px-2.5 py-1 text-[0.52rem] uppercase tracking-[0.14em] text-[#e7cfaa] opacity-0 shadow-[0_10px_24px_rgba(0,0,0,0.28)] transition duration-150 group-hover/edit:opacity-100">
+                                                        {{ __('Edit') }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <div x-show="archivedChannels.length && features.can_moderate_messages" x-cloak class="mt-6">
+                                    <div class="px-2 pb-3 text-[0.58rem] uppercase tracking-[0.14em] text-white/25">{{ __('Archived') }}</div>
+                                    <div class="space-y-2">
+                                        <template x-for="channel in archivedChannels" :key="`archived-${channel.id}`">
+                                            <div class="rounded-2xl border border-white/8 bg-white/[0.03] px-3 py-3">
+                                                <div class="flex items-start justify-between gap-3">
+                                                    <div class="min-w-0">
+                                                        <div class="truncate text-[0.76rem] font-semibold text-[#f0ede8]" x-text="channel.name"></div>
+                                                        <div class="mt-1 text-[0.58rem] uppercase tracking-[0.12em] text-white/30" x-text="channel.permission_summary"></div>
+                                                    </div>
+                                                    <button type="button" class="rounded-full border border-[#c9a96e]/20 px-3 py-1 text-[0.58rem] uppercase tracking-[0.12em] text-[#e7cfaa] transition hover:border-[#c9a96e]/35 hover:text-[#f4dfb8]" @click="restoreChannel(channel)">{{ __('Restore') }}</button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div x-show="moderationLogs.length && features.can_moderate_messages" x-cloak class="mt-6">
+                                    <div class="px-2 pb-3 text-[0.58rem] uppercase tracking-[0.14em] text-white/25">{{ __('Moderation') }}</div>
+                                    <div class="space-y-2">
+                                        <template x-for="log in moderationLogs.slice(0, 6)" :key="`mod-log-${log.id}`">
+                                            <div class="rounded-2xl border border-white/8 bg-white/[0.03] px-3 py-3">
+                                                <div class="text-[0.72rem] leading-6 text-white/68" x-text="formatModerationLog(log)"></div>
+                                                <div class="mt-1 text-[0.58rem] uppercase tracking-[0.12em] text-white/24" x-text="formatFullTimestamp(log.created_at)"></div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-black/40 bg-black/25 p-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="relative shrink-0">
+                                        <div class="flex h-8 w-8 items-center justify-center rounded-full border border-[#c9a96e]/25 bg-[linear-gradient(135deg,rgba(201,169,110,0.28),rgba(201,169,110,0.08))] font-display text-[0.58rem] text-[#e8c88a]" x-text="user.initials"></div>
+                                        <div class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0b0b15] bg-[#4ade80]"></div>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="truncate text-[0.72rem] font-semibold text-[#f0ede8]" x-text="user.name"></div>
+                                        <div class="text-[0.57rem] text-white/35">{{ __('Online') }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#080808]">
+                        <div class="flex items-center gap-3 border-b border-white/5 bg-[#0a0a0f]/92 px-5 py-4 backdrop-blur">
+                            <button type="button" class="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white xl:hidden" @click="channelDrawerOpen = true">
+                                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <path d="M4 7h16M4 12h16M4 17h16"></path>
+                                </svg>
+                            </button>
+                            <span class="shrink-0 font-display text-[1.1rem] leading-none text-white/35">#</span>
+                            <span class="text-[0.95rem] font-bold text-[#f0ede8]" x-text="selectedChannel?.name || 'general'"></span>
+                            <div x-show="selectedChannel?.permission_summary" x-cloak class="group relative shrink-0">
+                                <span class="flex h-10 w-10 items-center justify-center rounded-full border border-[#c9a96e]/18 bg-[#1b1714] text-[#e7cfaa] transition group-hover:border-[#c9a96e]/35 group-hover:text-[#f4dfb8]">
+                                    <svg viewBox="0 0 16 16" class="h-4 w-4 stroke-current fill-none stroke-[1.5]">
+                                        <circle cx="5.25" cy="5" r="2.25"></circle>
+                                        <path d="M1.75 12c0-2 1.55-3.75 3.5-3.75S8.75 10 8.75 12"></path>
+                                        <circle cx="11.5" cy="5.5" r="1.75"></circle>
+                                        <path d="M9.75 11.5c.2-1.55 1.42-2.75 3-2.75 1.03 0 1.95.52 2.5 1.33"></path>
+                                    </svg>
+                                </span>
+                                <span class="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-full border border-[#c9a96e]/18 bg-[#161114] px-3 py-1 text-[0.58rem] uppercase tracking-[0.16em] text-[#e7cfaa] opacity-0 shadow-[0_10px_24px_rgba(0,0,0,0.28)] transition duration-150 group-hover:opacity-100" x-text="selectedChannel?.permission_summary"></span>
+                            </div>
+                            <span x-show="selectedChannel?.is_locked" x-cloak class="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[0.58rem] uppercase tracking-[0.16em] text-white/45">{{ __('Locked') }}</span>
+                            <div class="h-4 w-px bg-white/10"></div>
+                            <span class="min-w-0 flex-1 truncate text-[0.76rem] text-white/35" x-text="selectedChannel?.description || 'General community chat & discussion'"></span>
+                            <div class="ml-auto hidden items-center gap-2 md:flex">
+                                <div class="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5">
+                                    <svg viewBox="0 0 16 16" class="h-4 w-4 shrink-0 stroke-current fill-none stroke-[1.8] text-white/25"><circle cx="7" cy="7" r="4"></circle><path d="M10 10l3 3"></path></svg>
+                                    <input x-model="searchQuery" @input="handleSearchInput()" type="text" class="w-48 border-0 bg-transparent px-0 py-0 text-[0.74rem] text-white placeholder:text-white/20 focus:outline-none focus:ring-0" placeholder="{{ __('Search messages') }}">
+                                </div>
+                                <button type="button" class="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white xl:hidden" @click="membersDrawerOpen = true">
+                                    <svg viewBox="0 0 16 16" class="h-4 w-4 stroke-current fill-none stroke-[1.8]"><circle cx="6" cy="5" r="2.5"></circle><path d="M1 13c0-2.8 2.2-5 5-5"></path><circle cx="12" cy="5" r="2.5"></circle><path d="M15 13c0-2.8-2.2-5-5-5"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div x-show="connectionLabel()" x-cloak class="border-b border-[#c9a96e]/10 bg-[#17120f] px-5 py-2 text-[0.72rem] text-[#e7cfaa]">
+                            <span x-text="connectionLabel()"></span>
+                        </div>
+
+                        <div x-ref="messageScroller" @scroll="handleScroller()" class="community-scroll flex-1 overflow-y-auto px-5 py-5">
+                            <div class="mx-auto max-w-5xl">
+                                <div class="mb-5 flex justify-center" x-show="hasMoreMessages">
+                                    <button type="button" class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[0.68rem] uppercase tracking-[0.18em] text-white/55 transition hover:border-[#c9a96e]/25 hover:text-white" @click="loadOlderMessages()" :disabled="loadingOlder">
+                                        <span x-text="loadingOlder ? 'Loading...' : 'Load older messages'"></span>
+                                    </button>
+                                </div>
+
+                                <div class="mb-6 border-b border-white/5 pb-6">
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-[#1d1a12] text-[#c9a96e]">
+                                            <span class="font-display text-[2rem] leading-none">#</span>
+                                        </div>
+                                        <div class="min-w-0 pt-0.5">
+                                            <h1 class="font-display text-[1.9rem] leading-[1.08] text-[#f0ede8]">
+                                                {{ __('Welcome to') }} <span x-text="selectedChannel ? `#${selectedChannel.name}` : '#general'"></span>!
+                                            </h1>
+                                            <p class="mt-1.5 max-w-3xl text-[0.8rem] leading-7 text-white/35" x-text="selectedChannel ? `This is the beginning of the #${selectedChannel.name} channel for ${server.name}.` : 'This is the beginning of your community channel.'"></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div x-show="channelNotice" x-cloak class="mb-4 rounded-2xl border px-4 py-3 text-sm" :class="channelNotice?.tone === 'success' ? 'border-emerald-400/18 bg-emerald-500/8 text-emerald-100' : channelNotice?.tone === 'warning' ? 'border-[#c9a96e]/18 bg-[#2a211b] text-[#eed9b4]' : channelNotice?.tone === 'muted' ? 'border-white/8 bg-white/[0.03] text-white/60' : 'border-red-400/16 bg-red-500/8 text-red-100'">
+                                    <span x-text="channelNotice?.message"></span>
+                                </div>
+
+                                <div x-show="searchNotice" x-cloak class="mb-4 rounded-2xl border px-4 py-3 text-sm" :class="searchNotice?.tone === 'muted' ? 'border-white/8 bg-white/[0.03] text-white/60' : 'border-red-400/16 bg-red-500/8 text-red-100'">
+                                    <span x-text="searchNotice?.message"></span>
+                                </div>
+
+                                <div x-show="pinnedMessages().length" x-cloak class="mb-4 rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+                                    <div class="mb-3 flex items-center justify-between gap-3">
+                                        <p class="text-[0.64rem] uppercase tracking-[0.18em] text-white/35">{{ __('Pinned messages') }}</p>
+                                        <span class="text-[0.58rem] uppercase tracking-[0.12em] text-[#c9a96e]" x-text="`${pinnedMessages().length} pinned`"></span>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <template x-for="message in pinnedMessages().slice(0, 3)" :key="`pinned-${message.id}`">
+                                            <button type="button" class="block w-full rounded-2xl border border-white/8 bg-black/20 px-3 py-3 text-left transition hover:border-[#c9a96e]/20 hover:bg-black/30" @click="jumpToMessage(message.id)">
+                                                <div class="text-[0.74rem] font-semibold text-[#f0ede8]" x-text="message.user.name"></div>
+                                                <div class="mt-1 text-[0.76rem] leading-6 text-white/60" x-text="message.message || message.attachment?.name || 'Attachment'"></div>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div x-show="activeSearchQuery && searchResults.length" x-cloak class="mb-4 rounded-2xl border border-white/8 bg-white/[0.03] p-3">
+                                    <div class="mb-2 flex items-center justify-between gap-3">
+                                        <p class="text-[0.68rem] uppercase tracking-[0.18em] text-white/35" x-text="searchResultSummary()"></p>
+                                        <button type="button" class="text-[0.65rem] uppercase tracking-[0.14em] text-[#c9a96e] transition hover:text-[#f4dfb8]" @click="clearSearch()">{{ __('Clear search') }}</button>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <template x-for="result in searchResults.slice(0, 8)" :key="`search-result-${result.id}`">
+                                            <button type="button" class="max-w-full rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-left text-[0.72rem] text-white/70 transition hover:border-[#c9a96e]/25 hover:text-white" @click="jumpToMessage(result.id)">
+                                                <span class="font-semibold text-[#f0ede8]" x-text="result.label"></span>
+                                                <span class="mx-1 text-white/20">-</span>
+                                                <span class="truncate" x-text="result.excerpt"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div x-show="loadingMessages" x-cloak class="overflow-hidden rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(17,15,18,0.98),rgba(10,10,12,0.98))] px-5 py-6 text-center">
+                                    <p class="font-display text-[1.55rem] leading-[1.08] text-[#f4dfb8]">{{ __('Loading conversation...') }}</p>
+                                    <p class="mt-1.5 text-[0.84rem] text-white/45">{{ __('Pulling the latest messages and channel activity now.') }}</p>
+                                </div>
+
+                                <div x-show="!loadingMessages && messages.length === 0" x-cloak class="overflow-hidden rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(20,17,21,0.98),rgba(11,10,13,0.98))] px-5 py-5 shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
+                                    <p class="font-display text-[1.42rem] leading-[1.08] text-[#f4dfb8]" x-text="messageStateCopy().title"></p>
+                                    <p class="mt-1.5 max-w-2xl text-[0.8rem] leading-6 text-white/45" x-text="messageStateCopy().body"></p>
+                                </div>
+
+                                <div x-show="!loadingMessages && messages.length" x-cloak class="space-y-0.5" id="messages-list">
+                                    <template x-for="(message, index) in messages" :key="message.id">
+                                        <div :data-message-id="message.id">
+                                            <template x-if="showDateDivider(index)">
+                                                <div class="my-5 flex items-center gap-3">
+                                                    <div class="h-px flex-1 bg-white/6"></div>
+                                                    <span class="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1 text-[0.64rem] uppercase tracking-[0.16em] text-white/35" x-text="formatMessageDate(message.created_at)"></span>
+                                                    <div class="h-px flex-1 bg-white/6"></div>
+                                                </div>
+                                            </template>
+
+                                            <template x-if="shouldShowUnreadDivider(index)">
+                                                <div class="my-4 flex items-center gap-3">
+                                                    <div class="h-px flex-1 bg-[#c9a96e]/25"></div>
+                                                    <span class="rounded-full border border-[#c9a96e]/25 bg-[#2a211b] px-3 py-1 text-[0.64rem] uppercase tracking-[0.16em] text-[#eed9b4]" x-text="unreadDividerLabel()"></span>
+                                                    <div class="h-px flex-1 bg-[#c9a96e]/25"></div>
+                                                </div>
+                                            </template>
+
+                                            <article class="group rounded-lg px-2 transition hover:bg-white/[0.025]" :class="isGrouped(index) ? 'py-1.5' : 'py-2.5 mt-1'">
+                                                <div class="flex items-start gap-3">
+                                                    <div class="w-10 shrink-0">
+                                                        <template x-if="!isGrouped(index)">
+                                                            <div class="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 font-display text-[0.66rem] font-bold text-white" :style="`background: radial-gradient(circle at top, ${message.user.accent}, #151014 70%)`">
+                                                                <span x-text="message.user.initials"></span>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                    <div class="min-w-0 flex-1">
+                                                        <template x-if="!isGrouped(index)">
+                                                            <div class="mb-1 flex items-baseline gap-2">
+                                                                <span class="text-[0.86rem] font-semibold text-[#f0ede8]" x-text="message.user.name"></span>
+                                                                <span class="text-[0.65rem] text-white/20" :title="formatFullTimestamp(message.created_at)" x-text="formatMessageTime(message.created_at)"></span>
+                                                            </div>
+                                                        </template>
+
+                                                        <div x-show="message.reply_to" x-cloak class="mb-2 rounded-lg border border-white/8 bg-white/[0.03] px-3 py-2 text-[0.72rem] text-white/45">
+                                                            <span class="font-semibold text-white/70" x-text="message.reply_to?.user_name"></span>
+                                                            <span class="mx-1 text-white/20">-</span>
+                                                            <span x-text="message.reply_to?.message"></span>
+                                                        </div>
+
+                                                        <div class="relative">
+                                                            <div class="absolute right-0 top-0 hidden -translate-y-8 items-center gap-1 rounded-xl border border-white/8 bg-[#151317] p-1 shadow-[0_12px_28px_rgba(0,0,0,0.34)] group-hover:flex">
+                                                                <button type="button" class="rounded-lg px-2 py-1 text-sm text-white/65 transition hover:bg-white/5 hover:text-white" @click="quickReact(message, '❤️')">❤</button>
+                                                                <button type="button" class="rounded-lg px-2 py-1 text-sm text-white/65 transition hover:bg-white/5 hover:text-white" @click="quickReact(message, '🔥')">🔥</button>
+                                                                <button type="button" class="rounded-lg px-2 py-1 text-sm text-white/65 transition hover:bg-white/5 hover:text-white" @click="quickReact(message, '👍')">👍</button>
+                                                                <button type="button" class="rounded-lg px-2 py-1 text-[0.62rem] uppercase tracking-[0.16em] text-white/55 transition hover:bg-white/5 hover:text-white" @click="reply(message)">{{ __('Reply') }}</button>
+                                                                <button type="button" x-show="message.can_pin" x-cloak class="rounded-lg px-2 py-1 text-[0.62rem] uppercase tracking-[0.16em] text-[#c9a96e] transition hover:bg-white/5" @click="togglePin(message)">{{ __('Pin') }}</button>
+                                                                <button type="button" x-show="message.can_delete" x-cloak class="rounded-lg px-2 py-1 text-[0.62rem] uppercase tracking-[0.16em] text-red-300 transition hover:bg-white/5" @click="deleteMessage(message)">{{ __('Delete') }}</button>
+                                                            </div>
+
+                                                            <div x-show="message.message" x-cloak class="text-[0.86rem] leading-7 text-white/75" x-html="renderMessage(message.message)"></div>
+
+                                                            <template x-if="message.attachment">
+                                                                <div class="mt-3 overflow-hidden rounded-2xl border border-white/8 bg-[#121014]">
+                                                                    <template x-if="message.attachment.is_image">
+                                                                        <img :src="message.attachment.preview_url || message.attachment.url" :alt="message.attachment.name" loading="lazy" decoding="async" class="max-h-[320px] w-full object-cover">
+                                                                    </template>
+                                                                    <template x-if="!message.attachment.is_image">
+                                                                        <a :href="message.attachment.url" target="_blank" class="flex items-center justify-between gap-4 px-4 py-4 text-sm text-white/78 transition hover:bg-white/[0.04]">
+                                                                            <span class="truncate" x-text="message.attachment.name"></span>
+                                                                            <span class="shrink-0 text-white/32">{{ __('Open') }}</span>
+                                                                        </a>
+                                                                    </template>
+                                                                </div>
+                                                            </template>
+                                                        </div>
+
+                                                        <div class="mt-2 flex flex-wrap items-center gap-2" x-show="message.reactions?.length">
+                                                            <template x-for="reaction in message.reactions" :key="`${message.id}-${reaction.emoji}`">
+                                                                <button type="button" class="rounded-full border px-3 py-1 text-[0.74rem] transition" :class="reaction.reacted ? 'border-[#c9a96e]/35 bg-[#2a221d] text-[#f4dfb8]' : 'border-white/8 bg-white/[0.03] text-white/55 hover:text-white'" @click="quickReact(message, reaction.emoji)">
+                                                                    <span x-text="`${reaction.emoji} ${reaction.count}`"></span>
+                                                                </button>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </article>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-white/5 px-5 py-4">
+                            <div class="mx-auto max-w-5xl">
+                                <div x-show="replyTo" x-cloak class="mb-3 flex items-center justify-between rounded-xl border border-[#c9a96e]/16 bg-[#1b1714] px-4 py-3 text-sm text-[#ead2ab]">
+                                    <div class="min-w-0">
+                                        <span class="font-semibold">{{ __('Replying to') }}</span>
+                                        <span class="ml-2 truncate text-white/72" x-text="replyTo?.user?.name"></span>
+                                        <span class="mx-2 text-white/22">-</span>
+                                        <span class="truncate text-white/48" x-text="replyTo?.message || replyTo?.attachment?.name"></span>
+                                    </div>
+                                    <button type="button" class="text-white/45 transition hover:text-white" @click="replyTo = null">x</button>
+                                </div>
+
+                                <div x-show="attachmentPreview || attachmentName" x-cloak class="mb-3 flex items-center justify-between rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-white/72">
+                                    <div class="flex min-w-0 items-center gap-3">
+                                        <template x-if="attachmentPreview">
+                                            <img :src="attachmentPreview" alt="" class="h-12 w-12 rounded-xl object-cover">
+                                        </template>
+                                        <span class="truncate" x-text="attachmentName"></span>
+                                    </div>
+                                    <button type="button" class="text-white/45 transition hover:text-white" @click="clearAttachment()">x</button>
+                                </div>
+
+                                <div x-show="selectedChannel?.is_private" x-cloak class="mb-3 rounded-xl border border-[#c9a96e]/16 bg-[#1b1714] px-4 py-3 text-sm text-[#ead2ab]">
+                                    {{ __('Private channel. Only approved members can view this conversation.') }}
+                                </div>
+
+                                <div x-show="selectedChannel?.is_locked && !features.can_moderate_messages" x-cloak class="mb-3 overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(20,17,21,0.96),rgba(11,10,13,0.96))] px-4 py-2.5 text-[0.8rem] leading-6 text-white/65 shadow-[0_10px_24px_rgba(0,0,0,0.14)]">
+                                    {{ __('This channel is currently locked. You can read messages here, but posting is temporarily paused.') }}
+                                </div>
+
+                                <div x-show="composerNotice" x-cloak class="mb-3 rounded-xl border px-4 py-3 text-sm" :class="composerNotice?.tone === 'warning' ? 'border-[#c9a96e]/18 bg-[#2a211b] text-[#eed9b4]' : 'border-red-400/16 bg-red-500/8 text-red-100'">
+                                    <span x-text="composerNotice?.message"></span>
+                                </div>
+
+                                <div x-show="members?.typing?.length" x-cloak class="mb-3 flex items-center gap-2 pl-2 text-[0.78rem] text-white/45">
+                                    <span class="inline-flex items-center gap-1 text-[#c9a96e]">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-[#c9a96e] animate-pulse"></span>
+                                        <span class="h-1.5 w-1.5 rounded-full bg-[#c9a96e]/70 animate-pulse" style="animation-delay: 120ms"></span>
+                                        <span class="h-1.5 w-1.5 rounded-full bg-[#c9a96e]/50 animate-pulse" style="animation-delay: 240ms"></span>
+                                    </span>
+                                    <span x-text="typingIndicatorText()"></span>
+                                </div>
+
+                                <form
+                                    @submit.prevent="sendMessage()"
+                                    @dragover="handleComposerDragOver($event)"
+                                    @dragleave="handleComposerDragLeave($event)"
+                                    @drop="handleComposerDrop($event)"
+                                    class="rounded-2xl border border-white/8 bg-white/[0.05] p-3 transition"
+                                    :class="dragActive ? 'border-[#c9a96e]/35 bg-[#1a1511]' : ''"
+                                >
+                                    <div x-show="dragActive" x-cloak class="mb-3 rounded-2xl border border-dashed border-[#c9a96e]/35 bg-[#2a211b] px-4 py-3 text-sm text-[#eed9b4]">
+                                        {{ __('Drop a file here to attach it to this message.') }}
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#c9a96e]/22 bg-[linear-gradient(135deg,rgba(201,169,110,0.28),rgba(201,169,110,0.08))] font-display text-[0.52rem] text-[#e8c88a]" x-text="user.initials"></div>
+                                        <textarea
+                                            x-ref="composerInput"
+                                            x-model="draft"
+                                            rows="1"
+                                            class="h-8 max-h-36 min-h-0 flex-1 resize-none border-0 bg-transparent py-1 text-[0.86rem] text-white placeholder:text-white/20 focus:outline-none focus:ring-0"
+                                            :placeholder="composerPlaceholder()"
+                                            :disabled="!canUseComposer()"
+                                            @keydown.enter.prevent="handleComposerEnter($event)"
+                                            @input="handleDraftInput()"
+                                        ></textarea>
+                                        <button type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white/55 transition hover:border-[#c9a96e]/22 hover:text-white disabled:cursor-not-allowed disabled:opacity-50" @click="$refs.attachmentInput.click()" :disabled="!canUseComposer()" aria-label="{{ __('Attach file') }}">
+                                            <svg viewBox="0 0 16 16" class="h-4 w-4 stroke-current fill-none stroke-[1.8]">
+                                                <path d="M6.5 8.5 10.8 4.2a2.2 2.2 0 1 1 3.1 3.1L7.8 13.4A4 4 0 1 1 2.1 7.7l6.1-6.1"></path>
+                                            </svg>
+                                        </button>
+                                        <button type="submit" class="flex h-9 w-9 items-center justify-center rounded-lg text-white/18 transition" :class="sendingMessage || (!draft.trim() && !attachmentFile) || !canUseComposer() ? 'bg-transparent' : 'bg-[linear-gradient(135deg,#6c5431,#d4af6c)] text-[#07070c] shadow-[0_4px_14px_rgba(255,140,0,0.3)]'" :disabled="sendingMessage || (!draft.trim() && !attachmentFile) || !canUseComposer()">
+                                            <svg viewBox="0 0 16 16" class="h-4 w-4 stroke-current fill-none stroke-[1.8]"><path d="M14 2 1 8l5 3 2 5 6-14zM6 11l3-3"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="mt-2 flex items-center gap-2 pl-10">
+                                        <button type="button" class="rounded-full border border-white/10 px-3 py-1 text-[0.62rem] text-white/55 transition hover:border-[#c9a96e]/22 hover:text-white" @click="insertEmoji('❤️')">❤</button>
+                                        <button type="button" class="rounded-full border border-white/10 px-3 py-1 text-[0.62rem] text-white/55 transition hover:border-[#c9a96e]/22 hover:text-white" @click="insertEmoji('🔥')">🔥</button>
+                                        <button type="button" class="rounded-full border border-white/10 px-3 py-1 text-[0.62rem] text-white/55 transition hover:border-[#c9a96e]/22 hover:text-white" @click="insertEmoji('👍')">👍</button>
+                                        <span x-show="selectedChannel?.slowmode_seconds" x-cloak class="ml-auto text-[0.62rem] uppercase tracking-[0.12em] text-white/25" x-text="`Slowmode ${selectedChannel.slowmode_seconds}s`"></span>
+                                    </div>
+                                    <input x-ref="attachmentInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" class="hidden" @change="handleAttachment($event)">
+                                </form>
+                            </div>
+                        </div>
+                    </section>
+
+                    <aside class="fixed inset-y-0 right-0 z-50 w-[86vw] max-w-[220px] translate-x-full border-l border-white/5 bg-[#100c0f] p-3 transition-transform xl:static xl:z-auto xl:w-[220px] xl:translate-x-0" :class="membersDrawerOpen ? 'translate-x-0' : 'translate-x-full xl:translate-x-0'">
+                        <div class="flex items-center justify-between">
+                            <div class="text-[0.58rem] uppercase tracking-[0.14em] text-white/25">{{ __('Online') }} - <span x-text="members.online.length"></span></div>
+                            <button type="button" class="rounded-lg p-2 text-white/40 transition hover:bg-white/5 hover:text-white xl:hidden" @click="membersDrawerOpen = false">x</button>
+                        </div>
+                        <div class="mt-3 space-y-2">
+                            <template x-for="member in members.online" :key="`online-${member.id}`">
+                                <div class="group flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-white/5">
+                                    <div class="relative shrink-0">
+                                        <div class="flex h-8 w-8 items-center justify-center rounded-full border border-white/8 font-display text-[0.58rem] font-bold text-white" :style="`background: radial-gradient(circle at top, ${member.accent}, #151014 70%)`">
+                                            <span x-text="member.initials"></span>
+                                        </div>
+                                        <div class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0b0b15] bg-[#4ade80]"></div>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="truncate text-[0.78rem] font-semibold text-[#f0ede8]"><span x-text="member.name"></span><span x-show="member.is_self" x-cloak class="text-[0.6rem] text-white/35"> ({{ __('You') }})</span></div>
+                                        <div class="text-[0.56rem] uppercase tracking-[0.12em] text-white/24" x-text="member.role"></div>
+                                    </div>
+                                    <button type="button" x-show="memberCanBeTimedOut(member)" x-cloak class="hidden rounded-full border border-[#c9a96e]/20 px-2.5 py-1 text-[0.52rem] uppercase tracking-[0.12em] text-[#e7cfaa] transition hover:border-[#c9a96e]/35 hover:text-[#f4dfb8] group-hover:block" @click="timeoutMember(member)">{{ __('Timeout') }}</button>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="mt-5 text-[0.58rem] uppercase tracking-[0.14em] text-white/25">{{ __('Offline') }} - <span x-text="members.offline_count ?? members.offline.length"></span></div>
+                        <div class="mt-3 space-y-2">
+                            <template x-for="member in members.offline" :key="`offline-${member.id}`">
+                                <div class="group flex items-center gap-3 rounded-lg px-2 py-2 opacity-50 transition hover:bg-white/5">
+                                    <div class="relative shrink-0">
+                                        <div class="flex h-8 w-8 items-center justify-center rounded-full border border-white/8 bg-white/[0.03] font-display text-[0.58rem] font-bold text-white/40">
+                                            <span x-text="member.initials"></span>
+                                        </div>
+                                        <div class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0b0b15] bg-slate-500"></div>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="truncate text-[0.78rem] text-white/70" x-text="member.name"></div>
+                                        <div class="text-[0.56rem] uppercase tracking-[0.12em] text-white/24" x-text="member.role"></div>
+                                    </div>
+                                    <button type="button" x-show="memberCanBeTimedOut(member)" x-cloak class="hidden rounded-full border border-[#c9a96e]/20 px-2.5 py-1 text-[0.52rem] uppercase tracking-[0.12em] text-[#e7cfaa] transition hover:border-[#c9a96e]/35 hover:text-[#f4dfb8] group-hover:block" @click="timeoutMember(member)">{{ __('Timeout') }}</button>
+                                </div>
+                            </template>
+                        </div>
+                    </aside>
+                </div>
+            </main>
+
+            <div x-show="channelModalOpen" x-cloak class="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4 py-6" @click.self="closeChannelModal()">
+                <div class="w-full max-w-xl rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(17,15,18,0.98),rgba(10,10,12,0.98))] p-6 shadow-[0_24px_64px_rgba(0,0,0,0.45)]">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-sm uppercase tracking-[0.22em] text-white/30">{{ __('Admin Controls') }}</p>
+                            <h3 class="mt-2 font-display text-3xl text-[#f4dfb8]" x-text="channelForm.id ? 'Edit channel' : 'Create channel'"></h3>
+                        </div>
+                        <button type="button" class="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-white/55 transition hover:text-white" @click="closeChannelModal()">x</button>
+                    </div>
+
+                    <form class="mt-6 space-y-4" @submit.prevent="submitChannelForm()">
+                        <div>
+                            <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Channel name') }}</label>
+                            <input x-model="channelForm.name" type="text" class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/20 focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0" placeholder="general">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Description') }}</label>
+                            <textarea x-model="channelForm.description" rows="3" class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/20 focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0" placeholder="{{ __('What is this channel for?') }}"></textarea>
+                        </div>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Category') }}</label>
+                                <input x-model="channelForm.category" type="text" class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/20 focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0" placeholder="Channels">
+                            </div>
+                            <div>
+                                <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Slowmode seconds') }}</label>
+                                <input x-model.number="channelForm.slowmode_seconds" type="number" min="0" max="300" class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/20 focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0">
+                            </div>
+                        </div>
+                        <div class="grid gap-3 md:grid-cols-2">
+                            <label class="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-white/72">
+                                <input x-model="channelForm.is_private" type="checkbox" class="rounded border-white/20 bg-transparent text-[#d8ae64] focus:ring-[#d8ae64]/40">
+                                <span>{{ __('Private channel') }}</span>
+                            </label>
+                            <label class="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-white/72">
+                                <input x-model="channelForm.is_locked" type="checkbox" class="rounded border-white/20 bg-transparent text-[#d8ae64] focus:ring-[#d8ae64]/40">
+                                <span>{{ __('Lock channel') }}</span>
+                            </label>
+                        </div>
+
+                        <div x-show="features.can_manage_channels" x-cloak class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Access mode') }}</label>
+                                <select x-model="channelForm.access_mode" class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0">
+                                    <template x-for="option in channelAccessOptions.access_modes" :key="option.value">
+                                        <option :value="option.value" x-text="option.label" class="bg-[#140f12]"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Denied behavior') }}</label>
+                                <select x-model="channelForm.denied_behavior" class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0">
+                                    <template x-for="option in channelAccessOptions.denied_behaviors" :key="option.value">
+                                        <option :value="option.value" x-text="option.label" class="bg-[#140f12]"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div x-show="features.can_manage_channels && channelForm.access_mode === 'roles'" x-cloak>
+                            <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Allowed roles') }}</label>
+                            <div class="grid gap-3 md:grid-cols-3">
+                                <template x-for="role in channelAccessOptions.roles" :key="role.value">
+                                    <label class="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-white/72">
+                                        <input x-model="channelForm.allowed_roles" :value="role.value" type="checkbox" class="rounded border-white/20 bg-transparent text-[#d8ae64] focus:ring-[#d8ae64]/40">
+                                        <span x-text="role.label"></span>
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div x-show="features.can_manage_channels && channelForm.access_mode === 'invite'" x-cloak>
+                            <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Invited members') }}</label>
+                            <div class="max-h-44 space-y-2 overflow-y-auto rounded-[24px] border border-white/8 bg-white/[0.03] p-3">
+                                <template x-for="member in memberDirectory" :key="member.id">
+                                    <label class="flex items-center gap-3 rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm text-white/72">
+                                        <input x-model="channelForm.invited_user_ids" :value="member.id" type="checkbox" class="rounded border-white/20 bg-transparent text-[#d8ae64] focus:ring-[#d8ae64]/40">
+                                        <span class="min-w-0 flex-1 truncate" x-text="member.name"></span>
+                                        <span class="text-[0.56rem] uppercase tracking-[0.12em] text-white/24" x-text="member.role"></span>
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div x-show="!features.can_manage_channels" x-cloak class="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-white/60">
+                            {{ __('Moderators can update channel details here, but only admins can change channel visibility and invite access rules.') }}
+                        </div>
+
+                        <div class="flex flex-wrap items-center justify-between gap-3 pt-4">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <button type="button" x-show="channelForm.id" x-cloak class="rounded-2xl border border-red-400/16 bg-red-500/8 px-4 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-red-200 transition hover:bg-red-500/14" @click="archiveChannelFromModal()">{{ __('Archive') }}</button>
+                                <button type="button" x-show="features.can_manage_channels && channelForm.id" x-cloak class="rounded-2xl border border-red-500/28 bg-red-500/14 px-4 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-red-100 transition hover:bg-red-500/20" @click="deleteChannelFromModal()">{{ __('Delete') }}</button>
+                            </div>
+                            <div class="ml-auto flex gap-3">
+                                <button type="button" class="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-white/55 transition hover:text-white" @click="closeChannelModal()">{{ __('Cancel') }}</button>
+                                <button type="submit" class="rounded-2xl bg-[linear-gradient(135deg,#6c5431,#d4af6c)] px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-[#17120f] shadow-[0_14px_28px_rgba(201,169,110,0.18)] transition hover:brightness-110" x-text="channelForm.id ? 'Save changes' : 'Create channel'"></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

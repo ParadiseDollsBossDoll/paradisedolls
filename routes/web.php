@@ -9,6 +9,12 @@ use App\Http\Controllers\Admin\AdminOnboardingController;
 use App\Http\Controllers\Admin\AdminTestimonialController;
 use App\Http\Controllers\Admin\BunnyVideoController;
 use App\Http\Controllers\ApplyController;
+use App\Http\Controllers\Community\CommunityChannelController;
+use App\Http\Controllers\Community\CommunityController;
+use App\Http\Controllers\Community\CommunityMessageController;
+use App\Http\Controllers\Community\CommunityModerationController;
+use App\Http\Controllers\Community\CommunityPresenceController;
+use App\Http\Controllers\Community\MessageReactionController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Member\CourseChatController;
 use App\Http\Controllers\Member\LessonProgressController;
@@ -69,6 +75,37 @@ Route::middleware(['auth', 'verified', 'model'])->prefix('member')->name('member
             ->middleware('throttle:30,1')
             ->name('courses.chat.store');
     });
+});
+
+Route::middleware(['auth', 'verified', 'community.perf'])->prefix('community')->name('community.')->group(function () {
+    Route::get('/', [CommunityController::class, 'show'])->name('show');
+    Route::get('/channels', [CommunityChannelController::class, 'index'])->name('channels.index');
+    Route::get('/channels/{channel:slug}', [CommunityController::class, 'show'])->name('channels.show');
+
+    Route::get('/channels/{channel:slug}/messages', [CommunityMessageController::class, 'index'])->name('channels.messages.index');
+    Route::post('/channels/{channel:slug}/messages', [CommunityMessageController::class, 'store'])
+        ->middleware('throttle:60,1')
+        ->name('channels.messages.store');
+    Route::post('/channels/{channel:slug}/read', [CommunityMessageController::class, 'markRead'])->name('channels.read');
+
+    Route::post('/messages/{message}/reactions/toggle', [MessageReactionController::class, 'toggle'])->name('messages.reactions.toggle');
+    Route::delete('/messages/{message}', [CommunityMessageController::class, 'destroy'])->name('messages.destroy');
+    Route::post('/messages/{message}/pin', [CommunityMessageController::class, 'pin'])->name('messages.pin');
+
+    Route::get('/presence', [CommunityPresenceController::class, 'index'])->name('presence.index');
+    Route::post('/presence/ping', [CommunityPresenceController::class, 'ping'])->name('presence.ping');
+    Route::post('/presence/typing', [CommunityPresenceController::class, 'typing'])->name('presence.typing');
+
+    Route::post('/channels', [CommunityChannelController::class, 'store'])->name('channels.store');
+    Route::post('/channels/{channel:slug}/archive', [CommunityChannelController::class, 'archive'])->name('channels.archive');
+    Route::patch('/channels/{channel:slug}', [CommunityChannelController::class, 'update'])->name('channels.update');
+    Route::delete('/channels/{channel:slug}', [CommunityChannelController::class, 'destroy'])->name('channels.destroy');
+    Route::post('/channels/{channel:slug}/restore', [CommunityChannelController::class, 'restore'])->name('channels.restore');
+    Route::post('/channels/reorder', [CommunityChannelController::class, 'reorder'])->name('channels.reorder');
+
+    Route::post('/members/{user}/timeout', [CommunityModerationController::class, 'timeout'])->name('members.timeout');
+    Route::post('/timeouts/{timeout}/revoke', [CommunityModerationController::class, 'revoke'])->name('timeouts.revoke');
+    Route::get('/moderation/history', [CommunityModerationController::class, 'history'])->name('moderation.history');
 });
 
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
