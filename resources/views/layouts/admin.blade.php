@@ -1,6 +1,11 @@
 @php
     $user = auth()->user();
-    $initial = strtoupper(substr($user->name, 0, 1)) ?: 'A';
+    $initials = collect(explode(' ', trim($user->name)))
+        ->filter()
+        ->take(2)
+        ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
+        ->implode('') ?: 'A';
+
     $pendingLayoutApplications = \App\Models\ModelApplication::query()
         ->where('status', \App\Models\ModelApplication::STATUS_PENDING)
         ->count();
@@ -9,13 +14,58 @@
         ->count();
 
     $links = [
-        ['route' => 'admin.dashboard', 'label' => __('Overview'), 'active' => request()->routeIs('admin.dashboard')],
-        ['route' => 'admin.applications.index', 'label' => __('Applications'), 'active' => request()->routeIs('admin.applications.*'), 'count' => $pendingLayoutApplications],
-        ['route' => 'admin.onboarding.index', 'label' => __('Onboarding'), 'active' => request()->routeIs('admin.onboarding.*'), 'count' => $pendingLayoutVerification],
-        ['route' => 'admin.models.progress', 'label' => __('Members'), 'active' => request()->routeIs('admin.models.progress')],
-        ['route' => 'admin.courses.index', 'label' => __('Courses'), 'active' => request()->routeIs('admin.courses.*')],
-        ['route' => 'admin.testimonials.index', 'label' => __('Stories'), 'active' => request()->routeIs('admin.testimonials.*')],
+        [
+            'route'  => 'admin.dashboard',
+            'label'  => __('Overview'),
+            'active' => request()->routeIs('admin.dashboard'),
+            'icon'   => 'overview',
+            'count'  => 0,
+        ],
+        [
+            'route'  => 'admin.applications.index',
+            'label'  => __('Applications'),
+            'active' => request()->routeIs('admin.applications.*'),
+            'icon'   => 'applications',
+            'count'  => $pendingLayoutApplications,
+        ],
+        [
+            'route'  => 'admin.onboarding.index',
+            'label'  => __('Onboarding'),
+            'active' => request()->routeIs('admin.onboarding.*'),
+            'icon'   => 'onboarding',
+            'count'  => $pendingLayoutVerification,
+        ],
+        [
+            'route'  => 'admin.models.progress',
+            'label'  => __('Members'),
+            'active' => request()->routeIs('admin.models.progress'),
+            'icon'   => 'members',
+            'count'  => 0,
+        ],
+        [
+            'route'  => 'admin.courses.index',
+            'label'  => __('Courses'),
+            'active' => request()->routeIs('admin.courses.*'),
+            'icon'   => 'courses',
+            'count'  => 0,
+        ],
+        [
+            'route'  => 'admin.testimonials.index',
+            'label'  => __('Stories'),
+            'active' => request()->routeIs('admin.testimonials.*'),
+            'icon'   => 'stories',
+            'count'  => 0,
+        ],
+        [
+            'route'  => 'community.show',
+            'label'  => __('Community'),
+            'active' => request()->routeIs('community.*'),
+            'icon'   => 'community',
+            'count'  => 0,
+        ],
     ];
+
+    $currentLabel = collect($links)->firstWhere('active', true)['label'] ?? __('Overview');
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -28,71 +78,110 @@
     </head>
     <body class="font-sans antialiased pd-dark-surface min-h-screen" x-data="{ sidebarOpen: false }">
         <div class="flex min-h-screen">
-            <aside
-                class="fixed inset-y-0 left-0 z-40 flex w-60 flex-col border-r border-white/[0.06] bg-boss-dark transition-transform duration-300 lg:static lg:inset-auto lg:translate-x-0"
-                :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-            >
-                <div class="border-b border-white/[0.06] px-5 py-6">
-                    <p class="font-display text-[1rem] text-boss-gold">{{ config('app.name') }} Admin</p>
-                    <p class="mt-1 text-[0.62rem] uppercase tracking-[0.14em] text-boss-ivory/25">{{ __('Control Panel') }}</p>
+
+            {{-- ── Sidebar ─────────────────────────────────────────── --}}
+            <aside class="elysian-sidebar" :class="sidebarOpen ? 'is-open' : ''">
+
+                <div class="elysian-brand">
+                    <div>
+                        <div class="elysian-brand-title">&#10022; PARADISEDOLLZ &#10022;</div>
+                        <div class="elysian-brand-sub">{{ __('Admin Panel') }}</div>
+                    </div>
                 </div>
 
-                <nav class="flex-1 space-y-1 px-3 py-4">
+                <div class="elysian-side-profile">
+                    <div class="elysian-side-profile-inner">
+                        <div class="elysian-side-profile-row">
+                            <div class="elysian-avatar-wrap">
+                                <div class="elysian-avatar">{{ $initials }}</div>
+                                <div class="elysian-online-dot"></div>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="elysian-side-name">{{ $user->name }}</div>
+                                <div class="elysian-side-sub">{{ __('Administrator') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <nav class="elysian-nav">
                     @foreach ($links as $link)
                         <a
                             href="{{ route($link['route']) }}"
-                            class="flex items-center gap-3 rounded-sm border px-4 py-3 text-[0.82rem] transition-all duration-200 {{ $link['active'] ? 'border-boss-gold/20 bg-boss-gold/10 text-boss-gold' : 'border-transparent text-boss-ivory/42 hover:border-white/[0.06] hover:bg-white/[0.035] hover:text-boss-ivory/75' }}"
+                            class="elysian-nav-item {{ $link['active'] ? 'active' : '' }}"
                             @click="sidebarOpen = false"
                         >
-                            <span class="h-1.5 w-1.5 rounded-full {{ $link['active'] ? 'bg-boss-gold' : 'bg-boss-ivory/18' }}"></span>
+                            @if ($link['icon'] === 'overview')
+                                <svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+                            @elseif ($link['icon'] === 'applications')
+                                <svg viewBox="0 0 16 16"><path d="M10 2h2a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1h2"/><rect x="5" y="1" width="6" height="2" rx="1"/><path d="M5 7h6M5 10h4"/></svg>
+                            @elseif ($link['icon'] === 'onboarding')
+                                <svg viewBox="0 0 16 16"><circle cx="7" cy="5" r="3"/><path d="M2 13c0-2.8 2.2-5 5-5"/><path d="M11 10l1.5 1.5L15 9"/></svg>
+                            @elseif ($link['icon'] === 'members')
+                                <svg viewBox="0 0 16 16"><circle cx="5.5" cy="5" r="2.5"/><path d="M1 13c0-2.5 2-4.5 4.5-4.5S10 10.5 10 13"/><circle cx="11.5" cy="5.5" r="2"/><path d="M10 12.5c.2-1.4 1.3-2.5 2.7-2.5 1.5 0 2.8 1.1 2.8 2.5"/></svg>
+                            @elseif ($link['icon'] === 'courses')
+                                <svg viewBox="0 0 16 16"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/></svg>
+                            @elseif ($link['icon'] === 'stories')
+                                <svg viewBox="0 0 16 16"><path d="M8 1l1.85 3.75L14 5.75l-3 2.9.7 4.1L8 10.75l-3.7 2 .7-4.1L2 5.75l4.15-.5z"/></svg>
+                            @elseif ($link['icon'] === 'community')
+                                <svg viewBox="0 0 16 16"><path d="M14 10c0 1.1-.9 2-2 2H4l-3 3V4c0-1.1.9-2 2-2h9c1.1 0 2 .9 2 2v6z"/></svg>
+                            @endif
                             <span class="flex-1">{{ $link['label'] }}</span>
-                            @if (($link['count'] ?? 0) > 0)
-                                <span class="rounded-full bg-boss-gold px-2 py-0.5 text-[0.62rem] font-semibold text-boss-ink">{{ $link['count'] }}</span>
+                            @if ($link['count'] > 0)
+                                <span class="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c9a96e] px-1 text-[0.52rem] font-bold text-[#080808]">{{ $link['count'] }}</span>
                             @endif
                         </a>
                     @endforeach
                 </nav>
 
-                <div class="space-y-1 border-t border-white/[0.06] px-3 pb-5 pt-3">
-                    <a href="{{ route('admin.courses.create') }}" class="flex items-center gap-3 rounded-sm border border-boss-gold/15 bg-boss-gold/[0.08] px-4 py-2.5 text-[0.75rem] text-boss-gold transition-colors hover:bg-boss-gold/15">
-                        {{ __('New Course') }}
+                <div class="elysian-side-footer">
+                    <a href="{{ route('admin.courses.create') }}" class="elysian-side-footer-btn" style="color: rgba(201,169,110,0.7);">
+                        <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v6M5 8h6"/></svg>
+                        <span>{{ __('New Course') }}</span>
                     </a>
-                    <a href="{{ route('home') }}" class="flex items-center gap-3 rounded-sm px-4 py-2.5 text-[0.75rem] text-boss-ivory/25 transition-colors hover:text-boss-ivory/55">
-                        {{ __('Main Site') }}
+                    <a href="{{ route('home') }}" class="elysian-side-footer-btn">
+                        <svg viewBox="0 0 16 16"><path d="M8 1L1 8h2.5v6h3.5v-4h2v4h3.5V8H15L8 1z"/></svg>
+                        <span>{{ __('Main Site') }}</span>
                     </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="flex w-full items-center gap-3 rounded-sm px-4 py-2.5 text-left text-[0.75rem] text-boss-ivory/25 transition-colors hover:text-red-400">
-                            {{ __('Sign Out') }}
+                        <button type="submit" class="elysian-side-footer-btn">
+                            <svg viewBox="0 0 16 16"><path d="M10 3l3 5-3 5M3 8h10"/></svg>
+                            <span>{{ __('Sign Out') }}</span>
                         </button>
                     </form>
                 </div>
             </aside>
 
-            <div x-show="sidebarOpen" x-cloak class="fixed inset-0 z-30 bg-black/75 lg:hidden" @click="sidebarOpen = false"></div>
+            {{-- Mobile backdrop --}}
+            <div x-show="sidebarOpen" x-cloak class="elysian-sidebar-backdrop" @click="sidebarOpen = false"></div>
 
+            {{-- ── Main content ─────────────────────────────────────── --}}
             <div class="flex min-w-0 flex-1 flex-col">
-                <header class="sticky top-0 z-20 flex items-center gap-4 border-b border-white/[0.06] bg-boss-dark/95 px-5 py-4 backdrop-blur lg:px-8">
-                    <button type="button" class="rounded-sm p-2 text-boss-ivory/45 lg:hidden" @click="sidebarOpen = true" aria-label="{{ __('Menu') }}">
-                        <span class="block space-y-1">
-                            <span class="block h-px w-5 bg-current"></span>
-                            <span class="block h-px w-5 bg-current"></span>
-                            <span class="block h-px w-5 bg-current"></span>
-                        </span>
+
+                <header class="elysian-topbar">
+                    <button type="button" class="elysian-mobile-toggle" @click="sidebarOpen = true" aria-label="{{ __('Menu') }}">
+                        <span></span>
+                        <span></span>
+                        <span></span>
                     </button>
-                    <p class="text-[0.78rem] text-boss-ivory/32">{{ __('Admin Dashboard') }}</p>
-                    <div class="ml-auto flex items-center gap-2">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-full border border-boss-gold/20 bg-boss-gold/10 font-display text-[0.75rem] text-boss-gold">{{ $initial }}</div>
-                        <span class="hidden text-[0.78rem] text-boss-ivory/42 sm:block">{{ $user->name }}</span>
+                    <span class="elysian-breadcrumb">{{ __('Admin') }} / {{ $currentLabel }}</span>
+                    <div class="elysian-topbar-right">
+                        <div class="elysian-topbar-greeting">
+                            <p>{{ __('Admin Panel') }}</p>
+                            <p>{{ $user->name }}</p>
+                        </div>
+                        <div class="elysian-topbar-avatar">{{ $initials }}</div>
                     </div>
                 </header>
 
-                <main class="flex-1 overflow-auto p-5 lg:p-8">
+                <main class="flex-1 p-5 lg:p-8">
                     @isset($header)
                         <div class="mb-7">{{ $header }}</div>
                     @endisset
                     {{ $slot }}
                 </main>
+
             </div>
         </div>
     </body>

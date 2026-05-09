@@ -267,4 +267,334 @@ body {
         background: rgba(201, 169, 110, 0.1);
         color: var(--pd-gold-light);
     }
+
+    /* ─── Community Chat Shell (Elysian) ─────────────────────── */
+
+    .elysian-sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        background: #0d0b10;
+        border-right: 1px solid rgba(255, 255, 255, 0.04);
+        overflow: hidden;
+        transition: transform 280ms ease;
+    }
+
+    .elysian-brand {
+        padding: 1.1rem 1rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.35);
+    }
+
+    .elysian-brand-title {
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #c9a96e;
+    }
+
+    .elysian-brand-sub {
+        margin-top: 0.2rem;
+        font-size: 0.52rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(240, 237, 232, 0.28);
+    }
+
+    .elysian-side-profile {
+        padding: 0.7rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+    }
+
+    .elysian-side-profile-inner {
+        background: rgba(201, 169, 110, 0.04);
+        border: 1px solid rgba(201, 169, 110, 0.08);
+        border-radius: 0.7rem;
+        padding: 0.6rem;
+    }
+
+    .elysian-side-profile-row {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        min-width: 0;
+    }
+
+    .elysian-avatar-wrap {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .elysian-avatar {
+        width: 2.1rem;
+        height: 2.1rem;
+        border-radius: 50%;
+        background: rgba(201, 169, 110, 0.12);
+        border: 1px solid rgba(201, 169, 110, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.62rem;
+        font-weight: 700;
+        color: #e8c88a;
+        letter-spacing: 0.04em;
+    }
+
+    .elysian-online-dot {
+        position: absolute;
+        bottom: -1px;
+        right: -1px;
+        width: 0.6rem;
+        height: 0.6rem;
+        border-radius: 50%;
+        background: #4ade80;
+        border: 2px solid #0d0b10;
+    }
+
+    .elysian-side-name {
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: #f0ede8;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .elysian-side-sub {
+        margin-top: 0.1rem;
+        font-size: 0.56rem;
+        color: rgba(240, 237, 232, 0.3);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .elysian-nav {
+        flex: 1;
+        padding: 0.65rem 0.6rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+        overflow-y: auto;
+    }
+
+    .elysian-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.55rem 0.8rem;
+        border-radius: 0.55rem;
+        font-size: 0.78rem;
+        color: rgba(240, 237, 232, 0.4);
+        text-decoration: none;
+        border: 1px solid transparent;
+        transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+    }
+
+    .elysian-nav-item svg {
+        width: 0.88rem;
+        height: 0.88rem;
+        flex-shrink: 0;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+    }
+
+    .elysian-nav-item:hover {
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(240, 237, 232, 0.72);
+        border-color: rgba(255, 255, 255, 0.04);
+    }
+
+    .elysian-nav-item.active {
+        background: rgba(201, 169, 110, 0.1);
+        border-color: rgba(201, 169, 110, 0.18);
+        color: #e8c88a;
+    }
+
+    .elysian-side-footer {
+        padding: 0.55rem 0.6rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.35);
+    }
+
+    .elysian-side-footer-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        width: 100%;
+        padding: 0.5rem 0.8rem;
+        border-radius: 0.55rem;
+        font-size: 0.74rem;
+        color: rgba(240, 237, 232, 0.26);
+        background: none;
+        border: none;
+        cursor: pointer;
+        text-align: left;
+        transition: color 150ms ease, background 150ms ease;
+    }
+
+    .elysian-side-footer-btn svg {
+        width: 0.82rem;
+        height: 0.82rem;
+        flex-shrink: 0;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+    }
+
+    .elysian-side-footer-btn:hover {
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.06);
+    }
+
+    .elysian-sidebar-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(4px);
+    }
+
+    .elysian-topbar {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0 1.1rem;
+        height: 3.25rem;
+        flex-shrink: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        background: rgba(10, 10, 15, 0.92);
+        backdrop-filter: blur(8px);
+    }
+
+    .elysian-mobile-toggle {
+        display: flex;
+        flex-direction: column;
+        gap: 0.22rem;
+        padding: 0.4rem;
+        border-radius: 0.4rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .elysian-mobile-toggle span {
+        display: block;
+        width: 1rem;
+        height: 1.5px;
+        background: rgba(240, 237, 232, 0.4);
+        border-radius: 1px;
+    }
+
+    .elysian-breadcrumb {
+        font-size: 0.68rem;
+        color: rgba(240, 237, 232, 0.28);
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .elysian-topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    .elysian-topbar-greeting {
+        display: none;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    .elysian-topbar-greeting p:first-child {
+        font-size: 0.58rem;
+        color: rgba(240, 237, 232, 0.28);
+    }
+
+    .elysian-topbar-greeting p:last-child {
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: #c9a96e;
+    }
+
+    .elysian-topbar-avatar {
+        width: 1.8rem;
+        height: 1.8rem;
+        border-radius: 50%;
+        background: rgba(201, 169, 110, 0.1);
+        border: 1px solid rgba(201, 169, 110, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.58rem;
+        font-weight: 700;
+        color: #e8c88a;
+        letter-spacing: 0.04em;
+        flex-shrink: 0;
+    }
+
+    .community-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.07) transparent;
+    }
+
+    .community-scroll::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .community-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .community-scroll::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.07);
+        border-radius: 2px;
+    }
+}
+
+/* ─── Community sidebar responsive behaviour ──────────────── */
+@media (max-width: 1279px) {
+    .elysian-sidebar {
+        position: fixed;
+        inset-y: 0;
+        left: 0;
+        z-index: 50;
+        transform: translateX(-100%);
+    }
+
+    .elysian-sidebar.is-open {
+        transform: translateX(0);
+    }
+}
+
+@media (min-width: 640px) {
+    .elysian-topbar-greeting {
+        display: flex;
+    }
+}
+
+@media (min-width: 1280px) {
+    .elysian-mobile-toggle {
+        display: none;
+    }
+
+    .elysian-sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+    }
+}
+
+/* Topbar sticks to top as content scrolls */
+.elysian-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
 }
