@@ -50,7 +50,7 @@
         <title>{{ __('Community').' - '.config('app.name') }}</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="min-h-screen overflow-hidden bg-[#080808] text-[#f0ede8] font-['DM_Sans',sans-serif]">
+    <body class="min-h-screen overflow-hidden bg-[#080808] text-[#f0ede8] font-sans antialiased">
         <div x-data="communityChat(@js($communityState))" x-init="init()" class="flex h-screen min-h-0">
             <aside class="elysian-sidebar" :class="shellDrawerOpen ? 'is-open' : ''">
                 <div class="elysian-brand">
