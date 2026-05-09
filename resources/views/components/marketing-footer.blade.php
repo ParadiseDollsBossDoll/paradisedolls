@@ -1,4 +1,9 @@
+@props([
+    'user' => null,
+])
 @php
+    $isAuthenticated = $user !== null;
+
     $explore = [
         ['route' => 'our-story', 'label' => __('Our Story')],
         ['route' => 'work-from-home', 'label' => __('Work From Home')],
@@ -41,8 +46,8 @@
             <div>
                 <p class="mb-5 text-[0.65rem] uppercase tracking-[0.2em] text-white/30">{{ __('Members') }}</p>
                 <ul class="space-y-3">
-                    @auth
-                        @if (auth()->user()->isAdmin())
+                    @if ($isAuthenticated)
+                        @if ($user->isAdmin())
                             <li><a href="{{ route('admin.dashboard') }}" class="text-[0.8rem] text-white/50 transition-colors hover:text-boss-gold">{{ __('Dashboard') }}</a></li>
                             <li><a href="{{ route('admin.courses.index') }}" class="text-[0.8rem] text-white/50 transition-colors hover:text-boss-gold">{{ __('Academy') }}</a></li>
                         @else
@@ -51,7 +56,7 @@
                         @endif
                     @else
                         <li><a href="{{ route('login') }}" class="text-[0.8rem] text-white/50 transition-colors hover:text-boss-gold">{{ __('Log in') }}</a></li>
-                    @endauth
+                    @endif
                     <li>
                         <a href="{{ route('home') }}#apply" class="text-[0.8rem] text-boss-gold transition-colors hover:text-white">{{ __('Apply Now') }} -></a>
                     </li>
@@ -63,11 +68,9 @@
             <p class="text-[0.75rem] text-white/25">&copy; {{ date('Y') }} {{ config('app.name') }}. {{ __('All rights reserved.') }}</p>
             <div class="flex items-center gap-6">
                 <p class="text-[0.75rem] text-white/25">{{ __('Made with care for members worldwide') }}</p>
-                @auth
-                    @if (auth()->user()->isAdmin())
-                        <a href="{{ route('admin.dashboard') }}" class="text-[0.65rem] tracking-[0.1em] text-white/10 transition-colors hover:text-white/30">{{ __('Admin') }}</a>
-                    @endif
-                @endauth
+                @if ($user?->isAdmin())
+                    <a href="{{ route('admin.dashboard') }}" class="text-[0.65rem] tracking-[0.1em] text-white/10 transition-colors hover:text-white/30">{{ __('Admin') }}</a>
+                @endif
             </div>
         </div>
     </div>

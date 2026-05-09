@@ -78,6 +78,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/applications/{application}/photos/{index}', [AdminApplicationController::class, 'downloadPhoto'])
         ->whereNumber('index')
         ->name('applications.photos.show');
+    Route::get('/applications/{application}/photos/{index}/view', [AdminApplicationController::class, 'viewPhoto'])
+        ->whereNumber('index')
+        ->name('applications.photos.view');
     Route::post('/applications/{application}/approve', [AdminApplicationController::class, 'approve'])
         ->middleware('throttle:admin-actions')
         ->name('applications.approve');
