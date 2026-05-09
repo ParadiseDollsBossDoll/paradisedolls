@@ -1,5 +1,434 @@
 <x-admin-layout>
-    <div class="mx-auto max-w-full space-y-6 text-boss-ivory">
+    <div
+        class="mx-auto max-w-full space-y-6 text-boss-ivory"
+        x-data="{ open: false, selected: null, showReject: false }"
+        @keydown.escape.window="open = false"
+    >
+
+        {{-- ── Backdrop ──────────────────────────────────────────── --}}
+        <div
+            x-show="open"
+            x-cloak
+            x-transition:enter="transition-opacity ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
+            @click="open = false"
+        ></div>
+
+        {{-- ── Slide-over panel ──────────────────────────────────── --}}
+        <div
+            x-show="open"
+            x-cloak
+            x-transition:enter="transition ease-out duration-300 transform"
+            x-transition:enter-start="translate-x-full"
+            x-transition:enter-end="translate-x-0"
+            x-transition:leave="transition ease-in duration-200 transform"
+            x-transition:leave-start="translate-x-0"
+            x-transition:leave-end="translate-x-full"
+            class="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-white/[0.06] bg-[#0d0e14] shadow-2xl sm:max-w-2xl"
+        >
+            <template x-if="selected">
+                <div class="flex h-full flex-col">
+
+                    {{-- Panel header --}}
+                    <div class="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-6 py-5">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-boss-gold/25 bg-boss-gold/10 font-display text-base text-boss-gold"
+                                x-text="selected.name.charAt(0).toUpperCase()"
+                            ></div>
+                            <div>
+                                <h2 class="font-display text-lg font-semibold text-boss-ivory" x-text="selected.name"></h2>
+                                <p class="text-sm text-boss-ivory/45" x-text="selected.email"></p>
+                                <p x-show="selected.profile && selected.profile.stage_name" class="mt-0.5 text-sm text-boss-gold/70" x-text="selected.profile && selected.profile.stage_name ? '« ' + selected.profile.stage_name + ' »' : ''"></p>
+                            </div>
+                        </div>
+                        <button
+                            @click="open = false"
+                            class="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.06] text-boss-ivory/50 transition hover:border-white/[0.12] hover:text-boss-ivory"
+                            aria-label="Close"
+                        >
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    {{-- Scrollable body --}}
+                    <div class="flex-1 space-y-5 overflow-y-auto px-6 py-6">
+
+                        {{-- Onboarding progress bar --}}
+                        <template x-if="selected.profile">
+                            <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-4">
+                                <div class="mb-2 flex items-center justify-between">
+                                    <p class="text-[0.68rem] uppercase tracking-[0.14em] text-boss-ivory/35">Onboarding Progress</p>
+                                    <span class="text-xs font-semibold text-boss-gold" x-text="selected.profile.onboarding_percent + '%'"></span>
+                                </div>
+                                <div class="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                                    <div
+                                        class="h-full rounded-full bg-boss-gold transition-all duration-500"
+                                        :style="'width: ' + selected.profile.onboarding_percent + '%'"
+                                    ></div>
+                                </div>
+                                <div class="mt-3 flex flex-wrap gap-2 text-[0.65rem]">
+                                    <span :class="selected.profile.has_information_form ? 'text-green-300' : 'text-boss-ivory/30'">
+                                        <span x-text="selected.profile.has_information_form ? '✓' : '○'"></span> Info Form
+                                    </span>
+                                    <span :class="selected.profile.has_verification_submission ? 'text-green-300' : 'text-boss-ivory/30'">
+                                        <span x-text="selected.profile.has_verification_submission ? '✓' : '○'"></span> Docs Submitted
+                                    </span>
+                                    <span :class="selected.profile.is_verified ? 'text-green-300' : 'text-boss-ivory/30'">
+                                        <span x-text="selected.profile.is_verified ? '✓' : '○'"></span> Verified
+                                    </span>
+                                    <span :class="selected.profile.community_invited_at ? 'text-green-300' : 'text-boss-ivory/30'">
+                                        <span x-text="selected.profile.community_invited_at ? '✓' : '○'"></span> Community Invited
+                                    </span>
+                                    <span :class="selected.profile.community_role_assigned_at ? 'text-green-300' : 'text-boss-ivory/30'">
+                                        <span x-text="selected.profile.community_role_assigned_at ? '✓' : '○'"></span> Role Assigned
+                                    </span>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- No profile yet --}}
+                        <template x-if="!selected.profile">
+                            <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-5 text-center text-sm text-boss-ivory/35">
+                                No profile created yet for this member.
+                            </div>
+                        </template>
+
+                        {{-- Information Form --}}
+                        <template x-if="selected.profile && selected.profile.has_information_form">
+                            <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-5 space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-[0.68rem] uppercase tracking-[0.14em] text-boss-ivory/35">Information Form</p>
+                                    <span class="text-[0.65rem] text-boss-ivory/30" x-text="'Submitted ' + selected.profile.information_submitted_at"></span>
+                                </div>
+
+                                {{-- Personal details grid --}}
+                                <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                                    <template x-if="selected.profile.legal_name">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Legal Name</p>
+                                            <p class="mt-0.5 text-sm text-boss-ivory/80" x-text="selected.profile.legal_name"></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="selected.profile.stage_name">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Stage Name</p>
+                                            <p class="mt-0.5 text-sm text-boss-ivory/80" x-text="selected.profile.stage_name"></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="selected.profile.date_of_birth">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Date of Birth</p>
+                                            <p class="mt-0.5 text-sm text-boss-ivory/80" x-text="selected.profile.date_of_birth"></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="selected.profile.phone">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Phone</p>
+                                            <p class="mt-0.5 text-sm text-boss-ivory/80" x-text="selected.profile.phone"></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="selected.profile.city || selected.profile.country">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Location</p>
+                                            <p class="mt-0.5 text-sm text-boss-ivory/80" x-text="[selected.profile.city, selected.profile.country].filter(Boolean).join(', ')"></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="selected.profile.timezone">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Timezone</p>
+                                            <p class="mt-0.5 text-sm text-boss-ivory/80" x-text="selected.profile.timezone"></p>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                {{-- Platforms --}}
+                                <template x-if="selected.profile.platforms && selected.profile.platforms.length > 0">
+                                    <div>
+                                        <p class="mb-2 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Platforms</p>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <template x-for="platform in selected.profile.platforms" :key="platform">
+                                                <span class="rounded-full bg-boss-gold/10 px-2.5 py-0.5 text-[0.7rem] text-boss-gold" x-text="platform"></span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                {{-- Equipment --}}
+                                <template x-if="selected.profile.equipment && selected.profile.equipment.length > 0">
+                                    <div>
+                                        <p class="mb-2 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Equipment</p>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <template x-for="item in selected.profile.equipment" :key="item">
+                                                <span class="rounded-full bg-white/[0.05] px-2.5 py-0.5 text-[0.7rem] text-boss-ivory/60" x-text="item"></span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                {{-- Text fields --}}
+                                <template x-if="selected.profile.availability">
+                                    <div>
+                                        <p class="mb-1 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Availability</p>
+                                        <p class="whitespace-pre-line text-sm leading-relaxed text-boss-ivory/65" x-text="selected.profile.availability"></p>
+                                    </div>
+                                </template>
+                                <template x-if="selected.profile.goals">
+                                    <div>
+                                        <p class="mb-1 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Goals</p>
+                                        <p class="whitespace-pre-line text-sm leading-relaxed text-boss-ivory/65" x-text="selected.profile.goals"></p>
+                                    </div>
+                                </template>
+                                <template x-if="selected.profile.experience_notes">
+                                    <div>
+                                        <p class="mb-1 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Experience Notes</p>
+                                        <p class="whitespace-pre-line text-sm leading-relaxed text-boss-ivory/65" x-text="selected.profile.experience_notes"></p>
+                                    </div>
+                                </template>
+
+                                {{-- Emergency contact --}}
+                                <template x-if="selected.profile.emergency_contact_name || selected.profile.emergency_contact_phone">
+                                    <div class="border-t border-white/[0.04] pt-3">
+                                        <p class="mb-2 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Emergency Contact</p>
+                                        <p class="text-sm text-boss-ivory/65" x-text="[selected.profile.emergency_contact_name, selected.profile.emergency_contact_phone].filter(Boolean).join(' · ')"></p>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        {{-- Verification documents --}}
+                        <template x-if="selected.profile && (selected.profile.doc_id_view || selected.profile.doc_selfie_view || selected.profile.doc_codes_view)">
+                            <div>
+                                <div class="mb-3 flex items-center justify-between">
+                                    <p class="text-[0.68rem] uppercase tracking-[0.14em] text-boss-ivory/35">Verification Documents</p>
+                                    <template x-if="selected.profile.verification_submitted_at">
+                                        <span class="text-[0.65rem] text-boss-ivory/30" x-text="'Submitted ' + selected.profile.verification_submitted_at"></span>
+                                    </template>
+                                </div>
+                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+
+                                    {{-- ID Document --}}
+                                    <template x-if="selected.profile.doc_id_view">
+                                        <div class="overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.025]" x-data="{ imgFailed: false }">
+                                            <div class="relative">
+                                                <img
+                                                    x-show="!imgFailed"
+                                                    :src="selected.profile.doc_id_view"
+                                                    x-on:error="imgFailed = true"
+                                                    alt="Valid ID"
+                                                    class="h-36 w-full object-cover"
+                                                    loading="lazy"
+                                                />
+                                                <div x-show="imgFailed" class="flex h-36 w-full flex-col items-center justify-center gap-2 bg-white/[0.02]">
+                                                    <svg class="h-8 w-8 text-boss-ivory/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                                    </svg>
+                                                    <span class="text-[0.65rem] text-boss-ivory/30">PDF Document</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between px-3 py-2">
+                                                <span class="text-[0.65rem] font-medium text-boss-ivory/50">Valid ID</span>
+                                                <div class="flex items-center gap-2">
+                                                    <a :href="selected.profile.doc_id_view" target="_blank" rel="noopener" class="text-[0.62rem] text-boss-gold transition hover:text-boss-gold-light">View</a>
+                                                    <a :href="selected.profile.doc_id_download" class="text-[0.62rem] text-boss-ivory/30 transition hover:text-boss-ivory/60" download>Download</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    {{-- Selfie with ID --}}
+                                    <template x-if="selected.profile.doc_selfie_view">
+                                        <div class="overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.025]" x-data="{ imgFailed: false }">
+                                            <a :href="selected.profile.doc_selfie_view" target="_blank" rel="noopener" class="block">
+                                                <img
+                                                    :src="selected.profile.doc_selfie_view"
+                                                    x-on:error="imgFailed = true"
+                                                    alt="Selfie with ID"
+                                                    class="h-36 w-full object-cover transition hover:opacity-90"
+                                                    loading="lazy"
+                                                />
+                                            </a>
+                                            <div class="flex items-center justify-between px-3 py-2">
+                                                <span class="text-[0.65rem] font-medium text-boss-ivory/50">Selfie + ID</span>
+                                                <a :href="selected.profile.doc_selfie_download" class="text-[0.62rem] text-boss-ivory/30 transition hover:text-boss-ivory/60" download>Download</a>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    {{-- Platform codes --}}
+                                    <template x-if="selected.profile.doc_codes_view">
+                                        <div class="overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.025]" x-data="{ imgFailed: false }">
+                                            <div class="relative">
+                                                <img
+                                                    x-show="!imgFailed"
+                                                    :src="selected.profile.doc_codes_view"
+                                                    x-on:error="imgFailed = true"
+                                                    alt="Platform Codes"
+                                                    class="h-36 w-full object-cover"
+                                                    loading="lazy"
+                                                />
+                                                <div x-show="imgFailed" class="flex h-36 w-full flex-col items-center justify-center gap-2 bg-white/[0.02]">
+                                                    <svg class="h-8 w-8 text-boss-ivory/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                                    </svg>
+                                                    <span class="text-[0.65rem] text-boss-ivory/30">PDF Document</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between px-3 py-2">
+                                                <span class="text-[0.65rem] font-medium text-boss-ivory/50">Platform Codes</span>
+                                                <div class="flex items-center gap-2">
+                                                    <a :href="selected.profile.doc_codes_view" target="_blank" rel="noopener" class="text-[0.62rem] text-boss-gold transition hover:text-boss-gold-light">View</a>
+                                                    <a :href="selected.profile.doc_codes_download" class="text-[0.62rem] text-boss-ivory/30 transition hover:text-boss-ivory/60" download>Download</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Verification notes (if any) --}}
+                        <template x-if="selected.profile && selected.profile.verification_notes">
+                            <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-4">
+                                <p class="mb-2 text-[0.68rem] uppercase tracking-[0.14em] text-boss-ivory/35">Verification Notes</p>
+                                <p class="whitespace-pre-line text-sm leading-relaxed text-boss-ivory/65" x-text="selected.profile.verification_notes"></p>
+                            </div>
+                        </template>
+
+                        {{-- Community --}}
+                        <template x-if="selected.profile && (selected.profile.community_invited_at || selected.profile.discord_username || selected.profile.discord_user_id)">
+                            <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-5 space-y-3">
+                                <p class="text-[0.68rem] uppercase tracking-[0.14em] text-boss-ivory/35">Community</p>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <template x-if="selected.profile.discord_username">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Discord Username</p>
+                                            <p class="mt-0.5 text-sm text-boss-ivory/70" x-text="selected.profile.discord_username"></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="selected.profile.discord_user_id">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Discord ID</p>
+                                            <p class="mt-0.5 text-sm text-boss-ivory/70" x-text="selected.profile.discord_user_id"></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="selected.profile.community_invited_at">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Community Invited</p>
+                                            <p class="mt-0.5 text-sm text-green-300" x-text="selected.profile.community_invited_at"></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="selected.profile.community_role_assigned_at">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Role Assigned</p>
+                                            <p class="mt-0.5 text-sm text-boss-gold" x-text="selected.profile.community_role_assigned_at"></p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Member since --}}
+                        <p class="text-center text-[0.65rem] text-boss-ivory/22">
+                            Member since <span x-text="selected.joined"></span>
+                        </p>
+
+                    </div>{{-- end scrollable body --}}
+
+                    {{-- ── Footer actions ──────────────────────────────── --}}
+                    <template x-if="selected.profile">
+                        <div class="shrink-0 space-y-3 border-t border-white/[0.06] px-6 py-4">
+
+                            {{-- Request Verification --}}
+                            <template x-if="selected.profile.can_request_verification">
+                                <form :action="selected.profile.request_verification_url" method="POST">
+                                    @csrf
+                                    <button type="submit" class="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-boss-ivory/70 transition hover:bg-white/[0.07] hover:text-boss-ivory">
+                                        Send Verification Request Email
+                                    </button>
+                                </form>
+                            </template>
+
+                            {{-- Approve + Reject verification --}}
+                            <template x-if="selected.profile.can_verify">
+                                <div class="space-y-3">
+                                    <form :action="selected.profile.verify_url" method="POST">
+                                        @csrf
+                                        <button type="submit" class="w-full rounded-xl bg-boss-gold px-4 py-2.5 text-sm font-semibold text-boss-ink transition hover:opacity-90">
+                                            Approve Account &amp; Send Approval Email
+                                        </button>
+                                    </form>
+
+                                    {{-- Reject toggle --}}
+                                    <div>
+                                        <button
+                                            type="button"
+                                            @click="showReject = !showReject"
+                                            class="w-full rounded-xl border border-red-400/25 bg-red-400/[0.07] px-4 py-2.5 text-sm font-medium text-red-300/80 transition hover:bg-red-400/[0.12]"
+                                            x-text="showReject ? 'Cancel' : 'Reject — Request Resubmission'"
+                                        ></button>
+                                        <div x-show="showReject" x-cloak class="mt-2 space-y-2">
+                                            <form :action="selected.profile.reject_verification_url" method="POST">
+                                                @csrf
+                                                <textarea
+                                                    name="verification_notes"
+                                                    rows="3"
+                                                    placeholder="Explain what needs to be resubmitted..."
+                                                    required
+                                                    class="pd-input w-full text-sm"
+                                                ></textarea>
+                                                <button type="submit" class="mt-2 w-full rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-400/20">
+                                                    Confirm Rejection
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            {{-- Community invite --}}
+                            <template x-if="selected.profile.can_community_invite">
+                                <form :action="selected.profile.community_invite_url" method="POST">
+                                    @csrf
+                                    <button type="submit" class="w-full rounded-xl bg-boss-gold px-4 py-2.5 text-sm font-semibold text-boss-ink transition hover:opacity-90">
+                                        Send Community Access Email
+                                    </button>
+                                </form>
+                            </template>
+
+                            {{-- Mark role assigned --}}
+                            <template x-if="selected.profile.can_role_assign">
+                                <form :action="selected.profile.community_role_url" method="POST">
+                                    @csrf
+                                    <button type="submit" class="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-boss-ivory/70 transition hover:bg-white/[0.07] hover:text-boss-ivory">
+                                        Mark Discord Role Assigned
+                                    </button>
+                                </form>
+                            </template>
+
+                            {{-- All done --}}
+                            <template x-if="!selected.profile.can_request_verification && !selected.profile.can_verify && !selected.profile.can_community_invite && !selected.profile.can_role_assign">
+                                <p class="text-center text-sm text-boss-ivory/30">
+                                    <span x-text="selected.profile.community_role_assigned_at ? 'Fully onboarded ✓' : 'No actions available at this stage.'"></span>
+                                </p>
+                            </template>
+
+                        </div>
+                    </template>
+
+                </div>
+            </template>
+        </div>
+
+        {{-- ── Page header ───────────────────────────────────────── --}}
         <header class="flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
             <div>
                 <p class="pd-kicker">{{ __('Onboarding') }}</p>
@@ -7,6 +436,7 @@
             </div>
         </header>
 
+        {{-- ── Flash messages ────────────────────────────────────── --}}
         @if (session('status'))
             <div class="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm text-green-200">{{ session('status') }}</div>
         @endif
@@ -19,6 +449,7 @@
             </div>
         @endif
 
+        {{-- ── Stats ─────────────────────────────────────────────── --}}
         <section class="grid grid-cols-2 gap-3 xl:grid-cols-6">
             @foreach ([
                 [__('Members'), $stats['members']],
@@ -35,148 +466,144 @@
             @endforeach
         </section>
 
+        {{-- ── Members table ─────────────────────────────────────── --}}
         <div class="overflow-hidden rounded-2xl border border-white/[0.06] bg-boss-panel-strong">
             <div class="overflow-x-auto">
-                <table class="pd-table min-w-[1180px]">
+                <table class="pd-table min-w-[640px]">
                     <thead>
                         <tr>
                             <th class="text-left">{{ __('Member') }}</th>
-                            <th class="text-left">{{ __('Information') }}</th>
+                            <th class="text-left">{{ __('Steps') }}</th>
                             <th class="text-left">{{ __('Verification') }}</th>
-                            <th class="text-left">{{ __('Documents') }}</th>
-                            <th class="text-left">{{ __('Community') }}</th>
-                            <th class="text-right">{{ __('Actions') }}</th>
+                            <th class="text-right text-boss-ivory/30">{{ __('Details') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($models as $model)
-                            @php($profile = $model->modelProfile)
-                            <tr>
-                                <td class="align-top">
-                                    <div class="flex items-start gap-3">
-                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-boss-gold/20 bg-boss-gold/10 font-display text-[0.72rem] text-boss-gold">
+                            @php
+                                $profile = $model->modelProfile;
+
+                                $modelData = [
+                                    'id'      => $model->id,
+                                    'name'    => $model->name,
+                                    'email'   => $model->email,
+                                    'joined'  => $model->created_at->toFormattedDateString(),
+                                    'profile' => $profile ? [
+                                        'id'                          => $profile->id,
+                                        'legal_name'                  => $profile->legal_name,
+                                        'stage_name'                  => $profile->stage_name,
+                                        'date_of_birth'               => $profile->date_of_birth?->format('M d, Y'),
+                                        'phone'                       => $profile->phone,
+                                        'country'                     => $profile->country,
+                                        'city'                        => $profile->city,
+                                        'timezone'                    => $profile->timezone,
+                                        'platforms'                   => $profile->platforms ?? [],
+                                        'equipment'                   => $profile->equipment ?? [],
+                                        'availability'                => $profile->availability,
+                                        'goals'                       => $profile->goals,
+                                        'experience_notes'            => $profile->experience_notes,
+                                        'emergency_contact_name'      => $profile->emergency_contact_name,
+                                        'emergency_contact_phone'     => $profile->emergency_contact_phone,
+                                        'discord_username'            => $profile->discord_username,
+                                        'discord_user_id'             => $profile->discord_user_id,
+                                        'has_information_form'        => $profile->hasInformationForm(),
+                                        'information_submitted_at'    => $profile->information_submitted_at?->toFormattedDateString(),
+                                        'verification_status'         => $profile->verification_status,
+                                        'verification_status_label'   => $profile->verificationStatusLabel(),
+                                        'verification_submitted_at'   => $profile->verification_submitted_at?->toFormattedDateString(),
+                                        'verification_notes'          => $profile->verification_notes,
+                                        'is_verified'                 => $profile->isVerified(),
+                                        'has_verification_submission' => $profile->hasVerificationSubmission(),
+                                        'doc_id_view'       => $profile->id_document_path       ? route('admin.onboarding.documents.view', [$profile, 'id'])     : null,
+                                        'doc_id_download'   => $profile->id_document_path       ? route('admin.onboarding.documents.show', [$profile, 'id'])     : null,
+                                        'doc_selfie_view'   => $profile->selfie_with_id_path    ? route('admin.onboarding.documents.view', [$profile, 'selfie']) : null,
+                                        'doc_selfie_download' => $profile->selfie_with_id_path  ? route('admin.onboarding.documents.show', [$profile, 'selfie']) : null,
+                                        'doc_codes_view'    => $profile->platform_codes_path    ? route('admin.onboarding.documents.view', [$profile, 'codes'])  : null,
+                                        'doc_codes_download'=> $profile->platform_codes_path    ? route('admin.onboarding.documents.show', [$profile, 'codes'])  : null,
+                                        'community_invited_at'        => $profile->community_invited_at?->toFormattedDateString(),
+                                        'community_role_assigned_at'  => $profile->community_role_assigned_at?->toFormattedDateString(),
+                                        'onboarding_percent'          => $profile->onboardingPercent(),
+                                        'request_verification_url'    => route('admin.onboarding.request-verification', $profile),
+                                        'verify_url'                  => route('admin.onboarding.verify', $profile),
+                                        'reject_verification_url'     => route('admin.onboarding.reject-verification', $profile),
+                                        'community_invite_url'        => route('admin.onboarding.community-invite', $profile),
+                                        'community_role_url'          => route('admin.onboarding.community-role-assigned', $profile),
+                                        'can_request_verification'    => $profile->hasInformationForm() && ! $profile->isVerified() && $profile->verification_status !== \App\Models\ModelProfile::VERIFICATION_SUBMITTED,
+                                        'can_verify'                  => $profile->verification_status === \App\Models\ModelProfile::VERIFICATION_SUBMITTED,
+                                        'can_community_invite'        => $profile->isVerified() && ! $profile->community_invited_at,
+                                        'can_role_assign'             => (bool) $profile->community_invited_at && ! $profile->community_role_assigned_at,
+                                    ] : null,
+                                ];
+                            @endphp
+                            <tr
+                                class="cursor-pointer transition hover:bg-white/[0.025]"
+                                @click="selected = {{ Js::from($modelData) }}; open = true; showReject = false"
+                            >
+                                <td class="align-middle">
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-boss-gold/20 bg-boss-gold/10 font-display text-[0.72rem] text-boss-gold">
                                             {{ strtoupper(substr($model->name, 0, 1)) }}
                                         </div>
                                         <div>
                                             <div class="font-medium text-boss-ivory">{{ $model->name }}</div>
-                                            <div class="text-xs text-boss-ivory/35">{{ $model->email }}</div>
+                                            <div class="text-[0.74rem] text-boss-ivory/35">{{ $model->email }}</div>
                                             @if ($profile?->stage_name)
-                                                <div class="mt-1 text-xs text-boss-gold/80">{{ $profile->stage_name }}</div>
+                                                <div class="text-[0.72rem] text-boss-gold/70">{{ $profile->stage_name }}</div>
                                             @endif
                                         </div>
                                     </div>
                                 </td>
-                                <td class="align-top">
-                                    @if ($profile?->hasInformationForm())
-                                        <span class="rounded-full bg-green-400/10 px-2.5 py-1 text-[0.65rem] text-green-300">{{ __('Submitted') }}</span>
-                                        <div class="mt-2 text-xs text-boss-ivory/35">{{ $profile->information_submitted_at->toFormattedDateString() }}</div>
-                                        @if ($profile->platforms)
-                                            <div class="mt-2 flex max-w-xs flex-wrap gap-1">
-                                                @foreach ($profile->platforms as $platform)
-                                                    <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.6rem] text-boss-ivory/35">{{ $platform }}</span>
-                                                @endforeach
-                                            </div>
+                                <td class="align-middle">
+                                    <div class="flex flex-wrap gap-1.5">
+                                        {{-- Info form step --}}
+                                        @if ($profile?->hasInformationForm())
+                                            <span class="rounded-full bg-green-400/10 px-2 py-0.5 text-[0.62rem] text-green-300">Info ✓</span>
+                                        @else
+                                            <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/28">Info</span>
                                         @endif
-                                    @else
-                                        <span class="rounded-full bg-white/[0.04] px-2.5 py-1 text-[0.65rem] text-boss-ivory/35">{{ __('Pending') }}</span>
-                                    @endif
+
+                                        {{-- Verification step --}}
+                                        @if ($profile?->isVerified())
+                                            <span class="rounded-full bg-green-400/10 px-2 py-0.5 text-[0.62rem] text-green-300">Verified ✓</span>
+                                        @elseif ($profile?->verification_status === \App\Models\ModelProfile::VERIFICATION_SUBMITTED)
+                                            <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.62rem] text-boss-gold">Review</span>
+                                        @elseif ($profile?->verification_status === \App\Models\ModelProfile::VERIFICATION_REJECTED)
+                                            <span class="rounded-full bg-red-400/10 px-2 py-0.5 text-[0.62rem] text-red-300">Resubmit</span>
+                                        @else
+                                            <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/28">Verify</span>
+                                        @endif
+
+                                        {{-- Community step --}}
+                                        @if ($profile?->community_role_assigned_at)
+                                            <span class="rounded-full bg-green-400/10 px-2 py-0.5 text-[0.62rem] text-green-300">Active ✓</span>
+                                        @elseif ($profile?->community_invited_at)
+                                            <span class="rounded-full bg-green-400/[0.07] px-2 py-0.5 text-[0.62rem] text-green-400/60">Invited</span>
+                                        @else
+                                            <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/28">Community</span>
+                                        @endif
+                                    </div>
                                 </td>
-                                <td class="align-top">
+                                <td class="align-middle">
                                     @if ($profile)
                                         <span class="rounded-full px-2.5 py-1 text-[0.65rem] {{ $profile->isVerified() ? 'bg-green-400/10 text-green-300' : ($profile->verification_status === \App\Models\ModelProfile::VERIFICATION_SUBMITTED ? 'bg-boss-gold/10 text-boss-gold' : ($profile->verification_status === \App\Models\ModelProfile::VERIFICATION_REJECTED ? 'bg-red-400/10 text-red-300' : 'bg-white/[0.04] text-boss-ivory/35')) }}">
                                             {{ $profile->verificationStatusLabel() }}
                                         </span>
-                                        @if ($profile->verification_submitted_at)
-                                            <div class="mt-2 text-xs text-boss-ivory/35">{{ $profile->verification_submitted_at->toFormattedDateString() }}</div>
-                                        @endif
-                                        @if ($profile->verification_notes)
-                                            <p class="mt-2 max-w-xs whitespace-pre-line text-xs text-boss-ivory/35">{{ $profile->verification_notes }}</p>
-                                        @endif
                                     @else
-                                        <span class="rounded-full bg-white/[0.04] px-2.5 py-1 text-[0.65rem] text-boss-ivory/35">{{ __('No profile') }}</span>
+                                        <span class="text-[0.72rem] text-boss-ivory/24">No profile</span>
                                     @endif
                                 </td>
-                                <td class="align-top">
-                                    @if ($profile)
-                                        <div class="flex flex-col items-start gap-2">
-                                            @foreach ([
-                                                'id' => [$profile->id_document_path, __('Valid ID')],
-                                                'selfie' => [$profile->selfie_with_id_path, __('Selfie')],
-                                                'codes' => [$profile->platform_codes_path, __('Codes')],
-                                            ] as $key => [$path, $label])
-                                                @if ($path)
-                                                    <a href="{{ route('admin.onboarding.documents.show', [$profile, $key]) }}" class="text-[0.72rem] text-boss-gold hover:text-boss-gold-light">{{ $label }}</a>
-                                                @else
-                                                    <span class="text-[0.72rem] text-boss-ivory/24">{{ $label }}</span>
-                                                @endif
-                                            @endforeach
-                                        </div>
-                                    @endif
-                                </td>
-                                <td class="align-top">
-                                    @if ($profile?->community_invited_at)
-                                        <span class="rounded-full bg-green-400/10 px-2.5 py-1 text-[0.65rem] text-green-300">{{ __('Invited') }}</span>
-                                        <div class="mt-2 text-xs text-boss-ivory/35">{{ $profile->community_invited_at->toFormattedDateString() }}</div>
-                                        @if ($profile->community_role_assigned_at)
-                                            <div class="mt-2 rounded-full bg-boss-gold/10 px-2.5 py-1 text-[0.65rem] text-boss-gold">{{ __('Role assigned') }}</div>
-                                            <div class="mt-1 text-xs text-boss-ivory/35">{{ $profile->community_role_assigned_at->toFormattedDateString() }}</div>
-                                        @endif
-                                    @else
-                                        <span class="rounded-full bg-white/[0.04] px-2.5 py-1 text-[0.65rem] text-boss-ivory/35">{{ __('Not sent') }}</span>
-                                    @endif
-                                    @if ($profile?->discord_username || $profile?->discord_user_id)
-                                        <div class="mt-3 max-w-[13rem] text-xs text-boss-ivory/35">
-                                            @if ($profile->discord_username)
-                                                <div>{{ __('Discord') }}: {{ $profile->discord_username }}</div>
-                                            @endif
-                                            @if ($profile->discord_user_id)
-                                                <div>{{ __('ID') }}: {{ $profile->discord_user_id }}</div>
-                                            @endif
-                                        </div>
-                                    @endif
-                                </td>
-                                <td class="align-top text-right">
-                                    @if ($profile)
-                                        <div class="flex flex-col items-end gap-2">
-                                            @if ($profile->hasInformationForm() && ! $profile->isVerified() && $profile->verification_status !== \App\Models\ModelProfile::VERIFICATION_SUBMITTED)
-                                                <form method="POST" action="{{ route('admin.onboarding.request-verification', $profile) }}">
-                                                    @csrf
-                                                    <x-secondary-button type="submit">{{ __('Request verification') }}</x-secondary-button>
-                                                </form>
-                                            @endif
-
-                                            @if ($profile->verification_status === \App\Models\ModelProfile::VERIFICATION_SUBMITTED)
-                                                <form method="POST" action="{{ route('admin.onboarding.verify', $profile) }}">
-                                                    @csrf
-                                                    <x-secondary-button type="submit">{{ __('Approve account') }}</x-secondary-button>
-                                                </form>
-                                                <form method="POST" action="{{ route('admin.onboarding.reject-verification', $profile) }}" class="w-56 space-y-2">
-                                                    @csrf
-                                                    <textarea name="verification_notes" rows="2" placeholder="{{ __('Resubmission note') }}" class="pd-input text-xs" required></textarea>
-                                                    <x-danger-button type="submit">{{ __('Reject verification') }}</x-danger-button>
-                                                </form>
-                                            @endif
-
-                                            @if ($profile->isVerified() && ! $profile->community_invited_at)
-                                                <form method="POST" action="{{ route('admin.onboarding.community-invite', $profile) }}">
-                                                    @csrf
-                                                    <x-secondary-button type="submit">{{ __('Send community access') }}</x-secondary-button>
-                                                </form>
-                                            @endif
-
-                                            @if ($profile->community_invited_at && ! $profile->community_role_assigned_at)
-                                                <form method="POST" action="{{ route('admin.onboarding.community-role-assigned', $profile) }}">
-                                                    @csrf
-                                                    <x-secondary-button type="submit">{{ __('Mark role assigned') }}</x-secondary-button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    @endif
+                                <td class="align-middle text-right">
+                                    <span class="inline-flex items-center gap-1 text-[0.72rem] text-boss-ivory/30">
+                                        View
+                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </span>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="py-12 text-center text-boss-ivory/35">{{ __('No member accounts yet.') }}</td>
+                                <td colspan="4" class="py-12 text-center text-boss-ivory/35">{{ __('No member accounts yet.') }}</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -185,5 +612,6 @@
         </div>
 
         <div class="px-2">{{ $models->links() }}</div>
+
     </div>
 </x-admin-layout>
