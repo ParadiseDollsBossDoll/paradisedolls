@@ -39,10 +39,20 @@
                     $isEnrolled = in_array($course->id, $enrolledCourseIds, true);
                     $color = $course->displayColor();
                     $bg = $course->displayColorBackground();
+                    $image = $course->overviewImageUrl();
                 @endphp
 
                 <article class="group flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-boss-ink transition-all duration-300 hover:shadow-glow" style="--platform-color: {{ $color }};">
-                    <div class="h-1 w-full shrink-0 transition-opacity duration-300 group-hover:opacity-100" style="background: linear-gradient(90deg, {{ $color }}, {{ $color }}44); opacity: .72;"></div>
+                    <div class="relative h-40 shrink-0 overflow-hidden">
+                        @if ($image)
+                            <img src="{{ $image }}" alt="{{ $course->title }}" class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                            <div class="absolute inset-0 bg-gradient-to-t from-boss-ink via-boss-ink/35 to-black/20"></div>
+                        @else
+                            <div class="absolute inset-0" style="background: linear-gradient(135deg, {{ $course->displayColorBackground(0.34) }}, rgba(255,255,255,0.035));"></div>
+                            <div class="absolute inset-0 bg-[radial-gradient(circle_at_72%_20%,rgba(232,200,138,0.16),transparent_32%)]"></div>
+                        @endif
+                        <div class="absolute bottom-0 left-0 right-0 h-1 transition-opacity duration-300 group-hover:opacity-100" style="background: linear-gradient(90deg, {{ $color }}, {{ $color }}44); opacity: .72;"></div>
+                    </div>
 
                     <div class="flex flex-1 flex-col gap-3 p-5">
                         <div class="flex flex-wrap items-center gap-2">

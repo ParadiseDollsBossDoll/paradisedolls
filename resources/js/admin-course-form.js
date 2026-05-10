@@ -56,6 +56,13 @@ window.adminCourseForm = function adminCourseForm(config) {
                 tips: '',
                 safety_notes: '',
                 resource_links: '',
+                lesson_banner_image: '',
+                lesson_banner_image_url: '',
+                lesson_images: [],
+                lesson_image_urls: [],
+                content_blocks: [],
+                content_blocks_enabled: true,
+                new_block_type: 'text',
                 is_published: true,
                 video_url: '',
                 bunny_video_id: '',
@@ -144,8 +151,126 @@ window.adminCourseForm = function adminCourseForm(config) {
             normalized.is_published = this.booleanValue(normalized.is_published, true);
             normalized.module_title = this.moduleTitleForKey(moduleKey);
             normalized.course_module_id = this.moduleIdForKey(moduleKey);
+            normalized.content_blocks = (normalized.content_blocks ?? []).map((block, blockIndex) => this.normalizedContentBlock(block, blockIndex));
+            normalized.content_blocks_enabled = true;
+            normalized.new_block_type = normalized.new_block_type || 'text';
 
             return normalized;
+        },
+
+        blankContentBlock(sortOrder, type = 'text') {
+            return {
+                id: null,
+                block_type: type,
+                title: '',
+                content: '',
+                image_path: '',
+                image_url: '',
+                gallery_image_urls: [],
+                gallery_captions: '',
+                file_path: '',
+                file_url: '',
+                button_label: '',
+                bunny_video_id: '',
+                bunny_library_id: '',
+                bunny_video_title: '',
+                bunny_thumbnail_url: '',
+                bunny_upload_fingerprint: '',
+                bunny_status: '',
+                duration: '',
+                presentation_url: '',
+                sort_order: sortOrder,
+            };
+        },
+
+        normalizedContentBlock(block, index) {
+            const sortOrder = Number(block.sort_order ?? index + 1);
+            const blockType = this.canonicalContentBlockType(block.block_type);
+
+            return {
+                ...this.blankContentBlock(sortOrder, blockType),
+                ...block,
+                block_type: blockType,
+                gallery_image_urls: block.gallery_image_urls ?? [],
+                gallery_captions: block.gallery_captions ?? '',
+                button_label: block.button_label ?? '',
+                sort_order: sortOrder,
+            };
+        },
+
+        canonicalContentBlockType(type) {
+            const aliases = {
+                presentation: 'canva',
+                pdf: 'pdf_resource',
+                tip: 'tips',
+                warning: 'safety',
+                step: 'steps',
+            };
+            const canonical = aliases[type] ?? type;
+
+            return this.contentBlockTypes().includes(canonical) ? canonical : 'text';
+        },
+
+        contentBlockTypes() {
+            return ['heading', 'text', 'image', 'gallery', 'video', 'canva', 'pdf_resource', 'steps', 'tips', 'safety', 'divider'];
+        },
+
+        blockTypeLabel(type) {
+            return {
+                heading: 'Heading',
+                text: 'Text',
+                image: 'Image',
+                gallery: 'Image gallery',
+                video: 'Bunny video',
+                canva: 'Canva presentation',
+                pdf_resource: 'PDF / resource',
+                steps: 'Step-by-step',
+                tips: 'Important tips',
+                safety: 'Safety notes',
+                divider: 'Divider',
+            }[type] || 'Text';
+        },
+
+        addLessonBlock(lessonIndex, type = 'text') {
+            const lesson = this.lessons[lessonIndex];
+            if (!lesson) {
+                return;
+            }
+
+            lesson.content_blocks.push(this.blankContentBlock(lesson.content_blocks.length + 1, type));
+            lesson.new_block_type = type;
+            this.reorderLessonBlocks(lesson);
+        },
+
+        removeLessonBlock(lessonIndex, blockIndex) {
+            const lesson = this.lessons[lessonIndex];
+            if (!lesson) {
+                return;
+            }
+
+            lesson.content_blocks.splice(blockIndex, 1);
+            this.reorderLessonBlocks(lesson);
+        },
+
+        moveLessonBlock(lessonIndex, blockIndex, direction) {
+            const lesson = this.lessons[lessonIndex];
+            const newIndex = blockIndex + direction;
+            if (!lesson || newIndex < 0 || newIndex >= lesson.content_blocks.length) {
+                return;
+            }
+
+            const blocks = [...lesson.content_blocks];
+            const [block] = blocks.splice(blockIndex, 1);
+            blocks.splice(newIndex, 0, block);
+            lesson.content_blocks = blocks;
+            this.reorderLessonBlocks(lesson);
+        },
+
+        reorderLessonBlocks(lesson) {
+            lesson.content_blocks = lesson.content_blocks.map((block, index) => ({
+                ...block,
+                sort_order: index + 1,
+            }));
         },
 
         moduleKeyForLesson(lesson) {
@@ -260,12 +385,16 @@ window.adminCourseForm = function adminCourseForm(config) {
             this.openBunnyPickerFor('lesson', index);
         },
 
+        openBlockBunnyPicker(lessonIndex, blockIndex) {
+            this.openBunnyPickerFor('lesson_block', lessonIndex, blockIndex);
+        },
+
         openIntroBunnyPicker() {
             this.openBunnyPickerFor('intro');
         },
 
-        openBunnyPickerFor(type, index = null) {
-            this.bunnyTarget = { type, index };
+        openBunnyPickerFor(type, index = null, blockIndex = null) {
+            this.bunnyTarget = { type, index, blockIndex };
             this.bunnyModalOpen = true;
             this.bunnyError = null;
             this.fetchBunnyVideos();
@@ -314,6 +443,10 @@ window.adminCourseForm = function adminCourseForm(config) {
 
         async uploadBunnyVideo(index, event) {
             return this.uploadBunnyVideoFor({ type: 'lesson', index }, event);
+        },
+
+        async uploadBlockBunnyVideo(lessonIndex, blockIndex, event) {
+            return this.uploadBunnyVideoFor({ type: 'lesson_block', index: lessonIndex, blockIndex }, event);
         },
 
         async uploadIntroBunnyVideo(event) {
@@ -396,6 +529,15 @@ window.adminCourseForm = function adminCourseForm(config) {
                 return;
             }
 
+            if (target.type === 'lesson_block') {
+                const block = this.lessons[target.index]?.content_blocks?.[target.blockIndex];
+                if (block) {
+                    this.lessons[target.index].content_blocks[target.blockIndex] = this.videoWithBunnyData(block, video, fingerprint);
+                }
+
+                return;
+            }
+
             const lesson = this.lessons[target.index];
             this.lessons[target.index] = this.videoWithBunnyData(lesson, video, fingerprint);
         },
@@ -418,7 +560,28 @@ window.adminCourseForm = function adminCourseForm(config) {
             this.introVideo = this.blankIntroVideo();
         },
 
+        clearBlockBunnyVideo(lessonIndex, blockIndex) {
+            const block = this.lessons[lessonIndex]?.content_blocks?.[blockIndex];
+            if (!block) {
+                return;
+            }
+
+            Object.assign(block, {
+                bunny_video_id: '',
+                bunny_library_id: '',
+                bunny_video_title: '',
+                bunny_thumbnail_url: '',
+                bunny_upload_fingerprint: '',
+                bunny_status: '',
+                duration: '',
+            });
+        },
+
         videoTarget(target) {
+            if (target.type === 'lesson_block') {
+                return this.lessons[target.index]?.content_blocks?.[target.blockIndex] ?? {};
+            }
+
             return target.type === 'intro'
                 ? this.introVideo
                 : this.lessons[target.index];
@@ -429,11 +592,33 @@ window.adminCourseForm = function adminCourseForm(config) {
                 return document.getElementById('intro_title')?.value || file.name.replace(/\.[^/.]+$/, '');
             }
 
+            if (target.type === 'lesson_block') {
+                const block = this.lessons[target.index]?.content_blocks?.[target.blockIndex];
+
+                return block?.title || this.lessons[target.index]?.title || file.name.replace(/\.[^/.]+$/, '');
+            }
+
             return this.lessons[target.index]?.title || file.name.replace(/\.[^/.]+$/, '');
         },
 
         uploadKey(target) {
+            if (target.type === 'lesson_block') {
+                return this.blockUploadKey(target.index, target.blockIndex);
+            }
+
             return target.type === 'intro' ? 'intro' : target.index;
+        },
+
+        blockUploadKey(lessonIndex, blockIndex) {
+            return `lesson-${lessonIndex}-block-${blockIndex}`;
+        },
+
+        lessonPreviewUrl(lesson) {
+            if (!lesson?.id || !config.lessonPreviewUrlTemplate) {
+                return '#';
+            }
+
+            return config.lessonPreviewUrlTemplate.replace('__LESSON_ID__', encodeURIComponent(lesson.id));
         },
 
         uploadCompleted(uploadKey) {

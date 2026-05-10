@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
+use App\Services\CourseCommunityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -79,7 +80,7 @@ class MemberCourseController extends Controller
         ));
     }
 
-    public function learn(Request $request, string $slug): RedirectResponse
+    public function learn(Request $request, string $slug, CourseCommunityService $community): RedirectResponse
     {
         $course = $this->publishedCourse($slug);
 
@@ -93,6 +94,8 @@ class MemberCourseController extends Controller
                 ['enrolled_at' => now()]
             );
         });
+
+        $community->ensureForCourse($course);
 
         $course = $this->learningCourse($slug);
         $lesson = $this->resumeLesson($course, $request->user()->id);
@@ -114,12 +117,16 @@ class MemberCourseController extends Controller
         $isEnrolled = $course->isEnrolledBy($request->user());
         $progress = $this->courseProgress($course, $request->user()->id);
         $resumeLesson = $this->resumeLesson($course, $request->user()->id);
+        $communityChannel = $course->communityChannels()
+            ->where('is_archived', false)
+            ->first();
 
         return view('member.courses.show', compact(
             'course',
             'isEnrolled',
             'progress',
-            'resumeLesson'
+            'resumeLesson',
+            'communityChannel'
         ));
     }
 
@@ -167,12 +174,13 @@ class MemberCourseController extends Controller
             ->with([
                 'lessons' => fn ($query) => $query
                     ->publishedForMembers()
-                    ->with('module')
+                    ->with(['module', 'contentBlocks'])
                     ->orderBy('sort_order'),
                 'modules' => fn ($query) => $query
                     ->where('is_published', true)
                     ->with(['lessons' => fn ($lessonQuery) => $lessonQuery
                         ->publishedForMembers()
+                        ->with('contentBlocks')
                         ->orderBy('sort_order')])
                     ->orderBy('sort_order'),
                 'chatRoom',
@@ -203,6 +211,10 @@ class MemberCourseController extends Controller
         $progress = $this->courseProgress($course, $request->user()->id);
         $lessonIds = $course->lessons->pluck('id')->values();
         $selectedLesson ??= $course->lessons->first();
+        if ($selectedLesson !== null) {
+            $selectedLesson = $course->lessons->firstWhere('id', $selectedLesson->id)
+                ?: $selectedLesson->loadMissing('contentBlocks');
+        }
         $selectedIndex = $selectedLesson ? $lessonIds->search($selectedLesson->id) : false;
         $previousLesson = $selectedIndex !== false && $selectedIndex > 0
             ? $course->lessons->firstWhere('id', $lessonIds[$selectedIndex - 1])
@@ -232,6 +244,10 @@ class MemberCourseController extends Controller
             ->get()
             ->sortBy('created_at') ?? collect();
 
+        $communityChannel = $course->communityChannels()
+            ->where('is_archived', false)
+            ->first();
+
         return view('member.courses.learn', compact(
             'course',
             'selectedLesson',
@@ -239,7 +255,8 @@ class MemberCourseController extends Controller
             'nextLesson',
             'progress',
             'moduleProgress',
-            'messages'
+            'messages',
+            'communityChannel'
         ));
     }
 

@@ -39,6 +39,8 @@ class CommunityChannel extends Model
         'is_locked',
         'slowmode_seconds',
         'last_message_at',
+        'course_id',
+        'course_name',
     ];
 
     protected function casts(): array
@@ -73,6 +75,11 @@ class CommunityChannel extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
     }
 
     public function messages(): HasMany
@@ -201,6 +208,8 @@ class CommunityChannel extends Model
             'invited_user_ids' => $viewer->canManageCommunityChannels()
                 ? $this->accessGrants()->pluck('user_id')->all()
                 : [],
+            'course_id' => $this->course_id,
+            'course_name' => $this->course_name,
         ];
     }
 
