@@ -652,7 +652,9 @@ document.addEventListener('alpine:init', () => {
         },
 
         hydrateMessages(messages) {
-            return messages.map((message) => this.normalizeMessage(message));
+            return messages
+                .map((message) => this.normalizeMessage(message))
+                .sort((a, b) => (a._createdTs ?? 0) - (b._createdTs ?? 0));
         },
 
         insertMessageSorted(message) {
