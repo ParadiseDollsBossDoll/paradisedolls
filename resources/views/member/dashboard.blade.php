@@ -102,11 +102,18 @@
                     @foreach ($continueCourses as $course)
                         @php
                             $progress = $courseProgress[$course->id];
+                            $image = $course->overviewImageUrl();
                         @endphp
                         <a href="{{ route('member.courses.learn.show', $course->slug) }}" class="group pd-panel-strong overflow-hidden transition-all duration-300 hover:border-boss-gold/30 hover:shadow-glow">
                             <div class="h-1 bg-boss-gold/30">
                                 <div class="h-full bg-gradient-to-r from-boss-gold to-boss-gold-light" style="width: {{ $progress['percent'] }}%"></div>
                             </div>
+                            @if ($image)
+                                <div class="relative h-28 overflow-hidden">
+                                    <img src="{{ $image }}" alt="{{ $course->title }}" class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-boss-panel-strong to-transparent"></div>
+                                </div>
+                            @endif
                             <div class="p-5">
                                 <div class="mb-3 flex items-center gap-2">
                                     <span class="pd-badge">{{ $course->platform_label ?: __('General') }}</span>
@@ -171,7 +178,15 @@
                 </div>
                 <div class="grid gap-3 md:grid-cols-3">
                     @foreach ($freshCourses as $course)
+                        @php
+                            $image = $course->overviewImageUrl();
+                        @endphp
                         <a href="{{ route('member.courses.show', $course->slug) }}" class="group rounded-2xl border border-white/[0.05] bg-boss-ink p-4 transition-colors hover:border-boss-gold/25">
+                            @if ($image)
+                                <div class="-mx-4 -mt-4 mb-4 h-24 overflow-hidden rounded-t-2xl">
+                                    <img src="{{ $image }}" alt="{{ $course->title }}" class="h-full w-full object-cover opacity-85 transition duration-500 group-hover:scale-105">
+                                </div>
+                            @endif
                             <span class="pd-badge">{{ $course->platform_label ?: __('General') }}</span>
                             <h3 class="pd-heading mt-3 text-[1rem] text-boss-ivory/65 transition-colors group-hover:text-boss-ivory">{{ $course->title }}</h3>
                             <p class="mt-2 text-[0.68rem] text-boss-ivory/25">{{ trans_choice(':count lesson|:count lessons', $course->lessons_count, ['count' => $course->lessons_count]) }}</p>

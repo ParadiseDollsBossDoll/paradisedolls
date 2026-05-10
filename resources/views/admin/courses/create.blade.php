@@ -19,6 +19,12 @@
         'tips' => '',
         'safety_notes' => '',
         'resource_links' => '',
+        'lesson_banner_image' => '',
+        'lesson_banner_image_url' => '',
+        'lesson_images' => [],
+        'lesson_image_urls' => [],
+        'content_blocks' => [],
+        'content_blocks_enabled' => true,
         'is_published' => true,
         'video_url' => '',
         'bunny_video_id' => '',
@@ -60,6 +66,7 @@
             bunnyVideosUrl: @js(route('admin.bunny.videos.index')),
             bunnyUploadIntentUrl: @js(route('admin.bunny.videos.upload-intent')),
             bunnyVideoUrlTemplate: @js(route('admin.bunny.videos.show', ['videoId' => '__VIDEO_ID__'])),
+            lessonPreviewUrlTemplate: null,
         })"
     >
         <header class="flex items-center gap-4">
@@ -83,7 +90,7 @@
             <span class="rounded-full px-2.5 py-0.5" x-bind:style="`background-color: ${platformColor}20; color: ${platformColor};`">4 Lessons</span>
         </div>
 
-        <form method="POST" action="{{ route('admin.courses.store') }}" class="space-y-5">
+        <form method="POST" action="{{ route('admin.courses.store') }}" enctype="multipart/form-data" class="space-y-5">
             @csrf
 
             {{-- ① COURSE DETAILS --}}
@@ -174,6 +181,13 @@
                         <input type="text" id="thumbnail_url" name="thumbnail_url" class="pd-input mt-2" value="{{ old('thumbnail_url') }}" placeholder="https://...">
                         <p class="mt-1 text-[0.6rem] text-boss-ivory/20">{{ __('Optional. Used on the course overview page. Bunny thumbnails are used as a fallback.') }}</p>
                         <x-input-error class="mt-2" :messages="$errors->get('thumbnail_url')" />
+                    </div>
+
+                    <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-4">
+                        <x-input-label for="course_cover_image_upload" :value="__('Course Cover Image')" />
+                        <input type="file" id="course_cover_image_upload" name="course_cover_image_upload" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="pd-input mt-2">
+                        <p class="mt-1.5 text-[0.62rem] leading-relaxed text-boss-ivory/25">{{ __('Optional. Used on academy cards and the course hero. If empty, the current gradient/Bunny thumbnail fallback stays in place.') }}</p>
+                        <x-input-error class="mt-2" :messages="$errors->get('course_cover_image_upload')" />
                     </div>
 
                     <div class="grid gap-3 sm:grid-cols-2">
@@ -422,6 +436,11 @@
 
                 <div class="space-y-3 p-5">
                     <x-input-error class="mt-2" :messages="$errors->get('lessons')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('lessons.*.lesson_banner_image_upload')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('lessons.*.lesson_images_upload.*')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('lessons.*.content_blocks.*.image_upload')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('lessons.*.content_blocks.*.gallery_uploads.*')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('lessons.*.content_blocks.*.file_upload')" />
 
                     <template x-for="(lesson, index) in lessons" :key="index">
                         <div class="overflow-hidden rounded-xl border border-white/[0.05] bg-[#131320]">
@@ -505,6 +524,21 @@
                                     </div>
                                 </div>
 
+                                <div class="sm:col-span-2 rounded-lg border border-white/[0.06] bg-white/[0.025] p-3">
+                                    <div class="grid gap-3 md:grid-cols-2">
+                                        <div>
+                                            <x-input-label ::for="`lesson_banner_image_${index}`" :value="__('Lesson Banner Image')" />
+                                            <input type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="pd-input mt-2" x-bind:id="`lesson_banner_image_${index}`" x-bind:name="`lessons[${index}][lesson_banner_image_upload]`">
+                                            <p class="mt-1 text-[0.6rem] text-boss-ivory/22">{{ __('Optional image shown above this lesson.') }}</p>
+                                        </div>
+                                        <div>
+                                            <x-input-label ::for="`lesson_images_${index}`" :value="__('Lesson Gallery Images')" />
+                                            <input type="file" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="pd-input mt-2" x-bind:id="`lesson_images_${index}`" x-bind:name="`lessons[${index}][lesson_images_upload][]`">
+                                            <p class="mt-1 text-[0.6rem] text-boss-ivory/22">{{ __('Optional screenshots, examples, or walkthrough images.') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="sm:col-span-2">
                                     <x-input-label ::for="`lesson_body_${index}`" :value="__('Lesson Description')" />
                                     <textarea rows="2" class="pd-input mt-2" x-model="lesson.body" x-bind:id="`lesson_body_${index}`" x-bind:name="`lessons[${index}][body]`" placeholder="{{ __('What will members learn in this lesson?') }}"></textarea>
@@ -544,9 +578,11 @@
 
                                 <div class="sm:col-span-2">
                                     <x-input-label ::for="`lesson_presentation_${index}`" :value="__('Canva / presentation URL')" />
-                                    <input type="text" class="pd-input mt-2" x-model="lesson.presentation_url" x-bind:id="`lesson_presentation_${index}`" x-bind:name="`lessons[${index}][presentation_url]`" placeholder="https://www.canva.com/design/...">
-                                    <p class="mt-1 text-[0.6rem] text-boss-ivory/20">{{ __('Use this for Canva-style visual presentations or slide decks.') }}</p>
+                                    <textarea rows="2" class="pd-input mt-2" x-model="lesson.presentation_url" x-bind:id="`lesson_presentation_${index}`" x-bind:name="`lessons[${index}][presentation_url]`" placeholder="https://www.canva.com/design/... or Canva iframe embed code"></textarea>
+                                    <p class="mt-1 text-[0.6rem] text-boss-ivory/20">{{ __('Paste a Canva presentation URL or full Canva iframe embed code.') }}</p>
                                 </div>
+
+                                @include('admin.courses.partials.lesson-content-blocks')
 
                                 <input type="hidden" x-bind:name="`lessons[${index}][sort_order]`" x-bind:value="index + 1">
                             </div>

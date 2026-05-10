@@ -2,19 +2,23 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\ManagesLessonContentBlocks;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\CourseModule;
 use App\Models\Lesson;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class AdminLessonController extends Controller
 {
+    use ManagesLessonContentBlocks;
+
     public function store(Request $request, Course $course): RedirectResponse
     {
-        $validated = $request->validate([
+        $rules = [
             'title' => ['required', 'string', 'max:255'],
             'course_module_id' => [
                 'nullable',
@@ -28,6 +32,9 @@ class AdminLessonController extends Controller
             'tips' => ['nullable', 'string', 'max:50000'],
             'safety_notes' => ['nullable', 'string', 'max:50000'],
             'resource_links' => ['nullable', 'string', 'max:50000'],
+            'lesson_banner_image_upload' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+            'lesson_images_upload' => ['nullable', 'array', 'max:12'],
+            'lesson_images_upload.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
             'is_published' => ['nullable', 'boolean'],
             'video_url' => ['nullable', 'string', 'max:2000'],
             'bunny_video_id' => ['nullable', 'string', 'max:64'],
@@ -39,15 +46,22 @@ class AdminLessonController extends Controller
             'duration' => ['nullable', 'string', 'max:64'],
             'has_pdf' => ['nullable', 'boolean'],
             'pdf_url' => ['nullable', 'string', 'max:2000'],
-            'presentation_url' => ['nullable', 'string', 'max:2000'],
+            'presentation_url' => ['nullable', 'string', 'max:50000'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
-        ]);
+        ];
+        $rules += $this->lessonContentBlockRules('content_blocks');
 
-        $course->lessons()->create([
+        $validated = $request->validate($rules);
+
+        $lesson = $course->lessons()->create([
             ...$this->normalizedLessonData($validated),
             'course_module_id' => $this->moduleIdFor($course, $validated['module_title'] ?? null, $validated['course_module_id'] ?? null),
             'sort_order' => $validated['sort_order'] ?? ($course->lessons()->max('sort_order') + 1),
         ]);
+
+        if ($this->shouldSyncContentBlocks($validated)) {
+            $this->syncLessonContentBlocks($lesson, $validated['content_blocks'] ?? []);
+        }
 
         return redirect()->route('admin.courses.edit', $course)->with('status', __('Lesson added.'));
     }
@@ -56,7 +70,7 @@ class AdminLessonController extends Controller
     {
         abort_unless($lesson->course_id === $course->id, 404);
 
-        $validated = $request->validate([
+        $rules = [
             'title' => ['required', 'string', 'max:255'],
             'course_module_id' => [
                 'nullable',
@@ -70,6 +84,9 @@ class AdminLessonController extends Controller
             'tips' => ['nullable', 'string', 'max:50000'],
             'safety_notes' => ['nullable', 'string', 'max:50000'],
             'resource_links' => ['nullable', 'string', 'max:50000'],
+            'lesson_banner_image_upload' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+            'lesson_images_upload' => ['nullable', 'array', 'max:12'],
+            'lesson_images_upload.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
             'is_published' => ['nullable', 'boolean'],
             'video_url' => ['nullable', 'string', 'max:2000'],
             'bunny_video_id' => ['nullable', 'string', 'max:64'],
@@ -81,14 +98,21 @@ class AdminLessonController extends Controller
             'duration' => ['nullable', 'string', 'max:64'],
             'has_pdf' => ['nullable', 'boolean'],
             'pdf_url' => ['nullable', 'string', 'max:2000'],
-            'presentation_url' => ['nullable', 'string', 'max:2000'],
+            'presentation_url' => ['nullable', 'string', 'max:50000'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
-        ]);
+        ];
+        $rules += $this->lessonContentBlockRules('content_blocks');
+
+        $validated = $request->validate($rules);
 
         $lesson->update([
-            ...$this->normalizedLessonData($validated),
+            ...$this->normalizedLessonData($validated, $lesson),
             'course_module_id' => $this->moduleIdFor($course, $validated['module_title'] ?? null, $validated['course_module_id'] ?? null),
         ]);
+
+        if ($this->shouldSyncContentBlocks($validated)) {
+            $this->syncLessonContentBlocks($lesson, $validated['content_blocks'] ?? []);
+        }
 
         return redirect()->route('admin.courses.edit', $course)->with('status', __('Lesson updated.'));
     }
@@ -102,21 +126,68 @@ class AdminLessonController extends Controller
         return redirect()->route('admin.courses.edit', $course)->with('status', __('Lesson removed.'));
     }
 
-    private function normalizedLessonData(array $lesson): array
+    private function normalizedLessonData(array $lesson, ?Lesson $existingLesson = null): array
     {
         $bunnyVideoId = $lesson['bunny_video_id'] ?? null;
         $bunnyLibraryId = $lesson['bunny_library_id'] ?? null;
+        $lessonVisuals = $this->normalizedLessonVisuals($lesson, $existingLesson);
 
         if (filled($bunnyVideoId) && filled($bunnyLibraryId)) {
             $lesson['video_url'] = 'https://iframe.mediadelivery.net/embed/'.$bunnyLibraryId.'/'.$bunnyVideoId.'?autoplay=false&loop=false&muted=false&preload=true&responsive=true';
         }
 
-        unset($lesson['course_module_id'], $lesson['module_title']);
+        unset(
+            $lesson['course_module_id'],
+            $lesson['module_title'],
+            $lesson['lesson_banner_image_upload'],
+            $lesson['lesson_images_upload'],
+            $lesson['content_blocks_enabled'],
+            $lesson['content_blocks']
+        );
 
         $lesson['is_published'] = array_key_exists('is_published', $lesson) ? (bool) $lesson['is_published'] : true;
         $lesson['has_pdf'] = array_key_exists('has_pdf', $lesson) ? (bool) $lesson['has_pdf'] : filled($lesson['pdf_url'] ?? null);
+        $lesson['lesson_banner_image'] = $lessonVisuals['lesson_banner_image'];
+        $lesson['lesson_images'] = $lessonVisuals['lesson_images'];
+        $lesson['presentation_url'] = Lesson::normalizePresentationUrl($lesson['presentation_url'] ?? null);
 
         return $lesson;
+    }
+
+    private function normalizedLessonVisuals(array $lesson, ?Lesson $existingLesson = null): array
+    {
+        $bannerImage = $existingLesson?->lesson_banner_image;
+        $galleryImages = $existingLesson?->lesson_images ?? [];
+
+        $bannerUpload = $lesson['lesson_banner_image_upload'] ?? null;
+        if ($bannerUpload instanceof UploadedFile) {
+            $bannerImage = $this->storePublicImage($bannerUpload, 'academy/lesson-banners');
+        }
+
+        foreach ($lesson['lesson_images_upload'] ?? [] as $galleryUpload) {
+            if ($galleryUpload instanceof UploadedFile) {
+                $galleryImages[] = $this->storePublicImage($galleryUpload, 'academy/lesson-images');
+            }
+        }
+
+        return [
+            'lesson_banner_image' => $bannerImage,
+            'lesson_images' => array_values(array_filter($galleryImages)),
+        ];
+    }
+
+    private function storePublicImage(UploadedFile $file, string $directory): string
+    {
+        return $file->store($directory, 'public');
+    }
+
+    /**
+     * @param  array<string, mixed>  $lesson
+     */
+    private function shouldSyncContentBlocks(array $lesson): bool
+    {
+        return array_key_exists('content_blocks_enabled', $lesson)
+            || array_key_exists('content_blocks', $lesson);
     }
 
     private function moduleIdFor(Course $course, ?string $title, int|string|null $moduleId = null): int

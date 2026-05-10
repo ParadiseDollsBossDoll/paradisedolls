@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -19,6 +20,7 @@ class Course extends Model
         'description',
         'short_description',
         'thumbnail_url',
+        'course_cover_image',
         'difficulty_level',
         'estimated_duration',
         'what_you_will_learn',
@@ -103,6 +105,11 @@ class Course extends Model
         return $this->hasMany(CourseEnrollment::class);
     }
 
+    public function communityChannels(): HasMany
+    {
+        return $this->hasMany(CommunityChannel::class);
+    }
+
     public function enrolledUsers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'course_enrollments')
@@ -168,9 +175,15 @@ class Course extends Model
 
     public function overviewImageUrl(): ?string
     {
-        return $this->thumbnail_url
+        return $this->courseCoverImageUrl()
+            ?: $this->thumbnail_url
             ?: $this->intro_bunny_thumbnail_url
             ?: $this->lessons->firstWhere('bunny_thumbnail_url')?->bunny_thumbnail_url;
+    }
+
+    public function courseCoverImageUrl(): ?string
+    {
+        return $this->publicImageUrl($this->course_cover_image);
     }
 
     public function learningPoints(): array
@@ -235,6 +248,19 @@ class Course extends Model
         $b = hexdec(substr($hex, 4, 2));
 
         return "rgba({$r},{$g},{$b},{$alpha})";
+    }
+
+    private function publicImageUrl(?string $path): ?string
+    {
+        if (blank($path)) {
+            return null;
+        }
+
+        if (preg_match('/^(https?:)?\/\//', $path) || str_starts_with($path, '/')) {
+            return $path;
+        }
+
+        return Storage::disk('public')->url($path);
     }
 
     /**

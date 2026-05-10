@@ -2,8 +2,12 @@
 
 namespace App\Models;
 
+use App\Observers\CourseEnrollmentObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+#[ObservedBy(CourseEnrollmentObserver::class)]
 
 class CourseEnrollment extends Model
 {

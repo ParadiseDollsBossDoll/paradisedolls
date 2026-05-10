@@ -184,8 +184,13 @@
                                         </svg>
                                     </button>
                                 </div>
+
+                                {{-- Global channels (non-course) --}}
+                                <div x-show="globalChannels().length" class="mb-1 flex items-center gap-2 px-2">
+                                    <div class="text-[0.58rem] uppercase tracking-[0.14em] text-white/25">{{ __('Global Community') }}</div>
+                                </div>
                                 <div class="space-y-1">
-                                    <template x-for="channel in filteredChannels()" :key="channel.id">
+                                    <template x-for="channel in globalChannels()" :key="channel.id">
                                         <div class="group flex items-center gap-1">
                                             <button
                                                 type="button"
@@ -241,6 +246,55 @@
                                     </template>
                                 </div>
 
+                                {{-- Academy course chats — flat list with search --}}
+                                <div x-show="hasCourseChannels()" x-cloak class="mt-5">
+                                    <div class="mb-2 flex items-center gap-2 px-2">
+                                        <svg viewBox="0 0 16 16" class="h-3 w-3 shrink-0 fill-none stroke-[#c9a96e]/60 stroke-[1.6]"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/></svg>
+                                        <div class="text-[0.58rem] uppercase tracking-[0.14em] text-[#c9a96e]/60">{{ __('My Course Chats') }}</div>
+                                    </div>
+
+                                    <div class="mb-2 px-1">
+                                        <div class="flex items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2">
+                                            <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 shrink-0 fill-none stroke-white/25 stroke-[1.8]"><circle cx="7" cy="7" r="4"/><path d="M10 10l3 3"/></svg>
+                                            <input
+                                                x-model="courseChannelSearch"
+                                                type="text"
+                                                class="w-full border-0 bg-transparent py-0 text-[0.76rem] text-white placeholder:text-white/20 focus:outline-none focus:ring-0"
+                                                placeholder="{{ __('Search course chats…') }}"
+                                            >
+                                            <button x-show="courseChannelSearch" x-cloak type="button" class="shrink-0 text-white/30 hover:text-white/60" @click="courseChannelSearch = ''">
+                                                <svg viewBox="0 0 12 12" class="h-3 w-3 fill-none stroke-current stroke-[1.8]"><path d="M2 2l8 8M10 2l-8 8"/></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-0.5">
+                                        <template x-for="channel in filteredCourseChannels()" :key="channel.id">
+                                            <div class="group flex items-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    class="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[0.82rem] transition"
+                                                    :class="selectedChannel?.slug === channel.slug ? 'bg-white/8 text-[#f0ede8] font-semibold' : channel.can_access ? 'text-white/40 hover:bg-white/5 hover:text-white/70' : 'text-white/25 hover:bg-white/[0.03] hover:text-white/40'"
+                                                    @click="handleChannelClick(channel)"
+                                                >
+                                                    <span class="shrink-0 font-display text-[1rem] leading-none text-white/40">#</span>
+                                                    <span class="min-w-0 flex-1 truncate" x-text="channel.course_name || channel.name"></span>
+                                                    <span x-show="channel.unread_count" x-cloak class="ml-auto shrink-0 rounded-full bg-[#ef4444] px-1.5 py-0.5 text-[0.44rem] font-bold text-white" x-text="channel.unread_count"></span>
+                                                </button>
+                                                <div x-show="channel.can_manage" x-cloak class="hidden items-center gap-1 group-hover:flex">
+                                                    <button type="button" class="rounded p-1 text-white/30 transition hover:bg-white/5 hover:text-[#c9a96e]" @click.stop="openChannelModal(channel)" aria-label="{{ __('Edit') }}">
+                                                        &#9998;
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <div x-show="hasCourseChannels() && filteredCourseChannels().length === 0" x-cloak class="px-3 py-3 text-[0.72rem] text-white/25">
+                                            {{ __('No course chats found.') }}
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div x-show="archivedChannels.length && features.can_moderate_messages" x-cloak class="mt-6">
                                     <div class="px-2 pb-3 text-[0.58rem] uppercase tracking-[0.14em] text-white/25">{{ __('Archived') }}</div>
                                     <div class="space-y-2">
@@ -258,17 +312,6 @@
                                     </div>
                                 </div>
 
-                                <div x-show="moderationLogs.length && features.can_moderate_messages" x-cloak class="mt-6">
-                                    <div class="px-2 pb-3 text-[0.58rem] uppercase tracking-[0.14em] text-white/25">{{ __('Moderation') }}</div>
-                                    <div class="space-y-2">
-                                        <template x-for="log in moderationLogs.slice(0, 6)" :key="`mod-log-${log.id}`">
-                                            <div class="rounded-2xl border border-white/8 bg-white/[0.03] px-3 py-3">
-                                                <div class="text-[0.72rem] leading-6 text-white/68" x-text="formatModerationLog(log)"></div>
-                                                <div class="mt-1 text-[0.58rem] uppercase tracking-[0.12em] text-white/24" x-text="formatFullTimestamp(log.created_at)"></div>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
                             </div>
 
                             <div class="border-t border-black/40 bg-black/25 p-3">
