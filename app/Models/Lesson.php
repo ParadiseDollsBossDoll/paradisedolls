@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Lesson extends Model
 {
@@ -19,6 +20,8 @@ class Lesson extends Model
         'tips',
         'safety_notes',
         'resource_links',
+        'lesson_banner_image',
+        'lesson_images',
         'is_published',
         'video_url',
         'bunny_video_id',
@@ -39,6 +42,7 @@ class Lesson extends Model
         return [
             'is_published' => 'boolean',
             'has_pdf' => 'boolean',
+            'lesson_images' => 'array',
         ];
     }
 
@@ -66,6 +70,11 @@ class Lesson extends Model
     public function progressRecords(): HasMany
     {
         return $this->hasMany(LessonProgress::class);
+    }
+
+    public function contentBlocks(): HasMany
+    {
+        return $this->hasMany(LessonContentBlock::class)->orderBy('sort_order');
     }
 
     public function videoEmbedUrl(): ?string
@@ -131,16 +140,109 @@ class Lesson extends Model
 
                 $parts = array_map('trim', explode('|', $line, 2));
                 $label = $parts[0];
-                $url = $parts[1] ?? $parts[0];
+                $url = self::normalizedHttpUrl($parts[1] ?? $parts[0]);
+
+                if ($url === null) {
+                    return null;
+                }
 
                 return [
-                    'label' => $label,
+                    'label' => $label !== '' ? $label : $url,
                     'url' => $url,
                 ];
             })
             ->filter()
             ->values()
             ->all();
+    }
+
+    public function presentationOpenUrl(): ?string
+    {
+        return self::normalizePresentationUrl($this->presentation_url);
+    }
+
+    public function canvaPresentationEmbedUrl(): ?string
+    {
+        $url = $this->presentationOpenUrl();
+        if ($url === null) {
+            return null;
+        }
+
+        $parts = parse_url($url);
+        $host = strtolower($parts['host'] ?? '');
+        $path = '/'.ltrim($parts['path'] ?? '', '/');
+        parse_str($parts['query'] ?? '', $query);
+
+        if ($host === 'canva.link') {
+            return $url;
+        }
+
+        if (! in_array($host, ['canva.com', 'www.canva.com'], true)) {
+            return null;
+        }
+
+        if (! array_key_exists('embed', $query)) {
+            return null;
+        }
+
+        if (! preg_match('#^/design/([A-Za-z0-9_-]+)(?:/|$)#', $path, $matches)) {
+            return null;
+        }
+
+        return $url;
+    }
+
+    public static function normalizePresentationUrl(?string $value): ?string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        if (preg_match('/<iframe\b[^>]*\bsrc\s*=\s*(["\'])(.*?)\1/is', $value, $matches)) {
+            $value = html_entity_decode($matches[2], ENT_QUOTES | ENT_HTML5);
+        }
+
+        return self::normalizedHttpUrl($value);
+    }
+
+    public function lessonBannerImageUrl(): ?string
+    {
+        return $this->publicImageUrl($this->lesson_banner_image);
+    }
+
+    public function lessonImageUrls(): array
+    {
+        return collect($this->lesson_images ?? [])
+            ->map(fn (?string $path) => $this->publicImageUrl($path))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    private static function normalizedHttpUrl(?string $url): ?string
+    {
+        $url = trim((string) $url);
+
+        if ($url === '') {
+            return null;
+        }
+
+        if (str_starts_with($url, 'www.') || preg_match('/^canva\.(com|link)\//i', $url)) {
+            $url = 'https://'.$url;
+        }
+
+        $parts = parse_url($url);
+        if ($parts === false || blank($parts['scheme'] ?? null) || blank($parts['host'] ?? null)) {
+            return null;
+        }
+
+        if (! in_array(strtolower($parts['scheme']), ['http', 'https'], true)) {
+            return null;
+        }
+
+        return $url;
     }
 
     private function linesFromText(?string $text): array
@@ -154,5 +256,18 @@ class Lesson extends Model
             ->filter()
             ->values()
             ->all();
+    }
+
+    private function publicImageUrl(?string $path): ?string
+    {
+        if (blank($path)) {
+            return null;
+        }
+
+        if (preg_match('/^(https?:)?\/\//', $path) || str_starts_with($path, '/')) {
+            return $path;
+        }
+
+        return Storage::disk('public')->url($path);
     }
 }

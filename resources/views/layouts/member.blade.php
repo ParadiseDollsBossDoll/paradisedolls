@@ -55,6 +55,7 @@
     ];
 
     $currentLabel = collect($links)->firstWhere('active', true)['label'] ?? __('Dashboard');
+    $hideSidebar = (bool) ($hideSidebar ?? false);
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -67,108 +68,108 @@
     </head>
     <body class="font-sans antialiased pd-dark-surface min-h-screen" x-data="{ sidebarOpen: false }">
         <div class="flex min-h-screen">
-
-            {{-- ── Sidebar ─────────────────────────────────────────── --}}
-            <aside class="elysian-sidebar" :class="sidebarOpen ? 'is-open' : ''">
-
-                <div class="elysian-brand">
-                    <div>
-                        <div class="elysian-brand-title">&#10022; PARADISEDOLLZ &#10022;</div>
-                        <div class="elysian-brand-sub">{{ __('Members Area') }}</div>
-                    </div>
-                </div>
-
-                <div class="elysian-side-profile">
-                    <div class="elysian-side-profile-inner">
-                        <div class="elysian-side-profile-row">
-                            <div class="elysian-avatar-wrap">
-                                <div class="elysian-avatar">{{ $initials }}</div>
-                                <div class="elysian-online-dot"></div>
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <div class="elysian-side-name">{{ $user->name }}</div>
-                                <div class="elysian-side-sub">{{ __('ParadiseDollz Member') }}</div>
-                            </div>
-                        </div>
-                        <div class="mt-2.5 border-t border-white/[0.06] pt-2.5">
-                            <div class="mb-1.5 flex items-center justify-between">
-                                <span class="text-[0.52rem] uppercase tracking-[0.12em] text-white/25">{{ __('Overall Progress') }}</span>
-                                <span class="text-[0.6rem] font-semibold text-[#c9a96e]">{{ $layoutProgress }}%</span>
-                            </div>
-                            <div class="h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
-                                <div class="h-full rounded-full bg-gradient-to-r from-[#c9a96e] to-[#e8c88a] transition-all duration-500" style="width: {{ $layoutProgress }}%"></div>
-                            </div>
+            @unless ($hideSidebar)
+                <aside class="elysian-sidebar" :class="sidebarOpen ? 'is-open' : ''">
+                    <div class="elysian-brand">
+                        <div>
+                            <div class="elysian-brand-title">&#10022; PARADISEDOLLZ &#10022;</div>
+                            <div class="elysian-brand-sub">{{ __('Members Area') }}</div>
                         </div>
                     </div>
-                </div>
 
-                <nav class="elysian-nav">
-                    @foreach ($links as $link)
-                        <a
-                            href="{{ route($link['route']) }}"
-                            class="elysian-nav-item {{ $link['active'] ? 'active' : '' }}"
-                            @click="sidebarOpen = false"
-                        >
-                            @if ($link['icon'] === 'dashboard')
-                                <svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
-                            @elseif ($link['icon'] === 'onboarding')
-                                <svg viewBox="0 0 16 16"><path d="M10 2h2a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1h2"/><rect x="5" y="1" width="6" height="2" rx="1"/><path d="M5.5 8.5l2 2L11 7"/></svg>
-                            @elseif ($link['icon'] === 'academy')
-                                <svg viewBox="0 0 16 16"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/></svg>
-                            @elseif ($link['icon'] === 'community')
-                                <svg viewBox="0 0 16 16"><path d="M14 10c0 1.1-.9 2-2 2H4l-3 3V4c0-1.1.9-2 2-2h9c1.1 0 2 .9 2 2v6z"/></svg>
-                            @elseif ($link['icon'] === 'profile')
-                                <svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
-                            @endif
-                            <span>{{ $link['label'] }}</span>
+                    <div class="elysian-side-profile">
+                        <div class="elysian-side-profile-inner">
+                            <div class="elysian-side-profile-row">
+                                <div class="elysian-avatar-wrap">
+                                    <div class="elysian-avatar">{{ $initials }}</div>
+                                    <div class="elysian-online-dot"></div>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="elysian-side-name">{{ $user->name }}</div>
+                                    <div class="elysian-side-sub">{{ __('ParadiseDollz Member') }}</div>
+                                </div>
+                            </div>
+                            <div class="mt-2.5 border-t border-white/[0.06] pt-2.5">
+                                <div class="mb-1.5 flex items-center justify-between">
+                                    <span class="text-[0.52rem] uppercase tracking-[0.12em] text-white/25">{{ __('Overall Progress') }}</span>
+                                    <span class="text-[0.6rem] font-semibold text-[#c9a96e]">{{ $layoutProgress }}%</span>
+                                </div>
+                                <div class="h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                                    <div class="h-full rounded-full bg-gradient-to-r from-[#c9a96e] to-[#e8c88a] transition-all duration-500" style="width: {{ $layoutProgress }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <nav class="elysian-nav">
+                        @foreach ($links as $link)
+                            <a
+                                href="{{ route($link['route']) }}"
+                                class="elysian-nav-item {{ $link['active'] ? 'active' : '' }}"
+                                @click="sidebarOpen = false"
+                            >
+                                @if ($link['icon'] === 'dashboard')
+                                    <svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+                                @elseif ($link['icon'] === 'onboarding')
+                                    <svg viewBox="0 0 16 16"><path d="M10 2h2a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1h2"/><rect x="5" y="1" width="6" height="2" rx="1"/><path d="M5.5 8.5l2 2L11 7"/></svg>
+                                @elseif ($link['icon'] === 'academy')
+                                    <svg viewBox="0 0 16 16"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/></svg>
+                                @elseif ($link['icon'] === 'community')
+                                    <svg viewBox="0 0 16 16"><path d="M14 10c0 1.1-.9 2-2 2H4l-3 3V4c0-1.1.9-2 2-2h9c1.1 0 2 .9 2 2v6z"/></svg>
+                                @elseif ($link['icon'] === 'profile')
+                                    <svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+                                @endif
+                                <span>{{ $link['label'] }}</span>
+                            </a>
+                        @endforeach
+                    </nav>
+
+                    <div class="elysian-side-footer">
+                        <a href="{{ route('home') }}" class="elysian-side-footer-btn">
+                            <svg viewBox="0 0 16 16"><path d="M8 1L1 8h2.5v6h3.5v-4h2v4h3.5V8H15L8 1z"/></svg>
+                            <span>{{ __('Main Site') }}</span>
                         </a>
-                    @endforeach
-                </nav>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="elysian-side-footer-btn">
+                                <svg viewBox="0 0 16 16"><path d="M10 3l3 5-3 5M3 8h10"/></svg>
+                                <span>{{ __('Sign Out') }}</span>
+                            </button>
+                        </form>
+                    </div>
+                </aside>
 
-                <div class="elysian-side-footer">
-                    <a href="{{ route('home') }}" class="elysian-side-footer-btn">
-                        <svg viewBox="0 0 16 16"><path d="M8 1L1 8h2.5v6h3.5v-4h2v4h3.5V8H15L8 1z"/></svg>
-                        <span>{{ __('Main Site') }}</span>
-                    </a>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="elysian-side-footer-btn">
-                            <svg viewBox="0 0 16 16"><path d="M10 3l3 5-3 5M3 8h10"/></svg>
-                            <span>{{ __('Sign Out') }}</span>
-                        </button>
-                    </form>
-                </div>
-            </aside>
+                <div x-show="sidebarOpen" x-cloak class="elysian-sidebar-backdrop" @click="sidebarOpen = false"></div>
+            @endunless
 
-            {{-- Mobile backdrop --}}
-            <div x-show="sidebarOpen" x-cloak class="elysian-sidebar-backdrop" @click="sidebarOpen = false"></div>
-
-            {{-- ── Main content ─────────────────────────────────────── --}}
             <div class="flex min-w-0 flex-1 flex-col">
-
                 <header class="elysian-topbar">
-                    <button type="button" class="elysian-mobile-toggle" @click="sidebarOpen = true" aria-label="{{ __('Menu') }}">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
+                    @unless ($hideSidebar)
+                        <button type="button" class="elysian-mobile-toggle" @click="sidebarOpen = true" aria-label="{{ __('Menu') }}">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </button>
+                    @endunless
                     <span class="elysian-breadcrumb">{{ __('Members') }} / {{ $currentLabel }}</span>
                     <div class="elysian-topbar-right">
                         <div class="elysian-topbar-greeting">
                             <p>{{ __('Welcome back,') }}</p>
                             <p>{{ $user->name }}</p>
                         </div>
+                        <a href="{{ route('home') }}#apply" class="hidden rounded-full border border-boss-gold/20 bg-boss-gold/10 px-4 py-2 text-[0.66rem] uppercase tracking-[0.14em] text-boss-gold transition-colors hover:bg-boss-gold hover:text-boss-ink sm:inline-flex">
+                            {{ __('Refer') }}
+                        </a>
                         <div class="elysian-topbar-avatar">{{ $initials }}</div>
                     </div>
                 </header>
 
-                <main class="flex-1 p-5 lg:p-8">
+                <main class="flex-1 overflow-auto {{ $hideSidebar ? 'p-4 sm:p-5 lg:p-6 xl:p-8' : 'p-5 lg:p-8' }}">
                     @isset($header)
                         <div class="mb-7">{{ $header }}</div>
                     @endisset
                     {{ $slot }}
                 </main>
-
             </div>
         </div>
     </body>

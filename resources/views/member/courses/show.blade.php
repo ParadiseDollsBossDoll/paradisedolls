@@ -43,7 +43,12 @@
                             </button>
                         </form>
 
-                        @if ($isEnrolled)
+                        @if ($isEnrolled && isset($communityChannel) && $communityChannel)
+                            <a href="{{ route('community.channels.show', $communityChannel->slug) }}" class="pd-btn-secondary inline-flex items-center gap-2">
+                                <svg viewBox="0 0 16 16" class="h-4 w-4 fill-none stroke-current stroke-[1.6]"><path d="M14 10c0 1.1-.9 2-2 2H4l-3 3V4c0-1.1.9-2 2-2h9c1.1 0 2 .9 2 2v6z"/></svg>
+                                {{ __('Open Community') }}
+                            </a>
+                        @elseif ($isEnrolled)
                             <a href="{{ route('member.courses.community', $course->slug) }}" class="pd-btn-secondary">{{ __('Course Community') }}</a>
                         @endif
                     </div>

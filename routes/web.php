@@ -149,6 +149,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         Route::post('/bunny/videos/upload-intent', [BunnyVideoController::class, 'uploadIntent'])->name('bunny.videos.upload-intent');
         Route::get('/bunny/videos/{videoId}', [BunnyVideoController::class, 'show'])->name('bunny.videos.show');
         Route::patch('/courses/{course}/visibility', [AdminCourseController::class, 'visibility'])->name('courses.visibility');
+        Route::get('/courses/{course}/preview', [AdminCourseController::class, 'preview'])->name('courses.preview');
+        Route::get('/courses/{course}/lessons/{lesson}/preview', [AdminCourseController::class, 'previewLesson'])->name('courses.lessons.preview');
         Route::resource('courses', AdminCourseController::class)->except(['show']);
 
         Route::post('/courses/{course}/lessons', [AdminLessonController::class, 'store'])->name('courses.lessons.store');
