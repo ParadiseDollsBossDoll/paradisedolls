@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\ManagesLessonContentBlocks;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\CourseModule;
+use App\Models\Lesson;
 use App\Models\LessonProgress;
+use App\Services\CourseCommunityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -15,6 +19,8 @@ use Illuminate\View\View;
 
 class AdminCourseController extends Controller
 {
+    use ManagesLessonContentBlocks;
+
     public function index(): View
     {
         $courses = Course::query()
@@ -60,14 +66,16 @@ class AdminCourseController extends Controller
         return view('admin.courses.create', $this->courseDesignOptions());
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, CourseCommunityService $community): RedirectResponse
     {
         $validated = $this->validateCourse($request, validateLessons: true);
         $courseData = $this->normalizedCourseData($request, $validated['course']);
 
         $slug = $this->uniqueSlug($courseData['slug'] ?? Str::slug($courseData['title']));
 
-        DB::transaction(function () use ($validated, $courseData, $slug): void {
+        $course = null;
+
+        DB::transaction(function () use ($validated, $courseData, $slug, &$course): void {
             $course = Course::create([
                 ...collect($courseData)->except('slug')->all(),
                 'slug' => $slug,
@@ -76,9 +84,17 @@ class AdminCourseController extends Controller
             $moduleMap = $this->syncModules($course, $validated['modules'] ?? [], $validated['lessons'] ?? []);
 
             foreach ($validated['lessons'] ?? [] as $index => $lesson) {
-                $course->lessons()->create($this->normalizedLessonData($lesson, $index, $moduleMap));
+                $createdLesson = $course->lessons()->create($this->normalizedLessonData($lesson, $index, $moduleMap));
+
+                if ($this->shouldSyncContentBlocks($lesson)) {
+                    $this->syncLessonContentBlocks($createdLesson, $lesson['content_blocks'] ?? []);
+                }
             }
         });
+
+        if ($course) {
+            $community->ensureForCourse($course);
+        }
 
         return redirect()->route('admin.courses.index')->with('status', __('Course created.'));
     }
@@ -87,7 +103,7 @@ class AdminCourseController extends Controller
     {
         $course->load([
             'modules' => fn ($q) => $q->orderBy('sort_order'),
-            'lessons' => fn ($q) => $q->with('module')->orderBy('sort_order'),
+            'lessons' => fn ($q) => $q->with(['module', 'contentBlocks'])->orderBy('sort_order'),
         ]);
 
         return view('admin.courses.edit', [
@@ -96,10 +112,29 @@ class AdminCourseController extends Controller
         ]);
     }
 
+    public function preview(Course $course): View
+    {
+        $course = $this->previewCoursePayload($course);
+
+        return $this->previewLearningView($course, $course->lessons->first());
+    }
+
+    public function previewLesson(Course $course, Lesson $lesson): View
+    {
+        abort_unless($lesson->course_id === $course->id, 404);
+
+        $course = $this->previewCoursePayload($course);
+        $selectedLesson = $course->lessons->firstWhere('id', $lesson->id);
+
+        abort_unless($selectedLesson !== null, 404);
+
+        return $this->previewLearningView($course, $selectedLesson);
+    }
+
     public function update(Request $request, Course $course): RedirectResponse
     {
         $validated = $this->validateCourse($request, $course->id, validateLessons: true);
-        $courseData = $this->normalizedCourseData($request, $validated['course']);
+        $courseData = $this->normalizedCourseData($request, $validated['course'], $course);
 
         $slugInput = $courseData['slug'] ?? null;
         $slug = $slugInput !== null && $slugInput !== ''
@@ -129,11 +164,81 @@ class AdminCourseController extends Controller
         return redirect()->route('admin.courses.index')->with('status', __('Course visibility updated.'));
     }
 
-    public function destroy(Course $course): RedirectResponse
+    public function destroy(Course $course, CourseCommunityService $community): RedirectResponse
     {
+        $community->archiveForCourse($course);
         $course->delete();
 
         return redirect()->route('admin.courses.index')->with('status', __('Course deleted.'));
+    }
+
+    private function previewCoursePayload(Course $course): Course
+    {
+        return Course::query()
+            ->whereKey($course->id)
+            ->with([
+                'lessons' => fn ($query) => $query
+                    ->with(['module', 'contentBlocks'])
+                    ->orderBy('sort_order'),
+                'modules' => fn ($query) => $query
+                    ->with(['lessons' => fn ($lessonQuery) => $lessonQuery
+                        ->with('contentBlocks')
+                        ->orderBy('sort_order')])
+                    ->orderBy('sort_order'),
+                'chatRoom',
+            ])
+            ->withCount([
+                'lessons as lessons_count',
+                'modules as modules_count',
+                'enrollments as enrolled_users_count',
+            ])
+            ->firstOrFail();
+    }
+
+    private function previewLearningView(Course $course, ?Lesson $selectedLesson): View
+    {
+        $lessonIds = $course->lessons->pluck('id')->values();
+        $selectedLesson ??= $course->lessons->first();
+        $selectedIndex = $selectedLesson ? $lessonIds->search($selectedLesson->id) : false;
+        $previousLesson = $selectedIndex !== false && $selectedIndex > 0
+            ? $course->lessons->firstWhere('id', $lessonIds[$selectedIndex - 1])
+            : null;
+        $nextLesson = $selectedIndex !== false && $selectedIndex < $lessonIds->count() - 1
+            ? $course->lessons->firstWhere('id', $lessonIds[$selectedIndex + 1])
+            : null;
+
+        $progress = [
+            'completed' => 0,
+            'total' => $lessonIds->count(),
+            'percent' => 0,
+            'completedLessonIds' => [],
+        ];
+
+        $moduleProgress = $course->modules->mapWithKeys(function (CourseModule $module) {
+            $total = $module->lessons->count();
+
+            return [$module->id => [
+                'completed' => 0,
+                'total' => $total,
+                'percent' => 0,
+            ]];
+        });
+
+        $messages = collect();
+        $previewMode = true;
+        $previewExitUrl = route('admin.courses.edit', $course);
+
+        return view('member.courses.learn', compact(
+            'course',
+            'selectedLesson',
+            'previousLesson',
+            'nextLesson',
+            'progress',
+            'moduleProgress',
+            'messages',
+            'previewMode',
+            'previewExitUrl'
+        ));
     }
 
     private function validateCourse(Request $request, ?int $courseId = null, bool $validateLessons = false): array
@@ -146,6 +251,7 @@ class AdminCourseController extends Controller
             'description' => ['required', 'string', 'max:10000'],
             'short_description' => ['nullable', 'string', 'max:1200'],
             'thumbnail_url' => ['nullable', 'string', 'max:2000'],
+            'course_cover_image_upload' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
             'difficulty_level' => ['nullable', 'string', 'max:64'],
             'estimated_duration' => ['nullable', 'string', 'max:64'],
             'what_you_will_learn' => ['nullable', 'string', 'max:50000'],
@@ -196,6 +302,9 @@ class AdminCourseController extends Controller
                 'lessons.*.tips' => ['nullable', 'string', 'max:50000'],
                 'lessons.*.safety_notes' => ['nullable', 'string', 'max:50000'],
                 'lessons.*.resource_links' => ['nullable', 'string', 'max:50000'],
+                'lessons.*.lesson_banner_image_upload' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+                'lessons.*.lesson_images_upload' => ['nullable', 'array', 'max:12'],
+                'lessons.*.lesson_images_upload.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
                 'lessons.*.is_published' => ['nullable', 'boolean'],
                 'lessons.*.video_url' => ['nullable', 'string', 'max:2000'],
                 'lessons.*.bunny_video_id' => ['nullable', 'string', 'max:64'],
@@ -207,9 +316,10 @@ class AdminCourseController extends Controller
                 'lessons.*.duration' => ['nullable', 'string', 'max:64'],
                 'lessons.*.has_pdf' => ['nullable', 'boolean'],
                 'lessons.*.pdf_url' => ['nullable', 'string', 'max:2000'],
-                'lessons.*.presentation_url' => ['nullable', 'string', 'max:2000'],
+                'lessons.*.presentation_url' => ['nullable', 'string', 'max:50000'],
                 'lessons.*.sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
             ];
+            $rules += $this->lessonContentBlockRules('lessons.*.content_blocks');
         }
 
         $validated = $request->validate($rules);
@@ -247,12 +357,13 @@ class AdminCourseController extends Controller
         ];
     }
 
-    private function normalizedCourseData(Request $request, array $course): array
+    private function normalizedCourseData(Request $request, array $course, ?Course $existingCourse = null): array
     {
         $course += [
             'course_outline_url' => null,
             'short_description' => null,
             'thumbnail_url' => null,
+            'course_cover_image' => $existingCourse?->course_cover_image,
             'difficulty_level' => null,
             'estimated_duration' => null,
             'what_you_will_learn' => null,
@@ -272,6 +383,11 @@ class AdminCourseController extends Controller
         $course['is_published'] = $request->boolean('is_published');
         $course['has_course_outline'] = $request->boolean('has_course_outline');
         $course['has_intro'] = $request->boolean('has_intro');
+
+        $coverImage = $request->file('course_cover_image_upload');
+        if ($coverImage instanceof UploadedFile) {
+            $course['course_cover_image'] = $this->storePublicImage($coverImage, 'academy/course-covers');
+        }
 
         if (! $course['has_course_outline']) {
             $course['course_outline_url'] = null;
@@ -315,8 +431,6 @@ class AdminCourseController extends Controller
         $syncedExistingIds = [];
 
         foreach ($lessons as $index => $lesson) {
-            $lessonData = $this->normalizedLessonData($lesson, $index, $moduleMap);
-
             $existingLesson = ! empty($lesson['id'])
                 ? $existingLessonsById->get((int) $lesson['id'])
                 : null;
@@ -326,14 +440,22 @@ class AdminCourseController extends Controller
                 $existingLesson = $existingLessons->get($index);
             }
 
+            $lessonData = $this->normalizedLessonData($lesson, $index, $moduleMap, $existingLesson);
+
             if ($existingLesson !== null) {
                 $existingLesson->update($lessonData);
+                if ($this->shouldSyncContentBlocks($lesson)) {
+                    $this->syncLessonContentBlocks($existingLesson, $lesson['content_blocks'] ?? []);
+                }
                 $syncedExistingIds[] = $existingLesson->id;
 
                 continue;
             }
 
             $createdLesson = $course->lessons()->create($lessonData);
+            if ($this->shouldSyncContentBlocks($lesson)) {
+                $this->syncLessonContentBlocks($createdLesson, $lesson['content_blocks'] ?? []);
+            }
             $syncedExistingIds[] = $createdLesson->id;
         }
 
@@ -344,12 +466,13 @@ class AdminCourseController extends Controller
         }
     }
 
-    private function normalizedLessonData(array $lesson, int $index, array $moduleMap = []): array
+    private function normalizedLessonData(array $lesson, int $index, array $moduleMap = [], ?Lesson $existingLesson = null): array
     {
         $bunnyVideoId = $lesson['bunny_video_id'] ?? null;
         $bunnyLibraryId = $lesson['bunny_library_id'] ?? null;
         $videoUrl = $lesson['video_url'] ?? null;
         $moduleId = $this->moduleIdForLesson($lesson, $moduleMap);
+        $lessonVisuals = $this->normalizedLessonVisuals($lesson, $existingLesson);
 
         if (filled($bunnyVideoId) && filled($bunnyLibraryId)) {
             $videoUrl = 'https://iframe.mediadelivery.net/embed/'.$bunnyLibraryId.'/'.$bunnyVideoId.'?autoplay=false&loop=false&muted=false&preload=true&responsive=true';
@@ -364,6 +487,8 @@ class AdminCourseController extends Controller
             'tips' => $lesson['tips'] ?? null,
             'safety_notes' => $lesson['safety_notes'] ?? null,
             'resource_links' => $lesson['resource_links'] ?? null,
+            'lesson_banner_image' => $lessonVisuals['lesson_banner_image'],
+            'lesson_images' => $lessonVisuals['lesson_images'],
             'is_published' => array_key_exists('is_published', $lesson) ? (bool) $lesson['is_published'] : true,
             'video_url' => $videoUrl,
             'bunny_video_id' => $bunnyVideoId,
@@ -375,9 +500,45 @@ class AdminCourseController extends Controller
             'duration' => $lesson['duration'] ?? null,
             'has_pdf' => array_key_exists('has_pdf', $lesson) ? (bool) $lesson['has_pdf'] : filled($lesson['pdf_url'] ?? null),
             'pdf_url' => $lesson['pdf_url'] ?? null,
-            'presentation_url' => $lesson['presentation_url'] ?? null,
+            'presentation_url' => Lesson::normalizePresentationUrl($lesson['presentation_url'] ?? null),
             'sort_order' => $lesson['sort_order'] ?? ($index + 1),
         ];
+    }
+
+    private function normalizedLessonVisuals(array $lesson, ?Lesson $existingLesson = null): array
+    {
+        $bannerImage = $existingLesson?->lesson_banner_image;
+        $galleryImages = $existingLesson?->lesson_images ?? [];
+
+        $bannerUpload = $lesson['lesson_banner_image_upload'] ?? null;
+        if ($bannerUpload instanceof UploadedFile) {
+            $bannerImage = $this->storePublicImage($bannerUpload, 'academy/lesson-banners');
+        }
+
+        foreach ($lesson['lesson_images_upload'] ?? [] as $galleryUpload) {
+            if ($galleryUpload instanceof UploadedFile) {
+                $galleryImages[] = $this->storePublicImage($galleryUpload, 'academy/lesson-images');
+            }
+        }
+
+        return [
+            'lesson_banner_image' => $bannerImage,
+            'lesson_images' => array_values(array_filter($galleryImages)),
+        ];
+    }
+
+    private function storePublicImage(UploadedFile $file, string $directory): string
+    {
+        return $file->store($directory, 'public');
+    }
+
+    /**
+     * @param  array<string, mixed>  $lesson
+     */
+    private function shouldSyncContentBlocks(array $lesson): bool
+    {
+        return array_key_exists('content_blocks_enabled', $lesson)
+            || array_key_exists('content_blocks', $lesson);
     }
 
     /**

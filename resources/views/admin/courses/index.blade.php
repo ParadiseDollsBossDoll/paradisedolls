@@ -28,10 +28,19 @@
                     $stats = $courseStats[$course->id] ?? ['started' => 0, 'finished' => 0, 'messages' => 0];
                     $color = $course->displayColor();
                     $bg = $course->displayColorBackground();
+                    $image = $course->overviewImageUrl();
                 @endphp
 
                 <article class="group flex flex-col overflow-hidden rounded-sm border border-white/[0.06] bg-[#141419] transition-all duration-200 hover:shadow-glow" style="--platform-color: {{ $color }};">
-                    <div class="h-1 w-full shrink-0" style="background: linear-gradient(90deg, {{ $color }}, {{ $color }}40);"></div>
+                    <div class="relative h-32 shrink-0 overflow-hidden">
+                        @if ($image)
+                            <img src="{{ $image }}" alt="{{ $course->title }}" class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#141419] via-[#141419]/35 to-black/10"></div>
+                        @else
+                            <div class="absolute inset-0" style="background: linear-gradient(135deg, {{ $course->displayColorBackground(0.28) }}, rgba(255,255,255,0.03));"></div>
+                        @endif
+                        <div class="absolute bottom-0 left-0 right-0 h-1" style="background: linear-gradient(90deg, {{ $color }}, {{ $color }}40);"></div>
+                    </div>
 
                     <div class="flex flex-1 flex-col gap-3 p-4">
                         <div class="flex flex-wrap items-center gap-2">

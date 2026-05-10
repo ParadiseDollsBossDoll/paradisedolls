@@ -165,6 +165,7 @@ document.addEventListener('alpine:init', () => {
         channelNotice: initialState.channel_notice,
         composerNotice: null,
         searchNotice: null,
+        courseChannelSearch: '',
         messageLoadError: null,
         channelForm: {
             id: null,
@@ -676,6 +677,24 @@ document.addEventListener('alpine:init', () => {
             });
 
             return Object.entries(groups).map(([name, channels]) => ({ name, channels }));
+        },
+
+        globalChannels() {
+            return this.filteredChannels().filter((c) => !c.course_id);
+        },
+
+        filteredCourseChannels() {
+            const query = (this.courseChannelSearch || '').toLowerCase().trim();
+            return this.filteredChannels()
+                .filter((c) => c.course_id)
+                .filter((c) => {
+                    if (!query) return true;
+                    return (c.course_name || c.name || '').toLowerCase().includes(query);
+                });
+        },
+
+        hasCourseChannels() {
+            return this.channels.some((c) => c.course_id);
         },
 
         filteredChannels() {
