@@ -2,6 +2,7 @@ const CHANNEL_PLACEHOLDER = '__slug__';
 const MESSAGE_PLACEHOLDER = '__id__';
 const TYPING_HEARTBEAT_MS = 2200;
 const TYPING_WHISPER_TTL_MS = 4200;
+const MAX_MESSAGES_IN_DOM = 150;
 const MESSAGE_TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
     hour: 'numeric',
     minute: '2-digit',
@@ -74,7 +75,7 @@ const deriveErrorMessage = (response, payload, rawText = '') => {
     return 'Something went wrong.';
 };
 
-const fetchJson = async (url, options = {}) => {
+const fetchJson = async (url, { headers: extraHeaders, ...options } = {}) => {
     const socketId = typeof window !== 'undefined' && window.Echo && typeof window.Echo.socketId === 'function'
         ? window.Echo.socketId()
         : null;
@@ -86,7 +87,7 @@ const fetchJson = async (url, options = {}) => {
             'X-Requested-With': 'XMLHttpRequest',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
             ...(socketId ? { 'X-Socket-Id': socketId } : {}),
-            ...(options.headers ?? {}),
+            ...(extraHeaders ?? {}),
         },
         ...options,
     });
@@ -140,7 +141,7 @@ document.addEventListener('alpine:init', () => {
         loadingOlder: false,
         searchingMessages: false,
         sendingMessage: false,
-        hasMoreMessages: (initialState.messages ?? []).length >= 25,
+        hasMoreMessages: initialState.has_more ?? false,
         searchQuery: '',
         activeSearchQuery: '',
         searchResults: [],
@@ -167,6 +168,7 @@ document.addEventListener('alpine:init', () => {
         searchNotice: null,
         courseChannelSearch: '',
         messageLoadError: null,
+        scrollThrottleFrame: null,
         channelForm: {
             id: null,
             slug: null,
@@ -210,6 +212,11 @@ document.addEventListener('alpine:init', () => {
         },
 
         stopPolling() {
+            if (this.scrollThrottleFrame) {
+                cancelAnimationFrame(this.scrollThrottleFrame);
+                this.scrollThrottleFrame = null;
+            }
+
             if (this.pollTimer) {
                 window.clearInterval(this.pollTimer);
             }
@@ -259,8 +266,12 @@ document.addEventListener('alpine:init', () => {
             if (this.channelSyncTimer) {
                 return;
             }
-
-            this.channelSyncTimer = window.setInterval(() => this.refreshChannelRoster(true), 10000);
+            // Only poll when Echo is disconnected; 30s is plenty even for fallback mode
+            this.channelSyncTimer = window.setInterval(() => {
+                if (this.shouldUsePollingFallback()) {
+                    this.refreshChannelRoster(true);
+                }
+            }, 30000);
         },
 
         startPolling() {
@@ -270,7 +281,7 @@ document.addEventListener('alpine:init', () => {
             }
 
             if (!this.pollTimer) {
-                this.pollTimer = window.setInterval(() => this.syncLatestMessages(), 7000);
+                this.pollTimer = window.setInterval(() => this.syncLatestMessages(), 12000);
             }
 
             if (!this.presenceTimer) {
@@ -491,7 +502,11 @@ document.addEventListener('alpine:init', () => {
         },
 
         uniqueMembersById(members) {
-            return members.filter((member, index, list) => list.findIndex((item) => item.id === member.id) === index);
+            const seen = new Map();
+            for (const member of members) {
+                if (!seen.has(member.id)) seen.set(member.id, member);
+            }
+            return [...seen.values()];
         },
 
         sortMembers(members) {
@@ -1061,9 +1076,13 @@ document.addEventListener('alpine:init', () => {
                     searchQuery: this.activeSearchQuery || undefined,
                 });
 
-                this.messages = [...this.hydrateMessages(data.messages), ...this.messages]
-                    .filter((message, index, list) => list.findIndex((item) => item.id === message.id) === index);
-                this.hasMoreMessages = data.has_more;
+                const existingIds = new Set(this.messages.map((m) => m.id));
+                const incoming = this.hydrateMessages(data.messages).filter((m) => !existingIds.has(m.id));
+                const combined = [...incoming, ...this.messages];
+                this.messages = combined.length > MAX_MESSAGES_IN_DOM
+                    ? combined.slice(0, MAX_MESSAGES_IN_DOM)
+                    : combined;
+                this.hasMoreMessages = data.has_more || combined.length > MAX_MESSAGES_IN_DOM;
                 this.syncSearchResults();
                 this.$nextTick(() => {
                     const nextHeight = scroller?.scrollHeight ?? previousHeight;
@@ -1130,7 +1149,7 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 this.searchMessages();
-            }, 260);
+            }, 400);
         },
 
         communityPerformance() {
@@ -1400,6 +1419,13 @@ document.addEventListener('alpine:init', () => {
             this.sendingMessage = true;
             this.composerNotice = null;
             const optimistic = this.buildOptimisticMessage();
+
+            const draftText = this.draft.trim();
+            const replyToId = this.replyTo?.id ?? null;
+            this.draft = '';
+            this.replyTo = null;
+            this.$nextTick(() => this.autosizeComposer());
+
             this.insertMessageSorted(optimistic);
             this.syncSearchResults();
             this.$nextTick(() => this.scrollToBottom(true));
@@ -1407,12 +1433,12 @@ document.addEventListener('alpine:init', () => {
             try {
                 const formData = new FormData();
 
-                if (this.draft.trim()) {
-                    formData.append('message', this.draft.trim());
+                if (draftText) {
+                    formData.append('message', draftText);
                 }
 
-                if (this.replyTo?.id) {
-                    formData.append('reply_to', this.replyTo.id);
+                if (replyToId) {
+                    formData.append('reply_to', replyToId);
                 }
 
                 if (this.attachmentFile) {
@@ -1426,8 +1452,6 @@ document.addEventListener('alpine:init', () => {
                 });
 
                 this.replaceMessage(optimistic.id, data.message);
-                this.draft = '';
-                this.replyTo = null;
                 this.clearAttachment();
                 this.sendTypingState(false);
                 this.bumpChannelActivity(data.message.channel_id);
@@ -1657,7 +1681,8 @@ document.addEventListener('alpine:init', () => {
             }
 
             try {
-                const latestId = this.messages[this.messages.length - 1]?.id;
+                const lastRealMessage = [...this.messages].reverse().find((m) => typeof m.id === 'number');
+                const latestId = lastRealMessage?.id ?? null;
 
                 if (latestId) {
                     const data = await this.loadChannelMessages(this.selectedChannel.slug, {
@@ -1668,6 +1693,9 @@ document.addEventListener('alpine:init', () => {
                     this.hasMoreMessages = data.has_more || this.hasMoreMessages;
                 }
 
+                if (this.channelNotice?.message === 'Message refresh is having trouble right now.') {
+                    this.channelNotice = null;
+                }
             } catch (error) {
                 this.channelNotice ??= { tone: 'warning', message: 'Message refresh is having trouble right now.' };
             }
@@ -1854,8 +1882,13 @@ document.addEventListener('alpine:init', () => {
         },
 
         handleScroller() {
-            if (this.firstUnreadMessageId && this.isNearBottom()) {
-                this.markCurrentChannelRead();
+            if (!this.scrollThrottleFrame) {
+                this.scrollThrottleFrame = requestAnimationFrame(() => {
+                    this.scrollThrottleFrame = null;
+                    if (this.firstUnreadMessageId && this.isNearBottom()) {
+                        this.markCurrentChannelRead();
+                    }
+                });
             }
         },
 

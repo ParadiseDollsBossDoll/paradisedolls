@@ -375,25 +375,25 @@
                                     </button>
                                 </div>
 
-                                <div class="mb-6 border-b border-white/5 pb-6">
-                                    <div class="flex items-start gap-4">
-                                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-[#1d1a12] text-[#c9a96e]">
-                                            <span class="font-display text-[2rem] leading-none">#</span>
+                                <div class="mb-5 border-b border-white/5 pb-5">
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[#1d1a12] text-[#c9a96e]">
+                                            <span class="font-display text-[1.3rem] leading-none">#</span>
                                         </div>
-                                        <div class="min-w-0 pt-0.5">
-                                            <h1 class="font-display text-[1.9rem] leading-[1.08] text-[#f0ede8]">
-                                                {{ __('Welcome to') }} <span x-text="selectedChannel ? `#${selectedChannel.name}` : '#general'"></span>!
+                                        <div class="min-w-0">
+                                            <h1 class="text-[1.15rem] font-semibold leading-tight text-[#f0ede8]">
+                                                {{ __('Welcome to') }} <span x-text="selectedChannel ? `#${selectedChannel.name}` : '#general'"></span>
                                             </h1>
-                                            <p class="mt-1.5 max-w-3xl text-[0.8rem] leading-7 text-white/35" x-text="selectedChannel ? `This is the beginning of the #${selectedChannel.name} channel for ${server.name}.` : 'This is the beginning of your community channel.'"></p>
+                                            <p class="mt-0.5 text-[0.74rem] leading-5 text-white/30" x-text="selectedChannel ? `This is the beginning of the #${selectedChannel.name} channel for ${server.name}.` : 'This is the beginning of your community channel.'"></p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div x-show="channelNotice" x-cloak class="mb-4 rounded-2xl border px-4 py-3 text-sm" :class="channelNotice?.tone === 'success' ? 'border-emerald-400/18 bg-emerald-500/8 text-emerald-100' : channelNotice?.tone === 'warning' ? 'border-[#c9a96e]/18 bg-[#2a211b] text-[#eed9b4]' : channelNotice?.tone === 'muted' ? 'border-white/8 bg-white/[0.03] text-white/60' : 'border-red-400/16 bg-red-500/8 text-red-100'">
+                                <div x-show="channelNotice" x-cloak class="mb-3 rounded-lg border px-3 py-2 text-[0.76rem]" :class="channelNotice?.tone === 'success' ? 'border-emerald-400/15 bg-emerald-500/6 text-emerald-200' : channelNotice?.tone === 'warning' ? 'border-[#c9a96e]/15 bg-[#2a211b]/70 text-[#eed9b4]' : channelNotice?.tone === 'muted' ? 'border-white/6 bg-white/[0.025] text-white/50' : 'border-red-400/14 bg-red-500/6 text-red-200'">
                                     <span x-text="channelNotice?.message"></span>
                                 </div>
 
-                                <div x-show="searchNotice" x-cloak class="mb-4 rounded-2xl border px-4 py-3 text-sm" :class="searchNotice?.tone === 'muted' ? 'border-white/8 bg-white/[0.03] text-white/60' : 'border-red-400/16 bg-red-500/8 text-red-100'">
+                                <div x-show="searchNotice" x-cloak class="mb-3 rounded-lg border px-3 py-2 text-[0.76rem]" :class="searchNotice?.tone === 'muted' ? 'border-white/6 bg-white/[0.025] text-white/50' : 'border-red-400/14 bg-red-500/6 text-red-200'">
                                     <span x-text="searchNotice?.message"></span>
                                 </div>
 
@@ -428,14 +428,14 @@
                                     </div>
                                 </div>
 
-                                <div x-show="loadingMessages" x-cloak class="overflow-hidden rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(17,15,18,0.98),rgba(10,10,12,0.98))] px-5 py-6 text-center">
-                                    <p class="font-display text-[1.55rem] leading-[1.08] text-[#f4dfb8]">{{ __('Loading conversation...') }}</p>
-                                    <p class="mt-1.5 text-[0.84rem] text-white/45">{{ __('Pulling the latest messages and channel activity now.') }}</p>
+                                <div x-show="loadingMessages" x-cloak class="rounded-xl border border-white/6 bg-white/[0.025] px-4 py-3.5">
+                                    <p class="text-[0.88rem] font-medium text-[#f4dfb8]">{{ __('Loading conversation...') }}</p>
+                                    <p class="mt-0.5 text-[0.74rem] text-white/35">{{ __('Pulling the latest messages and channel activity now.') }}</p>
                                 </div>
 
-                                <div x-show="!loadingMessages && messages.length === 0" x-cloak class="overflow-hidden rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(20,17,21,0.98),rgba(11,10,13,0.98))] px-5 py-5 shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
-                                    <p class="font-display text-[1.42rem] leading-[1.08] text-[#f4dfb8]" x-text="messageStateCopy().title"></p>
-                                    <p class="mt-1.5 max-w-2xl text-[0.8rem] leading-6 text-white/45" x-text="messageStateCopy().body"></p>
+                                <div x-show="!loadingMessages && messages.length === 0" x-cloak class="rounded-xl border border-white/6 bg-white/[0.025] px-4 py-3.5">
+                                    <p class="text-[0.88rem] font-medium text-[#f4dfb8]" x-text="messageStateCopy().title"></p>
+                                    <p class="mt-0.5 max-w-2xl text-[0.74rem] leading-5 text-white/38" x-text="messageStateCopy().body"></p>
                                 </div>
 
                                 <div x-show="!loadingMessages && messages.length" x-cloak class="space-y-0.5" id="messages-list">
@@ -523,34 +523,40 @@
                             </div>
                         </div>
 
-                        <div class="border-t border-white/5 px-5 py-4">
+                        <div class="border-t border-white/5 px-4 py-3">
                             <div class="mx-auto max-w-5xl">
-                                <div x-show="replyTo" x-cloak class="mb-3 flex items-center justify-between rounded-xl border border-[#c9a96e]/16 bg-[#1b1714] px-4 py-3 text-sm text-[#ead2ab]">
-                                    <div class="min-w-0">
-                                        <span class="font-semibold">{{ __('Replying to') }}</span>
-                                        <span class="ml-2 truncate text-white/72" x-text="replyTo?.user?.name"></span>
-                                        <span class="mx-2 text-white/22">-</span>
-                                        <span class="truncate text-white/48" x-text="replyTo?.message || replyTo?.attachment?.name"></span>
+                                <div x-show="replyTo" x-cloak class="mb-2 flex items-center justify-between rounded-lg border border-[#c9a96e]/14 bg-[#1b1714] px-3 py-2 text-[0.76rem] text-[#ead2ab]">
+                                    <div class="min-w-0 flex items-center gap-1.5 truncate">
+                                        <span class="shrink-0 font-medium">{{ __('Replying to') }}</span>
+                                        <span class="truncate text-white/65" x-text="replyTo?.user?.name"></span>
+                                        <span class="shrink-0 text-white/20">—</span>
+                                        <span class="truncate text-white/42" x-text="replyTo?.message || replyTo?.attachment?.name"></span>
                                     </div>
-                                    <button type="button" class="text-white/45 transition hover:text-white" @click="replyTo = null">x</button>
+                                    <button type="button" class="ml-3 shrink-0 text-white/35 transition hover:text-white" @click="replyTo = null">
+                                        <svg viewBox="0 0 16 16" class="h-3 w-3 stroke-current fill-none stroke-[2]"><path d="M3 3l10 10M13 3L3 13"></path></svg>
+                                    </button>
                                 </div>
 
-                                <div x-show="attachmentPreview || attachmentName" x-cloak class="mb-3 flex items-center justify-between rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-white/72">
-                                    <div class="flex min-w-0 items-center gap-3">
+                                <div x-show="attachmentPreview || attachmentName" x-cloak class="mb-2 flex items-center justify-between rounded-lg border border-white/8 bg-white/[0.03] px-3 py-2 text-[0.76rem] text-white/65">
+                                    <div class="flex min-w-0 items-center gap-2.5">
                                         <template x-if="attachmentPreview">
-                                            <img :src="attachmentPreview" alt="" class="h-12 w-12 rounded-xl object-cover">
+                                            <img :src="attachmentPreview" alt="" class="h-9 w-9 rounded-lg object-cover">
                                         </template>
                                         <span class="truncate" x-text="attachmentName"></span>
                                     </div>
-                                    <button type="button" class="text-white/45 transition hover:text-white" @click="clearAttachment()">x</button>
+                                    <button type="button" class="ml-3 shrink-0 text-white/35 transition hover:text-white" @click="clearAttachment()">
+                                        <svg viewBox="0 0 16 16" class="h-3 w-3 stroke-current fill-none stroke-[2]"><path d="M3 3l10 10M13 3L3 13"></path></svg>
+                                    </button>
                                 </div>
 
-                                <div x-show="selectedChannel?.is_private" x-cloak class="mb-3 rounded-xl border border-[#c9a96e]/16 bg-[#1b1714] px-4 py-3 text-sm text-[#ead2ab]">
-                                    {{ __('Private channel. Only approved members can view this conversation.') }}
+                                <div x-show="selectedChannel?.is_private" x-cloak class="mb-2 flex items-center gap-2 text-[0.72rem] text-[#c9a96e]/65">
+                                    <svg viewBox="0 0 16 16" class="h-3 w-3 shrink-0 fill-none stroke-current stroke-[1.8]"><rect x="3" y="7" width="10" height="7" rx="1.5"></rect><path d="M5 7V5a3 3 0 0 1 6 0v2"></path></svg>
+                                    <span>{{ __('Private channel — visible to approved members only.') }}</span>
                                 </div>
 
-                                <div x-show="selectedChannel?.is_locked && !features.can_moderate_messages" x-cloak class="mb-3 overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(20,17,21,0.96),rgba(11,10,13,0.96))] px-4 py-2.5 text-[0.8rem] leading-6 text-white/65 shadow-[0_10px_24px_rgba(0,0,0,0.14)]">
-                                    {{ __('This channel is currently locked. You can read messages here, but posting is temporarily paused.') }}
+                                <div x-show="selectedChannel?.is_locked && !features.can_moderate_messages" x-cloak class="mb-2 flex items-center gap-2 text-[0.72rem] text-white/38">
+                                    <svg viewBox="0 0 16 16" class="h-3 w-3 shrink-0 fill-none stroke-current stroke-[1.8]"><rect x="3" y="7" width="10" height="7" rx="1.5"></rect><path d="M5 7V5a3 3 0 0 1 6 0v2"></path></svg>
+                                    <span>{{ __('This channel is locked — read only.') }}</span>
                                 </div>
 
                                 <div x-show="composerNotice" x-cloak class="mb-3 rounded-xl border px-4 py-3 text-sm" :class="composerNotice?.tone === 'warning' ? 'border-[#c9a96e]/18 bg-[#2a211b] text-[#eed9b4]' : 'border-red-400/16 bg-red-500/8 text-red-100'">
@@ -571,38 +577,38 @@
                                     @dragover="handleComposerDragOver($event)"
                                     @dragleave="handleComposerDragLeave($event)"
                                     @drop="handleComposerDrop($event)"
-                                    class="rounded-2xl border border-white/8 bg-white/[0.05] p-3 transition"
-                                    :class="dragActive ? 'border-[#c9a96e]/35 bg-[#1a1511]' : ''"
+                                    class="rounded-xl border border-white/8 bg-white/[0.04] px-3 pt-2.5 pb-2 transition"
+                                    :class="dragActive ? 'border-[#c9a96e]/30 bg-[#1a1511]' : ''"
                                 >
-                                    <div x-show="dragActive" x-cloak class="mb-3 rounded-2xl border border-dashed border-[#c9a96e]/35 bg-[#2a211b] px-4 py-3 text-sm text-[#eed9b4]">
-                                        {{ __('Drop a file here to attach it to this message.') }}
+                                    <div x-show="dragActive" x-cloak class="mb-2 rounded-lg border border-dashed border-[#c9a96e]/30 bg-[#2a211b]/60 px-3 py-2 text-[0.74rem] text-[#eed9b4]">
+                                        {{ __('Drop a file here to attach it.') }}
                                     </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#c9a96e]/22 bg-[linear-gradient(135deg,rgba(201,169,110,0.28),rgba(201,169,110,0.08))] font-display text-[0.52rem] text-[#e8c88a]" x-text="user.initials"></div>
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#c9a96e]/20 bg-[linear-gradient(135deg,rgba(201,169,110,0.22),rgba(201,169,110,0.06))] font-display text-[0.48rem] text-[#e8c88a]" x-text="user.initials"></div>
                                         <textarea
                                             x-ref="composerInput"
                                             x-model="draft"
                                             rows="1"
-                                            class="h-8 max-h-36 min-h-0 flex-1 resize-none border-0 bg-transparent py-1 text-[0.86rem] text-white placeholder:text-white/20 focus:outline-none focus:ring-0"
+                                            class="h-7 max-h-32 min-h-0 flex-1 resize-none border-0 bg-transparent py-0.5 text-[0.82rem] text-white placeholder:text-white/22 focus:outline-none focus:ring-0"
                                             :placeholder="composerPlaceholder()"
                                             :disabled="!canUseComposer()"
                                             @keydown.enter.prevent="handleComposerEnter($event)"
                                             @input="handleDraftInput()"
                                         ></textarea>
-                                        <button type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white/55 transition hover:border-[#c9a96e]/22 hover:text-white disabled:cursor-not-allowed disabled:opacity-50" @click="$refs.attachmentInput.click()" :disabled="!canUseComposer()" aria-label="{{ __('Attach file') }}">
-                                            <svg viewBox="0 0 16 16" class="h-4 w-4 stroke-current fill-none stroke-[1.8]">
+                                        <button type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white/35 transition hover:bg-white/5 hover:text-white/70 disabled:cursor-not-allowed disabled:opacity-40" @click="$refs.attachmentInput.click()" :disabled="!canUseComposer()" aria-label="{{ __('Attach file') }}">
+                                            <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 stroke-current fill-none stroke-[1.8]">
                                                 <path d="M6.5 8.5 10.8 4.2a2.2 2.2 0 1 1 3.1 3.1L7.8 13.4A4 4 0 1 1 2.1 7.7l6.1-6.1"></path>
                                             </svg>
                                         </button>
-                                        <button type="submit" class="flex h-9 w-9 items-center justify-center rounded-lg text-white/18 transition" :class="sendingMessage || (!draft.trim() && !attachmentFile) || !canUseComposer() ? 'bg-transparent' : 'bg-[linear-gradient(135deg,#6c5431,#d4af6c)] text-[#07070c] shadow-[0_4px_14px_rgba(255,140,0,0.3)]'" :disabled="sendingMessage || (!draft.trim() && !attachmentFile) || !canUseComposer()">
-                                            <svg viewBox="0 0 16 16" class="h-4 w-4 stroke-current fill-none stroke-[1.8]"><path d="M14 2 1 8l5 3 2 5 6-14zM6 11l3-3"></path></svg>
+                                        <button type="submit" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white/18 transition" :class="sendingMessage || (!draft.trim() && !attachmentFile) || !canUseComposer() ? 'opacity-30' : 'bg-[linear-gradient(135deg,#6c5431,#d4af6c)] text-[#07070c] shadow-[0_3px_10px_rgba(255,140,0,0.25)]'" :disabled="sendingMessage || (!draft.trim() && !attachmentFile) || !canUseComposer()">
+                                            <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 stroke-current fill-none stroke-[1.8]"><path d="M14 2 1 8l5 3 2 5 6-14zM6 11l3-3"></path></svg>
                                         </button>
                                     </div>
-                                    <div class="mt-2 flex items-center gap-2 pl-10">
-                                        <button type="button" class="rounded-full border border-white/10 px-3 py-1 text-[0.62rem] text-white/55 transition hover:border-[#c9a96e]/22 hover:text-white" @click="insertEmoji('❤️')">❤</button>
-                                        <button type="button" class="rounded-full border border-white/10 px-3 py-1 text-[0.62rem] text-white/55 transition hover:border-[#c9a96e]/22 hover:text-white" @click="insertEmoji('🔥')">🔥</button>
-                                        <button type="button" class="rounded-full border border-white/10 px-3 py-1 text-[0.62rem] text-white/55 transition hover:border-[#c9a96e]/22 hover:text-white" @click="insertEmoji('👍')">👍</button>
-                                        <span x-show="selectedChannel?.slowmode_seconds" x-cloak class="ml-auto text-[0.62rem] uppercase tracking-[0.12em] text-white/25" x-text="`Slowmode ${selectedChannel.slowmode_seconds}s`"></span>
+                                    <div class="mt-1.5 flex items-center gap-1 pl-[34px]">
+                                        <button type="button" class="rounded-full border border-white/8 px-2 py-0.5 text-[0.6rem] text-white/40 transition hover:border-[#c9a96e]/20 hover:text-white/70" @click="insertEmoji('❤️')">❤</button>
+                                        <button type="button" class="rounded-full border border-white/8 px-2 py-0.5 text-[0.6rem] text-white/40 transition hover:border-[#c9a96e]/20 hover:text-white/70" @click="insertEmoji('🔥')">🔥</button>
+                                        <button type="button" class="rounded-full border border-white/8 px-2 py-0.5 text-[0.6rem] text-white/40 transition hover:border-[#c9a96e]/20 hover:text-white/70" @click="insertEmoji('👍')">👍</button>
+                                        <span x-show="selectedChannel?.slowmode_seconds" x-cloak class="ml-auto text-[0.6rem] uppercase tracking-[0.1em] text-white/22" x-text="`${selectedChannel.slowmode_seconds}s slowmode`"></span>
                                     </div>
                                     <input x-ref="attachmentInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" class="hidden" @change="handleAttachment($event)">
                                 </form>
