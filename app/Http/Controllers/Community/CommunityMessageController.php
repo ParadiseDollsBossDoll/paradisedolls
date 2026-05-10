@@ -34,8 +34,8 @@ class CommunityMessageController extends Controller
         CommunityPresence::ping($user);
 
         $request->validate([
-            'before_id' => ['nullable', 'integer', 'exists:community_messages,id'],
-            'after_id' => ['nullable', 'integer', 'exists:community_messages,id'],
+            'before_id' => ['nullable', 'integer', 'min:1'],
+            'after_id' => ['nullable', 'integer', 'min:1'],
             'q' => ['nullable', 'string', 'min:'.max(1, (int) config('community.performance.search_min_chars', 2)), 'max:100'],
         ]);
 
@@ -48,7 +48,7 @@ class CommunityMessageController extends Controller
         if ($search !== '') {
             $query->where(function ($builder) use ($search) {
                 $builder
-                    ->where('message', 'like', '%'.$search.'%')
+                    ->whereFullText('message', $search)
                     ->orWhere('attachment', 'like', '%'.$search.'%');
             });
         }

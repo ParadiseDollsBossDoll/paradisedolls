@@ -15,7 +15,7 @@ class CommunityPresence
 
     private const DIRECTORY_CACHE_KEY = 'community:member-directory';
 
-    private const DIRECTORY_CACHE_SECONDS = 60;
+    private const DIRECTORY_CACHE_SECONDS = 300;
 
     public static function ping(User $user): void
     {
@@ -52,11 +52,11 @@ class CommunityPresence
         $offlineCount = max(0, $users->count() - count($online));
 
         return [
-            'online' => $online,
-            'offline' => $offline,
+            'online'        => $online,
+            'offline'       => $summaryOnly ? [] : array_slice($offline, 0, 50),
             'offline_count' => $offlineCount,
-            'total' => count($online) + $offlineCount,
-            'typing' => $channelId ? self::typingUsersFor($viewer, $channelId) : [],
+            'total'         => count($online) + $offlineCount,
+            'typing'        => $channelId ? self::typingUsersFor($viewer, $channelId) : [],
         ];
     }
 

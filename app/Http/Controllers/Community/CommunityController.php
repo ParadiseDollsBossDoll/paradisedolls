@@ -64,18 +64,22 @@ class CommunityController extends Controller
             $this->markChannelAsRead($selectedChannel, $user);
         }
 
-        $messages = $selectedChannel
+        $initialPageSize = max(1, (int) config('community.performance.initial_message_page_size', 15));
+        $rawMessages = $selectedChannel
             ? $selectedChannel->messages()
                 ->select(['id', 'channel_id', 'user_id', 'message', 'attachment', 'reply_to', 'is_pinned', 'created_at'])
                 ->with(['user:id,name', 'replyTo.user:id,name', 'reactions'])
                 ->latest()
-                ->take(max(1, (int) config('community.performance.initial_message_page_size', 15)))
+                ->take($initialPageSize)
                 ->get()
                 ->reverse()
                 ->values()
-                ->map(fn (CommunityMessage $message) => $message->toFrontendArray($user))
-                ->all()
-            : [];
+            : collect([]);
+
+        $initialHasMore = $rawMessages->isNotEmpty()
+            && $selectedChannel->messages()->where('id', '<', $rawMessages->first()->id)->exists();
+
+        $messages = $rawMessages->map(fn (CommunityMessage $message) => $message->toFrontendArray($user))->all();
 
         $courses = Course::query()
             ->where('is_published', true)
@@ -149,6 +153,7 @@ class CommunityController extends Controller
                 'channels' => $channels->map(fn (CommunityChannel $item) => $item->toFrontendArray($user, $unreadCounts[$item->id] ?? 0))->all(),
                 'selected_channel' => $selectedChannel?->toFrontendArray($user, $unreadCounts[$selectedChannel->id] ?? 0),
                 'messages' => $messages,
+                'has_more' => $initialHasMore,
                 'members' => CommunityPresence::payloadFor($user, $selectedChannel?->id),
                 'channel_notice' => $channelNotice,
                 'first_unread_message_id' => $firstUnreadMessageId,
