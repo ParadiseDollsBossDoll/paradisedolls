@@ -357,8 +357,23 @@
                                     <svg viewBox="0 0 16 16" class="h-4 w-4 shrink-0 stroke-current fill-none stroke-[1.8] text-white/25"><circle cx="7" cy="7" r="4"></circle><path d="M10 10l3 3"></path></svg>
                                     <input x-model="searchQuery" @input="handleSearchInput()" type="text" class="w-48 border-0 bg-transparent px-0 py-0 text-[0.74rem] text-white placeholder:text-white/20 focus:outline-none focus:ring-0" placeholder="{{ __('Search messages') }}">
                                 </div>
-                                <button type="button" class="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white xl:hidden" @click="membersDrawerOpen = true">
-                                    <svg viewBox="0 0 16 16" class="h-4 w-4 stroke-current fill-none stroke-[1.8]"><circle cx="6" cy="5" r="2.5"></circle><path d="M1 13c0-2.8 2.2-5 5-5"></path><circle cx="12" cy="5" r="2.5"></circle><path d="M15 13c0-2.8-2.2-5-5-5"></path></svg>
+                                {{-- Mobile: open drawer overlay --}}
+                                <button type="button" class="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white xl:hidden" @click="membersDrawerOpen = !membersDrawerOpen" title="{{ __('Members') }}">
+                                    <svg viewBox="0 0 16 16" class="h-[17px] w-[17px] fill-none stroke-current stroke-[1.5]" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="5.5" cy="4.5" r="2.5"/>
+                                        <path d="M0.5 14a5 5 0 0 1 10 0"/>
+                                        <circle cx="12.5" cy="4" r="2" opacity=".45"/>
+                                        <path d="M11 13.5a3.5 3.5 0 0 1 4.5 0" opacity=".45"/>
+                                    </svg>
+                                </button>
+                                {{-- Desktop: toggle members sidebar --}}
+                                <button type="button" class="hidden xl:flex h-8 w-8 items-center justify-center rounded-lg transition" :class="membersOpen ? 'bg-white/[0.08] text-[#c9a96e]' : 'text-white/30 hover:bg-white/[0.05] hover:text-white'" @click="membersOpen = !membersOpen" :title="membersOpen ? '{{ __('Hide members') }}' : '{{ __('Show members') }}'">
+                                    <svg viewBox="0 0 16 16" class="h-[17px] w-[17px] fill-none stroke-current stroke-[1.5]" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="5.5" cy="4.5" r="2.5"/>
+                                        <path d="M0.5 14a5 5 0 0 1 10 0"/>
+                                        <circle cx="12.5" cy="4" r="2" opacity=".45"/>
+                                        <path d="M11 13.5a3.5 3.5 0 0 1 4.5 0" opacity=".45"/>
+                                    </svg>
                                 </button>
                             </div>
                         </div>
@@ -369,12 +384,6 @@
 
                         <div x-ref="messageScroller" @scroll="handleScroller()" class="community-scroll flex-1 overflow-y-auto px-5 py-5">
                             <div class="mx-auto max-w-5xl">
-                                <div class="mb-5 flex justify-center" x-show="hasMoreMessages">
-                                    <button type="button" class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[0.68rem] uppercase tracking-[0.18em] text-white/55 transition hover:border-[#c9a96e]/25 hover:text-white" @click="loadOlderMessages()" :disabled="loadingOlder">
-                                        <span x-text="loadingOlder ? 'Loading...' : 'Load older messages'"></span>
-                                    </button>
-                                </div>
-
                                 <div class="mb-5 border-b border-white/5 pb-5">
                                     <div class="flex items-center gap-3">
                                         <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[#1d1a12] text-[#c9a96e]">
@@ -387,6 +396,12 @@
                                             <p class="mt-0.5 text-[0.74rem] leading-5 text-white/30" x-text="selectedChannel ? `This is the beginning of the #${selectedChannel.name} channel for ${server.name}.` : 'This is the beginning of your community channel.'"></p>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div class="mb-5 flex justify-center" x-show="hasMoreMessages">
+                                    <button type="button" class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[0.68rem] uppercase tracking-[0.18em] text-white/55 transition hover:border-[#c9a96e]/25 hover:text-white" @click="loadOlderMessages()" :disabled="loadingOlder">
+                                        <span x-text="loadingOlder ? 'Loading...' : 'Load older messages'"></span>
+                                    </button>
                                 </div>
 
                                 <div x-show="channelNotice" x-cloak class="mb-3 rounded-lg border px-3 py-2 text-[0.76rem]" :class="channelNotice?.tone === 'success' ? 'border-emerald-400/15 bg-emerald-500/6 text-emerald-200' : channelNotice?.tone === 'warning' ? 'border-[#c9a96e]/15 bg-[#2a211b]/70 text-[#eed9b4]' : channelNotice?.tone === 'muted' ? 'border-white/6 bg-white/[0.025] text-white/50' : 'border-red-400/14 bg-red-500/6 text-red-200'">
@@ -457,7 +472,19 @@
                                                 </div>
                                             </template>
 
-                                            <article class="group rounded-lg px-2 transition hover:bg-white/[0.025]" :class="isGrouped(index) ? 'py-1.5' : 'py-2.5 mt-1'">
+                                            <article class="group rounded-lg px-2 transition hover:bg-white/[0.02]" :class="isGrouped(index) ? 'pt-0.5 pb-0' : 'pt-3 pb-0 mt-2'">
+                                                {{-- Discord-style reply indicator --}}
+                                                <template x-if="message.reply_to">
+                                                    <div class="mb-0.5 flex items-end gap-3">
+                                                        <div class="w-10 shrink-0 flex justify-end">
+                                                            <div class="h-[10px] w-[18px] border-t border-l border-white/[0.12] rounded-tl-[5px]"></div>
+                                                        </div>
+                                                        <button type="button" @click="jumpToMessage(message.reply_to.id)" class="flex min-w-0 flex-1 items-center gap-1.5 pb-0.5 text-left text-[0.72rem] text-white/38 transition-colors hover:text-white/60 truncate">
+                                                            <span class="shrink-0 font-semibold text-white/55" x-text="message.reply_to.user_name"></span>
+                                                            <span class="truncate" x-text="message.reply_to.message || 'Attachment'"></span>
+                                                        </button>
+                                                    </div>
+                                                </template>
                                                 <div class="flex items-start gap-3">
                                                     <div class="w-10 shrink-0">
                                                         <template x-if="!isGrouped(index)">
@@ -465,20 +492,19 @@
                                                                 <span x-text="message.user.initials"></span>
                                                             </div>
                                                         </template>
+                                                        <template x-if="isGrouped(index)">
+                                                            <div class="flex h-5 items-center justify-end pr-0.5 opacity-0 transition-opacity duration-100 group-hover:opacity-100">
+                                                                <span class="text-[0.58rem] tabular-nums leading-none text-white/18" x-text="formatMessageTime(message.created_at)"></span>
+                                                            </div>
+                                                        </template>
                                                     </div>
                                                     <div class="min-w-0 flex-1">
                                                         <template x-if="!isGrouped(index)">
-                                                            <div class="mb-1 flex items-baseline gap-2">
-                                                                <span class="text-[0.86rem] font-semibold text-[#f0ede8]" x-text="message.user.name"></span>
-                                                                <span class="text-[0.65rem] text-white/20" :title="formatFullTimestamp(message.created_at)" x-text="formatMessageTime(message.created_at)"></span>
+                                                            <div class="mb-0.5 flex items-baseline gap-2">
+                                                                <span class="text-[0.83rem] font-semibold text-[#f0ede8]" x-text="message.user.name"></span>
+                                                                <span class="text-[0.62rem] text-white/20" :title="formatFullTimestamp(message.created_at)" x-text="formatMessageTime(message.created_at)"></span>
                                                             </div>
                                                         </template>
-
-                                                        <div x-show="message.reply_to" x-cloak class="mb-2 rounded-lg border border-white/8 bg-white/[0.03] px-3 py-2 text-[0.72rem] text-white/45">
-                                                            <span class="font-semibold text-white/70" x-text="message.reply_to?.user_name"></span>
-                                                            <span class="mx-1 text-white/20">-</span>
-                                                            <span x-text="message.reply_to?.message"></span>
-                                                        </div>
 
                                                         <div class="relative">
                                                             <div class="absolute right-0 top-0 hidden -translate-y-8 items-center gap-1 rounded-xl border border-white/8 bg-[#151317] p-1 shadow-[0_12px_28px_rgba(0,0,0,0.34)] group-hover:flex">
@@ -490,7 +516,7 @@
                                                                 <button type="button" x-show="message.can_delete" x-cloak class="rounded-lg px-2 py-1 text-[0.62rem] uppercase tracking-[0.16em] text-red-300 transition hover:bg-white/5" @click="deleteMessage(message)">{{ __('Delete') }}</button>
                                                             </div>
 
-                                                            <div x-show="message.message" x-cloak class="text-[0.86rem] leading-7 text-white/75" x-html="renderMessage(message.message)"></div>
+                                                            <div x-show="message.message" x-cloak class="text-[0.82rem] leading-relaxed text-white/80" x-html="renderMessage(message.message)"></div>
 
                                                             <template x-if="message.attachment">
                                                                 <div class="mt-3 overflow-hidden rounded-2xl border border-white/8 bg-[#121014]">
@@ -523,7 +549,7 @@
                             </div>
                         </div>
 
-                        <div class="border-t border-white/5 px-4 py-3">
+                        <div x-show="!(selectedChannel?.is_locked && !features.can_moderate_messages)" x-cloak class="border-t border-white/5 px-4 py-3">
                             <div class="mx-auto max-w-5xl">
                                 <div x-show="replyTo" x-cloak class="mb-2 flex items-center justify-between rounded-lg border border-[#c9a96e]/14 bg-[#1b1714] px-3 py-2 text-[0.76rem] text-[#ead2ab]">
                                     <div class="min-w-0 flex items-center gap-1.5 truncate">
@@ -616,7 +642,7 @@
                         </div>
                     </section>
 
-                    <aside class="fixed inset-y-0 right-0 z-50 w-[86vw] max-w-[220px] translate-x-full border-l border-white/5 bg-[#100c0f] p-3 transition-transform xl:static xl:z-auto xl:w-[220px] xl:translate-x-0" :class="membersDrawerOpen ? 'translate-x-0' : 'translate-x-full xl:translate-x-0'">
+                    <aside x-show="membersOpen || membersDrawerOpen" class="fixed inset-y-0 right-0 z-50 w-[86vw] max-w-[220px] translate-x-full border-l border-white/5 bg-[#100c0f] p-3 transition-transform xl:static xl:z-auto xl:w-[220px] xl:translate-x-0" :class="membersDrawerOpen ? 'translate-x-0' : 'translate-x-full xl:translate-x-0'">
                         <div class="flex items-center justify-between">
                             <div class="text-[0.58rem] uppercase tracking-[0.14em] text-white/25">{{ __('Online') }} - <span x-text="members.online.length"></span></div>
                             <button type="button" class="rounded-lg p-2 text-white/40 transition hover:bg-white/5 hover:text-white xl:hidden" @click="membersDrawerOpen = false">x</button>
