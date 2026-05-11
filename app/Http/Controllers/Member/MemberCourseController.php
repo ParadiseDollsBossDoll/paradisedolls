@@ -95,7 +95,7 @@ class MemberCourseController extends Controller
             );
         });
 
-        $community->ensureForCourse($course);
+        $community->ensureForCourse($course, $request->user());
 
         $course = $this->learningCourse($slug);
         $lesson = $this->resumeLesson($course, $request->user()->id);

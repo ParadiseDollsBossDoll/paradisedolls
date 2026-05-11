@@ -572,4 +572,92 @@ class AdminCourseManagementTest extends TestCase
         ]);
         $this->assertSame(3, $course->fresh()->lessons()->count());
     }
+
+    public function test_minimal_lesson_form_update_preserves_legacy_lesson_content(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $course = Course::create([
+            'title' => 'Legacy Lesson Course',
+            'slug' => 'legacy-lesson-course',
+            'platform_label' => 'General',
+            'description' => 'A course with saved legacy lesson content.',
+            'is_published' => true,
+        ]);
+        $module = $course->modules()->create([
+            'title' => 'Core Training',
+            'is_published' => true,
+            'sort_order' => 1,
+        ]);
+        $lesson = $course->lessons()->create([
+            'course_module_id' => $module->id,
+            'title' => 'Legacy Setup',
+            'body' => 'Saved body copy.',
+            'overview' => 'Saved overview copy.',
+            'steps' => "Saved step one\nSaved step two",
+            'tips' => 'Saved tip.',
+            'safety_notes' => 'Saved safety note.',
+            'resource_links' => 'Saved Resource | https://example.com/resource',
+            'lesson_banner_image' => 'academy/lesson-banners/banner.png',
+            'lesson_images' => ['academy/lesson-images/example.png'],
+            'video_url' => 'https://iframe.mediadelivery.net/embed/654926/video-id',
+            'bunny_video_id' => 'video-id',
+            'bunny_library_id' => '654926',
+            'bunny_video_title' => 'Saved Bunny Video',
+            'bunny_thumbnail_url' => 'https://cdn.example.com/video-id/thumbnail.jpg',
+            'bunny_upload_fingerprint' => 'saved.mp4:100:123',
+            'bunny_status' => 4,
+            'duration' => '04:12',
+            'has_pdf' => true,
+            'pdf_url' => 'https://example.com/guide.pdf',
+            'presentation_url' => 'https://www.canva.com/design/legacy/view?embed',
+            'is_published' => true,
+            'sort_order' => 1,
+        ]);
+
+        $this->actingAs($admin)->put(route('admin.courses.update', $course), [
+            'title' => 'Legacy Lesson Course',
+            'slug' => 'legacy-lesson-course',
+            'platform_label' => 'General',
+            'description' => 'A course with saved legacy lesson content.',
+            'has_course_outline' => '0',
+            'has_intro' => '0',
+            'is_published' => '1',
+            'modules' => [
+                [
+                    'id' => $module->id,
+                    'client_key' => 'module-'.$module->id,
+                    'title' => 'Core Training',
+                    'is_published' => '1',
+                    'sort_order' => 1,
+                ],
+            ],
+            'lessons' => [
+                [
+                    'id' => $lesson->id,
+                    'course_module_id' => $module->id,
+                    'module_key' => 'module-'.$module->id,
+                    'title' => 'Legacy Setup Updated',
+                    'is_published' => '1',
+                    'content_blocks_enabled' => '1',
+                    'sort_order' => 1,
+                ],
+            ],
+        ])->assertRedirect(route('admin.courses.index'));
+
+        $lesson->refresh();
+
+        $this->assertSame('Legacy Setup Updated', $lesson->title);
+        $this->assertSame('Saved body copy.', $lesson->body);
+        $this->assertSame('Saved overview copy.', $lesson->overview);
+        $this->assertSame("Saved step one\nSaved step two", $lesson->steps);
+        $this->assertSame('Saved tip.', $lesson->tips);
+        $this->assertSame('Saved safety note.', $lesson->safety_notes);
+        $this->assertSame('Saved Resource | https://example.com/resource', $lesson->resource_links);
+        $this->assertSame('academy/lesson-banners/banner.png', $lesson->lesson_banner_image);
+        $this->assertSame(['academy/lesson-images/example.png'], $lesson->lesson_images);
+        $this->assertSame('video-id', $lesson->bunny_video_id);
+        $this->assertSame('https://example.com/guide.pdf', $lesson->pdf_url);
+        $this->assertTrue($lesson->has_pdf);
+        $this->assertSame('https://www.canva.com/design/legacy/view?embed', $lesson->presentation_url);
+    }
 }

@@ -512,8 +512,6 @@
 
                 <div class="space-y-3 p-5">
                     <x-input-error class="mt-2" :messages="$errors->get('lessons')" />
-                    <x-input-error class="mt-2" :messages="$errors->get('lessons.*.lesson_banner_image_upload')" />
-                    <x-input-error class="mt-2" :messages="$errors->get('lessons.*.lesson_images_upload.*')" />
                     <x-input-error class="mt-2" :messages="$errors->get('lessons.*.content_blocks.*.image_upload')" />
                     <x-input-error class="mt-2" :messages="$errors->get('lessons.*.content_blocks.*.gallery_uploads.*')" />
                     <x-input-error class="mt-2" :messages="$errors->get('lessons.*.content_blocks.*.file_upload')" />
@@ -562,122 +560,6 @@
                                         <span class="mt-0.5 block text-[0.68rem] text-boss-ivory/32">{{ __('Visible inside the course.') }}</span>
                                     </span>
                                 </label>
-
-                                <div class="sm:col-span-2">
-                                    <input type="hidden" x-bind:name="`lessons[${index}][video_url]`" x-bind:value="lesson.video_url || ''">
-                                    <input type="hidden" x-bind:name="`lessons[${index}][bunny_video_id]`" x-bind:value="lesson.bunny_video_id || ''">
-                                    <input type="hidden" x-bind:name="`lessons[${index}][bunny_library_id]`" x-bind:value="lesson.bunny_library_id || ''">
-                                    <input type="hidden" x-bind:name="`lessons[${index}][bunny_video_title]`" x-bind:value="lesson.bunny_video_title || ''">
-                                    <input type="hidden" x-bind:name="`lessons[${index}][bunny_thumbnail_url]`" x-bind:value="lesson.bunny_thumbnail_url || ''">
-                                    <input type="hidden" x-bind:name="`lessons[${index}][bunny_upload_fingerprint]`" x-bind:value="lesson.bunny_upload_fingerprint || ''">
-                                    <input type="hidden" x-bind:name="`lessons[${index}][bunny_status]`" x-bind:value="lesson.bunny_status || ''">
-                                    <input type="hidden" x-bind:name="`lessons[${index}][duration]`" x-bind:value="lesson.duration || ''">
-
-                                    <x-input-label ::for="`lesson_video_${index}`" :value="__('Bunny Video')" />
-                                    <div class="mt-2 rounded-lg border border-white/[0.06] bg-white/[0.025] p-3">
-                                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                                            <div class="flex h-20 w-full shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/[0.06] bg-[#08080f] text-[0.62rem] text-boss-ivory/25 sm:w-32">
-                                                <img x-show="lesson.bunny_thumbnail_url" x-bind:src="lesson.bunny_thumbnail_url" x-bind:alt="lesson.bunny_video_title || lesson.title" class="h-full w-full object-cover">
-                                                <span x-show="!lesson.bunny_thumbnail_url">{{ __('No video') }}</span>
-                                            </div>
-                                            <div class="min-w-0 flex-1">
-                                                <p class="truncate text-[0.78rem] text-boss-ivory" x-text="lesson.bunny_video_title || '{{ __('No Bunny video selected') }}'"></p>
-                                                <p class="mt-1 text-[0.62rem] text-boss-ivory/28">
-                                                    <span x-show="lesson.bunny_video_id" x-text="lesson.duration ? `${lesson.duration} · ${lesson.bunny_video_id}` : lesson.bunny_video_id"></span>
-                                                    <span x-show="!lesson.bunny_video_id">{{ __('Select an existing Bunny video or upload a new one.') }}</span>
-                                                </p>
-                                                <div x-show="uploads[index]" class="mt-2">
-                                                    <div class="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                                                        <div class="h-full rounded-full bg-boss-gold transition-all" x-bind:style="`width: ${uploads[index]?.progress || 0}%`"></div>
-                                                    </div>
-                                                    <p class="mt-1 text-[0.62rem]" x-bind:class="uploads[index]?.error ? 'text-red-300' : 'text-boss-ivory/32'" x-text="uploads[index]?.error || uploads[index]?.status"></p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="mt-3 flex flex-wrap gap-2">
-                                            <button type="button" @click="openBunnyPicker(index)" class="rounded-lg border border-boss-gold/20 bg-boss-gold/10 px-3 py-1.5 text-[0.68rem] text-boss-gold transition-colors hover:bg-boss-gold/15">
-                                                {{ __('Select Existing Bunny Video') }}
-                                            </button>
-                                            <label class="cursor-pointer rounded-lg border border-white/[0.07] bg-white/[0.04] px-3 py-1.5 text-[0.68rem] text-boss-ivory/45 transition-colors hover:text-boss-gold">
-                                                {{ __('Upload New Bunny Video') }}
-                                                <input type="file" accept="video/*" class="hidden" @change="uploadBunnyVideo(index, $event)">
-                                            </label>
-                                            <button x-show="lesson.bunny_video_id" type="button" @click="lesson.bunny_video_id = ''; lesson.bunny_library_id = ''; lesson.bunny_video_title = ''; lesson.bunny_thumbnail_url = ''; lesson.video_url = ''; lesson.duration = ''" class="rounded-lg border border-red-400/10 bg-red-400/[0.05] px-3 py-1.5 text-[0.68rem] text-red-300/70 transition-colors hover:text-red-200">
-                                                {{ __('Remove Video') }}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="sm:col-span-2 rounded-lg border border-white/[0.06] bg-white/[0.025] p-3">
-                                    <div class="grid gap-3 md:grid-cols-2">
-                                        <div>
-                                            <x-input-label ::for="`lesson_banner_image_${index}`" :value="__('Lesson Banner Image')" />
-                                            <template x-if="lesson.lesson_banner_image_url">
-                                                <div class="mt-2 overflow-hidden rounded-lg border border-white/[0.06] bg-[#08080f]">
-                                                    <img x-bind:src="lesson.lesson_banner_image_url" x-bind:alt="lesson.title || '{{ __('Lesson banner') }}'" class="h-28 w-full object-cover">
-                                                </div>
-                                            </template>
-                                            <input type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="pd-input mt-3" x-bind:id="`lesson_banner_image_${index}`" x-bind:name="`lessons[${index}][lesson_banner_image_upload]`">
-                                            <p class="mt-1 text-[0.6rem] text-boss-ivory/22">{{ __('Optional image shown above this lesson. Uploading a new file replaces the current banner.') }}</p>
-                                        </div>
-                                        <div>
-                                            <x-input-label ::for="`lesson_images_${index}`" :value="__('Lesson Gallery Images')" />
-                                            <template x-if="lesson.lesson_image_urls && lesson.lesson_image_urls.length">
-                                                <div class="mt-2 grid grid-cols-3 gap-2">
-                                                    <template x-for="imageUrl in lesson.lesson_image_urls" :key="imageUrl">
-                                                        <img x-bind:src="imageUrl" x-bind:alt="lesson.title || '{{ __('Lesson image') }}'" class="h-16 w-full rounded-md border border-white/[0.06] object-cover">
-                                                    </template>
-                                                </div>
-                                            </template>
-                                            <input type="file" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="pd-input mt-3" x-bind:id="`lesson_images_${index}`" x-bind:name="`lessons[${index}][lesson_images_upload][]`">
-                                            <p class="mt-1 text-[0.6rem] text-boss-ivory/22">{{ __('Optional screenshots, examples, or walkthrough images. New uploads are added to the gallery.') }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="sm:col-span-2">
-                                    <x-input-label ::for="`lesson_body_${index}`" :value="__('Lesson Description')" />
-                                    <textarea rows="2" class="pd-input mt-2" x-model="lesson.body" x-bind:id="`lesson_body_${index}`" x-bind:name="`lessons[${index}][body]`" placeholder="{{ __('What will members learn in this lesson?') }}"></textarea>
-                                </div>
-
-                                <div class="sm:col-span-2">
-                                    <x-input-label ::for="`lesson_overview_${index}`" :value="__('Overview Content')" />
-                                    <textarea rows="3" class="pd-input mt-2" x-model="lesson.overview" x-bind:id="`lesson_overview_${index}`" x-bind:name="`lessons[${index}][overview]`" placeholder="{{ __('Plain-language explanation for this lesson.') }}"></textarea>
-                                </div>
-
-                                <div class="sm:col-span-2">
-                                    <x-input-label ::for="`lesson_steps_${index}`" :value="__('Step-by-step Guide')" />
-                                    <textarea rows="4" class="pd-input mt-2" x-model="lesson.steps" x-bind:id="`lesson_steps_${index}`" x-bind:name="`lessons[${index}][steps]`" placeholder="{{ __('One step per line') }}"></textarea>
-                                </div>
-
-                                <div>
-                                    <x-input-label ::for="`lesson_tips_${index}`" :value="__('Important Tips')" />
-                                    <textarea rows="4" class="pd-input mt-2" x-model="lesson.tips" x-bind:id="`lesson_tips_${index}`" x-bind:name="`lessons[${index}][tips]`" placeholder="{{ __('One tip per line') }}"></textarea>
-                                </div>
-
-                                <div>
-                                    <x-input-label ::for="`lesson_safety_${index}`" :value="__('Safety Notes')" />
-                                    <textarea rows="4" class="pd-input mt-2" x-model="lesson.safety_notes" x-bind:id="`lesson_safety_${index}`" x-bind:name="`lessons[${index}][safety_notes]`" placeholder="{{ __('One note per line') }}"></textarea>
-                                </div>
-
-                                <div class="sm:col-span-2">
-                                    <x-input-label ::for="`lesson_resources_${index}`" :value="__('Resource Links')" />
-                                    <textarea rows="3" class="pd-input mt-2" x-model="lesson.resource_links" x-bind:id="`lesson_resources_${index}`" x-bind:name="`lessons[${index}][resource_links]`" placeholder="{{ __('Label | https://example.com') }}"></textarea>
-                                    <p class="mt-1 text-[0.6rem] text-boss-ivory/20">{{ __('Use one resource per line. Format: Label | URL') }}</p>
-                                </div>
-
-                                <div class="sm:col-span-2">
-                                    <x-input-label ::for="`lesson_pdf_${index}`" :value="__('PDF URL (optional)')" />
-                                    <input type="text" class="pd-input mt-2" x-model="lesson.pdf_url" x-bind:id="`lesson_pdf_${index}`" x-bind:name="`lessons[${index}][pdf_url]`" placeholder="https://... (leave blank if lesson is video only)">
-                                    <p class="mt-1 text-[0.6rem] text-boss-ivory/20">{{ __('If this lesson is a PDF, paste the link here. Leave blank for video-only lessons.') }}</p>
-                                </div>
-
-                                <div class="sm:col-span-2">
-                                    <x-input-label ::for="`lesson_presentation_${index}`" :value="__('Canva / presentation URL')" />
-                                    <textarea rows="2" class="pd-input mt-2" x-model="lesson.presentation_url" x-bind:id="`lesson_presentation_${index}`" x-bind:name="`lessons[${index}][presentation_url]`" placeholder="https://www.canva.com/design/... or Canva iframe embed code"></textarea>
-                                    <p class="mt-1 text-[0.6rem] text-boss-ivory/20">{{ __('Paste a Canva presentation URL or full Canva iframe embed code.') }}</p>
-                                </div>
 
                                 @include('admin.courses.partials.lesson-content-blocks')
 
