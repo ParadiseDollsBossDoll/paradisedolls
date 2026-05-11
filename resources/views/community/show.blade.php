@@ -353,6 +353,75 @@
                             <div class="h-4 w-px bg-white/10"></div>
                             <span class="min-w-0 flex-1 truncate text-[0.76rem] text-white/35" x-text="selectedChannel?.description || 'General community chat & discussion'"></span>
                             <div class="ml-auto hidden items-center gap-2 md:flex">
+
+                                {{-- Pinned messages toggle + floating panel --}}
+                                <div class="relative" @click.outside="pinnedPanelOpen = false">
+                                    <button type="button"
+                                        x-show="pinnedMessages().length > 0" x-cloak
+                                        class="flex h-8 w-8 items-center justify-center rounded-lg transition"
+                                        :class="pinnedPanelOpen ? 'bg-white/[0.08] text-[#c9a96e]' : 'text-white/30 hover:bg-white/[0.05] hover:text-white'"
+                                        @click="pinnedPanelOpen = !pinnedPanelOpen"
+                                        title="{{ __('Pinned messages') }}">
+                                        <svg viewBox="0 0 16 16" class="h-[15px] w-[15px] fill-none stroke-current stroke-[1.5]" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M8 2l2 2-3.5 3.5 1.5 1.5-4.5 4.5H2v-1.5l4.5-4.5L5 6.5z"/>
+                                            <path d="M13 1l2 2"/>
+                                            <path d="M1 15l3-3"/>
+                                        </svg>
+                                    </button>
+
+                                    {{-- Floating pinned panel --}}
+                                    <div x-show="pinnedPanelOpen" x-cloak
+                                        class="absolute right-0 top-full z-30 mt-2 w-80 overflow-hidden rounded-2xl border border-white/8 bg-[#111015] shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
+                                        @keydown.escape.window="pinnedPanelOpen = false">
+
+                                        {{-- Panel header --}}
+                                        <div class="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
+                                            <div class="flex items-center gap-2">
+                                                <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[1.5] text-[#c9a96e]" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M8 2l2 2-3.5 3.5 1.5 1.5-4.5 4.5H2v-1.5l4.5-4.5L5 6.5z"/>
+                                                    <path d="M1 15l3-3"/>
+                                                </svg>
+                                                <span class="text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-white/50">{{ __('Pinned Messages') }}</span>
+                                                <span class="rounded-full bg-[#c9a96e]/15 px-2 py-0.5 text-[0.56rem] font-semibold text-[#c9a96e]" x-text="pinnedMessages().length"></span>
+                                            </div>
+                                            <button type="button" @click="pinnedPanelOpen = false" class="flex h-6 w-6 items-center justify-center rounded-lg text-white/30 transition hover:text-white">
+                                                <svg viewBox="0 0 16 16" class="h-3 w-3 fill-none stroke-current stroke-[2]"><path d="M2 2l12 12M14 2L2 14"></path></svg>
+                                            </button>
+                                        </div>
+
+                                        {{-- Empty state --}}
+                                        <template x-if="!pinnedMessages().length">
+                                            <div class="px-4 py-8 text-center">
+                                                <svg viewBox="0 0 16 16" class="mx-auto mb-2 h-6 w-6 fill-none stroke-current stroke-[1.2] text-white/15" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M8 2l2 2-3.5 3.5 1.5 1.5-4.5 4.5H2v-1.5l4.5-4.5L5 6.5z"/>
+                                                    <path d="M1 15l3-3"/>
+                                                </svg>
+                                                <p class="text-[0.75rem] text-white/28">{{ __('No pinned messages yet.') }}</p>
+                                            </div>
+                                        </template>
+
+                                        {{-- Pinned message list --}}
+                                        <div x-show="pinnedMessages().length" class="max-h-[340px] overflow-y-auto community-scroll">
+                                            <template x-for="msg in pinnedMessages()" :key="`panel-pinned-${msg.id}`">
+                                                <button type="button"
+                                                    @click="jumpToMessage(msg.id); pinnedPanelOpen = false"
+                                                    class="flex w-full gap-3 border-b border-white/[0.04] px-4 py-3 text-left transition hover:bg-white/[0.04] last:border-b-0">
+                                                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/8 font-display text-[0.56rem] font-bold text-white" :style="`background: radial-gradient(circle at top, ${msg.user.accent}, #151014 70%)`">
+                                                        <span x-text="msg.user.initials"></span>
+                                                    </div>
+                                                    <div class="min-w-0 flex-1">
+                                                        <div class="flex items-baseline gap-1.5">
+                                                            <span class="text-[0.76rem] font-semibold text-[#f0ede8]" x-text="msg.user.name"></span>
+                                                            <span class="text-[0.6rem] text-white/22" x-text="formatMessageTime(msg.created_at)"></span>
+                                                        </div>
+                                                        <p class="mt-0.5 line-clamp-2 text-[0.74rem] leading-[1.45] text-white/48" x-text="msg.message || msg.attachment?.name || 'Attachment'"></p>
+                                                    </div>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5">
                                     <svg viewBox="0 0 16 16" class="h-4 w-4 shrink-0 stroke-current fill-none stroke-[1.8] text-white/25"><circle cx="7" cy="7" r="4"></circle><path d="M10 10l3 3"></path></svg>
                                     <input x-model="searchQuery" @input="handleSearchInput()" type="text" class="w-48 border-0 bg-transparent px-0 py-0 text-[0.74rem] text-white placeholder:text-white/20 focus:outline-none focus:ring-0" placeholder="{{ __('Search messages') }}">
@@ -412,20 +481,6 @@
                                     <span x-text="searchNotice?.message"></span>
                                 </div>
 
-                                <div x-show="pinnedMessages().length" x-cloak class="mb-4 rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
-                                    <div class="mb-3 flex items-center justify-between gap-3">
-                                        <p class="text-[0.64rem] uppercase tracking-[0.18em] text-white/35">{{ __('Pinned messages') }}</p>
-                                        <span class="text-[0.58rem] uppercase tracking-[0.12em] text-[#c9a96e]" x-text="`${pinnedMessages().length} pinned`"></span>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <template x-for="message in pinnedMessages().slice(0, 3)" :key="`pinned-${message.id}`">
-                                            <button type="button" class="block w-full rounded-2xl border border-white/8 bg-black/20 px-3 py-3 text-left transition hover:border-[#c9a96e]/20 hover:bg-black/30" @click="jumpToMessage(message.id)">
-                                                <div class="text-[0.74rem] font-semibold text-[#f0ede8]" x-text="message.user.name"></div>
-                                                <div class="mt-1 text-[0.76rem] leading-6 text-white/60" x-text="message.message || message.attachment?.name || 'Attachment'"></div>
-                                            </button>
-                                        </template>
-                                    </div>
-                                </div>
 
                                 <div x-show="activeSearchQuery && searchResults.length" x-cloak class="mb-4 rounded-2xl border border-white/8 bg-white/[0.03] p-3">
                                     <div class="mb-2 flex items-center justify-between gap-3">
@@ -457,10 +512,10 @@
                                     <template x-for="(message, index) in messages" :key="message.id">
                                         <div :data-message-id="message.id">
                                             <template x-if="showDateDivider(index)">
-                                                <div class="my-5 flex items-center gap-3">
-                                                    <div class="h-px flex-1 bg-white/6"></div>
-                                                    <span class="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1 text-[0.64rem] uppercase tracking-[0.16em] text-white/35" x-text="formatMessageDate(message.created_at)"></span>
-                                                    <div class="h-px flex-1 bg-white/6"></div>
+                                                <div class="my-4 flex items-center gap-3 px-1 select-none">
+                                                    <div class="h-px flex-1 bg-white/[0.05]"></div>
+                                                    <span class="text-[0.6rem] uppercase tracking-[0.18em] text-white/25" x-text="formatMessageDate(message.created_at)"></span>
+                                                    <div class="h-px flex-1 bg-white/[0.05]"></div>
                                                 </div>
                                             </template>
 
@@ -472,6 +527,26 @@
                                                 </div>
                                             </template>
 
+                                            {{-- System message (pin events) --}}
+                                            <template x-if="message._isSystem">
+                                                <div class="flex items-center gap-2 px-3 py-1 my-0.5 select-none">
+                                                    <svg viewBox="0 0 16 16" class="h-3 w-3 shrink-0 fill-none stroke-current stroke-[1.5] text-white/22" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M8 2l2 2-3.5 3.5 1.5 1.5-4.5 4.5H2v-1.5l4.5-4.5L5 6.5z"/>
+                                                        <path d="M1 15l3-3"/>
+                                                    </svg>
+                                                    <span class="text-[0.74rem] text-white/32 leading-snug">
+                                                        <span class="font-medium text-white/48" x-text="message._actorName"></span>
+                                                        <template x-if="message._systemType === 'pin'">
+                                                            <span> {{ __('pinned a message to this channel.') }}
+                                                                <button type="button" @click="pinnedPanelOpen = true" class="text-white/50 underline underline-offset-2 decoration-white/25 transition hover:text-white/75 hover:decoration-white/50">{{ __('See all pinned messages.') }}</button>
+                                                            </span>
+                                                        </template>
+                                                    </span>
+                                                </div>
+                                            </template>
+
+                                            {{-- Normal message --}}
+                                            <template x-if="!message._isSystem">
                                             <article class="group rounded-lg px-2 transition hover:bg-white/[0.02]" :class="isGrouped(index) ? 'pt-0.5 pb-0' : 'pt-3 pb-0 mt-2'">
                                                 {{-- Discord-style reply indicator --}}
                                                 <template x-if="message.reply_to">
@@ -543,6 +618,7 @@
                                                     </div>
                                                 </div>
                                             </article>
+                                            </template>{{-- end x-if="!message._isSystem" --}}
                                         </div>
                                     </template>
                                 </div>
@@ -687,58 +763,60 @@
                 </div>
             </main>
 
-            <div x-show="channelModalOpen" x-cloak class="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4 py-6" @click.self="closeChannelModal()">
-                <div class="w-full max-w-xl rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(17,15,18,0.98),rgba(10,10,12,0.98))] p-6 shadow-[0_24px_64px_rgba(0,0,0,0.45)]">
-                    <div class="flex items-start justify-between gap-4">
+            <div x-show="channelModalOpen" x-cloak class="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 py-6" @click.self="closeChannelModal()">
+                <div class="w-full max-w-md rounded-2xl border border-white/8 bg-[linear-gradient(180deg,rgba(17,15,18,0.99),rgba(10,10,12,0.99))] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.45)]">
+                    <div class="flex items-start justify-between gap-3">
                         <div>
-                            <p class="text-sm uppercase tracking-[0.22em] text-white/30">{{ __('Admin Controls') }}</p>
-                            <h3 class="mt-2 font-display text-3xl text-[#f4dfb8]" x-text="channelForm.id ? 'Edit channel' : 'Create channel'"></h3>
+                            <p class="text-[0.6rem] uppercase tracking-[0.2em] text-white/30">{{ __('Admin Controls') }}</p>
+                            <h3 class="mt-1 text-[1.1rem] font-semibold text-[#f4dfb8]" x-text="channelForm.id ? 'Edit channel' : 'Create channel'"></h3>
                         </div>
-                        <button type="button" class="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-white/55 transition hover:text-white" @click="closeChannelModal()">x</button>
+                        <button type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-white/40 transition hover:text-white" @click="closeChannelModal()">
+                            <svg viewBox="0 0 16 16" class="h-3 w-3 fill-none stroke-current stroke-[2]"><path d="M2 2l12 12M14 2L2 14"></path></svg>
+                        </button>
                     </div>
 
-                    <form class="mt-6 space-y-4" @submit.prevent="submitChannelForm()">
+                    <form class="mt-4 space-y-3" @submit.prevent="submitChannelForm()">
                         <div>
-                            <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Channel name') }}</label>
-                            <input x-model="channelForm.name" type="text" class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/20 focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0" placeholder="general">
+                            <label class="mb-1.5 block text-[0.6rem] uppercase tracking-[0.16em] text-white/35">{{ __('Channel name') }}</label>
+                            <input x-model="channelForm.name" type="text" class="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[0.82rem] text-white placeholder:text-white/22 focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0" placeholder="general">
                         </div>
                         <div>
-                            <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Description') }}</label>
-                            <textarea x-model="channelForm.description" rows="3" class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/20 focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0" placeholder="{{ __('What is this channel for?') }}"></textarea>
-                        </div>
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <div>
-                                <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Category') }}</label>
-                                <input x-model="channelForm.category" type="text" class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/20 focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0" placeholder="Channels">
-                            </div>
-                            <div>
-                                <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Slowmode seconds') }}</label>
-                                <input x-model.number="channelForm.slowmode_seconds" type="number" min="0" max="300" class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/20 focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0">
-                            </div>
+                            <label class="mb-1.5 block text-[0.6rem] uppercase tracking-[0.16em] text-white/35">{{ __('Description') }}</label>
+                            <textarea x-model="channelForm.description" rows="2" class="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[0.82rem] text-white placeholder:text-white/22 focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0" placeholder="{{ __('What is this channel for?') }}"></textarea>
                         </div>
                         <div class="grid gap-3 md:grid-cols-2">
-                            <label class="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-white/72">
+                            <div>
+                                <label class="mb-1.5 block text-[0.6rem] uppercase tracking-[0.16em] text-white/35">{{ __('Category') }}</label>
+                                <input x-model="channelForm.category" type="text" class="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[0.82rem] text-white placeholder:text-white/22 focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0" placeholder="Channels">
+                            </div>
+                            <div>
+                                <label class="mb-1.5 block text-[0.6rem] uppercase tracking-[0.16em] text-white/35">{{ __('Slowmode seconds') }}</label>
+                                <input x-model.number="channelForm.slowmode_seconds" type="number" min="0" max="300" class="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[0.82rem] text-white focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0">
+                            </div>
+                        </div>
+                        <div class="grid gap-2 md:grid-cols-2">
+                            <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2 text-[0.78rem] text-white/65 transition hover:bg-white/[0.05]">
                                 <input x-model="channelForm.is_private" type="checkbox" class="rounded border-white/20 bg-transparent text-[#d8ae64] focus:ring-[#d8ae64]/40">
                                 <span>{{ __('Private channel') }}</span>
                             </label>
-                            <label class="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-white/72">
+                            <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2 text-[0.78rem] text-white/65 transition hover:bg-white/[0.05]">
                                 <input x-model="channelForm.is_locked" type="checkbox" class="rounded border-white/20 bg-transparent text-[#d8ae64] focus:ring-[#d8ae64]/40">
                                 <span>{{ __('Lock channel') }}</span>
                             </label>
                         </div>
 
-                        <div x-show="features.can_manage_channels" x-cloak class="grid gap-4 md:grid-cols-2">
+                        <div x-show="features.can_manage_channels" x-cloak class="grid gap-3 md:grid-cols-2">
                             <div>
-                                <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Access mode') }}</label>
-                                <select x-model="channelForm.access_mode" class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0">
+                                <label class="mb-1.5 block text-[0.6rem] uppercase tracking-[0.16em] text-white/35">{{ __('Access mode') }}</label>
+                                <select x-model="channelForm.access_mode" class="w-full rounded-xl border border-white/10 bg-[#0e0c10] px-3 py-2 text-[0.82rem] text-white focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0">
                                     <template x-for="option in channelAccessOptions.access_modes" :key="option.value">
                                         <option :value="option.value" x-text="option.label" class="bg-[#140f12]"></option>
                                     </template>
                                 </select>
                             </div>
                             <div>
-                                <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Denied behavior') }}</label>
-                                <select x-model="channelForm.denied_behavior" class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0">
+                                <label class="mb-1.5 block text-[0.6rem] uppercase tracking-[0.16em] text-white/35">{{ __('Denied behavior') }}</label>
+                                <select x-model="channelForm.denied_behavior" class="w-full rounded-xl border border-white/10 bg-[#0e0c10] px-3 py-2 text-[0.82rem] text-white focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0">
                                     <template x-for="option in channelAccessOptions.denied_behaviors" :key="option.value">
                                         <option :value="option.value" x-text="option.label" class="bg-[#140f12]"></option>
                                     </template>
@@ -747,10 +825,10 @@
                         </div>
 
                         <div x-show="features.can_manage_channels && channelForm.access_mode === 'roles'" x-cloak>
-                            <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Allowed roles') }}</label>
-                            <div class="grid gap-3 md:grid-cols-3">
+                            <label class="mb-1.5 block text-[0.6rem] uppercase tracking-[0.16em] text-white/35">{{ __('Allowed roles') }}</label>
+                            <div class="grid gap-2 md:grid-cols-3">
                                 <template x-for="role in channelAccessOptions.roles" :key="role.value">
-                                    <label class="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-white/72">
+                                    <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2 text-[0.78rem] text-white/65 transition hover:bg-white/[0.05]">
                                         <input x-model="channelForm.allowed_roles" :value="role.value" type="checkbox" class="rounded border-white/20 bg-transparent text-[#d8ae64] focus:ring-[#d8ae64]/40">
                                         <span x-text="role.label"></span>
                                     </label>
@@ -759,35 +837,103 @@
                         </div>
 
                         <div x-show="features.can_manage_channels && channelForm.access_mode === 'invite'" x-cloak>
-                            <label class="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">{{ __('Invited members') }}</label>
-                            <div class="max-h-44 space-y-2 overflow-y-auto rounded-[24px] border border-white/8 bg-white/[0.03] p-3">
+                            <label class="mb-1.5 block text-[0.6rem] uppercase tracking-[0.16em] text-white/35">{{ __('Invited members') }}</label>
+                            <div class="max-h-36 space-y-1.5 overflow-y-auto rounded-xl border border-white/8 bg-white/[0.03] p-2">
                                 <template x-for="member in memberDirectory" :key="member.id">
-                                    <label class="flex items-center gap-3 rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm text-white/72">
+                                    <label class="flex cursor-pointer items-center gap-2.5 rounded-lg border border-white/6 bg-black/15 px-3 py-1.5 text-[0.78rem] text-white/65 transition hover:bg-white/[0.05]">
                                         <input x-model="channelForm.invited_user_ids" :value="member.id" type="checkbox" class="rounded border-white/20 bg-transparent text-[#d8ae64] focus:ring-[#d8ae64]/40">
                                         <span class="min-w-0 flex-1 truncate" x-text="member.name"></span>
-                                        <span class="text-[0.56rem] uppercase tracking-[0.12em] text-white/24" x-text="member.role"></span>
+                                        <span class="text-[0.55rem] uppercase tracking-[0.1em] text-white/24" x-text="member.role"></span>
                                     </label>
                                 </template>
                             </div>
                         </div>
 
-                        <div x-show="!features.can_manage_channels" x-cloak class="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-white/60">
+                        <div x-show="!features.can_manage_channels" x-cloak class="rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2.5 text-[0.75rem] text-white/50">
                             {{ __('Moderators can update channel details here, but only admins can change channel visibility and invite access rules.') }}
                         </div>
 
-                        <div class="flex flex-wrap items-center justify-between gap-3 pt-4">
-                            <div class="flex flex-wrap items-center gap-3">
-                                <button type="button" x-show="channelForm.id" x-cloak class="rounded-2xl border border-red-400/16 bg-red-500/8 px-4 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-red-200 transition hover:bg-red-500/14" @click="archiveChannelFromModal()">{{ __('Archive') }}</button>
-                                <button type="button" x-show="features.can_manage_channels && channelForm.id" x-cloak class="rounded-2xl border border-red-500/28 bg-red-500/14 px-4 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-red-100 transition hover:bg-red-500/20" @click="deleteChannelFromModal()">{{ __('Delete') }}</button>
+                        <div class="mt-1 flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.06] pt-3">
+                            <div class="flex items-center gap-1.5">
+                                {{-- Archive — amber/warning (action is reversible) --}}
+                                <button type="button" x-show="channelForm.id" x-cloak
+                                    class="flex items-center gap-1.5 rounded-xl border border-amber-500/18 bg-amber-500/[0.07] px-3 py-1.5 text-[0.67rem] font-semibold uppercase tracking-[0.14em] text-amber-300/70 transition hover:border-amber-400/30 hover:bg-amber-500/14 hover:text-amber-200"
+                                    @click="archiveChannelFromModal()">
+                                    <svg viewBox="0 0 16 16" class="h-3 w-3 shrink-0 fill-none stroke-current stroke-[1.6]" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="1" y="3" width="14" height="3" rx="0.5"/>
+                                        <path d="M2 6v7a1 1 0 001 1h10a1 1 0 001-1V6"/>
+                                        <path d="M6.5 9.5h3"/>
+                                    </svg>
+                                    {{ __('Archive') }}
+                                </button>
+                                {{-- Delete — red/danger (action is permanent) --}}
+                                <button type="button" x-show="features.can_manage_channels && channelForm.id" x-cloak
+                                    class="flex items-center gap-1.5 rounded-xl border border-red-500/20 bg-red-500/[0.07] px-3 py-1.5 text-[0.67rem] font-semibold uppercase tracking-[0.14em] text-red-300/70 transition hover:border-red-400/32 hover:bg-red-500/14 hover:text-red-200"
+                                    @click="deleteChannelFromModal()">
+                                    <svg viewBox="0 0 16 16" class="h-3 w-3 shrink-0 fill-none stroke-current stroke-[1.6]" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M2 4h12"/>
+                                        <path d="M5 4V2.5a.5.5 0 01.5-.5h5a.5.5 0 01.5.5V4"/>
+                                        <rect x="3" y="4" width="10" height="10" rx="1"/>
+                                        <path d="M6.5 7v4M9.5 7v4"/>
+                                    </svg>
+                                    {{ __('Delete') }}
+                                </button>
                             </div>
-                            <div class="ml-auto flex gap-3">
-                                <button type="button" class="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-white/55 transition hover:text-white" @click="closeChannelModal()">{{ __('Cancel') }}</button>
-                                <button type="submit" class="rounded-2xl bg-[linear-gradient(135deg,#6c5431,#d4af6c)] px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-[#17120f] shadow-[0_14px_28px_rgba(201,169,110,0.18)] transition hover:brightness-110" x-text="channelForm.id ? 'Save changes' : 'Create channel'"></button>
+                            <div class="ml-auto flex items-center gap-2">
+                                <button type="button" class="rounded-xl border border-white/[0.08] px-4 py-1.5 text-[0.67rem] font-semibold uppercase tracking-[0.14em] text-white/40 transition hover:border-white/14 hover:text-white/75" @click="closeChannelModal()">{{ __('Cancel') }}</button>
+                                <button type="submit" class="flex items-center gap-1.5 rounded-xl bg-[linear-gradient(135deg,#6c5431,#d4af6c)] px-4 py-1.5 text-[0.67rem] font-semibold uppercase tracking-[0.14em] text-[#17120f] shadow-[0_3px_12px_rgba(201,169,110,0.2)] transition hover:brightness-110">
+                                    <svg viewBox="0 0 16 16" class="h-3 w-3 shrink-0 fill-none stroke-current stroke-[2]" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M2 8l4 4 8-8"/>
+                                    </svg>
+                                    <span x-text="channelForm.id ? '{{ __('Save changes') }}' : '{{ __('Create channel') }}'"></span>
+                                </button>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
+        {{-- Custom confirm dialog (replaces window.confirm) --}}
+        <div x-show="confirmDialog.open" x-cloak class="fixed inset-0 z-[90] flex items-center justify-center bg-black/65 px-4" @keydown.escape.window="confirmDialogCancel()">
+            <div class="w-full max-w-sm rounded-2xl border border-white/8 bg-[linear-gradient(180deg,rgba(20,17,21,0.99),rgba(12,11,14,0.99))] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.55)]" @click.stop>
+                <h3 class="text-[0.95rem] font-semibold text-[#f0ede8]" x-text="confirmDialog.title"></h3>
+                <p class="mt-1.5 text-[0.78rem] leading-[1.5] text-white/48" x-text="confirmDialog.message"></p>
+                <div class="mt-5 flex items-center justify-end gap-2.5">
+                    <button type="button" class="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-white/50 transition hover:text-white" @click="confirmDialogCancel()">{{ __('Cancel') }}</button>
+                    <button type="button" class="rounded-xl px-4 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] transition" :class="confirmDialog.confirmTone === 'warning' ? 'border border-amber-400/22 bg-amber-500/12 text-amber-200 hover:bg-amber-500/22' : 'border border-red-400/20 bg-red-500/12 text-red-200 hover:bg-red-500/22'" @click="confirmDialogAccept()" x-text="confirmDialog.confirmText"></button>
+                </div>
+            </div>
+        </div>
+
+        {{-- Custom timeout dialog (replaces window.prompt for member timeouts) --}}
+        <div x-show="timeoutDialog.open" x-cloak class="fixed inset-0 z-[90] flex items-center justify-center bg-black/65 px-4" @keydown.escape.window="closeTimeoutDialog()">
+            <div class="w-full max-w-sm rounded-2xl border border-white/8 bg-[linear-gradient(180deg,rgba(20,17,21,0.99),rgba(12,11,14,0.99))] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.55)]" @click.stop>
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p class="text-[0.6rem] uppercase tracking-[0.18em] text-white/28">{{ __('Moderation') }}</p>
+                        <h3 class="mt-1 text-[1rem] font-semibold text-[#f0ede8]">{{ __('Timeout member') }}</h3>
+                        <p class="mt-0.5 text-[0.76rem] text-white/42">{{ __('Silence') }} <span class="font-semibold text-white/65" x-text="timeoutDialog.member?.name"></span> {{ __('from posting.') }}</p>
+                    </div>
+                    <button type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-white/35 transition hover:text-white" @click="closeTimeoutDialog()">
+                        <svg viewBox="0 0 16 16" class="h-3 w-3 fill-none stroke-current stroke-[2]"><path d="M2 2l12 12M14 2L2 14"></path></svg>
+                    </button>
+                </div>
+                <div class="mt-4 space-y-3">
+                    <div>
+                        <label class="mb-1.5 block text-[0.6rem] uppercase tracking-[0.16em] text-white/35">{{ __('Duration (minutes)') }}</label>
+                        <input x-model="timeoutDialog.duration" type="number" min="1" max="10080" class="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[0.82rem] text-white focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0">
+                    </div>
+                    <div>
+                        <label class="mb-1.5 block text-[0.6rem] uppercase tracking-[0.16em] text-white/35">{{ __('Reason (optional)') }}</label>
+                        <input x-model="timeoutDialog.reason" type="text" class="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[0.82rem] text-white placeholder:text-white/22 focus:border-[#d8ae64]/35 focus:outline-none focus:ring-0" placeholder="{{ __('e.g. Spam, harassment') }}">
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center justify-end gap-2.5">
+                    <button type="button" class="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-white/50 transition hover:text-white" @click="closeTimeoutDialog()">{{ __('Cancel') }}</button>
+                    <button type="button" class="rounded-xl border border-amber-400/22 bg-amber-500/12 px-4 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-amber-200 transition hover:bg-amber-500/22" @click="submitTimeoutDialog()">{{ __('Apply timeout') }}</button>
+                </div>
+            </div>
+        </div>
+
         </div>
     </body>
 </html>
