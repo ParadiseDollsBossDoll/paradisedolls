@@ -135,6 +135,7 @@ document.addEventListener('alpine:init', () => {
         shellDrawerOpen: false,
         channelDrawerOpen: false,
         membersDrawerOpen: false,
+        membersOpen: true,
         channelModalOpen: false,
         channelSyncTimer: null,
         loadingMessages: false,
@@ -799,6 +800,10 @@ document.addEventListener('alpine:init', () => {
             const previous = this.messages[index - 1];
 
             if (!message || !previous) {
+                return false;
+            }
+
+            if (message.reply_to) {
                 return false;
             }
 
