@@ -163,14 +163,17 @@
                                     x-data="{ drag: false, fileLabel: '', previewSrc: null }"
                                     @dragover.prevent="drag = true"
                                     @dragleave.prevent="drag = false"
-                                    @drop.prevent="drag = false; const f = $event.dataTransfer?.files; if (f?.length && f[0].type.startsWith('image/')) { $el.querySelector('input[type=file]').files = f; fileLabel = f[0].name; previewSrc = URL.createObjectURL(f[0]); }"
+                                    @drop.prevent="drag = false; const f = $event.dataTransfer?.files; if (f?.length && f[0].type.startsWith('image/')) { $refs.fileInput.files = f; fileLabel = f[0].name; previewSrc = URL.createObjectURL(f[0]); }"
                                     class="mt-2"
                                 >
                                     {{-- Instant preview of newly selected image --}}
                                     <template x-if="previewSrc">
                                         <div class="mb-2 overflow-hidden rounded-xl border border-boss-gold/25 bg-[#08080f]">
                                             <img :src="previewSrc" alt="" class="h-36 w-full object-cover">
-                                            <p class="px-3 py-1.5 text-[0.6rem] text-boss-gold/60">{{ __('Image selected — click Save to upload') }}</p>
+                                            <div class="flex items-center justify-between gap-3 px-3 py-1.5">
+                                                <p class="text-[0.6rem] text-boss-gold/60">{{ __('New image selected — will replace current image on save') }}</p>
+                                                <button type="button" class="text-[0.6rem] text-boss-ivory/35 transition-colors hover:text-boss-gold" @click="previewSrc = null; fileLabel = ''; $refs.fileInput.value = ''">{{ __('Clear') }}</button>
+                                            </div>
                                         </div>
                                     </template>
                                     <label
@@ -196,6 +199,7 @@
                                             name="course_cover_image_upload"
                                             accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                                             class="sr-only"
+                                            x-ref="fileInput"
                                             @change="const f = $event.target.files; if (f.length) { fileLabel = f[0].name; previewSrc = URL.createObjectURL(f[0]); } else { fileLabel = ''; previewSrc = null; }"
                                         >
                                     </label>
