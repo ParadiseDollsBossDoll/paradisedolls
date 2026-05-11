@@ -170,6 +170,21 @@ document.addEventListener('alpine:init', () => {
         courseChannelSearch: '',
         messageLoadError: null,
         scrollThrottleFrame: null,
+        pinnedPanelOpen: false,
+        confirmDialog: {
+            open: false,
+            title: '',
+            message: '',
+            confirmText: 'Confirm',
+            confirmTone: 'danger',
+            resolve: null,
+        },
+        timeoutDialog: {
+            open: false,
+            member: null,
+            duration: '60',
+            reason: '',
+        },
         channelForm: {
             id: null,
             slug: null,
@@ -800,6 +815,10 @@ document.addEventListener('alpine:init', () => {
             const previous = this.messages[index - 1];
 
             if (!message || !previous) {
+                return false;
+            }
+
+            if (message._isSystem || previous._isSystem) {
                 return false;
             }
 
@@ -1505,15 +1524,38 @@ document.addEventListener('alpine:init', () => {
                 });
 
                 this.upsertMessage(data.message, false);
+
+                if (data.message.is_pinned) {
+                    const now = Date.now();
+                    this.insertMessageSorted({
+                        id: `system-pin-${now}`,
+                        _isSystem: true,
+                        _systemType: 'pin',
+                        _actorName: this.user.name,
+                        channel_id: data.message.channel_id,
+                        created_at: new Date().toISOString(),
+                        _createdTs: now,
+                        _dateKey: new Date().toDateString(),
+                        user: null,
+                        message: null,
+                        attachment: null,
+                        reactions: [],
+                        is_pinned: false,
+                        reply_to: null,
+                    });
+                }
             } catch (error) {
                 this.channelNotice = { tone: 'error', message: error.message };
             }
         },
 
         async deleteMessage(message) {
-            if (!window.confirm('Delete this message?')) {
-                return;
-            }
+            const confirmed = await this.showConfirm({
+                title: 'Delete message',
+                message: 'This message will be permanently removed from the channel.',
+                confirmText: 'Delete',
+            });
+            if (!confirmed) return;
 
             try {
                 await fetchJson(this.route(this.routes.delete_message, message.id), {
@@ -1947,6 +1989,61 @@ document.addEventListener('alpine:init', () => {
             this.channelModalOpen = false;
         },
 
+        async showConfirm({ title, message, confirmText = 'Confirm', confirmTone = 'danger' }) {
+            return new Promise((resolve) => {
+                this.confirmDialog = { open: true, title, message, confirmText, confirmTone, resolve };
+            });
+        },
+
+        confirmDialogAccept() {
+            const resolve = this.confirmDialog.resolve;
+            this.confirmDialog = { open: false, title: '', message: '', confirmText: 'Confirm', confirmTone: 'danger', resolve: null };
+            if (resolve) resolve(true);
+        },
+
+        confirmDialogCancel() {
+            const resolve = this.confirmDialog.resolve;
+            this.confirmDialog = { open: false, title: '', message: '', confirmText: 'Confirm', confirmTone: 'danger', resolve: null };
+            if (resolve) resolve(false);
+        },
+
+        showTimeoutDialog(member) {
+            this.timeoutDialog = { open: true, member, duration: '60', reason: '' };
+        },
+
+        closeTimeoutDialog() {
+            this.timeoutDialog = { open: false, member: null, duration: '60', reason: '' };
+        },
+
+        async submitTimeoutDialog() {
+            const { member, duration, reason } = this.timeoutDialog;
+            const durationMinutes = Number.parseInt(duration, 10);
+
+            if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+                this.channelNotice = { tone: 'error', message: 'Enter a valid timeout length in minutes.' };
+                return;
+            }
+
+            this.closeTimeoutDialog();
+
+            try {
+                await fetchJson(this.route(this.routes.member_timeout, member.id), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        channel_id: this.selectedChannel?.id ?? null,
+                        duration_minutes: durationMinutes,
+                        reason: reason ?? '',
+                    }),
+                });
+
+                this.refreshModerationHistory();
+                this.channelNotice = { tone: 'success', message: `${member.name} has been timed out.` };
+            } catch (error) {
+                this.channelNotice = { tone: 'error', message: error.message };
+            }
+        },
+
         async submitChannelForm() {
             try {
                 const isEditing = Boolean(this.channelForm.id);
@@ -2078,9 +2175,15 @@ document.addEventListener('alpine:init', () => {
         },
 
         async archiveChannelFromModal() {
-            if (!this.channelForm.slug || !window.confirm('Archive this channel?')) {
-                return;
-            }
+            if (!this.channelForm.slug) return;
+
+            const confirmed = await this.showConfirm({
+                title: 'Archive channel',
+                message: `#${this.channelForm.slug} will be archived and hidden from members.`,
+                confirmText: 'Archive',
+                confirmTone: 'warning',
+            });
+            if (!confirmed) return;
 
             const channel = this.channels.find((item) => item.slug === this.channelForm.slug);
 
@@ -2090,9 +2193,14 @@ document.addEventListener('alpine:init', () => {
         },
 
         async deleteChannelFromModal() {
-            if (!this.channelForm.slug || !window.confirm('Delete this channel permanently? This will remove its messages too.')) {
-                return;
-            }
+            if (!this.channelForm.slug) return;
+
+            const confirmed = await this.showConfirm({
+                title: 'Delete channel permanently',
+                message: 'All messages in this channel will be removed. This cannot be undone.',
+                confirmText: 'Delete permanently',
+            });
+            if (!confirmed) return;
 
             const channel = this.channels.find((item) => item.slug === this.channelForm.slug)
                 ?? this.archivedChannels.find((item) => item.slug === this.channelForm.slug);
@@ -2184,39 +2292,7 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            const durationValue = window.prompt(`Timeout ${member.name} for how many minutes?`, '60');
-
-            if (durationValue === null) {
-                return;
-            }
-
-            const durationMinutes = Number.parseInt(durationValue, 10);
-
-            if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
-                this.channelNotice = { tone: 'error', message: 'Enter a valid timeout length in minutes.' };
-                return;
-            }
-
-            const reason = window.prompt('Reason for timeout (optional)', '') ?? '';
-
-            try {
-                await fetchJson(this.route(this.routes.member_timeout, member.id), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        channel_id: this.selectedChannel?.id ?? null,
-                        duration_minutes: durationMinutes,
-                        reason,
-                    }),
-                });
-
-                this.refreshModerationHistory();
-                this.channelNotice = { tone: 'success', message: `${member.name} has been timed out.` };
-            } catch (error) {
-                this.channelNotice = { tone: 'error', message: error.message };
-            }
+            this.showTimeoutDialog(member);
         },
 
         async refreshModerationHistory() {
