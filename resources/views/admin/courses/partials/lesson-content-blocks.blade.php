@@ -5,7 +5,7 @@
         <div>
             <p class="pd-heading text-[0.9rem] text-boss-gold">{{ __('Lesson Flow Builder') }}</p>
             <p class="mt-1 max-w-2xl text-[0.62rem] leading-relaxed text-boss-ivory/30">
-                {{ __('Optional. Build a guided lesson sequence below the fixed lesson fields. The lesson banner above stays separate from flow images and galleries.') }}
+                {{ __('Build the lesson content here. Older lessons without flow blocks will still use their saved fallback content.') }}
             </p>
         </div>
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -21,7 +21,7 @@
     </div>
 
     <div x-show="lesson.content_blocks.length === 0" class="mt-3 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2 text-[0.7rem] text-boss-ivory/30">
-        {{ __('No flow blocks yet. This lesson will use the existing fixed lesson layout.') }}
+        {{ __('No flow blocks yet. Add blocks for new lesson content; older saved lesson content will continue to render as fallback.') }}
     </div>
 
     <div x-show="lesson.content_blocks.length > 0" class="mt-3 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2 text-[0.68rem] leading-relaxed text-boss-ivory/32">

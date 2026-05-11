@@ -17,7 +17,7 @@ class CourseCommunityService
      * Idempotently ensure one community channel exists for this course.
      * Safe to call multiple times — creates only if missing.
      */
-    public function ensureForCourse(Course $course): CommunityChannel
+    public function ensureForCourse(Course $course, ?User $creator = null): CommunityChannel
     {
         $existing = CommunityChannel::query()
             ->where('course_id', $course->id)
@@ -32,6 +32,9 @@ class CourseCommunityService
             ->where('role', 'admin')
             ->orderBy('id')
             ->value('id');
+        $creatorId = $adminId
+            ?? $creator?->id
+            ?? User::query()->orderBy('id')->value('id');
 
         $slug = CommunityChannel::makeUniqueSlug($course->slug);
 
@@ -42,7 +45,7 @@ class CourseCommunityService
             'description'     => "Community chat for {$course->title} enrolled members.",
             'course_id'       => $course->id,
             'course_name'     => $course->title,
-            'created_by'      => $adminId,
+            'created_by'      => $creatorId,
             'is_private'      => true,
             'access_mode'     => CommunityChannel::ACCESS_INVITE,
             'denied_behavior' => CommunityChannel::DENIED_HIDDEN,
@@ -57,7 +60,7 @@ class CourseCommunityService
      */
     public function joinCourse(User $user, Course $course): void
     {
-        $channel = $this->ensureForCourse($course);
+        $channel = $this->ensureForCourse($course, $user);
 
         DB::transaction(function () use ($user, $channel, $course): void {
             CommunityChannelAccess::query()->firstOrCreate([

@@ -93,7 +93,7 @@ class AdminCourseController extends Controller
         });
 
         if ($course) {
-            $community->ensureForCourse($course);
+            $community->ensureForCourse($course, $request->user());
         }
 
         return redirect()->route('admin.courses.index')->with('status', __('Course created.'));
@@ -468,11 +468,16 @@ class AdminCourseController extends Controller
 
     private function normalizedLessonData(array $lesson, int $index, array $moduleMap = [], ?Lesson $existingLesson = null): array
     {
-        $bunnyVideoId = $lesson['bunny_video_id'] ?? null;
-        $bunnyLibraryId = $lesson['bunny_library_id'] ?? null;
-        $videoUrl = $lesson['video_url'] ?? null;
+        $lessonValue = fn (string $key) => array_key_exists($key, $lesson)
+            ? $lesson[$key]
+            : $existingLesson?->{$key};
+
+        $bunnyVideoId = $lessonValue('bunny_video_id');
+        $bunnyLibraryId = $lessonValue('bunny_library_id');
+        $videoUrl = $lessonValue('video_url');
         $moduleId = $this->moduleIdForLesson($lesson, $moduleMap);
         $lessonVisuals = $this->normalizedLessonVisuals($lesson, $existingLesson);
+        $pdfUrl = $lessonValue('pdf_url');
 
         if (filled($bunnyVideoId) && filled($bunnyLibraryId)) {
             $videoUrl = 'https://iframe.mediadelivery.net/embed/'.$bunnyLibraryId.'/'.$bunnyVideoId.'?autoplay=false&loop=false&muted=false&preload=true&responsive=true';
@@ -481,27 +486,29 @@ class AdminCourseController extends Controller
         return [
             'course_module_id' => $moduleId,
             'title' => $lesson['title'],
-            'body' => $lesson['body'] ?? null,
-            'overview' => $lesson['overview'] ?? null,
-            'steps' => $lesson['steps'] ?? null,
-            'tips' => $lesson['tips'] ?? null,
-            'safety_notes' => $lesson['safety_notes'] ?? null,
-            'resource_links' => $lesson['resource_links'] ?? null,
+            'body' => $lessonValue('body'),
+            'overview' => $lessonValue('overview'),
+            'steps' => $lessonValue('steps'),
+            'tips' => $lessonValue('tips'),
+            'safety_notes' => $lessonValue('safety_notes'),
+            'resource_links' => $lessonValue('resource_links'),
             'lesson_banner_image' => $lessonVisuals['lesson_banner_image'],
             'lesson_images' => $lessonVisuals['lesson_images'],
-            'is_published' => array_key_exists('is_published', $lesson) ? (bool) $lesson['is_published'] : true,
+            'is_published' => array_key_exists('is_published', $lesson) ? (bool) $lesson['is_published'] : (bool) ($existingLesson?->is_published ?? true),
             'video_url' => $videoUrl,
             'bunny_video_id' => $bunnyVideoId,
             'bunny_library_id' => $bunnyLibraryId,
-            'bunny_video_title' => $lesson['bunny_video_title'] ?? null,
-            'bunny_thumbnail_url' => $lesson['bunny_thumbnail_url'] ?? null,
-            'bunny_upload_fingerprint' => $lesson['bunny_upload_fingerprint'] ?? null,
-            'bunny_status' => $lesson['bunny_status'] ?? null,
-            'duration' => $lesson['duration'] ?? null,
-            'has_pdf' => array_key_exists('has_pdf', $lesson) ? (bool) $lesson['has_pdf'] : filled($lesson['pdf_url'] ?? null),
-            'pdf_url' => $lesson['pdf_url'] ?? null,
-            'presentation_url' => Lesson::normalizePresentationUrl($lesson['presentation_url'] ?? null),
-            'sort_order' => $lesson['sort_order'] ?? ($index + 1),
+            'bunny_video_title' => $lessonValue('bunny_video_title'),
+            'bunny_thumbnail_url' => $lessonValue('bunny_thumbnail_url'),
+            'bunny_upload_fingerprint' => $lessonValue('bunny_upload_fingerprint'),
+            'bunny_status' => $lessonValue('bunny_status'),
+            'duration' => $lessonValue('duration'),
+            'has_pdf' => array_key_exists('has_pdf', $lesson)
+                ? (bool) $lesson['has_pdf']
+                : (array_key_exists('pdf_url', $lesson) ? filled($pdfUrl) : (bool) ($existingLesson?->has_pdf ?? filled($pdfUrl))),
+            'pdf_url' => $pdfUrl,
+            'presentation_url' => Lesson::normalizePresentationUrl($lessonValue('presentation_url')),
+            'sort_order' => $lesson['sort_order'] ?? $existingLesson?->sort_order ?? ($index + 1),
         ];
     }
 

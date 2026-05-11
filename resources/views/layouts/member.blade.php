@@ -69,7 +69,7 @@
     <body class="font-sans antialiased pd-dark-surface min-h-screen" x-data="{ sidebarOpen: false }">
         <div class="flex min-h-screen">
             @unless ($hideSidebar)
-                <aside class="elysian-sidebar" :class="sidebarOpen ? 'is-open' : ''">
+                <aside class="elysian-sidebar" data-member-sidebar="main" :class="sidebarOpen ? 'is-open' : ''">
                     <div class="elysian-brand">
                         <div>
                             <div class="elysian-brand-title">&#10022; PARADISEDOLLZ &#10022;</div>

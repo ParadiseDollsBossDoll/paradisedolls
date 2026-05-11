@@ -145,11 +145,16 @@ class AdminLessonController extends Controller
             $lesson['content_blocks']
         );
 
-        $lesson['is_published'] = array_key_exists('is_published', $lesson) ? (bool) $lesson['is_published'] : true;
-        $lesson['has_pdf'] = array_key_exists('has_pdf', $lesson) ? (bool) $lesson['has_pdf'] : filled($lesson['pdf_url'] ?? null);
+        $lesson['is_published'] = array_key_exists('is_published', $lesson) ? (bool) $lesson['is_published'] : (bool) ($existingLesson?->is_published ?? true);
+        $lesson['has_pdf'] = array_key_exists('has_pdf', $lesson)
+            ? (bool) $lesson['has_pdf']
+            : (array_key_exists('pdf_url', $lesson) ? filled($lesson['pdf_url'] ?? null) : (bool) ($existingLesson?->has_pdf ?? false));
         $lesson['lesson_banner_image'] = $lessonVisuals['lesson_banner_image'];
         $lesson['lesson_images'] = $lessonVisuals['lesson_images'];
-        $lesson['presentation_url'] = Lesson::normalizePresentationUrl($lesson['presentation_url'] ?? null);
+
+        if (array_key_exists('presentation_url', $lesson)) {
+            $lesson['presentation_url'] = Lesson::normalizePresentationUrl($lesson['presentation_url']);
+        }
 
         return $lesson;
     }
