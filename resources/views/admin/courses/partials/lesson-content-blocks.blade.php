@@ -88,25 +88,28 @@
                         {{-- Image upload with drag-and-drop + instant preview --}}
                         <div x-show="block.block_type === 'image'" class="sm:col-span-2">
                             <x-input-label ::for="`lesson_${index}_block_${blockIndex}_image`" :value="__('Content Image Upload')" />
-                            {{-- Saved image (shown when no new file selected) --}}
-                            <template x-if="block.image_url">
-                                <div class="mt-2 overflow-hidden rounded-lg border border-white/[0.06] bg-[#08080f]">
-                                    <img x-bind:src="block.image_url" x-bind:alt="block.title || lesson.title || '{{ __('Lesson image') }}'" class="max-h-48 w-full object-cover">
-                                    <p class="px-3 py-1 text-[0.58rem] text-boss-ivory/22">{{ __('Current saved image') }}</p>
-                                </div>
-                            </template>
                             <div
                                 x-data="{ drag: false, fileLabel: '', previewSrc: null }"
                                 @dragover.prevent="drag = true"
                                 @dragleave.prevent="drag = false"
-                                @drop.prevent="drag = false; const f = $event.dataTransfer?.files; if (f?.length && f[0].type.startsWith('image/')) { $el.querySelector('input[type=file]').files = f; fileLabel = f[0].name; previewSrc = URL.createObjectURL(f[0]); }"
+                                @drop.prevent="drag = false; const f = $event.dataTransfer?.files; if (f?.length && f[0].type.startsWith('image/')) { $refs.fileInput.files = f; fileLabel = f[0].name; previewSrc = URL.createObjectURL(f[0]); }"
                                 class="mt-2"
                             >
+                                {{-- Saved image (shown when no new file selected) --}}
+                                <template x-if="block.image_url && !previewSrc">
+                                    <div class="mb-2 overflow-hidden rounded-lg border border-white/[0.06] bg-[#08080f]">
+                                        <img x-bind:src="block.image_url" x-bind:alt="block.title || lesson.title || '{{ __('Lesson image') }}'" class="max-h-48 w-full object-cover">
+                                        <p class="px-3 py-1 text-[0.58rem] text-boss-ivory/22">{{ __('Current saved image') }}</p>
+                                    </div>
+                                </template>
                                 {{-- Instant new-image preview --}}
                                 <template x-if="previewSrc">
                                     <div class="mb-2 overflow-hidden rounded-lg border border-boss-gold/25 bg-[#08080f]">
                                         <img :src="previewSrc" alt="" class="max-h-48 w-full object-cover">
-                                        <p class="px-3 py-1 text-[0.58rem] text-boss-gold/60">{{ __('New image selected — will replace current on save') }}</p>
+                                        <div class="flex items-center justify-between gap-3 px-3 py-1">
+                                            <p class="text-[0.58rem] text-boss-gold/60">{{ __('New image selected — will replace current image on save') }}</p>
+                                            <button type="button" class="text-[0.58rem] text-boss-ivory/35 transition-colors hover:text-boss-gold" @click="previewSrc = null; fileLabel = ''; $refs.fileInput.value = ''">{{ __('Clear') }}</button>
+                                        </div>
                                     </div>
                                 </template>
                                 <label
@@ -131,6 +134,7 @@
                                         class="sr-only"
                                         x-bind:id="`lesson_${index}_block_${blockIndex}_image`"
                                         x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][image_upload]`"
+                                        x-ref="fileInput"
                                         @change="const f = $event.target.files; if (f.length) { fileLabel = f[0].name; previewSrc = URL.createObjectURL(f[0]); } else { fileLabel = ''; previewSrc = null; }"
                                     >
                                 </label>
@@ -141,28 +145,31 @@
                         {{-- Gallery upload with drag-and-drop + instant preview --}}
                         <div x-show="block.block_type === 'gallery'" class="sm:col-span-2">
                             <x-input-label ::for="`lesson_${index}_block_${blockIndex}_gallery`" :value="__('Image Gallery Uploads')" />
-                            {{-- Saved gallery images --}}
-                            <template x-if="block.gallery_image_urls && block.gallery_image_urls.length">
-                                <div class="mt-2">
-                                    <p class="mb-1.5 text-[0.58rem] text-boss-ivory/22">{{ __('Current saved images') }}</p>
-                                    <div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                                        <template x-for="imageUrl in block.gallery_image_urls" :key="imageUrl">
-                                            <img x-bind:src="imageUrl" x-bind:alt="lesson.title || '{{ __('Gallery image') }}'" class="h-16 w-full rounded-md border border-white/[0.06] object-cover">
-                                        </template>
-                                    </div>
-                                </div>
-                            </template>
                             <div
                                 x-data="{ drag: false, fileLabel: '', previewSrcs: [] }"
                                 @dragover.prevent="drag = true"
                                 @dragleave.prevent="drag = false"
-                                @drop.prevent="drag = false; const f = $event.dataTransfer?.files; if (f?.length) { $el.querySelector('input[type=file]').files = f; fileLabel = f.length === 1 ? f[0].name : `${f.length} files selected`; previewSrcs = Array.from(f).filter(fi => fi.type.startsWith('image/')).map(fi => URL.createObjectURL(fi)); }"
+                                @drop.prevent="drag = false; const f = $event.dataTransfer?.files; if (f?.length) { $refs.fileInput.files = f; fileLabel = f.length === 1 ? f[0].name : `${f.length} files selected`; previewSrcs = Array.from(f).filter(fi => fi.type.startsWith('image/')).map(fi => URL.createObjectURL(fi)); }"
                                 class="mt-2"
                             >
+                                {{-- Saved gallery images --}}
+                                <template x-if="block.gallery_image_urls && block.gallery_image_urls.length && previewSrcs.length === 0">
+                                    <div class="mb-2">
+                                        <p class="mb-1.5 text-[0.58rem] text-boss-ivory/22">{{ __('Current saved image') }}</p>
+                                        <div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                                            <template x-for="imageUrl in block.gallery_image_urls" :key="imageUrl">
+                                                <img x-bind:src="imageUrl" x-bind:alt="lesson.title || '{{ __('Gallery image') }}'" class="h-16 w-full rounded-md border border-white/[0.06] object-cover">
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
                                 {{-- Instant gallery preview --}}
                                 <template x-if="previewSrcs.length > 0">
                                     <div class="mb-2">
-                                        <p class="mb-1.5 text-[0.58rem] text-boss-gold/60">{{ __('New images selected — will replace current on save') }}</p>
+                                        <div class="mb-1.5 flex items-center justify-between gap-3">
+                                            <p class="text-[0.58rem] text-boss-gold/60">{{ __('New image selected — will replace current image on save') }}</p>
+                                            <button type="button" class="text-[0.58rem] text-boss-ivory/35 transition-colors hover:text-boss-gold" @click="previewSrcs = []; fileLabel = ''; $refs.fileInput.value = ''">{{ __('Clear') }}</button>
+                                        </div>
                                         <div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
                                             <template x-for="src in previewSrcs" :key="src">
                                                 <img :src="src" alt="" class="h-16 w-full rounded-md border border-boss-gold/25 object-cover">
@@ -193,6 +200,7 @@
                                         class="sr-only"
                                         x-bind:id="`lesson_${index}_block_${blockIndex}_gallery`"
                                         x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][gallery_uploads][]`"
+                                        x-ref="fileInput"
                                         @change="const files = Array.from($event.target.files); fileLabel = files.length ? (files.length === 1 ? files[0].name : `${files.length} files selected`) : ''; previewSrcs = files.filter(f => f.type.startsWith('image/')).map(f => URL.createObjectURL(f));"
                                     >
                                 </label>
