@@ -13,6 +13,7 @@ class AdminTestimonialController extends Controller
     public function index(): View
     {
         $testimonials = Testimonial::query()
+            ->with(['submitter:id,name,email', 'approver:id,name'])
             ->orderBy('sort_order')
             ->orderByDesc('created_at')
             ->paginate(20);
@@ -28,7 +29,10 @@ class AdminTestimonialController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validateTestimonial($request);
-        $validated['is_published'] = $request->boolean('is_published');
+        $validated = [
+            ...$validated,
+            ...$this->approvalAttributes($request->boolean('is_published')),
+        ];
         $validated['sort_order'] = $validated['sort_order'] ?? 0;
 
         Testimonial::create($validated);
@@ -38,13 +42,18 @@ class AdminTestimonialController extends Controller
 
     public function edit(Testimonial $testimonial): View
     {
+        $testimonial->loadMissing('submitter:id,name');
+
         return view('admin.testimonials.edit', compact('testimonial'));
     }
 
     public function update(Request $request, Testimonial $testimonial): RedirectResponse
     {
         $validated = $this->validateTestimonial($request);
-        $validated['is_published'] = $request->boolean('is_published');
+        $validated = [
+            ...$validated,
+            ...$this->approvalAttributes($request->boolean('is_published'), $testimonial),
+        ];
         $validated['sort_order'] = $validated['sort_order'] ?? 0;
 
         $testimonial->update($validated);
@@ -59,11 +68,16 @@ class AdminTestimonialController extends Controller
         return redirect()->route('admin.testimonials.index')->with('status', __('Success story deleted.'));
     }
 
+    public function approve(Testimonial $testimonial): RedirectResponse
+    {
+        $testimonial->update($this->approvalAttributes(true));
+
+        return redirect()->route('admin.testimonials.index')->with('status', __('Success story approved and published.'));
+    }
+
     public function visibility(Request $request, Testimonial $testimonial): RedirectResponse
     {
-        $testimonial->update([
-            'is_published' => $request->boolean('is_published'),
-        ]);
+        $testimonial->update($this->approvalAttributes($request->boolean('is_published'), $testimonial));
 
         return redirect()->route('admin.testimonials.index')->with('status', __('Success story visibility updated.'));
     }
@@ -79,5 +93,22 @@ class AdminTestimonialController extends Controller
             'image_url' => ['nullable', 'string', 'max:2000'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
         ]);
+    }
+
+    private function approvalAttributes(bool $approved, ?Testimonial $testimonial = null): array
+    {
+        if (! $approved) {
+            return [
+                'is_published' => false,
+                'approved_by' => null,
+                'approved_at' => null,
+            ];
+        }
+
+        return [
+            'is_published' => true,
+            'approved_by' => $testimonial?->approved_by ?? auth()->id(),
+            'approved_at' => $testimonial?->approved_at ?? now(),
+        ];
     }
 }

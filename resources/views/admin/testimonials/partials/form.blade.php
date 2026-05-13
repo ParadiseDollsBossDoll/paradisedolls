@@ -47,7 +47,7 @@
 <label for="is_published" class="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
     <input id="is_published" name="is_published" type="checkbox" value="1" class="mt-1 rounded border-white/15 bg-white/5 text-boss-gold focus:ring-boss-gold" @checked(old('is_published', $testimonial?->is_published ?? false))>
     <span>
-        <span class="block text-[0.85rem] text-boss-ivory">{{ __('Published') }}</span>
-        <span class="mt-1 block text-[0.72rem] text-boss-ivory/32">{{ __('Visible on the homepage and success stories page.') }}</span>
+        <span class="block text-[0.85rem] text-boss-ivory">{{ __('Approved & published') }}</span>
+        <span class="mt-1 block text-[0.72rem] text-boss-ivory/32">{{ __('Approved stories are visible on the homepage and success stories page.') }}</span>
     </span>
 </label>

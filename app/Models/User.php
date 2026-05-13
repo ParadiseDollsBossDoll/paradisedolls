@@ -111,6 +111,11 @@ class User extends Authenticatable
         return $this->hasMany(CommunityMessage::class);
     }
 
+    public function testimonials(): HasMany
+    {
+        return $this->hasMany(Testimonial::class, 'submitted_by');
+    }
+
     public function communityMessageReads(): HasMany
     {
         return $this->hasMany(CommunityMessageRead::class);

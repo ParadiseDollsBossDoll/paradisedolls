@@ -12,6 +12,12 @@
             <div class="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm text-green-200">{{ session('status') }}</div>
         @endif
 
+        @if ($testimonial->submitter)
+            <div class="rounded-xl border border-amber-300/15 bg-amber-300/10 p-4 text-sm text-amber-100/80">
+                {{ __('Submitted by') }} {{ $testimonial->submitter->name }} {{ __('and awaiting admin approval before public display.') }}
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('admin.testimonials.update', $testimonial) }}" class="pd-panel space-y-5 p-6">
             @csrf
             @method('PUT')
