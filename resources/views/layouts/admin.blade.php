@@ -1,10 +1,7 @@
 @php
     $user = auth()->user();
-    $initials = collect(explode(' ', trim($user->name)))
-        ->filter()
-        ->take(2)
-        ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
-        ->implode('') ?: 'A';
+    $initials = $user->initials();
+    $profilePhotoUrl = $user->profilePhotoUrl();
 
     $pendingLayoutApplications = \App\Models\ModelApplication::query()
         ->where('status', \App\Models\ModelApplication::STATUS_PENDING)
@@ -65,7 +62,9 @@
         ],
     ];
 
-    $currentLabel = collect($links)->firstWhere('active', true)['label'] ?? __('Overview');
+    $currentLabel = request()->routeIs('profile.*')
+        ? __('Profile')
+        : (collect($links)->firstWhere('active', true)['label'] ?? __('Overview'));
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -93,7 +92,12 @@
                     <div class="elysian-side-profile-inner">
                         <div class="elysian-side-profile-row">
                             <div class="elysian-avatar-wrap">
-                                <div class="elysian-avatar">{{ $initials }}</div>
+                                <div class="elysian-avatar">
+                                    <span>{{ $initials }}</span>
+                                    @if ($profilePhotoUrl)
+                                        <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
+                                    @endif
+                                </div>
                                 <div class="elysian-online-dot"></div>
                             </div>
                             <div class="min-w-0 flex-1">
@@ -171,7 +175,12 @@
                             <p>{{ __('Admin Panel') }}</p>
                             <p>{{ $user->name }}</p>
                         </div>
-                        <div class="elysian-topbar-avatar">{{ $initials }}</div>
+                        <div class="elysian-topbar-avatar">
+                            <span>{{ $initials }}</span>
+                            @if ($profilePhotoUrl)
+                                <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
+                            @endif
+                        </div>
                     </div>
                 </header>
 

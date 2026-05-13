@@ -18,7 +18,7 @@ return new class extends Migration
 
         // Full-text index for message search (only if engine supports it)
         // MariaDB / MySQL InnoDB both support FULLTEXT on text columns.
-        if (! $this->fulltextExists('community_messages', 'community_messages_message_fulltext')) {
+        if ($this->supportsFulltextIndexes() && ! $this->fulltextExists('community_messages', 'community_messages_message_fulltext')) {
             DB::statement('ALTER TABLE community_messages ADD FULLTEXT INDEX community_messages_message_fulltext (message)');
         }
 
@@ -36,7 +36,9 @@ return new class extends Migration
             $table->dropIndexIfExists('community_messages_channel_user_latest_index');
         });
 
-        DB::statement('ALTER TABLE community_messages DROP INDEX IF EXISTS community_messages_message_fulltext');
+        if ($this->supportsFulltextIndexes()) {
+            DB::statement('ALTER TABLE community_messages DROP INDEX IF EXISTS community_messages_message_fulltext');
+        }
 
         Schema::table('community_channel_accesses', function (Blueprint $table) {
             $table->dropIndexIfExists('community_channel_accesses_user_id_index');
@@ -45,6 +47,11 @@ return new class extends Migration
 
     private function indexExists(string $table, string $index): bool
     {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return collect(Schema::getIndexes($table))
+                ->contains(fn (array $row) => ($row['name'] ?? null) === $index);
+        }
+
         return collect(DB::select("SHOW INDEX FROM `{$table}`"))
             ->contains(fn ($row) => $row->Key_name === $index);
     }
@@ -53,5 +60,10 @@ return new class extends Migration
     {
         return collect(DB::select("SHOW INDEX FROM `{$table}`"))
             ->contains(fn ($row) => $row->Key_name === $index && $row->Index_type === 'FULLTEXT');
+    }
+
+    private function supportsFulltextIndexes(): bool
+    {
+        return in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true);
     }
 };

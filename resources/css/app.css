@@ -341,6 +341,7 @@ body {
     }
 
     .elysian-avatar {
+        position: relative;
         width: 2.1rem;
         height: 2.1rem;
         border-radius: 50%;
@@ -353,6 +354,16 @@ body {
         font-weight: 700;
         color: #e8c88a;
         letter-spacing: 0.04em;
+        overflow: hidden;
+    }
+
+    .elysian-avatar img,
+    .elysian-topbar-avatar img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
     .elysian-online-dot {
@@ -538,6 +549,7 @@ body {
     }
 
     .elysian-topbar-avatar {
+        position: relative;
         width: 1.8rem;
         height: 1.8rem;
         border-radius: 50%;
@@ -551,6 +563,7 @@ body {
         color: #e8c88a;
         letter-spacing: 0.04em;
         flex-shrink: 0;
+        overflow: hidden;
     }
 
     .community-scroll {

@@ -1,6 +1,7 @@
 @php
     $user = auth()->user();
     $serverInitials = collect(explode(' ', $communityState['server']['name']))->map(fn ($part) => strtoupper(substr($part, 0, 1)))->take(2)->implode('');
+    $profilePhotoUrl = $user->profilePhotoUrl();
 
     if ($user->isAdmin()) {
         $pendingApps = \App\Models\ModelApplication::where('status', \App\Models\ModelApplication::STATUS_PENDING)->count();
@@ -38,7 +39,7 @@
             ['href' => route('profile.edit'),           'label' => __('Profile'),    'icon' => 'profile',    'active' => false, 'count' => 0],
         ];
         $sidebarSubtitle = __('Members Area');
-        $sidebarRole     = __('ParadiseDollz Member');
+        $sidebarRole     = __('Paradise Dolls Member');
     }
 @endphp
 <!DOCTYPE html>
@@ -52,6 +53,8 @@
     </head>
     <body class="min-h-screen overflow-hidden bg-[#080808] text-[#f0ede8] font-sans antialiased">
         <div x-data="communityChat(@js($communityState))" x-init="init()" class="flex h-screen min-h-0">
+            {{-- Transparent backdrop: intercepts all pointer/hover events from chat when pinned panel is open --}}
+            <div x-show="pinnedPanelOpen" x-cloak class="fixed inset-0 z-[80]" @click="pinnedPanelOpen = false" aria-hidden="true"></div>
             <aside class="elysian-sidebar" :class="shellDrawerOpen ? 'is-open' : ''">
                 <div class="elysian-brand">
                     <div>
@@ -64,7 +67,12 @@
                     <div class="elysian-side-profile-inner">
                         <div class="elysian-side-profile-row">
                             <div class="elysian-avatar-wrap">
-                                <div class="elysian-avatar">{{ $user->initials() }}</div>
+                                <div class="elysian-avatar">
+                                    <span>{{ $user->initials() }}</span>
+                                    @if ($profilePhotoUrl)
+                                        <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
+                                    @endif
+                                </div>
                                 <div class="elysian-online-dot"></div>
                             </div>
                             <div class="min-w-0 flex-1">
@@ -144,7 +152,12 @@
                             <p>{{ __('Welcome back,') }}</p>
                             <p>{{ $user->name }}</p>
                         </div>
-                        <div class="elysian-topbar-avatar">{{ $user->initials() }}</div>
+                        <div class="elysian-topbar-avatar">
+                            <span>{{ $user->initials() }}</span>
+                            @if ($profilePhotoUrl)
+                                <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
+                            @endif
+                        </div>
                     </div>
                 </header>
 
@@ -317,7 +330,14 @@
                             <div class="border-t border-black/40 bg-black/25 p-3">
                                 <div class="flex items-center gap-3">
                                     <div class="relative shrink-0">
-                                        <div class="flex h-8 w-8 items-center justify-center rounded-full border border-[#c9a96e]/25 bg-[linear-gradient(135deg,rgba(201,169,110,0.28),rgba(201,169,110,0.08))] font-display text-[0.58rem] text-[#e8c88a]" x-text="user.initials"></div>
+                                        <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-[#c9a96e]/25 bg-[linear-gradient(135deg,rgba(201,169,110,0.28),rgba(201,169,110,0.08))] font-display text-[0.58rem] text-[#e8c88a]">
+                                            <template x-if="user.profile_photo_url">
+                                                <img :src="user.profile_photo_url" alt="" class="h-full w-full object-cover">
+                                            </template>
+                                            <template x-if="!user.profile_photo_url">
+                                                <span x-text="user.initials"></span>
+                                            </template>
+                                        </div>
                                         <div class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0b0b15] bg-[#4ade80]"></div>
                                     </div>
                                     <div class="min-w-0 flex-1">
@@ -330,7 +350,7 @@
                     </section>
 
                     <section class="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#080808]">
-                        <div class="flex items-center gap-3 border-b border-white/5 bg-[#0a0a0f]/92 px-5 py-4 backdrop-blur">
+                        <div class="relative flex items-center gap-3 border-b border-white/5 bg-[#0a0a0f]/92 px-5 py-4 backdrop-blur" :class="pinnedPanelOpen ? 'z-[90]' : 'z-10'">
                             <button type="button" class="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white xl:hidden" @click="channelDrawerOpen = true">
                                 <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8">
                                     <path d="M4 7h16M4 12h16M4 17h16"></path>
@@ -354,8 +374,34 @@
                             <span class="min-w-0 flex-1 truncate text-[0.76rem] text-white/35" x-text="selectedChannel?.description || 'General community chat & discussion'"></span>
                             <div class="ml-auto hidden items-center gap-2 md:flex">
 
+                                <div class="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5">
+                                    <svg viewBox="0 0 16 16" class="h-4 w-4 shrink-0 stroke-current fill-none stroke-[1.8] text-white/25"><circle cx="7" cy="7" r="4"></circle><path d="M10 10l3 3"></path></svg>
+                                    <input x-model="searchQuery" @input="handleSearchInput()" type="text" class="w-48 border-0 bg-transparent px-0 py-0 text-[0.74rem] text-white placeholder:text-white/20 focus:outline-none focus:ring-0" placeholder="{{ __('Search messages') }}">
+                                </div>
+
+                                <div class="h-4 w-px bg-white/10"></div>
+
+                                {{-- Mobile: open drawer overlay --}}
+                                <button type="button" class="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white xl:hidden" @click="membersDrawerOpen = !membersDrawerOpen" title="{{ __('Members') }}">
+                                    <svg viewBox="0 0 16 16" class="h-[17px] w-[17px] fill-none stroke-current stroke-[1.5]" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="5.5" cy="4.5" r="2.5"/>
+                                        <path d="M0.5 14a5 5 0 0 1 10 0"/>
+                                        <circle cx="12.5" cy="4" r="2" opacity=".45"/>
+                                        <path d="M11 13.5a3.5 3.5 0 0 1 4.5 0" opacity=".45"/>
+                                    </svg>
+                                </button>
+                                {{-- Desktop: toggle members sidebar --}}
+                                <button type="button" class="hidden xl:flex h-8 w-8 items-center justify-center rounded-lg transition" :class="membersOpen ? 'bg-white/[0.08] text-[#c9a96e]' : 'text-white/30 hover:bg-white/[0.05] hover:text-white'" @click="membersOpen = !membersOpen" :title="membersOpen ? '{{ __('Hide members') }}' : '{{ __('Show members') }}'">
+                                    <svg viewBox="0 0 16 16" class="h-[17px] w-[17px] fill-none stroke-current stroke-[1.5]" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="5.5" cy="4.5" r="2.5"/>
+                                        <path d="M0.5 14a5 5 0 0 1 10 0"/>
+                                        <circle cx="12.5" cy="4" r="2" opacity=".45"/>
+                                        <path d="M11 13.5a3.5 3.5 0 0 1 4.5 0" opacity=".45"/>
+                                    </svg>
+                                </button>
+
                                 {{-- Pinned messages toggle + floating panel --}}
-                                <div class="relative" @click.outside="pinnedPanelOpen = false">
+                                <div class="relative">
                                     <button type="button"
                                         x-show="pinnedMessages().length > 0" x-cloak
                                         class="flex h-8 w-8 items-center justify-center rounded-lg transition"
@@ -371,7 +417,13 @@
 
                                     {{-- Floating pinned panel --}}
                                     <div x-show="pinnedPanelOpen" x-cloak
-                                        class="absolute right-0 top-full z-30 mt-2 w-80 overflow-hidden rounded-2xl border border-white/8 bg-[#111015] shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
+                                        x-transition:enter="transition ease-out duration-150"
+                                        x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
+                                        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                        x-transition:leave="transition ease-in duration-100"
+                                        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                                        x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
+                                        class="absolute right-0 top-full z-[91] mt-2 w-80 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#111015] shadow-[0_20px_50px_rgba(0,0,0,0.65)] will-change-transform"
                                         @keydown.escape.window="pinnedPanelOpen = false">
 
                                         {{-- Panel header --}}
@@ -401,49 +453,46 @@
                                         </template>
 
                                         {{-- Pinned message list --}}
-                                        <div x-show="pinnedMessages().length" class="max-h-[340px] overflow-y-auto community-scroll">
+                                        <div x-show="pinnedMessages().length" class="max-h-[340px] space-y-1.5 overflow-y-auto p-2 community-scroll">
                                             <template x-for="msg in pinnedMessages()" :key="`panel-pinned-${msg.id}`">
-                                                <button type="button"
-                                                    @click="jumpToMessage(msg.id); pinnedPanelOpen = false"
-                                                    class="flex w-full gap-3 border-b border-white/[0.04] px-4 py-3 text-left transition hover:bg-white/[0.04] last:border-b-0">
-                                                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/8 font-display text-[0.56rem] font-bold text-white" :style="`background: radial-gradient(circle at top, ${msg.user.accent}, #151014 70%)`">
-                                                        <span x-text="msg.user.initials"></span>
+                                                <div class="group relative flex w-full items-start gap-3 rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 py-3 text-left transition hover:border-white/[0.12] hover:bg-white/[0.045]"
+                                                    :class="isHighlightedMessage(msg.id) ? 'bg-[#c9a96e]/10' : ''">
+                                                    <div class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/[0.08] font-display text-[0.56rem] font-bold text-white" :style="`background: radial-gradient(circle at top, ${msg.user.accent}, #151014 70%)`">
+                                                        <template x-if="msg.user.profile_photo_url">
+                                                            <img :src="msg.user.profile_photo_url" alt="" class="h-full w-full object-cover">
+                                                        </template>
+                                                        <template x-if="!msg.user.profile_photo_url">
+                                                            <span x-text="msg.user.initials"></span>
+                                                        </template>
                                                     </div>
-                                                    <div class="min-w-0 flex-1">
-                                                        <div class="flex items-baseline gap-1.5">
-                                                            <span class="text-[0.76rem] font-semibold text-[#f0ede8]" x-text="msg.user.name"></span>
-                                                            <span class="text-[0.6rem] text-white/22" x-text="formatMessageTime(msg.created_at)"></span>
+                                                    <div class="min-w-0 flex-1 pr-[5.75rem] md:pr-0 md:group-hover:pr-[5.75rem]">
+                                                        <div class="flex min-w-0 items-center gap-1.5 leading-none">
+                                                            <span class="min-w-0 truncate text-[0.76rem] font-semibold text-[#f0ede8]" x-text="msg.user.name"></span>
+                                                            <span class="shrink-0 whitespace-nowrap text-[0.56rem] font-semibold text-white/28" :title="formatFullTimestamp(msg.created_at)" x-text="formatMessageTime(msg.created_at)"></span>
                                                         </div>
-                                                        <p class="mt-0.5 line-clamp-2 text-[0.74rem] leading-[1.45] text-white/48" x-text="msg.message || msg.attachment?.name || 'Attachment'"></p>
+                                                        <p class="mt-1 line-clamp-2 text-[0.74rem] leading-[1.35] text-white/58" x-text="msg.message || msg.attachment?.name || 'Attachment'"></p>
                                                     </div>
-                                                </button>
+                                                    <div class="pointer-events-auto absolute right-2.5 top-2.5 flex items-center gap-1 opacity-100 transition-opacity md:pointer-events-none md:opacity-0 md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100">
+                                                        <button type="button"
+                                                            @click.stop="jumpToMessage(msg.id); pinnedPanelOpen = false"
+                                                            class="rounded-lg border border-white/8 bg-[#222127] px-2.5 py-1.5 text-[0.68rem] font-semibold text-white/72 shadow-[0_6px_14px_rgba(0,0,0,0.22)] transition hover:border-[#c9a96e]/30 hover:bg-[#2b261f] hover:text-[#f4dfb8]">
+                                                            {{ __('Jump') }}
+                                                        </button>
+                                                        <button type="button"
+                                                            x-show="canUnpinPinnedMessage(msg)" x-cloak
+                                                            @click.stop="unpinPinnedMessage(msg)"
+                                                            class="flex h-7 w-7 items-center justify-center rounded-lg border border-white/8 bg-[#222127] text-white/45 shadow-[0_6px_14px_rgba(0,0,0,0.22)] transition hover:border-red-300/25 hover:bg-red-500/10 hover:text-red-200"
+                                                            title="{{ __('Remove pinned message') }}"
+                                                            aria-label="{{ __('Remove pinned message') }}">
+                                                            <svg viewBox="0 0 16 16" class="h-3 w-3 fill-none stroke-current stroke-[2]"><path d="M3 3l10 10M13 3L3 13"></path></svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </template>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5">
-                                    <svg viewBox="0 0 16 16" class="h-4 w-4 shrink-0 stroke-current fill-none stroke-[1.8] text-white/25"><circle cx="7" cy="7" r="4"></circle><path d="M10 10l3 3"></path></svg>
-                                    <input x-model="searchQuery" @input="handleSearchInput()" type="text" class="w-48 border-0 bg-transparent px-0 py-0 text-[0.74rem] text-white placeholder:text-white/20 focus:outline-none focus:ring-0" placeholder="{{ __('Search messages') }}">
-                                </div>
-                                {{-- Mobile: open drawer overlay --}}
-                                <button type="button" class="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white xl:hidden" @click="membersDrawerOpen = !membersDrawerOpen" title="{{ __('Members') }}">
-                                    <svg viewBox="0 0 16 16" class="h-[17px] w-[17px] fill-none stroke-current stroke-[1.5]" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="5.5" cy="4.5" r="2.5"/>
-                                        <path d="M0.5 14a5 5 0 0 1 10 0"/>
-                                        <circle cx="12.5" cy="4" r="2" opacity=".45"/>
-                                        <path d="M11 13.5a3.5 3.5 0 0 1 4.5 0" opacity=".45"/>
-                                    </svg>
-                                </button>
-                                {{-- Desktop: toggle members sidebar --}}
-                                <button type="button" class="hidden xl:flex h-8 w-8 items-center justify-center rounded-lg transition" :class="membersOpen ? 'bg-white/[0.08] text-[#c9a96e]' : 'text-white/30 hover:bg-white/[0.05] hover:text-white'" @click="membersOpen = !membersOpen" :title="membersOpen ? '{{ __('Hide members') }}' : '{{ __('Show members') }}'">
-                                    <svg viewBox="0 0 16 16" class="h-[17px] w-[17px] fill-none stroke-current stroke-[1.5]" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="5.5" cy="4.5" r="2.5"/>
-                                        <path d="M0.5 14a5 5 0 0 1 10 0"/>
-                                        <circle cx="12.5" cy="4" r="2" opacity=".45"/>
-                                        <path d="M11 13.5a3.5 3.5 0 0 1 4.5 0" opacity=".45"/>
-                                    </svg>
-                                </button>
                             </div>
                         </div>
 
@@ -510,7 +559,7 @@
 
                                 <div x-show="!loadingMessages && messages.length" x-cloak class="space-y-0.5" id="messages-list">
                                     <template x-for="(message, index) in messages" :key="message.id">
-                                        <div :data-message-id="message.id">
+                                        <div :data-message-id="message.id" class="scroll-mt-24">
                                             <template x-if="showDateDivider(index)">
                                                 <div class="my-4 flex items-center gap-3 px-1 select-none">
                                                     <div class="h-px flex-1 bg-white/[0.05]"></div>
@@ -547,7 +596,7 @@
 
                                             {{-- Normal message --}}
                                             <template x-if="!message._isSystem">
-                                            <article class="group rounded-lg px-2 transition hover:bg-white/[0.02]" :class="isGrouped(index) ? 'pt-0.5 pb-0' : 'pt-3 pb-0 mt-2'">
+                                            <article class="group rounded-lg px-2 transition duration-500" :class="`${isGrouped(index) ? 'pt-0.5 pb-0' : 'pt-3 pb-0 mt-2'} ${isHighlightedMessage(message.id) ? 'bg-[#c9a96e]/12 ring-1 ring-[#c9a96e]/30 shadow-[0_0_0_1px_rgba(201,169,110,0.12)]' : 'hover:bg-white/[0.02]'}`">
                                                 {{-- Discord-style reply indicator --}}
                                                 <template x-if="message.reply_to">
                                                     <div class="mb-0.5 flex items-end gap-3">
@@ -563,8 +612,13 @@
                                                 <div class="flex items-start gap-3">
                                                     <div class="w-10 shrink-0">
                                                         <template x-if="!isGrouped(index)">
-                                                            <div class="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 font-display text-[0.66rem] font-bold text-white" :style="`background: radial-gradient(circle at top, ${message.user.accent}, #151014 70%)`">
-                                                                <span x-text="message.user.initials"></span>
+                                                            <div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/10 font-display text-[0.66rem] font-bold text-white" :style="`background: radial-gradient(circle at top, ${message.user.accent}, #151014 70%)`">
+                                                                <template x-if="message.user.profile_photo_url">
+                                                                    <img :src="message.user.profile_photo_url" alt="" class="h-full w-full object-cover">
+                                                                </template>
+                                                                <template x-if="!message.user.profile_photo_url">
+                                                                    <span x-text="message.user.initials"></span>
+                                                                </template>
                                                             </div>
                                                         </template>
                                                         <template x-if="isGrouped(index)">
@@ -686,7 +740,14 @@
                                         {{ __('Drop a file here to attach it.') }}
                                     </div>
                                     <div class="flex items-center gap-2.5">
-                                        <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#c9a96e]/20 bg-[linear-gradient(135deg,rgba(201,169,110,0.22),rgba(201,169,110,0.06))] font-display text-[0.48rem] text-[#e8c88a]" x-text="user.initials"></div>
+                                        <div class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#c9a96e]/20 bg-[linear-gradient(135deg,rgba(201,169,110,0.22),rgba(201,169,110,0.06))] font-display text-[0.48rem] text-[#e8c88a]">
+                                            <template x-if="user.profile_photo_url">
+                                                <img :src="user.profile_photo_url" alt="" class="h-full w-full object-cover">
+                                            </template>
+                                            <template x-if="!user.profile_photo_url">
+                                                <span x-text="user.initials"></span>
+                                            </template>
+                                        </div>
                                         <textarea
                                             x-ref="composerInput"
                                             x-model="draft"
@@ -727,8 +788,13 @@
                             <template x-for="member in members.online" :key="`online-${member.id}`">
                                 <div class="group flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-white/5">
                                     <div class="relative shrink-0">
-                                        <div class="flex h-8 w-8 items-center justify-center rounded-full border border-white/8 font-display text-[0.58rem] font-bold text-white" :style="`background: radial-gradient(circle at top, ${member.accent}, #151014 70%)`">
-                                            <span x-text="member.initials"></span>
+                                        <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-white/8 font-display text-[0.58rem] font-bold text-white" :style="`background: radial-gradient(circle at top, ${member.accent}, #151014 70%)`">
+                                            <template x-if="member.profile_photo_url">
+                                                <img :src="member.profile_photo_url" alt="" class="h-full w-full object-cover">
+                                            </template>
+                                            <template x-if="!member.profile_photo_url">
+                                                <span x-text="member.initials"></span>
+                                            </template>
                                         </div>
                                         <div class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0b0b15] bg-[#4ade80]"></div>
                                     </div>
@@ -746,8 +812,13 @@
                             <template x-for="member in members.offline" :key="`offline-${member.id}`">
                                 <div class="group flex items-center gap-3 rounded-lg px-2 py-2 opacity-50 transition hover:bg-white/5">
                                     <div class="relative shrink-0">
-                                        <div class="flex h-8 w-8 items-center justify-center rounded-full border border-white/8 bg-white/[0.03] font-display text-[0.58rem] font-bold text-white/40">
-                                            <span x-text="member.initials"></span>
+                                        <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-white/8 bg-white/[0.03] font-display text-[0.58rem] font-bold text-white/40">
+                                            <template x-if="member.profile_photo_url">
+                                                <img :src="member.profile_photo_url" alt="" class="h-full w-full object-cover">
+                                            </template>
+                                            <template x-if="!member.profile_photo_url">
+                                                <span x-text="member.initials"></span>
+                                            </template>
                                         </div>
                                         <div class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0b0b15] bg-slate-500"></div>
                                     </div>
@@ -893,7 +964,7 @@
                 </div>
             </div>
         {{-- Custom confirm dialog (replaces window.confirm) --}}
-        <div x-show="confirmDialog.open" x-cloak class="fixed inset-0 z-[90] flex items-center justify-center bg-black/65 px-4" @keydown.escape.window="confirmDialogCancel()">
+        <div x-show="confirmDialog.open" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 px-4" @keydown.escape.window="confirmDialogCancel()">
             <div class="w-full max-w-sm rounded-2xl border border-white/8 bg-[linear-gradient(180deg,rgba(20,17,21,0.99),rgba(12,11,14,0.99))] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.55)]" @click.stop>
                 <h3 class="text-[0.95rem] font-semibold text-[#f0ede8]" x-text="confirmDialog.title"></h3>
                 <p class="mt-1.5 text-[0.78rem] leading-[1.5] text-white/48" x-text="confirmDialog.message"></p>
@@ -905,7 +976,7 @@
         </div>
 
         {{-- Custom timeout dialog (replaces window.prompt for member timeouts) --}}
-        <div x-show="timeoutDialog.open" x-cloak class="fixed inset-0 z-[90] flex items-center justify-center bg-black/65 px-4" @keydown.escape.window="closeTimeoutDialog()">
+        <div x-show="timeoutDialog.open" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 px-4" @keydown.escape.window="closeTimeoutDialog()">
             <div class="w-full max-w-sm rounded-2xl border border-white/8 bg-[linear-gradient(180deg,rgba(20,17,21,0.99),rgba(12,11,14,0.99))] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.55)]" @click.stop>
                 <div class="flex items-start justify-between gap-3">
                     <div>

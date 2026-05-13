@@ -91,6 +91,7 @@ Route::middleware(['auth', 'verified', 'community.perf'])->prefix('community')->
     Route::post('/messages/{message}/reactions/toggle', [MessageReactionController::class, 'toggle'])->name('messages.reactions.toggle');
     Route::delete('/messages/{message}', [CommunityMessageController::class, 'destroy'])->name('messages.destroy');
     Route::post('/messages/{message}/pin', [CommunityMessageController::class, 'pin'])->name('messages.pin');
+    Route::get('/messages/{message}/attachment', [CommunityMessageController::class, 'serveAttachment'])->name('messages.attachment');
 
     Route::get('/presence', [CommunityPresenceController::class, 'index'])->name('presence.index');
     Route::post('/presence/ping', [CommunityPresenceController::class, 'ping'])->name('presence.ping');

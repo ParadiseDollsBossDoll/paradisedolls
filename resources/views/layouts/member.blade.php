@@ -1,10 +1,7 @@
 @php
     $user = auth()->user();
-    $initials = collect(explode(' ', trim($user->name)))
-        ->filter()
-        ->take(2)
-        ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
-        ->implode('') ?: 'M';
+    $initials = $user->initials();
+    $profilePhotoUrl = $user->profilePhotoUrl();
 
     $coursesForLayout = \App\Models\Course::query()
         ->where('is_published', true)
@@ -81,12 +78,17 @@
                         <div class="elysian-side-profile-inner">
                             <div class="elysian-side-profile-row">
                                 <div class="elysian-avatar-wrap">
-                                    <div class="elysian-avatar">{{ $initials }}</div>
+                                    <div class="elysian-avatar">
+                                        <span>{{ $initials }}</span>
+                                        @if ($profilePhotoUrl)
+                                            <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
+                                        @endif
+                                    </div>
                                     <div class="elysian-online-dot"></div>
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <div class="elysian-side-name">{{ $user->name }}</div>
-                                    <div class="elysian-side-sub">{{ __('ParadiseDollz Member') }}</div>
+                                    <div class="elysian-side-sub">{{ __('Paradise Dolls Member') }}</div>
                                 </div>
                             </div>
                             <div class="mt-2.5 border-t border-white/[0.06] pt-2.5">
@@ -160,7 +162,12 @@
                         <a href="{{ route('home') }}#apply" class="hidden rounded-full border border-boss-gold/20 bg-boss-gold/10 px-4 py-2 text-[0.66rem] uppercase tracking-[0.14em] text-boss-gold transition-colors hover:bg-boss-gold hover:text-boss-ink sm:inline-flex">
                             {{ __('Refer') }}
                         </a>
-                        <div class="elysian-topbar-avatar">{{ $initials }}</div>
+                        <div class="elysian-topbar-avatar">
+                            <span>{{ $initials }}</span>
+                            @if ($profilePhotoUrl)
+                                <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
+                            @endif
+                        </div>
                     </div>
                 </header>
 
