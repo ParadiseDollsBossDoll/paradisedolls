@@ -18,14 +18,16 @@ trait ManagesLessonContentBlocks
             $prefix.'_enabled' => ['nullable', 'boolean'],
             $prefix => ['nullable', 'array', 'max:60'],
             $prefix.'.*.id' => ['nullable', 'integer'],
-            $prefix.'.*.block_type' => ['nullable', 'string', Rule::in(LessonContentBlock::TYPES)],
+            $prefix.'.*.block_type' => ['nullable', 'string', Rule::in(LessonContentBlock::VALID_TYPES)],
             $prefix.'.*.title' => ['nullable', 'string', 'max:255'],
             $prefix.'.*.content' => ['nullable', 'string', 'max:50000'],
+            $prefix.'.*.image_path' => ['nullable', 'string', 'max:500'],
             $prefix.'.*.image_upload' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
             $prefix.'.*.gallery_uploads' => ['nullable', 'array', 'max:20'],
             $prefix.'.*.gallery_uploads.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
             $prefix.'.*.gallery_captions' => ['nullable', 'string', 'max:10000'],
-            $prefix.'.*.file_upload' => ['nullable', 'file', 'mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,csv,txt,zip', 'max:20480'],
+            $prefix.'.*.file_path' => ['nullable', 'string', 'max:500'],
+            $prefix.'.*.file_upload' => ['nullable', 'file', 'mimes:pdf,ppt,pptx,key', 'max:20480'],
             $prefix.'.*.button_label' => ['nullable', 'string', 'max:120'],
             $prefix.'.*.bunny_video_id' => ['nullable', 'string', 'max:64'],
             $prefix.'.*.bunny_library_id' => ['nullable', 'string', 'max:64'],
@@ -78,17 +80,31 @@ trait ManagesLessonContentBlocks
         $type = LessonContentBlock::canonicalType($block['block_type'] ?? null);
 
         $imagePath = $type === 'image' ? $existingBlock?->image_path : null;
-        $filePath = $type === 'pdf_resource' ? $existingBlock?->file_path : null;
-        $settings = [];
+        $filePath = in_array($type, ['pdf_resource', 'presentation'], true) ? $existingBlock?->file_path : null;
+        $presentationUrl = $type === 'presentation' ? $existingBlock?->presentation_url : null;
+        $settings = in_array($type, ['pdf_resource', 'presentation'], true)
+            ? ($existingBlock?->settings ?? [])
+            : [];
 
         $imageUpload = $block['image_upload'] ?? null;
         if ($type === 'image' && $imageUpload instanceof UploadedFile) {
             $imagePath = $this->storeLessonBlockFile($imageUpload, 'academy/lesson-content/images');
+        } elseif ($type === 'image' && filled($block['image_path'] ?? null)) {
+            $imagePath = $block['image_path'];
         }
 
         $fileUpload = $block['file_upload'] ?? null;
         if ($type === 'pdf_resource' && $fileUpload instanceof UploadedFile) {
-            $filePath = $this->storeLessonBlockFile($fileUpload, 'academy/lesson-content/files');
+            $filePath = $this->storeLessonBlockFile($fileUpload, 'academy/lesson-content/pdfs');
+        } elseif ($type === 'pdf_resource' && filled($block['file_path'] ?? null)) {
+            $filePath = $block['file_path'];
+        }
+
+        if ($type === 'presentation' && $fileUpload instanceof UploadedFile) {
+            $filePath = $this->storeLessonBlockFile($fileUpload, 'academy/lesson-content/presentations');
+            $presentationUrl = null;
+        } elseif ($type === 'presentation' && filled($block['file_path'] ?? null)) {
+            $filePath = $block['file_path'];
         }
 
         if ($type === 'gallery') {
@@ -107,7 +123,11 @@ trait ManagesLessonContentBlocks
             }
         }
 
-        if ($type === 'pdf_resource' && filled($block['button_label'] ?? null)) {
+        if ($type === 'presentation' && filled($block['presentation_url'] ?? null)) {
+            $presentationUrl = Lesson::normalizePresentationUrl($block['presentation_url']);
+        }
+
+        if (in_array($type, ['pdf_resource', 'presentation'], true) && filled($block['button_label'] ?? null)) {
             $settings['button_label'] = trim((string) $block['button_label']);
         }
 
@@ -124,7 +144,7 @@ trait ManagesLessonContentBlocks
             'bunny_upload_fingerprint' => $type === 'video' ? ($block['bunny_upload_fingerprint'] ?? null) : null,
             'bunny_status' => $type === 'video' && filled($block['bunny_status'] ?? null) ? (int) $block['bunny_status'] : null,
             'duration' => $type === 'video' ? ($block['duration'] ?? null) : null,
-            'presentation_url' => $type === 'canva' ? Lesson::normalizePresentationUrl($block['presentation_url'] ?? null) : null,
+            'presentation_url' => $presentationUrl,
             'settings' => $settings !== [] ? $settings : null,
             'sort_order' => $block['sort_order'] ?? ($index + 1),
         ];

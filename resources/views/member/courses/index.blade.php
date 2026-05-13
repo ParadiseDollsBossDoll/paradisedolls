@@ -95,7 +95,11 @@
                                         class="flex h-4 w-4 items-center justify-center rounded-full border text-[0.45rem]"
                                         style="{{ $done ? 'background: linear-gradient(135deg, '.$color.', #E8C88A); border-color: '.$color.'40; color: #07070C;' : 'background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); color: rgba(240,237,232,0.2);' }}"
                                     >
-                                        {{ $done ? 'OK' : $loop->iteration }}
+                                        @if ($done)
+                                            &#10003;
+                                        @else
+                                            {{ $loop->iteration }}
+                                        @endif
                                     </span>
                                 @endforeach
                             </div>

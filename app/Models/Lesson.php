@@ -163,33 +163,7 @@ class Lesson extends Model
 
     public function canvaPresentationEmbedUrl(): ?string
     {
-        $url = $this->presentationOpenUrl();
-        if ($url === null) {
-            return null;
-        }
-
-        $parts = parse_url($url);
-        $host = strtolower($parts['host'] ?? '');
-        $path = '/'.ltrim($parts['path'] ?? '', '/');
-        parse_str($parts['query'] ?? '', $query);
-
-        if ($host === 'canva.link') {
-            return $url;
-        }
-
-        if (! in_array($host, ['canva.com', 'www.canva.com'], true)) {
-            return null;
-        }
-
-        if (! array_key_exists('embed', $query)) {
-            return null;
-        }
-
-        if (! preg_match('#^/design/([A-Za-z0-9_-]+)(?:/|$)#', $path, $matches)) {
-            return null;
-        }
-
-        return $url;
+        return null;
     }
 
     public static function normalizePresentationUrl(?string $value): ?string

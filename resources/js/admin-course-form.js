@@ -2,6 +2,7 @@ window.adminCourseForm = function adminCourseForm(config) {
     return {
         platform: config.platform ?? '',
         platformColor: config.platformColor ?? '#C9A96E',
+        courseId: config.courseId ?? '',
         showSuggestions: config.showSuggestions ?? false,
         hasCourseOutline: !!config.hasCourseOutline,
         hasIntro: !!config.hasIntro,
@@ -17,6 +18,7 @@ window.adminCourseForm = function adminCourseForm(config) {
         bunnyLoading: false,
         bunnyError: null,
         uploads: {},
+        lessonMoveNotice: null,
 
         init() {
             this.introVideo = this.normalizedIntroVideo(config.introVideo ?? {});
@@ -41,11 +43,15 @@ window.adminCourseForm = function adminCourseForm(config) {
             };
         },
 
-        blankLesson(sortOrder) {
-            const module = this.modules[0] ?? this.blankModule(1);
+        blankLesson(sortOrder, moduleKey = null) {
+            const module = this.modules.find((candidate) => candidate.client_key === moduleKey)
+                || this.modules[0]
+                || this.blankModule(1);
 
             return {
                 id: null,
+                client_key: this.newLessonKey(sortOrder),
+                course_id: this.courseId,
                 course_module_id: module.id ?? '',
                 module_key: module.client_key,
                 module_title: module.title || 'Core Training',
@@ -148,6 +154,8 @@ window.adminCourseForm = function adminCourseForm(config) {
                 module_key: moduleKey,
             };
 
+            normalized.client_key = normalized.client_key || this.newLessonKey(index + 1);
+            normalized.course_id = normalized.course_id ?? this.courseId;
             normalized.is_published = this.booleanValue(normalized.is_published, true);
             normalized.module_title = this.moduleTitleForKey(moduleKey);
             normalized.course_module_id = this.moduleIdForKey(moduleKey);
@@ -200,11 +208,17 @@ window.adminCourseForm = function adminCourseForm(config) {
 
         canonicalContentBlockType(type) {
             const aliases = {
-                presentation: 'canva',
+                heading: 'text',
+                gallery: 'image',
+                canva: 'presentation',
                 pdf: 'pdf_resource',
-                tip: 'tips',
-                warning: 'safety',
-                step: 'steps',
+                tip: 'text',
+                tips: 'text',
+                warning: 'text',
+                safety: 'text',
+                step: 'text',
+                steps: 'text',
+                divider: 'text',
             };
             const canonical = aliases[type] ?? type;
 
@@ -212,22 +226,16 @@ window.adminCourseForm = function adminCourseForm(config) {
         },
 
         contentBlockTypes() {
-            return ['heading', 'text', 'image', 'gallery', 'video', 'canva', 'pdf_resource', 'steps', 'tips', 'safety', 'divider'];
+            return ['text', 'image', 'video', 'pdf_resource', 'presentation'];
         },
 
         blockTypeLabel(type) {
             return {
-                heading: 'Heading',
                 text: 'Text',
                 image: 'Image',
-                gallery: 'Image gallery',
                 video: 'Bunny video',
-                canva: 'Canva presentation',
-                pdf_resource: 'PDF / resource',
-                steps: 'Step-by-step',
-                tips: 'Important tips',
-                safety: 'Safety notes',
-                divider: 'Divider',
+                pdf_resource: 'PDF',
+                presentation: 'Presentation',
             }[type] || 'Text';
         },
 
@@ -303,13 +311,34 @@ window.adminCourseForm = function adminCourseForm(config) {
             return value === true || value === 1 || value === '1' || value === 'true';
         },
 
-        addLesson() {
-            this.lessons.push(this.blankLesson(this.lessons.length + 1));
+        addLesson(moduleKey = null) {
+            const lesson = this.blankLesson(this.lessons.length + 1, moduleKey);
+            this.lessons.push(lesson);
+
+            return this.lessonKey(lesson);
+        },
+
+        addLessonForModule(moduleIndex) {
+            return this.addLesson(this.activeModuleKey(moduleIndex));
+        },
+
+        addLessonForFilter(filter, fallbackModule = 0) {
+            const moduleKey = this.isAllLessonsFilter(filter)
+                ? this.moduleKeyFromFilter(fallbackModule)
+                : this.moduleKeyFromFilter(filter);
+
+            return this.addLesson(moduleKey);
         },
 
         removeLesson(index) {
             this.lessons.splice(index, 1);
             this.lessons = this.lessons.map((lesson, i) => ({ ...lesson, sort_order: i + 1 }));
+        },
+
+        removeLessonForFilter(index, filter = 0) {
+            this.removeLesson(index);
+
+            return this.firstLessonKeyForFilter(filter);
         },
 
         addModule() {
@@ -360,6 +389,123 @@ window.adminCourseForm = function adminCourseForm(config) {
             Object.assign(lesson, this.lessonWithModule(lesson, lesson.module_key));
         },
 
+        activeModuleKey(moduleIndex = 0) {
+            return this.modules[moduleIndex]?.client_key
+                ?? this.modules[0]?.client_key
+                ?? this.blankModule(1).client_key;
+        },
+
+        moduleKeyFromFilter(filter = 0) {
+            if (filter && filter !== 'all' && this.modules.some((module) => module.client_key === filter)) {
+                return filter;
+            }
+
+            const numericIndex = Number(filter);
+            if (Number.isInteger(numericIndex) && numericIndex >= 0 && numericIndex < this.modules.length) {
+                return this.activeModuleKey(numericIndex);
+            }
+
+            return this.activeModuleKey(0);
+        },
+
+        moduleLabel(moduleIndex = 0) {
+            return `Module ${Number(moduleIndex) + 1}`;
+        },
+
+        selectedModuleName(moduleKeyOrIndex = 0) {
+            const moduleKey = this.moduleKeyFromFilter(moduleKeyOrIndex);
+            const moduleIndex = this.moduleIndexForKey(moduleKey);
+
+            return this.modules[moduleIndex]?.title || `Module ${moduleIndex + 1}`;
+        },
+
+        moduleContextLabel(moduleKeyOrIndex = 0) {
+            const moduleKey = this.moduleKeyFromFilter(moduleKeyOrIndex);
+            const moduleIndex = this.moduleIndexForKey(moduleKey);
+            const label = this.moduleLabel(moduleIndex);
+            const title = this.selectedModuleName(moduleKey);
+
+            return title && title !== label ? `${label} - ${title}` : label;
+        },
+
+        lessonFilterContext(filter = 0) {
+            return this.isAllLessonsFilter(filter) ? 'All Lessons' : this.moduleContextLabel(filter);
+        },
+
+        lessonKey(lesson) {
+            if (!lesson) {
+                return null;
+            }
+
+            return lesson.id ? `lesson-${lesson.id}` : lesson.client_key;
+        },
+
+        lessonBelongsToModule(lesson, moduleKeyOrIndex = 0) {
+            return lesson.module_key === this.moduleKeyFromFilter(moduleKeyOrIndex);
+        },
+
+        isAllLessonsFilter(filter) {
+            return filter === 'all';
+        },
+
+        lessonMatchesFilter(lesson, filter = 0) {
+            return this.isAllLessonsFilter(filter) || this.lessonBelongsToModule(lesson, filter);
+        },
+
+        lessonsForModule(moduleKeyOrIndex = 0) {
+            const moduleKey = this.moduleKeyFromFilter(moduleKeyOrIndex);
+
+            return this.lessons.filter((lesson) => lesson.module_key === moduleKey);
+        },
+
+        lessonsForFilter(filter = 0) {
+            return this.isAllLessonsFilter(filter)
+                ? this.lessons
+                : this.lessonsForModule(filter);
+        },
+
+        firstLessonKeyForFilter(filter = 0) {
+            return this.lessonKey(this.lessonsForFilter(filter)[0]) ?? null;
+        },
+
+        moduleIndexForKey(moduleKey) {
+            const index = this.modules.findIndex((module) => module.client_key === moduleKey);
+
+            return index >= 0 ? index : 0;
+        },
+
+        lessonNumberInModule(lesson) {
+            const moduleLessons = this.lessons.filter((candidate) => candidate.module_key === lesson.module_key);
+            const lessonKey = this.lessonKey(lesson);
+            const index = moduleLessons.findIndex((candidate) => this.lessonKey(candidate) === lessonKey);
+
+            return index >= 0 ? index + 1 : 1;
+        },
+
+        lessonTabLabel(lesson, filter = 0) {
+            const lessonLabel = `Lesson ${this.lessonNumberInModule(lesson)}`;
+
+            if (!this.isAllLessonsFilter(filter)) {
+                return lessonLabel;
+            }
+
+            return `M${this.moduleIndexForKey(lesson.module_key) + 1} - ${lessonLabel}`;
+        },
+
+        changeLessonModuleForFilter(lesson, filter = 0) {
+            this.syncLessonModule(lesson);
+
+            if (this.isAllLessonsFilter(filter) || this.lessonMatchesFilter(lesson, filter)) {
+                this.lessonMoveNotice = null;
+
+                return this.lessonKey(lesson);
+            }
+
+            this.lessonMoveNotice = `This lesson was moved to ${this.moduleLabel(this.moduleIndexForKey(lesson.module_key))}.`;
+
+            return this.firstLessonKeyForFilter(filter);
+        },
+
         lessonWithModule(lesson, moduleKey) {
             return {
                 ...lesson,
@@ -379,6 +525,10 @@ window.adminCourseForm = function adminCourseForm(config) {
 
         newModuleKey(sortOrder) {
             return `module-${Date.now()}-${sortOrder}-${Math.random().toString(36).slice(2, 8)}`;
+        },
+
+        newLessonKey(sortOrder) {
+            return `lesson-new-${Date.now()}-${sortOrder}-${Math.random().toString(36).slice(2, 8)}`;
         },
 
         openBunnyPicker(index) {
@@ -611,6 +761,76 @@ window.adminCourseForm = function adminCourseForm(config) {
 
         blockUploadKey(lessonIndex, blockIndex) {
             return `lesson-${lessonIndex}-block-${blockIndex}`;
+        },
+
+        blockFileUploadKey(lessonIndex, blockIndex) {
+            return `block-file-${lessonIndex}-${blockIndex}`;
+        },
+
+        async uploadBlockLocalFile(lessonIndex, blockIndex, event, type) {
+            const file = event.target.files?.[0];
+            if (!file) {
+                return;
+            }
+
+            event.target.value = '';
+
+            const uploadKey = this.blockFileUploadKey(lessonIndex, blockIndex);
+            this.setUpload(uploadKey, { progress: 0, status: 'Uploading...', error: null });
+
+            const formData = new FormData();
+            formData.append('type', type);
+            formData.append('file', file);
+
+            try {
+                await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', config.blockFileUploadUrl);
+                    xhr.setRequestHeader('Accept', 'application/json');
+                    xhr.setRequestHeader('X-CSRF-TOKEN', this.csrfToken());
+
+                    xhr.upload.onprogress = (e) => {
+                        if (e.lengthComputable) {
+                            const pct = Math.min(99, Math.round((e.loaded / e.total) * 100));
+                            this.setUpload(uploadKey, { progress: pct, status: `Uploading... ${pct}%`, error: null });
+                        }
+                    };
+
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            let data = {};
+                            try { data = JSON.parse(xhr.responseText); } catch (_) {}
+
+                            const block = this.lessons[lessonIndex]?.content_blocks?.[blockIndex];
+                            if (block) {
+                                if (type === 'image') {
+                                    this.lessons[lessonIndex].content_blocks[blockIndex].image_path = data.path ?? '';
+                                    this.lessons[lessonIndex].content_blocks[blockIndex].image_url = data.url ?? '';
+                                } else {
+                                    this.lessons[lessonIndex].content_blocks[blockIndex].file_path = data.path ?? '';
+                                    this.lessons[lessonIndex].content_blocks[blockIndex].file_url = data.url ?? '';
+                                }
+                            }
+
+                            this.setUpload(uploadKey, { progress: 100, status: 'Upload complete. Save the course to keep this file.', error: null });
+                            resolve();
+                        } else {
+                            let message = 'Upload failed.';
+                            try { message = JSON.parse(xhr.responseText)?.message || message; } catch (_) {}
+                            reject(new Error(message));
+                        }
+                    };
+
+                    xhr.onerror = () => reject(new Error('Network error during upload.'));
+                    xhr.send(formData);
+                });
+            } catch (error) {
+                this.setUpload(uploadKey, {
+                    progress: this.uploads[uploadKey]?.progress ?? 0,
+                    status: 'Upload failed.',
+                    error: error.message,
+                });
+            }
         },
 
         lessonPreviewUrl(lesson) {

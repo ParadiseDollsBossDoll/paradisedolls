@@ -17,6 +17,8 @@ class AdminCourseManagementTest extends TestCase
 
     public function test_admin_can_create_course_with_zip_style_lesson_fields(): void
     {
+        Storage::fake('public');
+
         $admin = User::factory()->create(['role' => 'admin']);
 
         $this->actingAs($admin)->post(route('admin.courses.store'), [
@@ -27,7 +29,7 @@ class AdminCourseManagementTest extends TestCase
             'short_description' => 'A premium onboarding path for new members.',
             'description' => 'Master the platform from setup to private shows.',
             'has_course_outline' => '1',
-            'course_outline_url' => 'https://example.com/outline.pdf',
+            'course_outline_upload' => $this->fakePdfUpload('outline.pdf'),
             'has_intro' => '1',
             'intro_title' => 'Course Orientation',
             'intro_video_url' => 'https://www.youtube.com/embed/intro',
@@ -73,7 +75,10 @@ class AdminCourseManagementTest extends TestCase
         $this->assertSame('#FF3E4D', $course->platform_color);
         $this->assertSame('A premium onboarding path for new members.', $course->short_description);
         $this->assertTrue($course->has_course_outline);
-        $this->assertSame('https://example.com/outline.pdf', $course->course_outline_url);
+        $this->assertStringStartsWith('academy/course-outlines/', $course->course_outline_url);
+        $this->assertStringStartsWith('outline-', $course->courseOutlineFileName());
+        $this->assertStringEndsWith('.pdf', $course->courseOutlineFileName());
+        Storage::disk('public')->assertExists($course->course_outline_url);
         $this->assertTrue($course->has_intro);
         $this->assertSame('Course Orientation', $course->intro_title);
         $this->assertSame('https://www.youtube.com/embed/intro', $course->intro_video_url);
@@ -189,31 +194,16 @@ class AdminCourseManagementTest extends TestCase
                     'content_blocks_enabled' => '1',
                     'content_blocks' => [
                         [
-                            'block_type' => 'heading',
-                            'title' => 'Lesson Flow',
-                            'content' => 'Follow the sections in order.',
-                            'sort_order' => 1,
-                        ],
-                        [
                             'block_type' => 'text',
                             'title' => 'Start Here',
                             'content' => 'Read this first.',
-                            'sort_order' => 2,
+                            'sort_order' => 1,
                         ],
                         [
                             'block_type' => 'image',
                             'title' => 'Profile Example',
                             'image_upload' => $this->fakePngUpload('profile-example.png'),
-                            'sort_order' => 3,
-                        ],
-                        [
-                            'block_type' => 'gallery',
-                            'gallery_uploads' => [
-                                $this->fakePngUpload('gallery-one.png'),
-                                $this->fakePngUpload('gallery-two.png'),
-                            ],
-                            'gallery_captions' => "First example\nSecond example",
-                            'sort_order' => 4,
+                            'sort_order' => 2,
                         ],
                         [
                             'block_type' => 'video',
@@ -222,40 +212,19 @@ class AdminCourseManagementTest extends TestCase
                             'bunny_library_id' => 'library-456',
                             'bunny_video_title' => 'Block Walkthrough',
                             'duration' => '03:20',
-                            'sort_order' => 5,
-                        ],
-                        [
-                            'block_type' => 'canva',
-                            'title' => 'Slides',
-                            'presentation_url' => '<iframe src="https://www.canva.com/design/block-slides/view?embed"></iframe>',
-                            'sort_order' => 6,
+                            'sort_order' => 3,
                         ],
                         [
                             'block_type' => 'pdf_resource',
                             'title' => 'Checklist',
                             'file_upload' => $this->fakePdfUpload('checklist.pdf'),
-                            'button_label' => 'Open Checklist',
-                            'sort_order' => 7,
+                            'sort_order' => 4,
                         ],
                         [
-                            'block_type' => 'steps',
-                            'title' => 'Actions',
-                            'content' => "Do this\nThen this",
-                            'sort_order' => 8,
-                        ],
-                        [
-                            'block_type' => 'tips',
-                            'content' => "Keep this in mind\nReview before publishing",
-                            'sort_order' => 9,
-                        ],
-                        [
-                            'block_type' => 'safety',
-                            'content' => "Do not share passwords\nUse approved links",
-                            'sort_order' => 10,
-                        ],
-                        [
-                            'block_type' => 'divider',
-                            'sort_order' => 11,
+                            'block_type' => 'presentation',
+                            'title' => 'Slides',
+                            'file_upload' => $this->fakePdfUpload('slides.pdf'),
+                            'sort_order' => 5,
                         ],
                     ],
                     'is_published' => '1',
@@ -267,23 +236,18 @@ class AdminCourseManagementTest extends TestCase
         $course = Course::with('lessons.contentBlocks')->where('slug', 'flexible-lesson-guide')->firstOrFail();
         $blocks = $course->lessons->first()->contentBlocks;
 
-        $this->assertSame(['heading', 'text', 'image', 'gallery', 'video', 'canva', 'pdf_resource', 'steps', 'tips', 'safety', 'divider'], $blocks->pluck('block_type')->all());
-        $this->assertSame('Lesson Flow', $blocks[0]->title);
-        $this->assertSame('Start Here', $blocks[1]->title);
-        $this->assertNotNull($blocks[2]->image_path);
-        $this->assertCount(2, $blocks[3]->settings['gallery_images']);
-        $this->assertSame("First example\nSecond example", $blocks[3]->settings['gallery_captions']);
-        $this->assertSame('video-123', $blocks[4]->bunny_video_id);
-        $this->assertSame('library-456', $blocks[4]->bunny_library_id);
-        $this->assertSame('https://www.canva.com/design/block-slides/view?embed', $blocks[5]->presentation_url);
-        $this->assertNotNull($blocks[6]->file_path);
-        $this->assertSame('Open Checklist', $blocks[6]->settings['button_label']);
+        $this->assertSame(['text', 'image', 'video', 'pdf_resource', 'presentation'], $blocks->pluck('block_type')->all());
+        $this->assertSame('Start Here', $blocks[0]->title);
+        $this->assertSame('Read this first.', $blocks[0]->content);
+        $this->assertNotNull($blocks[1]->image_path);
+        $this->assertSame('video-123', $blocks[2]->bunny_video_id);
+        $this->assertSame('library-456', $blocks[2]->bunny_library_id);
+        $this->assertNotNull($blocks[3]->file_path);
+        $this->assertNotNull($blocks[4]->file_path);
 
-        Storage::disk('public')->assertExists($blocks[2]->image_path);
-        foreach ($blocks[3]->settings['gallery_images'] as $galleryImage) {
-            Storage::disk('public')->assertExists($galleryImage);
-        }
-        Storage::disk('public')->assertExists($blocks[6]->file_path);
+        Storage::disk('public')->assertExists($blocks[1]->image_path);
+        Storage::disk('public')->assertExists($blocks[3]->file_path);
+        Storage::disk('public')->assertExists($blocks[4]->file_path);
     }
 
     public function test_admin_added_empty_content_block_is_saved_as_draft(): void
@@ -406,7 +370,7 @@ class AdminCourseManagementTest extends TestCase
         );
     }
 
-    public function test_admin_update_keeps_user_progress_when_lesson_ids_are_missing(): void
+    public function test_admin_update_keeps_user_progress_when_lesson_ids_are_submitted(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $member = User::factory()->create(['role' => 'model']);
@@ -428,7 +392,7 @@ class AdminCourseManagementTest extends TestCase
             'sort_order' => 1,
         ]);
 
-        $course->lessons()->create([
+        $secondLesson = $course->lessons()->create([
             'title' => 'Profile Polish',
             'body' => 'Improve the public profile.',
             'video_url' => 'https://www.youtube.com/embed/profile',
@@ -454,6 +418,8 @@ class AdminCourseManagementTest extends TestCase
             'sort_order' => 1,
             'lessons' => [
                 [
+                    'id' => $firstLesson->id,
+                    'course_id' => $course->id,
                     'title' => 'Getting Started Updated',
                     'body' => 'Updated account registration and verification.',
                     'video_url' => 'https://www.youtube.com/embed/demo-updated',
@@ -462,6 +428,8 @@ class AdminCourseManagementTest extends TestCase
                     'sort_order' => 1,
                 ],
                 [
+                    'id' => $secondLesson->id,
+                    'course_id' => $course->id,
                     'title' => 'Profile Polish Updated',
                     'body' => 'Updated profile guidance.',
                     'video_url' => 'https://www.youtube.com/embed/profile-updated',
@@ -571,6 +539,85 @@ class AdminCourseManagementTest extends TestCase
             'title' => 'Safety Review',
         ]);
         $this->assertSame(3, $course->fresh()->lessons()->count());
+    }
+
+    public function test_admin_update_moves_existing_lesson_using_real_course_module_id(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $course = Course::create([
+            'title' => 'Module Move Course',
+            'slug' => 'module-move-course',
+            'platform_label' => 'General',
+            'description' => 'A course with several modules.',
+            'is_published' => true,
+        ]);
+
+        $modules = collect(range(1, 4))->map(fn (int $number) => $course->modules()->create([
+            'title' => 'Module '.$number,
+            'is_published' => true,
+            'sort_order' => $number,
+        ]))->values();
+
+        $movedLesson = $course->lessons()->create([
+            'course_module_id' => $modules[0]->id,
+            'title' => 'Move Me',
+            'is_published' => true,
+            'sort_order' => 1,
+        ]);
+        $moduleTwoLesson = $course->lessons()->create([
+            'course_module_id' => $modules[1]->id,
+            'title' => 'Stay In Module 2',
+            'is_published' => true,
+            'sort_order' => 2,
+        ]);
+
+        $this->actingAs($admin)->put(route('admin.courses.update', $course), [
+            'title' => 'Module Move Course',
+            'slug' => 'module-move-course',
+            'platform_label' => 'General',
+            'description' => 'A course with several modules.',
+            'has_course_outline' => '0',
+            'has_intro' => '0',
+            'is_published' => '1',
+            'modules' => $modules->map(fn ($module) => [
+                'id' => $module->id,
+                'client_key' => 'module-'.$module->id,
+                'title' => $module->title,
+                'is_published' => '1',
+                'sort_order' => $module->sort_order,
+            ])->all(),
+            'lessons' => [
+                [
+                    'id' => $movedLesson->id,
+                    'course_id' => $course->id,
+                    'course_module_id' => $modules[3]->id,
+                    'module_key' => 'module-'.$modules[0]->id,
+                    'title' => 'Move Me',
+                    'is_published' => '1',
+                    'sort_order' => 1,
+                ],
+                [
+                    'id' => $moduleTwoLesson->id,
+                    'course_id' => $course->id,
+                    'course_module_id' => $modules[1]->id,
+                    'module_key' => 'module-'.$modules[1]->id,
+                    'title' => 'Stay In Module 2',
+                    'is_published' => '1',
+                    'sort_order' => 2,
+                ],
+            ],
+        ])->assertRedirect(route('admin.courses.index'));
+
+        $this->assertDatabaseHas('lessons', [
+            'id' => $movedLesson->id,
+            'course_id' => $course->id,
+            'course_module_id' => $modules[3]->id,
+        ]);
+
+        $course->refresh()->load('modules.lessons');
+
+        $this->assertFalse($course->modules->firstWhere('id', $modules[0]->id)->lessons->contains('id', $movedLesson->id));
+        $this->assertTrue($course->modules->firstWhere('id', $modules[3]->id)->lessons->contains('id', $movedLesson->id));
     }
 
     public function test_minimal_lesson_form_update_preserves_legacy_lesson_content(): void

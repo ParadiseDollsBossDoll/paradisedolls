@@ -21,6 +21,7 @@
 
     $initialLessons = old('lessons', $course->lessons->map(fn ($lesson) => [
         'id' => $lesson->id,
+        'course_id' => $lesson->course_id,
         'course_module_id' => $lesson->course_module_id,
         'module_key' => $lesson->course_module_id ? 'module-'.$lesson->course_module_id : ($initialModules[0]['client_key'] ?? 'module-1'),
         'module_title' => $lesson->module?->title ?? ($initialModules[0]['title'] ?? 'Core Training'),
@@ -75,6 +76,7 @@
     if ($initialLessons === []) {
         $initialLessons = [[
             'id' => null,
+            'course_id' => $course->id,
             'course_module_id' => '',
             'module_key' => $initialModules[0]['client_key'] ?? 'module-1',
             'module_title' => 'Core Training',
@@ -111,6 +113,7 @@
     <div
         class="mx-auto max-w-5xl space-y-5 pb-10 text-boss-ivory"
         x-data="adminCourseForm({
+            courseId: @js($course->id),
             platform: @js(old('platform_label', $course->platform_label)),
             platformColor: @js(old('platform_color', $course->displayColor())),
             showSuggestions: false,
@@ -133,6 +136,7 @@
             bunnyVideosUrl: @js(route('admin.bunny.videos.index')),
             bunnyUploadIntentUrl: @js(route('admin.bunny.videos.upload-intent')),
             bunnyVideoUrlTemplate: @js(route('admin.bunny.videos.show', ['videoId' => '__VIDEO_ID__'])),
+            blockFileUploadUrl: @js(route('admin.courses.block-file')),
             lessonPreviewUrlTemplate: @js(route('admin.courses.lessons.preview', [$course, '__LESSON_ID__'])),
         })"
     >
@@ -416,10 +420,10 @@
                         </div>
 
                         <div x-show="hasCourseOutline" x-transition class="border-t border-white/[0.05] px-4 pb-4 pt-3">
-                            <x-input-label for="course_outline_url" :value="__('PDF URL')" />
-                            <input type="text" id="course_outline_url" name="course_outline_url" class="pd-input mt-2" value="{{ old('course_outline_url', $course->course_outline_url) }}" placeholder="https://...">
-                            <p class="mt-1.5 text-[0.62rem] text-boss-ivory/20">{{ __('Paste a direct link to the PDF. Members will see this as "Course Outline" at the top.') }}</p>
-                            <x-input-error class="mt-2" :messages="$errors->get('course_outline_url')" />
+                            <x-input-label for="course_outline_upload" :value="__('Guide File')" />
+                            <div class="mt-2">
+                                @include('admin.courses.partials.course-outline-upload', ['course' => $course])
+                            </div>
                         </div>
                     </div>
 
@@ -512,7 +516,9 @@
 
             {{-- ③ MODULES + LESSONS — Tab-based compact editor --}}
             <div
-                x-data="{ activeSection: 'modules', activeModuleTab: 0, activeLessonTab: 0 }"
+                x-data="{ activeSection: 'modules', activeModuleTab: 0, lessonModuleFilter: 0, activeLessonKey: null }"
+                x-init="lessonModuleFilter = activeModuleKey(activeModuleTab); activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
+                x-effect="activeLessonKey = lessonsForFilter(lessonModuleFilter).some((lesson) => lessonKey(lesson) === activeLessonKey) ? activeLessonKey : firstLessonKeyForFilter(lessonModuleFilter)"
                 class="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0E0E1A]"
             >
                 {{-- Section switcher header --}}
@@ -524,10 +530,10 @@
                             :class="activeSection === 'modules' ? 'border-boss-gold/30 bg-boss-gold/[0.12] text-boss-gold' : 'border-white/[0.07] bg-white/[0.04] text-boss-ivory/45 hover:text-boss-ivory/75'">
                             {{ __('Modules') }} <span class="opacity-60" x-text="`(${modules.length})`"></span>
                         </button>
-                        <button type="button" @click="activeSection = 'lessons'"
+                        <button type="button" @click="activeSection = 'lessons'; lessonModuleFilter = activeModuleKey(activeModuleTab); lessonMoveNotice = null; activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
                             class="rounded-lg border px-4 py-1.5 text-[0.75rem] font-medium transition-colors"
                             :class="activeSection === 'lessons' ? 'border-boss-gold/30 bg-boss-gold/[0.12] text-boss-gold' : 'border-white/[0.07] bg-white/[0.04] text-boss-ivory/45 hover:text-boss-ivory/75'">
-                            {{ __('Lessons') }} <span class="opacity-60" x-text="`(${lessons.length})`"></span>
+                            {{ __('Lessons') }} <span class="opacity-60" x-text="`(${lessonsForFilter(lessonModuleFilter).length}/${lessons.length})`"></span>
                         </button>
                     </div>
                 </div>
@@ -535,16 +541,17 @@
                 {{-- ═══ MODULES PANEL ═══ --}}
                 <div x-show="activeSection === 'modules'">
                     {{-- Chrome-style module tabs --}}
-                    <div class="flex items-end gap-0.5 overflow-x-auto border-b border-white/[0.06] bg-[#080810] px-3 pt-2">
+                    <div class="flex items-end gap-0.5 overflow-x-auto border-b border-white/[0.06] bg-[#080810] px-3 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                         <template x-for="(module, moduleIndex) in modules" :key="module.client_key">
-                            <button type="button" @click="activeModuleTab = moduleIndex"
-                                class="relative shrink-0 max-w-[150px] truncate rounded-t-md border px-3.5 py-2 text-[0.72rem] transition-colors"
+                            <button type="button" @click="activeModuleTab = moduleIndex; lessonModuleFilter = module.client_key; lessonMoveNotice = null; activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
+                                x-bind:title="module.title || moduleLabel(moduleIndex)"
+                                class="relative shrink-0 rounded-t-md border px-3.5 py-2 text-[0.72rem] transition-colors"
                                 :class="activeModuleTab === moduleIndex ? 'border-white/[0.08] bg-[#0E0E1A] text-boss-ivory -mb-px z-10' : 'border-transparent text-boss-ivory/38 hover:text-boss-ivory/65'"
                                 :style="activeModuleTab === moduleIndex ? 'border-bottom-color: #0E0E1A' : ''"
-                                x-text="module.title || `Module ${moduleIndex + 1}`">
+                                x-text="moduleLabel(moduleIndex)">
                             </button>
                         </template>
-                        <button type="button" @click="addModule(); activeModuleTab = modules.length - 1"
+                        <button type="button" @click="addModule(); activeModuleTab = modules.length - 1; lessonModuleFilter = activeModuleKey(activeModuleTab); lessonMoveNotice = null; activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
                             class="shrink-0 rounded-t-md px-3 py-2 text-[0.72rem] text-boss-gold/50 transition-colors hover:text-boss-gold">
                             + {{ __('Add Module') }}
                         </button>
@@ -567,19 +574,19 @@
                                     </p>
                                     <div class="flex items-center gap-1">
                                         <button type="button"
-                                            @click="moveModule(moduleIndex, -1); activeModuleTab = Math.max(0, activeModuleTab - 1)"
+                                            @click="moveModule(moduleIndex, -1); activeModuleTab = Math.max(0, activeModuleTab - 1); lessonModuleFilter = activeModuleKey(activeModuleTab); lessonMoveNotice = null; activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
                                             x-bind:disabled="moduleIndex === 0"
                                             class="rounded border border-white/[0.06] bg-white/[0.03] px-2 py-1 text-[0.63rem] text-boss-ivory/35 transition-colors hover:text-boss-gold disabled:opacity-25">
                                             &larr; {{ __('Left') }}
                                         </button>
                                         <button type="button"
-                                            @click="moveModule(moduleIndex, 1); activeModuleTab = Math.min(modules.length - 1, activeModuleTab + 1)"
+                                            @click="moveModule(moduleIndex, 1); activeModuleTab = Math.min(modules.length - 1, activeModuleTab + 1); lessonModuleFilter = activeModuleKey(activeModuleTab); lessonMoveNotice = null; activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
                                             x-bind:disabled="moduleIndex === modules.length - 1"
                                             class="rounded border border-white/[0.06] bg-white/[0.03] px-2 py-1 text-[0.63rem] text-boss-ivory/35 transition-colors hover:text-boss-gold disabled:opacity-25">
                                             {{ __('Right') }} &rarr;
                                         </button>
                                         <button type="button"
-                                            @click="const t = activeModuleTab; removeModule(moduleIndex); activeModuleTab = moduleIndex <= t ? Math.max(0, t - 1) : t"
+                                            @click="const t = activeModuleTab; removeModule(moduleIndex); activeModuleTab = moduleIndex <= t ? Math.max(0, t - 1) : Math.min(t, modules.length - 1); lessonModuleFilter = activeModuleKey(activeModuleTab); lessonMoveNotice = null; activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
                                             class="rounded border border-red-400/10 bg-red-400/[0.05] px-2 py-1 text-[0.63rem] text-red-400/60 transition-colors hover:text-red-300">
                                             {{ __('Remove') }}
                                         </button>
@@ -629,31 +636,65 @@
                         <x-input-error :messages="$errors->get('lessons.*.content_blocks.*.file_upload')" />
                     </div>
 
+                    <div class="space-y-3 border-b border-white/[0.05] px-5 py-4">
+                        <p class="text-[0.78rem] text-boss-ivory/55">
+                            {{ __('Editing lessons for:') }}
+                            <span class="font-medium text-boss-gold" x-text="lessonFilterContext(lessonModuleFilter)"></span>
+                        </p>
+                        <div class="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                            <template x-for="(module, moduleIndex) in modules" :key="module.client_key">
+                                <button type="button"
+                                    @click="activeModuleTab = moduleIndex; lessonModuleFilter = module.client_key; lessonMoveNotice = null; activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
+                                    x-bind:title="moduleContextLabel(module.client_key)"
+                                    class="shrink-0 rounded-lg border px-3 py-1.5 text-[0.7rem] transition-colors"
+                                    :class="lessonModuleFilter === module.client_key ? 'border-boss-gold/30 bg-boss-gold/[0.12] text-boss-gold' : 'border-white/[0.07] bg-white/[0.035] text-boss-ivory/42 hover:text-boss-ivory/70'"
+                                    x-text="moduleLabel(moduleIndex)">
+                                </button>
+                            </template>
+                            <button type="button"
+                                @click="lessonModuleFilter = 'all'; lessonMoveNotice = null; activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
+                                class="shrink-0 rounded-lg border px-3 py-1.5 text-[0.7rem] transition-colors"
+                                :class="lessonModuleFilter === 'all' ? 'border-boss-gold/30 bg-boss-gold/[0.12] text-boss-gold' : 'border-white/[0.07] bg-white/[0.035] text-boss-ivory/42 hover:text-boss-ivory/70'">
+                                {{ __('All Lessons') }}
+                            </button>
+                        </div>
+                        <p x-show="lessonMoveNotice" x-cloak class="rounded-lg border border-boss-gold/15 bg-boss-gold/[0.06] px-3 py-2 text-[0.72rem] text-boss-gold/80" x-text="lessonMoveNotice"></p>
+                    </div>
+
                     {{-- Chrome-style lesson tabs --}}
-                    <div class="flex items-end gap-0.5 overflow-x-auto border-b border-white/[0.06] bg-[#080810] px-3 pt-2">
-                        <template x-for="(lesson, index) in lessons" :key="lesson.id || index">
-                            <button type="button" @click="activeLessonTab = index"
-                                class="relative shrink-0 max-w-[150px] truncate rounded-t-md border px-3.5 py-2 text-[0.72rem] transition-colors"
-                                :class="activeLessonTab === index ? 'border-white/[0.08] bg-[#0E0E1A] text-boss-ivory -mb-px z-10' : 'border-transparent text-boss-ivory/38 hover:text-boss-ivory/65'"
-                                :style="activeLessonTab === index ? 'border-bottom-color: #0E0E1A' : ''"
-                                x-text="lesson.title || `Lesson ${index + 1}`">
+                    <div class="flex items-end gap-0.5 overflow-x-auto border-b border-white/[0.06] bg-[#080810] px-3 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        <template x-for="lesson in lessonsForFilter(lessonModuleFilter)" :key="lessonKey(lesson)">
+                            <button type="button" @click="lessonMoveNotice = null; activeLessonKey = lessonKey(lesson)"
+                                x-bind:title="lesson.title || lessonTabLabel(lesson, lessonModuleFilter)"
+                                class="relative shrink-0 rounded-t-md border px-3.5 py-2 text-[0.72rem] transition-colors"
+                                :class="activeLessonKey === lessonKey(lesson) ? 'border-white/[0.08] bg-[#0E0E1A] text-boss-ivory -mb-px z-10' : 'border-transparent text-boss-ivory/38 hover:text-boss-ivory/65'"
+                                :style="activeLessonKey === lessonKey(lesson) ? 'border-bottom-color: #0E0E1A' : ''"
+                                x-text="lessonTabLabel(lesson, lessonModuleFilter)">
                             </button>
                         </template>
-                        <button type="button" @click="addLesson(); activeLessonTab = lessons.length - 1"
+                        <button type="button" @click="lessonMoveNotice = null; activeLessonKey = addLessonForFilter(lessonModuleFilter, activeModuleKey(activeModuleTab))"
                             class="shrink-0 rounded-t-md px-3 py-2 text-[0.72rem] text-boss-gold/50 transition-colors hover:text-boss-gold">
                             + {{ __('Add Lesson') }}
                         </button>
                     </div>
 
                     {{-- Lesson forms — all in DOM (x-show preserves data), only active visible --}}
-                    <template x-for="(lesson, index) in lessons" :key="lesson.id || index">
-                        <div x-show="activeLessonTab === index" class="p-5">
+                    <div x-show="lessonsForFilter(lessonModuleFilter).length === 0" class="p-5 text-center">
+                        <p class="text-[0.86rem] text-boss-ivory/45" x-text="isAllLessonsFilter(lessonModuleFilter) ? '{{ __('No lessons yet.') }}' : '{{ __('No lessons yet for this module.') }}'"></p>
+                        <button type="button" @click="lessonMoveNotice = null; activeLessonKey = addLessonForFilter(lessonModuleFilter, activeModuleKey(activeModuleTab))" class="mt-3 rounded-lg border border-boss-gold/20 bg-boss-gold/10 px-3 py-1.5 text-[0.72rem] text-boss-gold transition-colors hover:bg-boss-gold/15">
+                            + {{ __('Add Lesson') }}
+                        </button>
+                    </div>
+
+                    <template x-for="(lesson, index) in lessons" :key="lessonKey(lesson)">
+                        <div x-show="activeLessonKey === lessonKey(lesson) && lessonMatchesFilter(lesson, lessonModuleFilter)" class="p-5">
                             <input type="hidden" x-bind:name="`lessons[${index}][id]`" x-bind:value="lesson.id || ''">
+                            <input type="hidden" x-bind:name="`lessons[${index}][course_id]`" x-bind:value="lesson.course_id || ''">
 
                             {{-- Lesson controls bar --}}
                             <div class="mb-4 flex items-center justify-between">
                                 <p class="text-[0.63rem] text-boss-ivory/28">
-                                    {{ __('Lesson') }} <span x-text="index + 1"></span>
+                                    <span x-text="lessonTabLabel(lesson, lessonModuleFilter)"></span>
                                     <span class="mx-1 opacity-30">·</span>
                                     <span x-text="lesson.is_published ? '{{ __('Published') }}' : '{{ __('Draft') }}'"></span>
                                 </p>
@@ -665,7 +706,7 @@
                                         </a>
                                     </template>
                                     <button type="button"
-                                        @click="const t = activeLessonTab; removeLesson(index); activeLessonTab = index <= t ? Math.max(0, t - 1) : t"
+                                        @click="lessonMoveNotice = null; activeLessonKey = removeLessonForFilter(index, lessonModuleFilter)"
                                         class="rounded border border-red-400/10 bg-red-400/[0.05] px-2 py-1 text-[0.63rem] text-red-400/60 transition-colors hover:text-red-300">
                                         {{ __('Remove') }}
                                     </button>
@@ -690,7 +731,7 @@
                                         x-model="lesson.module_key"
                                         x-bind:id="`lesson_module_${index}`"
                                         x-bind:name="`lessons[${index}][module_key]`"
-                                        @change="syncLessonModule(lesson)">
+                                        @change="activeLessonKey = changeLessonModuleForFilter(lesson, lessonModuleFilter)">
                                         <template x-for="module in modules" :key="module.client_key">
                                             <option x-bind:value="module.client_key" x-text="module.title || 'Untitled Module'"></option>
                                         </template>
