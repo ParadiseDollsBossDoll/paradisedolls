@@ -1,10 +1,7 @@
 @php
     $user = auth()->user();
-    $initials = collect(explode(' ', trim($user->name)))
-        ->filter()
-        ->take(2)
-        ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
-        ->implode('') ?: 'M';
+    $initials = $user->initials();
+    $profilePhotoUrl = $user->profilePhotoUrl();
 
     $coursesForLayout = \App\Models\Course::query()
         ->where('is_published', true)
@@ -39,6 +36,12 @@
             'label'  => __('Academy'),
             'active' => request()->routeIs('member.courses.*'),
             'icon'   => 'academy',
+        ],
+        [
+            'route'  => 'member.testimonials.create',
+            'label'  => __('My Testimony'),
+            'active' => request()->routeIs('member.testimonials.*'),
+            'icon'   => 'stories',
         ],
         [
             'route'  => 'community.show',
@@ -81,12 +84,17 @@
                         <div class="elysian-side-profile-inner">
                             <div class="elysian-side-profile-row">
                                 <div class="elysian-avatar-wrap">
-                                    <div class="elysian-avatar">{{ $initials }}</div>
+                                    <div class="elysian-avatar">
+                                        <span>{{ $initials }}</span>
+                                        @if ($profilePhotoUrl)
+                                            <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
+                                        @endif
+                                    </div>
                                     <div class="elysian-online-dot"></div>
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <div class="elysian-side-name">{{ $user->name }}</div>
-                                    <div class="elysian-side-sub">{{ __('ParadiseDollz Member') }}</div>
+                                    <div class="elysian-side-sub">{{ __('Paradise Dolls Member') }}</div>
                                 </div>
                             </div>
                             <div class="mt-2.5 border-t border-white/[0.06] pt-2.5">
@@ -114,6 +122,8 @@
                                     <svg viewBox="0 0 16 16"><path d="M10 2h2a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1h2"/><rect x="5" y="1" width="6" height="2" rx="1"/><path d="M5.5 8.5l2 2L11 7"/></svg>
                                 @elseif ($link['icon'] === 'academy')
                                     <svg viewBox="0 0 16 16"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/></svg>
+                                @elseif ($link['icon'] === 'stories')
+                                    <svg viewBox="0 0 16 16"><path d="M3 2h10v12H3z"/><path d="M5.5 5h5M5.5 8h5M5.5 11h3"/></svg>
                                 @elseif ($link['icon'] === 'community')
                                     <svg viewBox="0 0 16 16"><path d="M14 10c0 1.1-.9 2-2 2H4l-3 3V4c0-1.1.9-2 2-2h9c1.1 0 2 .9 2 2v6z"/></svg>
                                 @elseif ($link['icon'] === 'profile')
@@ -160,7 +170,12 @@
                         <a href="{{ route('home') }}#apply" class="hidden rounded-full border border-boss-gold/20 bg-boss-gold/10 px-4 py-2 text-[0.66rem] uppercase tracking-[0.14em] text-boss-gold transition-colors hover:bg-boss-gold hover:text-boss-ink sm:inline-flex">
                             {{ __('Refer') }}
                         </a>
-                        <div class="elysian-topbar-avatar">{{ $initials }}</div>
+                        <div class="elysian-topbar-avatar">
+                            <span>{{ $initials }}</span>
+                            @if ($profilePhotoUrl)
+                                <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
+                            @endif
+                        </div>
                     </div>
                 </header>
 

@@ -75,14 +75,18 @@ class CommunityMessage extends Model
             return null;
         }
 
-        $disk = $this->attachment['disk'] ?? 'public';
+        $disk = $this->attachment['disk'] ?? 'local';
         $mime = $this->attachment['mime_type'] ?? 'application/octet-stream';
 
+        // Local disk files are served through an auth-protected route.
+        // Public disk files (legacy, pre-migration) keep their direct URL.
+        $url = $disk === 'local'
+            ? route('community.messages.attachment', ['message' => $this->id])
+            : Storage::disk($disk)->url($this->attachment['path']);
+
         return [
-            'url' => Storage::disk($disk)->url($this->attachment['path']),
-            'preview_url' => Str::startsWith($mime, 'image/')
-                ? Storage::disk($disk)->url($this->attachment['path'])
-                : null,
+            'url' => $url,
+            'preview_url' => Str::startsWith($mime, 'image/') ? $url : null,
             'name' => $this->attachment['original_name'] ?? basename($this->attachment['path']),
             'size' => $this->attachment['size'] ?? null,
             'mime_type' => $mime,
@@ -128,6 +132,7 @@ class CommunityMessage extends Model
                 'name' => $this->user->name,
                 'initials' => $this->user->initials(),
                 'accent' => $this->user->communityAccent(),
+                'profile_photo_url' => $this->user->profilePhotoUrl(),
                 'is_current_user' => $viewer?->id === $this->user_id,
             ],
             'reactions' => $this->reactionsFor($viewer),

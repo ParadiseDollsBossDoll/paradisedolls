@@ -22,6 +22,7 @@ Broadcast::channel('community.presence', function (User $user) {
         'name' => $user->name,
         'initials' => $user->initials(),
         'accent' => $user->communityAccent(),
+        'profile_photo_url' => $user->profilePhotoUrl(),
         'role' => $user->role,
         'online' => true,
     ];

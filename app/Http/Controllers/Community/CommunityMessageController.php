@@ -16,8 +16,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CommunityMessageController extends Controller
 {
@@ -36,12 +38,13 @@ class CommunityMessageController extends Controller
         $request->validate([
             'before_id' => ['nullable', 'integer', 'min:1'],
             'after_id' => ['nullable', 'integer', 'min:1'],
+            'around_id' => ['nullable', 'integer', 'min:1'],
             'q' => ['nullable', 'string', 'min:'.max(1, (int) config('community.performance.search_min_chars', 2)), 'max:100'],
         ]);
 
         $query = $channel->messages()
             ->select(['id', 'channel_id', 'user_id', 'message', 'attachment', 'reply_to', 'is_pinned', 'created_at'])
-            ->with(['user:id,name', 'replyTo.user:id,name', 'reactions']);
+            ->with(['user:id,name,profile_photo_path', 'replyTo.user:id,name', 'reactions']);
 
         $search = trim((string) $request->input('q'));
 
@@ -57,10 +60,36 @@ class CommunityMessageController extends Controller
         $syncLimit = max($perPage, (int) config('community.performance.message_sync_limit', 50));
         $beforeId = $request->integer('before_id');
         $afterId = $request->integer('after_id');
+        $aroundId = $request->integer('around_id');
 
-        if ($beforeId > 0) {
+        if ($aroundId > 0) {
+            $target = (clone $query)
+                ->where('community_messages.id', $aroundId)
+                ->firstOrFail();
+            $beforeLimit = max(1, intdiv($perPage, 2));
+            $before = (clone $query)
+                ->where('community_messages.id', '<', $aroundId)
+                ->reorder()
+                ->latest()
+                ->take($beforeLimit)
+                ->get()
+                ->reverse()
+                ->values();
+            $afterLimit = max(0, $perPage - $before->count() - 1);
+            $after = $afterLimit > 0
+                ? (clone $query)
+                    ->where('community_messages.id', '>', $aroundId)
+                    ->reorder()
+                    ->oldest()
+                    ->take($afterLimit)
+                    ->get()
+                    ->values()
+                : collect([]);
+            $messages = $before->concat([$target])->concat($after)->values();
+        } elseif ($beforeId > 0) {
             $messages = (clone $query)
                 ->where('community_messages.id', '<', $beforeId)
+                ->reorder()
                 ->latest()
                 ->take($perPage)
                 ->get()
@@ -69,12 +98,14 @@ class CommunityMessageController extends Controller
         } elseif ($afterId > 0) {
             $messages = (clone $query)
                 ->where('community_messages.id', '>', $afterId)
+                ->reorder()
                 ->oldest()
                 ->take($syncLimit)
                 ->get()
                 ->values();
         } else {
             $messages = (clone $query)
+                ->reorder()
                 ->latest()
                 ->take($perPage)
                 ->get()
@@ -97,6 +128,7 @@ class CommunityMessageController extends Controller
         return response()->json([
             'channel' => $channel->toFrontendArray($user),
             'messages' => $messages->map(fn (CommunityMessage $message) => $message->toFrontendArray($user))->all(),
+            'pinned_messages' => $this->pinnedMessagesFor($channel, $user),
             'has_more' => $hasMore,
             'first_unread_message_id' => $search === '' ? $firstUnreadMessageId : null,
             'search' => [
@@ -159,7 +191,7 @@ class CommunityMessageController extends Controller
             $file = $request->file('attachment');
 
             try {
-                $path = $file->store('community-attachments', 'public');
+                $path = $file->store('community-attachments', 'local');
             } catch (\Throwable $exception) {
                 report($exception);
                 Log::channel(config('community.performance.log_channel'))->warning('Community attachment upload failed.', [
@@ -177,7 +209,7 @@ class CommunityMessageController extends Controller
             }
 
             $attachment = [
-                'disk' => 'public',
+                'disk' => 'local',
                 'path' => $path,
                 'original_name' => $file->getClientOriginalName(),
                 'size' => $file->getSize(),
@@ -197,7 +229,7 @@ class CommunityMessageController extends Controller
 
         $this->persistReadState([$message->id], $user->id);
 
-        $message->load(['user:id,name', 'replyTo.user:id,name', 'reactions']);
+        $message->load(['user:id,name,profile_photo_path', 'replyTo.user:id,name', 'reactions']);
 
         $this->broadcastSafely(
             fn () => broadcast(new CommunityMessageCreated($message))->toOthers(),
@@ -287,7 +319,7 @@ class CommunityMessageController extends Controller
             'is_pinned' => ! $message->is_pinned,
         ]);
 
-        $message->load(['user:id,name', 'replyTo.user:id,name', 'reactions']);
+        $message->load(['user:id,name,profile_photo_path', 'replyTo.user:id,name', 'reactions']);
 
         CommunityModeration::log($user, $message->is_pinned ? 'message_pinned' : 'message_unpinned', $message->channel, $message, $message->user);
 
@@ -337,6 +369,20 @@ class CommunityMessageController extends Controller
             ->value('community_messages.id');
     }
 
+    private function pinnedMessagesFor(CommunityChannel $channel, User $user): array
+    {
+        return $channel->messages()
+            ->select(['id', 'channel_id', 'user_id', 'message', 'attachment', 'reply_to', 'is_pinned', 'created_at'])
+            ->with(['user:id,name,profile_photo_path', 'replyTo.user:id,name', 'reactions'])
+            ->where('is_pinned', true)
+            ->reorder()
+            ->latest()
+            ->take(50)
+            ->get()
+            ->map(fn (CommunityMessage $message) => $message->toFrontendArray($user))
+            ->all();
+    }
+
     private function broadcastSafely(callable $dispatch, string $eventName, array $context = []): void
     {
         try {
@@ -350,5 +396,26 @@ class CommunityMessageController extends Controller
                 ...$context,
             ]);
         }
+    }
+
+    public function serveAttachment(Request $request, CommunityMessage $message): StreamedResponse
+    {
+        $user = $request->user();
+        $channel = $message->channel;
+
+        abort_unless($channel && $channel->isAccessibleTo($user), 403);
+        abort_unless(is_array($message->attachment) && isset($message->attachment['path']), 404);
+
+        $path = $message->attachment['path'];
+        $disk = $message->attachment['disk'] ?? 'local';
+        $mime = $message->attachment['mime_type'] ?? 'application/octet-stream';
+        $name = $message->attachment['original_name'] ?? basename($path);
+
+        abort_unless(Storage::disk($disk)->exists($path), 404);
+
+        return Storage::disk($disk)->response($path, $name, [
+            'Content-Type' => $mime,
+            'Cache-Control' => 'private, max-age=3600',
+        ]);
     }
 }

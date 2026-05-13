@@ -171,6 +171,9 @@ document.addEventListener('alpine:init', () => {
         messageLoadError: null,
         scrollThrottleFrame: null,
         pinnedPanelOpen: false,
+        pinnedMessagesList: initialState.pinned_messages ?? [],
+        highlightedMessageId: null,
+        highlightTimer: null,
         confirmDialog: {
             open: false,
             title: '',
@@ -202,6 +205,7 @@ document.addEventListener('alpine:init', () => {
 
         init() {
             this.messages = this.hydrateMessages(this.messages);
+            this.pinnedMessagesList = this.hydrateMessages(this.pinnedMessagesList);
             this.syncSearchResults();
             this.$nextTick(() => this.scrollToRelevantAnchor(true));
             this.bindEchoConnection();
@@ -231,6 +235,11 @@ document.addEventListener('alpine:init', () => {
             if (this.scrollThrottleFrame) {
                 cancelAnimationFrame(this.scrollThrottleFrame);
                 this.scrollThrottleFrame = null;
+            }
+
+            if (this.highlightTimer) {
+                window.clearTimeout(this.highlightTimer);
+                this.highlightTimer = null;
             }
 
             if (this.pollTimer) {
@@ -498,6 +507,10 @@ document.addEventListener('alpine:init', () => {
 
         normalizePresenceMember(member, online = true) {
             const name = member?.name ?? 'Member';
+            const existingMember = [
+                ...(this.members?.online ?? []),
+                ...(this.members?.offline ?? []),
+            ].find((item) => item.id === member?.id);
             const initials = member?.initials ?? name
                 .split(' ')
                 .filter(Boolean)
@@ -511,6 +524,7 @@ document.addEventListener('alpine:init', () => {
                 name,
                 initials: initials || 'PD',
                 accent: member?.accent ?? '#C9A96E',
+                profile_photo_url: member?.profile_photo_url ?? existingMember?.profile_photo_url ?? null,
                 role: member?.role ?? 'member',
                 online,
                 is_self: Boolean(member?.id === this.user.id || member?.is_self),
@@ -785,7 +799,53 @@ document.addEventListener('alpine:init', () => {
         },
 
         pinnedMessages() {
-            return this.messages.filter((message) => message.is_pinned);
+            return [...this.pinnedMessagesList]
+                .filter((message) => message.is_pinned)
+                .sort((left, right) => (right._createdTs ?? 0) - (left._createdTs ?? 0));
+        },
+
+        syncPinnedMessages(messages) {
+            this.pinnedMessagesList = this.hydrateMessages(messages ?? []);
+        },
+
+        syncPinnedMessage(message) {
+            if (!message || message._isSystem) {
+                return;
+            }
+
+            const nextMessage = this.normalizeMessage(message);
+            const existingIndex = this.pinnedMessagesList.findIndex((item) => item.id === nextMessage.id);
+
+            if (!nextMessage.is_pinned) {
+                if (existingIndex !== -1) {
+                    this.pinnedMessagesList.splice(existingIndex, 1);
+                }
+
+                return;
+            }
+
+            if (existingIndex === -1) {
+                this.pinnedMessagesList.push(nextMessage);
+                return;
+            }
+
+            this.pinnedMessagesList.splice(existingIndex, 1, nextMessage);
+        },
+
+        removePinnedMessage(messageId) {
+            this.pinnedMessagesList = this.pinnedMessagesList.filter((message) => message.id !== messageId);
+        },
+
+        canUnpinPinnedMessage(message) {
+            return Boolean(message?.can_pin);
+        },
+
+        async unpinPinnedMessage(message) {
+            if (!message?.is_pinned || !this.canUnpinPinnedMessage(message)) {
+                return;
+            }
+
+            await this.togglePin(message);
         },
 
         typingIndicatorText() {
@@ -1013,6 +1073,10 @@ document.addEventListener('alpine:init', () => {
                 params.set('after_id', options.afterId);
             }
 
+            if (options.aroundId) {
+                params.set('around_id', options.aroundId);
+            }
+
             if (options.searchQuery) {
                 params.set('q', options.searchQuery);
             }
@@ -1056,6 +1120,7 @@ document.addEventListener('alpine:init', () => {
 
                 this.currentEchoChannel = this.selectedRealtimeChannelName();
                 this.messages = this.hydrateMessages(data.messages);
+                this.syncPinnedMessages(data.pinned_messages ?? []);
                 this.hasMoreMessages = data.has_more;
                 this.firstUnreadMessageId = data.first_unread_message_id ?? null;
                 this.clearTypingMembers();
@@ -1108,6 +1173,9 @@ document.addEventListener('alpine:init', () => {
                 this.messages = combined.length > MAX_MESSAGES_IN_DOM
                     ? combined.slice(0, MAX_MESSAGES_IN_DOM)
                     : combined;
+                if (data.pinned_messages) {
+                    this.syncPinnedMessages(data.pinned_messages);
+                }
                 this.hasMoreMessages = data.has_more || combined.length > MAX_MESSAGES_IN_DOM;
                 this.syncSearchResults();
                 this.$nextTick(() => {
@@ -1276,6 +1344,7 @@ document.addEventListener('alpine:init', () => {
                         name: this.user.name,
                         initials: this.user.initials,
                         accent: this.user.accent,
+                        profile_photo_url: this.user.profile_photo_url,
                         role: this.user.role,
                         online: true,
                     },
@@ -1420,6 +1489,7 @@ document.addEventListener('alpine:init', () => {
                     name: this.user.name,
                     initials: this.user.initials,
                     accent: this.user.accent,
+                    profile_photo_url: this.user.profile_photo_url,
                     is_current_user: true,
                 },
                 reactions: [],
@@ -1523,7 +1593,11 @@ document.addEventListener('alpine:init', () => {
                     method: 'POST',
                 });
 
-                this.upsertMessage(data.message, false);
+                if (this.messages.some((item) => item.id === data.message.id)) {
+                    this.upsertMessage(data.message, false);
+                }
+
+                this.syncPinnedMessage(data.message);
 
                 if (data.message.is_pinned) {
                     const now = Date.now();
@@ -1563,6 +1637,7 @@ document.addEventListener('alpine:init', () => {
                 });
 
                 this.messages = this.messages.filter((item) => item.id !== message.id);
+                this.removePinnedMessage(message.id);
                 this.syncSearchResults();
             } catch (error) {
                 this.channelNotice = { tone: 'error', message: error.message };
@@ -1595,6 +1670,7 @@ document.addEventListener('alpine:init', () => {
             }
 
             this.syncSearchResults();
+            this.syncPinnedMessage(nextMessage);
 
             if (shouldScroll && wasNearBottom) {
                 this.$nextTick(() => {
@@ -1684,6 +1760,9 @@ document.addEventListener('alpine:init', () => {
                 this.activeSearchQuery = query;
                 this.hasSearched = true;
                 this.messages = this.hydrateMessages(data.messages);
+                if (data.pinned_messages) {
+                    this.syncPinnedMessages(data.pinned_messages);
+                }
                 this.hasMoreMessages = data.has_more;
                 this.firstUnreadMessageId = null;
                 this.searchNotice = data.messages.length === 0
@@ -1739,6 +1818,9 @@ document.addEventListener('alpine:init', () => {
                     });
 
                     data.messages.forEach((message) => this.upsertMessage(message, true));
+                    if (data.pinned_messages) {
+                        this.syncPinnedMessages(data.pinned_messages);
+                    }
                     this.hasMoreMessages = data.has_more || this.hasMoreMessages;
                 }
 
@@ -1908,26 +1990,100 @@ document.addEventListener('alpine:init', () => {
 
         scrollToRelevantAnchor(force = false) {
             if (this.firstUnreadMessageId && !this.activeSearchQuery) {
-                this.jumpToMessage(this.firstUnreadMessageId, force);
+                this.jumpToMessage(this.firstUnreadMessageId, force, false);
                 return;
             }
 
             this.scrollToBottom(force);
         },
 
-        jumpToMessage(messageId, smooth = true) {
-            this.$nextTick(() => {
-                const target = this.$refs.messageScroller?.querySelector(`[data-message-id="${messageId}"]`);
+        async jumpToMessage(messageId, smooth = true, highlight = true) {
+            if (await this.scrollToMessageElement(messageId, smooth, highlight)) {
+                return;
+            }
 
-                if (!target) {
-                    return;
-                }
+            if (!this.selectedChannel || !Number.isFinite(Number(messageId))) {
+                return;
+            }
 
-                target.scrollIntoView({
-                    behavior: smooth ? 'smooth' : 'auto',
-                    block: 'center',
+            if (await this.loadMessageContext(messageId)) {
+                await this.scrollToMessageElement(messageId, false, highlight);
+            }
+        },
+
+        scrollToMessageElement(messageId, smooth = true, highlight = true) {
+            return new Promise((resolve) => {
+                this.$nextTick(() => {
+                    const target = this.$refs.messageScroller?.querySelector(`[data-message-id="${messageId}"]`);
+
+                    if (!target) {
+                        resolve(false);
+                        return;
+                    }
+
+                    target.scrollIntoView({
+                        behavior: smooth ? 'smooth' : 'auto',
+                        block: 'center',
+                    });
+
+                    if (highlight) {
+                        this.highlightMessage(messageId);
+                    }
+
+                    resolve(true);
                 });
             });
+        },
+
+        async loadMessageContext(messageId) {
+            this.loadingMessages = true;
+            this.channelNotice = null;
+
+            try {
+                const data = await this.loadChannelMessages(this.selectedChannel.slug, {
+                    aroundId: messageId,
+                });
+
+                this.messages = this.hydrateMessages(data.messages);
+                if (data.pinned_messages) {
+                    this.syncPinnedMessages(data.pinned_messages);
+                }
+                this.hasMoreMessages = data.has_more;
+                this.firstUnreadMessageId = null;
+
+                if (this.activeSearchQuery) {
+                    this.searchQuery = '';
+                    this.activeSearchQuery = '';
+                    this.searchResults = [];
+                    this.searchNotice = null;
+                    this.hasSearched = false;
+                }
+
+                this.syncSearchResults();
+
+                return this.messages.some((message) => message.id === Number(messageId));
+            } catch (error) {
+                this.channelNotice = { tone: 'error', message: error.message };
+                return false;
+            } finally {
+                this.loadingMessages = false;
+            }
+        },
+
+        highlightMessage(messageId) {
+            if (this.highlightTimer) {
+                window.clearTimeout(this.highlightTimer);
+            }
+
+            this.highlightedMessageId = Number(messageId);
+            this.highlightTimer = window.setTimeout(() => {
+                this.highlightedMessageId = null;
+                this.highlightTimer = null;
+            }, 2400);
+        },
+
+        isHighlightedMessage(messageId) {
+            return Number(messageId) === this.highlightedMessageId;
         },
 
         handleScroller() {

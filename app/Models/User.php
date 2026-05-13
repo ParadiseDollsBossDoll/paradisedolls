@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class User extends Authenticatable
@@ -27,6 +28,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'profile_photo_path',
     ];
 
     /**
@@ -109,6 +111,11 @@ class User extends Authenticatable
         return $this->hasMany(CommunityMessage::class);
     }
 
+    public function testimonials(): HasMany
+    {
+        return $this->hasMany(Testimonial::class, 'submitted_by');
+    }
+
     public function communityMessageReads(): HasMany
     {
         return $this->hasMany(CommunityMessageRead::class);
@@ -157,6 +164,15 @@ class User extends Authenticatable
         return $palette[$this->id % count($palette)];
     }
 
+    public function profilePhotoUrl(): ?string
+    {
+        if (blank($this->profile_photo_path) || ! Storage::disk('public')->exists($this->profile_photo_path)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->profile_photo_path);
+    }
+
     public function toCommunityMemberArray(bool $online, bool $isSelf = false): array
     {
         return [
@@ -164,6 +180,7 @@ class User extends Authenticatable
             'name'     => $this->name,
             'initials' => $this->initials(),
             'accent'   => $this->communityAccent(),
+            'profile_photo_url' => $this->profilePhotoUrl(),
             'role'     => $this->role,
             'online'   => $online,
             'is_self'  => $isSelf,

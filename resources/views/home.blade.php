@@ -231,7 +231,7 @@
         </div>
     </section>
 
-    <section class="bg-white py-24">
+    <section class="bg-[#f3f3f5] py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-12 flex flex-col justify-between gap-5 md:flex-row md:items-end">
                 <div class="max-w-3xl">
@@ -241,34 +241,74 @@
                 <a href="{{ route('success-stories') }}" class="text-[0.72rem] uppercase tracking-[0.16em] text-boss-gold hover:text-boss-dark">{{ __('View stories') }} -></a>
             </div>
 
-            <div class="grid gap-5 lg:grid-cols-3">
-                @forelse ($testimonials as $testimonial)
-                    <article class="overflow-hidden bg-boss-muted shadow-luxe">
-                        <div class="aspect-[4/3] overflow-hidden">
-                            <img src="{{ $testimonial->displayImage() }}" alt="" class="h-full w-full object-cover">
-                        </div>
-                        <div class="p-6">
-                            @if ($testimonial->result_label)
-                                <p class="mb-3 text-[0.66rem] uppercase tracking-[0.18em] text-boss-gold">{{ $testimonial->result_label }}</p>
+            @php
+                $testimonialSlides = $testimonials->isNotEmpty()
+                    ? $testimonials->map(fn ($testimonial) => [
+                        'name' => $testimonial->name,
+                        'handle' => $testimonial->displayHandle(),
+                        'quote' => $testimonial->quote,
+                        'tag' => $testimonial->displayHashtag(),
+                        'image' => $testimonial->displayAvatar(),
+                    ])
+                    : collect([
+                        [
+                            'name' => __('New Member'),
+                            'handle' => '@newmember',
+                            'quote' => __('I had no idea where to start, but the structure made everything feel possible instead of overwhelming.'),
+                            'tag' => '#BeginnerConfidence',
+                            'image' => 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=85&w=300',
+                        ],
+                        [
+                            'name' => __('Paradise Doll'),
+                            'handle' => '@paradisedoll',
+                            'quote' => __('The biggest change was feeling like I had support while building something flexible around my life.'),
+                            'tag' => '#RemoteFreedom',
+                            'image' => 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=85&w=300',
+                        ],
+                        [
+                            'name' => __('Blueprint Member'),
+                            'handle' => '@blueprintmember',
+                            'quote' => __('The walkthrough approach helped me understand the platforms instead of guessing my way through.'),
+                            'tag' => '#ProfessionalGuidance',
+                            'image' => 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=85&w=300',
+                        ],
+                        [
+                            'name' => __('Community Member'),
+                            'handle' => '@communitymember',
+                            'quote' => __('Having a private place to learn, ask questions, and grow made the whole process feel real.'),
+                            'tag' => '#SupportSystem',
+                            'image' => 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=85&w=300',
+                        ],
+                    ]);
+
+                $baseSlides = $testimonialSlides->values();
+                while ($testimonialSlides->count() < 4) {
+                    $testimonialSlides = $testimonialSlides->concat($baseSlides)->values();
+                }
+
+                $carouselSlides = $testimonialSlides->values()->concat($testimonialSlides->values());
+            @endphp
+
+            <div class="pd-testimonial-carousel -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+                <div class="pd-testimonial-track gap-5">
+                    @foreach ($carouselSlides as $story)
+                        <article class="h-[17.5rem] w-[17.5rem] shrink-0 rounded-lg bg-white p-5 shadow-[0_18px_45px_rgba(15,15,20,0.08)] sm:w-[19.5rem]">
+                            <div class="flex items-center gap-3">
+                                <img src="{{ $story['image'] }}" alt="" class="h-11 w-11 shrink-0 rounded-full object-cover">
+                                <div class="min-w-0 flex-1">
+                                    <h3 class="truncate text-[0.86rem] font-semibold leading-tight text-[#06070b]">{{ $story['name'] }}</h3>
+                                    <p class="mt-1 truncate text-[0.78rem] leading-tight text-[#6f7280]">{{ $story['handle'] }}</p>
+                                </div>
+                            </div>
+
+                            <p class="mt-6 line-clamp-5 text-[0.96rem] leading-[1.45] text-[#151821]">{{ $story['quote'] }}</p>
+
+                            @if ($story['tag'])
+                                <p class="mt-2 truncate text-[0.9rem] leading-tight text-[#1d9bf0]">{{ $story['tag'] }}</p>
                             @endif
-                            <h3 class="font-display text-[1.3rem] text-boss-dark">{{ $testimonial->headline }}</h3>
-                            <p class="mt-4 line-clamp-4 text-[0.88rem] leading-relaxed text-boss-dark/62">{{ $testimonial->quote }}</p>
-                            <p class="mt-5 text-[0.72rem] uppercase tracking-[0.14em] text-boss-dark/42">{{ $testimonial->name }}{{ $testimonial->location ? ' - '.$testimonial->location : '' }}</p>
-                        </div>
-                    </article>
-                @empty
-                    @foreach ([
-                        [__('Beginner confidence'), __('I had no idea where to start, but the structure made everything feel possible instead of overwhelming.'), __('New member')],
-                        [__('Remote freedom'), __('The biggest change was feeling like I had support while building something flexible around my life.'), __('Paradise Dolls community')],
-                        [__('Professional guidance'), __('The walkthrough approach helped me understand the platforms instead of guessing my way through.'), __('Boss Doll Blueprint')],
-                    ] as $story)
-                        <article class="bg-boss-muted p-6 shadow-luxe">
-                            <p class="mb-3 text-[0.66rem] uppercase tracking-[0.18em] text-boss-gold">{{ $story[0] }}</p>
-                            <p class="font-display text-[1.35rem] leading-snug text-boss-dark">"{{ $story[1] }}"</p>
-                            <p class="mt-5 text-[0.72rem] uppercase tracking-[0.14em] text-boss-dark/42">{{ $story[2] }}</p>
                         </article>
                     @endforeach
-                @endforelse
+                </div>
             </div>
         </div>
     </section>
