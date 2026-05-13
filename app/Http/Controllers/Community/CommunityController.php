@@ -68,7 +68,8 @@ class CommunityController extends Controller
         $rawMessages = $selectedChannel
             ? $selectedChannel->messages()
                 ->select(['id', 'channel_id', 'user_id', 'message', 'attachment', 'reply_to', 'is_pinned', 'created_at'])
-                ->with(['user:id,name', 'replyTo.user:id,name', 'reactions'])
+                ->with(['user:id,name,profile_photo_path', 'replyTo.user:id,name', 'reactions'])
+                ->reorder()
                 ->latest()
                 ->take($initialPageSize)
                 ->get()
@@ -80,6 +81,7 @@ class CommunityController extends Controller
             && $selectedChannel->messages()->where('id', '<', $rawMessages->first()->id)->exists();
 
         $messages = $rawMessages->map(fn (CommunityMessage $message) => $message->toFrontendArray($user))->all();
+        $pinnedMessages = $selectedChannel ? $this->pinnedMessagesFor($selectedChannel, $user) : [];
 
         $courses = Course::query()
             ->where('is_published', true)
@@ -140,6 +142,7 @@ class CommunityController extends Controller
                     'role' => $user->role,
                     'initials' => $user->initials(),
                     'accent' => $user->communityAccent(),
+                    'profile_photo_url' => $user->profilePhotoUrl(),
                 ],
                 'server' => [
                     'name' => __('Paradise Dolls Foundation'),
@@ -153,6 +156,7 @@ class CommunityController extends Controller
                 'channels' => $channels->map(fn (CommunityChannel $item) => $item->toFrontendArray($user, $unreadCounts[$item->id] ?? 0))->all(),
                 'selected_channel' => $selectedChannel?->toFrontendArray($user, $unreadCounts[$selectedChannel->id] ?? 0),
                 'messages' => $messages,
+                'pinned_messages' => $pinnedMessages,
                 'has_more' => $initialHasMore,
                 'members' => CommunityPresence::payloadFor($user, $selectedChannel?->id),
                 'channel_notice' => $channelNotice,
@@ -296,6 +300,20 @@ class CommunityController extends Controller
             ->whereDoesntHave('reads', fn ($reads) => $reads->where('user_id', $user->id))
             ->orderBy('created_at')
             ->value('community_messages.id');
+    }
+
+    private function pinnedMessagesFor(CommunityChannel $channel, User $user): array
+    {
+        return $channel->messages()
+            ->select(['id', 'channel_id', 'user_id', 'message', 'attachment', 'reply_to', 'is_pinned', 'created_at'])
+            ->with(['user:id,name,profile_photo_path', 'replyTo.user:id,name', 'reactions'])
+            ->where('is_pinned', true)
+            ->reorder()
+            ->latest()
+            ->take(50)
+            ->get()
+            ->map(fn (CommunityMessage $message) => $message->toFrontendArray($user))
+            ->all();
     }
 
     private function persistUnreadQueryInChunks(Builder|Relation $query, int $userId): void

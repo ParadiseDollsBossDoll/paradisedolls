@@ -10,25 +10,32 @@
         </div>
     </section>
 
-    <section class="bg-boss-muted py-24">
+    <section class="bg-[#f3f3f5] py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="grid gap-5 lg:grid-cols-3">
+            <div class="mb-12 max-w-3xl">
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Community Testimonials') }}</p>
+                <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Real words from approved Paradise Dolls members') }}</h2>
+            </div>
+
+            <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 @forelse ($testimonials as $testimonial)
-                    <article class="overflow-hidden bg-white shadow-luxe">
-                        <div class="aspect-[4/3] overflow-hidden">
-                            <img src="{{ $testimonial->displayImage() }}" alt="" class="h-full w-full object-cover">
+                    <article class="min-h-[17.5rem] rounded-lg bg-white p-5 shadow-[0_18px_45px_rgba(15,15,20,0.08)]">
+                        <div class="flex items-center gap-3">
+                            <img src="{{ $testimonial->displayAvatar() }}" alt="" class="h-11 w-11 shrink-0 rounded-full object-cover">
+                            <div class="min-w-0 flex-1">
+                                <h3 class="truncate text-[0.86rem] font-semibold leading-tight text-[#06070b]">{{ $testimonial->name }}</h3>
+                                <p class="mt-1 truncate text-[0.78rem] leading-tight text-[#6f7280]">{{ $testimonial->displayHandle() }}</p>
+                            </div>
                         </div>
-                        <div class="p-6">
-                            @if ($testimonial->result_label)
-                                <p class="mb-3 text-[0.66rem] uppercase tracking-[0.18em] text-boss-gold">{{ $testimonial->result_label }}</p>
-                            @endif
-                            <h2 class="font-display text-[1.35rem] text-boss-dark">{{ $testimonial->headline }}</h2>
-                            <p class="mt-4 text-[0.9rem] leading-relaxed text-boss-dark/62">{{ $testimonial->quote }}</p>
-                            <p class="mt-5 text-[0.76rem] uppercase tracking-[0.14em] text-boss-dark/42">{{ $testimonial->name }}{{ $testimonial->location ? ' - '.$testimonial->location : '' }}</p>
-                        </div>
+
+                        <p class="mt-6 text-[0.96rem] leading-[1.45] text-[#151821]">{{ $testimonial->quote }}</p>
+
+                        @if ($testimonial->displayHashtag())
+                            <p class="mt-3 truncate text-[0.9rem] leading-tight text-[#1d9bf0]">{{ $testimonial->displayHashtag() }}</p>
+                        @endif
                     </article>
                 @empty
-                    <div class="col-span-full bg-white px-6 py-16 text-center shadow-luxe">
+                    <div class="col-span-full rounded-lg bg-white px-6 py-16 text-center shadow-[0_18px_45px_rgba(15,15,20,0.08)]">
                         <p class="font-display text-[1.5rem] text-boss-dark">{{ __('Success stories are coming soon') }}</p>
                         <p class="mx-auto mt-3 max-w-lg text-[0.9rem] leading-relaxed text-boss-dark/58">{{ __('The team can add approved member testimonials from the admin dashboard as the community grows.') }}</p>
                     </div>

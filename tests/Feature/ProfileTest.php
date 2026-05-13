@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProfileTest extends TestCase
@@ -59,6 +61,51 @@ class ProfileTest extends TestCase
             ->assertRedirect('/profile');
 
         $this->assertNotNull($user->refresh()->email_verified_at);
+    }
+
+    public function test_profile_photo_can_be_uploaded_and_removed(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+
+        $this
+            ->actingAs($user)
+            ->patch('/profile', [
+                'name' => $user->name,
+                'email' => $user->email,
+                'profile_photo' => $this->fakePngUpload(),
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $photoPath = $user->refresh()->profile_photo_path;
+
+        $this->assertNotNull($photoPath);
+        Storage::disk('public')->assertExists($photoPath);
+
+        $this
+            ->actingAs($user)
+            ->patch('/profile', [
+                'name' => $user->name,
+                'email' => $user->email,
+                'remove_profile_photo' => '1',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $this->assertNull($user->refresh()->profile_photo_path);
+        Storage::disk('public')->assertMissing($photoPath);
+    }
+
+    private function fakePngUpload(): UploadedFile
+    {
+        $path = tempnam(sys_get_temp_dir(), 'avatar');
+        file_put_contents($path, base64_decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII='
+        ));
+
+        return new UploadedFile($path, 'avatar.png', 'image/png', null, true);
     }
 
     public function test_user_can_delete_their_account(): void

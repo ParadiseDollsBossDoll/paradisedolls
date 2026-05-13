@@ -47,7 +47,7 @@ class MessageReactionController extends Controller
             ]);
         }
 
-        $message->load(['user:id,name', 'replyTo.user:id,name', 'reactions']);
+        $message->load(['user:id,name,profile_photo_path', 'replyTo.user:id,name', 'reactions']);
 
         try {
             broadcast(new CommunityReactionUpdated($message))->toOthers();

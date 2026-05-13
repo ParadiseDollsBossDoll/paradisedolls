@@ -36,6 +36,40 @@ body {
     display: none !important;
 }
 
+@keyframes pd-testimonial-marquee {
+    from {
+        transform: translateX(-50%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+.pd-testimonial-carousel {
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+
+.pd-testimonial-track {
+    display: flex;
+    width: max-content;
+    animation: pd-testimonial-marquee 42s linear infinite;
+    will-change: transform;
+}
+
+.pd-testimonial-carousel:hover .pd-testimonial-track {
+    animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pd-testimonial-track {
+        animation: none;
+        transform: translateX(0);
+    }
+}
+
 @layer components {
     .pd-kicker {
         color: var(--pd-gold);
@@ -341,6 +375,7 @@ body {
     }
 
     .elysian-avatar {
+        position: relative;
         width: 2.1rem;
         height: 2.1rem;
         border-radius: 50%;
@@ -353,6 +388,16 @@ body {
         font-weight: 700;
         color: #e8c88a;
         letter-spacing: 0.04em;
+        overflow: hidden;
+    }
+
+    .elysian-avatar img,
+    .elysian-topbar-avatar img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
     .elysian-online-dot {
@@ -538,6 +583,7 @@ body {
     }
 
     .elysian-topbar-avatar {
+        position: relative;
         width: 1.8rem;
         height: 1.8rem;
         border-radius: 50%;
@@ -551,6 +597,7 @@ body {
         color: #e8c88a;
         letter-spacing: 0.04em;
         flex-shrink: 0;
+        overflow: hidden;
     }
 
     .community-scroll {

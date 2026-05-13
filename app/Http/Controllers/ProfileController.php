@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Support\CommunityPresence;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -26,13 +28,25 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $validated = $request->safe()->except(['profile_photo', 'remove_profile_photo']);
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user->fill($validated);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        if ($request->hasFile('profile_photo')) {
+            $this->deleteProfilePhoto($user->profile_photo_path);
+            $user->profile_photo_path = $request->file('profile_photo')->store('profile-photos', 'public');
+        } elseif ($request->boolean('remove_profile_photo')) {
+            $this->deleteProfilePhoto($user->profile_photo_path);
+            $user->profile_photo_path = null;
+        }
+
+        $user->save();
+        CommunityPresence::forgetMemberDirectory();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
@@ -50,11 +64,20 @@ class ProfileController extends Controller
 
         Auth::logout();
 
+        $this->deleteProfilePhoto($user->profile_photo_path);
         $user->delete();
+        CommunityPresence::forgetMemberDirectory();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+
+    private function deleteProfilePhoto(?string $path): void
+    {
+        if (filled($path)) {
+            Storage::disk('public')->delete($path);
+        }
     }
 }

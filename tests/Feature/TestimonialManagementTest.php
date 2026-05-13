@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Testimonial;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class TestimonialManagementTest extends TestCase
@@ -29,14 +30,75 @@ class TestimonialManagementTest extends TestCase
         $this->assertDatabaseHas('testimonials', [
             'name' => 'Success Member',
             'is_published' => true,
+            'approved_by' => $admin->id,
         ]);
 
         $this->get(route('success-stories'))
             ->assertOk()
-            ->assertSee('Built confidence online');
+            ->assertSee('The support system made the opportunity feel achievable.')
+            ->assertSee('#Confidence');
     }
 
-    public function test_homepage_only_shows_published_success_stories(): void
+    public function test_model_submitted_testimonial_needs_admin_approval_before_public_display(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('profile-photos/model.jpg', 'avatar');
+
+        $model = User::factory()->create([
+            'role' => 'model',
+            'profile_photo_path' => 'profile-photos/model.jpg',
+        ]);
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($model)->post(route('member.testimonials.store'), [
+            'name' => 'Model Member',
+            'display_handle' => '@neljhanredondo',
+            'quote' => 'Training and support helped me feel ready.',
+            'result_label' => 'Confidence',
+        ])->assertRedirect(route('member.testimonials.create'));
+
+        $testimonial = Testimonial::query()->where('quote', 'Training and support helped me feel ready.')->firstOrFail();
+
+        $this->get(route('member.testimonials.create'))
+            ->assertOk()
+            ->assertSee('Training and support helped me feel ready.')
+            ->assertSee('Pending review');
+
+        $this->assertFalse($testimonial->is_published);
+        $this->assertSame($model->id, $testimonial->submitted_by);
+        $this->assertSame('neljhanredondo', $testimonial->display_handle);
+        $this->assertSame('Confidence', $testimonial->headline);
+        $this->assertNull($testimonial->approved_by);
+        $this->assertNull($testimonial->approved_at);
+        $this->assertNull($testimonial->image_path);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertDontSee('Training and support helped me feel ready.');
+
+        $this->actingAs($admin)->get(route('admin.testimonials.index'))
+            ->assertOk()
+            ->assertSee('Training and support helped me feel ready.')
+            ->assertSee('Approve');
+
+        $this->actingAs($admin)->post(route('admin.testimonials.approve', $testimonial))
+            ->assertRedirect(route('admin.testimonials.index'));
+
+        $testimonial->refresh();
+
+        $this->assertTrue($testimonial->is_published);
+        $this->assertSame($admin->id, $testimonial->approved_by);
+        $this->assertNotNull($testimonial->approved_at);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Training and support helped me feel ready.')
+            ->assertSee('#Confidence')
+            ->assertSee('@neljhanredondo')
+            ->assertSee('profile-photos/model.jpg');
+    }
+
+    public function test_homepage_only_shows_approved_success_stories(): void
     {
         Testimonial::create([
             'name' => 'Published Member',
@@ -54,7 +116,7 @@ class TestimonialManagementTest extends TestCase
 
         $this->get(route('home'))
             ->assertOk()
-            ->assertSee('Visible win')
-            ->assertDontSee('Hidden win');
+            ->assertSee('A published testimonial.')
+            ->assertDontSee('A draft testimonial.');
     }
 }

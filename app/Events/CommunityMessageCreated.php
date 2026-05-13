@@ -16,7 +16,7 @@ class CommunityMessageCreated implements ShouldBroadcast
     public function __construct(public CommunityMessage $message)
     {
         $this->message->loadMissing([
-            'user:id,name',
+            'user:id,name,profile_photo_path',
             'replyTo.user:id,name',
             'reactions',
             'reads',
