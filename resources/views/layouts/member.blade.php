@@ -38,6 +38,12 @@
             'icon'   => 'academy',
         ],
         [
+            'route'  => 'member.testimonials.create',
+            'label'  => __('My Testimony'),
+            'active' => request()->routeIs('member.testimonials.*'),
+            'icon'   => 'stories',
+        ],
+        [
             'route'  => 'community.show',
             'label'  => __('Community'),
             'active' => request()->routeIs('community.*'),
@@ -116,6 +122,8 @@
                                     <svg viewBox="0 0 16 16"><path d="M10 2h2a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1h2"/><rect x="5" y="1" width="6" height="2" rx="1"/><path d="M5.5 8.5l2 2L11 7"/></svg>
                                 @elseif ($link['icon'] === 'academy')
                                     <svg viewBox="0 0 16 16"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/></svg>
+                                @elseif ($link['icon'] === 'stories')
+                                    <svg viewBox="0 0 16 16"><path d="M3 2h10v12H3z"/><path d="M5.5 5h5M5.5 8h5M5.5 11h3"/></svg>
                                 @elseif ($link['icon'] === 'community')
                                     <svg viewBox="0 0 16 16"><path d="M14 10c0 1.1-.9 2-2 2H4l-3 3V4c0-1.1.9-2 2-2h9c1.1 0 2 .9 2 2v6z"/></svg>
                                 @elseif ($link['icon'] === 'profile')

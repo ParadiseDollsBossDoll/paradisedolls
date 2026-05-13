@@ -21,6 +21,7 @@ use App\Http\Controllers\Member\LessonProgressController;
 use App\Http\Controllers\Member\MemberCourseController;
 use App\Http\Controllers\Member\MemberDashboardController;
 use App\Http\Controllers\Member\MemberOnboardingController;
+use App\Http\Controllers\Member\MemberTestimonialController;
 use App\Http\Controllers\Member\MemberVerificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TestimonialController;
@@ -58,6 +59,10 @@ Route::middleware(['auth', 'verified', 'model'])->prefix('member')->name('member
     Route::post('/verification', [MemberVerificationController::class, 'store'])
         ->middleware('throttle:profile-updates')
         ->name('verification.store');
+    Route::get('/testimonials/create', [MemberTestimonialController::class, 'create'])->name('testimonials.create');
+    Route::post('/testimonials', [MemberTestimonialController::class, 'store'])
+        ->middleware('throttle:profile-updates')
+        ->name('testimonials.store');
     Route::get('/courses', [MemberCourseController::class, 'index'])->name('courses.index');
     Route::get('/courses/{slug}', [MemberCourseController::class, 'show'])->name('courses.show');
     Route::post('/courses/{slug}/learn', [MemberCourseController::class, 'learn'])
@@ -144,6 +149,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
             ->name('onboarding.community-invite');
         Route::post('/onboarding/{profile}/community-role-assigned', [AdminOnboardingController::class, 'markCommunityRoleAssigned'])
             ->name('onboarding.community-role-assigned');
+        Route::post('/testimonials/{testimonial}/approve', [AdminTestimonialController::class, 'approve'])->name('testimonials.approve');
         Route::patch('/testimonials/{testimonial}/visibility', [AdminTestimonialController::class, 'visibility'])->name('testimonials.visibility');
         Route::resource('testimonials', AdminTestimonialController::class)->except(['show']);
         Route::get('/bunny/videos', [BunnyVideoController::class, 'index'])->name('bunny.videos.index');

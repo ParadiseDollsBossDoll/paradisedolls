@@ -13,6 +13,7 @@ class TestimonialController extends Controller
     {
         $testimonials = Schema::hasTable('testimonials')
             ? Testimonial::query()
+                ->with('submitter:id,name,profile_photo_path')
                 ->where('is_published', true)
                 ->orderBy('sort_order')
                 ->orderByDesc('created_at')

@@ -36,6 +36,40 @@ body {
     display: none !important;
 }
 
+@keyframes pd-testimonial-marquee {
+    from {
+        transform: translateX(-50%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+.pd-testimonial-carousel {
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+
+.pd-testimonial-track {
+    display: flex;
+    width: max-content;
+    animation: pd-testimonial-marquee 42s linear infinite;
+    will-change: transform;
+}
+
+.pd-testimonial-carousel:hover .pd-testimonial-track {
+    animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pd-testimonial-track {
+        animation: none;
+        transform: translateX(0);
+    }
+}
+
 @layer components {
     .pd-kicker {
         color: var(--pd-gold);
