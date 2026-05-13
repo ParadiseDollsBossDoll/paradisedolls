@@ -101,6 +101,7 @@ class CommunityPresence
                 'id' => $user->id,
                 'name' => $user->name,
                 'initials' => $user->initials(),
+                'profile_photo_url' => $user->profilePhotoUrl(),
             ])
             ->values()
             ->all();
@@ -111,6 +112,11 @@ class CommunityPresence
         $lastSeen = self::store()->get(self::cacheKey($user->id));
 
         return is_numeric($lastSeen) && (int) $lastSeen >= now()->subSeconds(self::ONLINE_WINDOW_SECONDS)->timestamp;
+    }
+
+    public static function forgetMemberDirectory(): void
+    {
+        self::store()->forget(self::DIRECTORY_CACHE_KEY);
     }
 
     private static function cacheKey(int $userId): string
@@ -125,7 +131,7 @@ class CommunityPresence
             now()->addSeconds(self::DIRECTORY_CACHE_SECONDS),
             fn () => User::query()
                 ->whereIn('role', ['admin', 'moderator', 'model'])
-                ->get(['id', 'name', 'role'])
+                ->get(['id', 'name', 'role', 'profile_photo_path'])
         );
     }
 
