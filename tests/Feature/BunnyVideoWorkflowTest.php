@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -44,6 +45,24 @@ class BunnyVideoWorkflowTest extends TestCase
         $this->assertStringNotContainsString('secret-key', $response->getContent());
 
         Http::assertSent(fn ($request) => $request->hasHeader('AccessKey', 'secret-key'));
+    }
+
+    public function test_bunny_connection_errors_return_safe_retryable_message(): void
+    {
+        config()->set('services.bunny.library_id', '654926');
+        config()->set('services.bunny.api_key', 'secret-key');
+
+        Http::fake(function () {
+            throw new ConnectionException('cURL error 28: SSL connection timeout for https://video.bunnycdn.com/library/654926/videos');
+        });
+
+        $response = $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->getJson(route('admin.bunny.videos.index'))
+            ->assertStatus(503)
+            ->assertJsonPath('message', 'Bunny Stream is taking too long to respond. Please try again in a moment.');
+
+        $this->assertStringNotContainsString('cURL error', $response->getContent());
+        $this->assertStringNotContainsString('video.bunnycdn.com', $response->getContent());
     }
 
     public function test_admin_can_create_signed_direct_upload_intent(): void

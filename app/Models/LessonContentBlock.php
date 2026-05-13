@@ -9,13 +9,22 @@ use Illuminate\Support\Facades\Storage;
 class LessonContentBlock extends Model
 {
     public const TYPES = [
-        'heading',
         'text',
         'image',
-        'gallery',
         'video',
-        'canva',
         'pdf_resource',
+        'presentation',
+    ];
+
+    public const VALID_TYPES = [
+        'text',
+        'image',
+        'video',
+        'pdf_resource',
+        'presentation',
+        'heading',
+        'gallery',
+        'canva',
         'steps',
         'tips',
         'safety',
@@ -23,11 +32,16 @@ class LessonContentBlock extends Model
     ];
 
     public const LEGACY_TYPE_MAP = [
-        'presentation' => 'canva',
+        'heading' => 'text',
+        'steps' => 'text',
+        'tips' => 'text',
+        'safety' => 'text',
+        'divider' => 'text',
+        'canva' => 'presentation',
         'pdf' => 'pdf_resource',
-        'tip' => 'tips',
-        'warning' => 'safety',
-        'step' => 'steps',
+        'tip' => 'text',
+        'warning' => 'text',
+        'step' => 'text',
     ];
 
     protected $fillable = [
@@ -95,51 +109,22 @@ class LessonContentBlock extends Model
 
     public function presentationOpenUrl(): ?string
     {
-        return Lesson::normalizePresentationUrl($this->presentation_url);
+        return $this->fileUrl() ?: Lesson::normalizePresentationUrl($this->presentation_url);
     }
 
     public function canvaPresentationEmbedUrl(): ?string
     {
-        $url = Lesson::normalizePresentationUrl($this->presentation_url);
-        if ($url === null) {
-            return null;
-        }
-
-        $parts = parse_url($url);
-        $host = strtolower($parts['host'] ?? '');
-        $path = '/'.ltrim($parts['path'] ?? '', '/');
-        parse_str($parts['query'] ?? '', $query);
-
-        if ($host === 'canva.link') {
-            return $url;
-        }
-
-        if (! in_array($host, ['canva.com', 'www.canva.com'], true)) {
-            return null;
-        }
-
-        if (! array_key_exists('embed', $query)) {
-            return null;
-        }
-
-        if (! preg_match('#^/design/([A-Za-z0-9_-]+)(?:/|$)#', $path)) {
-            return null;
-        }
-
-        return $url;
+        return null;
     }
 
     public function hasRenderableContent(): bool
     {
         return match ($this->flowType()) {
-            'divider' => true,
-            'heading', 'text' => filled($this->title) || filled($this->content),
+            'text' => filled($this->title) || filled($this->content),
             'image' => filled($this->image_path),
-            'gallery' => $this->galleryImageUrls() !== [],
             'video' => filled($this->bunny_video_id) && filled($this->bunny_library_id),
-            'canva' => $this->presentationOpenUrl() !== null,
             'pdf_resource' => $this->fileUrl() !== null,
-            'steps', 'tips', 'safety' => $this->contentLines() !== [],
+            'presentation' => $this->presentationOpenUrl() !== null,
             default => filled($this->title) || filled($this->content),
         };
     }

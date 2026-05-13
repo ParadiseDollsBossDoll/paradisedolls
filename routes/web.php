@@ -151,6 +151,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         Route::patch('/courses/{course}/visibility', [AdminCourseController::class, 'visibility'])->name('courses.visibility');
         Route::get('/courses/{course}/preview', [AdminCourseController::class, 'preview'])->name('courses.preview');
         Route::get('/courses/{course}/lessons/{lesson}/preview', [AdminCourseController::class, 'previewLesson'])->name('courses.lessons.preview');
+        Route::post('/courses/block-file', [AdminCourseController::class, 'uploadBlockFile'])->name('courses.block-file');
         Route::resource('courses', AdminCourseController::class)->except(['show']);
 
         Route::post('/courses/{course}/lessons', [AdminLessonController::class, 'store'])->name('courses.lessons.store');

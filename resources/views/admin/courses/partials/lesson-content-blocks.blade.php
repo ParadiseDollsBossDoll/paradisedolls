@@ -36,8 +36,6 @@
     <div class="mt-3 space-y-2">
         <template x-for="(block, blockIndex) in lesson.content_blocks" :key="block.id || `${index}-${blockIndex}`">
             <div x-data="{ expanded: true }" class="overflow-hidden rounded-lg border border-white/[0.06] bg-[#0E0E1A]">
-
-                {{-- Block header with collapse toggle --}}
                 <div class="flex flex-wrap items-center gap-2 border-b border-white/[0.05] bg-white/[0.015] px-3 py-2">
                     <span class="flex h-5 w-5 items-center justify-center rounded-full border border-boss-gold/25 bg-boss-gold/10 text-[0.58rem] text-boss-gold" x-text="blockIndex + 1"></span>
                     <span class="text-[0.68rem] text-boss-ivory/38" x-text="blockTypeLabel(block.block_type)"></span>
@@ -58,11 +56,13 @@
                     </div>
                 </div>
 
-                {{-- Block body (collapsible) --}}
                 <div x-show="expanded" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
                     <div class="grid gap-3 p-3 sm:grid-cols-2">
                         <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][id]`" x-bind:value="block.id || ''">
                         <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][sort_order]`" x-bind:value="blockIndex + 1">
+                        <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][image_path]`" x-bind:value="block.image_path || ''">
+                        <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][file_path]`" x-bind:value="block.file_path || ''">
+                        <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][presentation_url]`" x-bind:value="block.presentation_url || ''">
 
                         <div>
                             <x-input-label ::for="`lesson_${index}_block_${blockIndex}_type`" :value="__('Block Type')" />
@@ -73,143 +73,66 @@
                             </select>
                         </div>
 
-                        <div x-show="!['divider', 'gallery'].includes(block.block_type)">
-                            <x-input-label ::for="`lesson_${index}_block_${blockIndex}_title`" :value="__('Title / Heading')" />
-                            <input type="text" class="pd-input mt-2" x-model="block.title" x-bind:id="`lesson_${index}_block_${blockIndex}_title`" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][title]`" x-bind:placeholder="block.block_type === 'heading' ? '{{ __('Main heading text') }}' : '{{ __('Optional section title') }}'">
+                        <div>
+                            <x-input-label ::for="`lesson_${index}_block_${blockIndex}_title`" :value="__('Title')" />
+                            <input type="text" class="pd-input mt-2" x-model="block.title" x-bind:id="`lesson_${index}_block_${blockIndex}_title`" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][title]`" placeholder="{{ __('Optional section title') }}">
                         </div>
 
-                        <div x-show="['heading', 'text', 'image', 'video', 'canva', 'steps', 'tips', 'safety'].includes(block.block_type)" class="sm:col-span-2">
-                            <label class="pd-label" x-bind:for="`lesson_${index}_block_${blockIndex}_content`">
-                                <span x-text="block.block_type === 'image' ? @js(__('Caption')) : (block.block_type === 'heading' ? @js(__('Subtitle')) : @js(__('Content')))"></span>
-                            </label>
-                            <textarea rows="4" class="pd-input mt-2" x-model="block.content" x-bind:id="`lesson_${index}_block_${blockIndex}_content`" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][content]`" x-bind:placeholder="['steps', 'tips', 'safety'].includes(block.block_type) ? '{{ __('One item per line') }}' : '{{ __('Add the lesson text for this section') }}'"></textarea>
+                        <div x-show="block.block_type === 'text'" class="sm:col-span-2">
+                            <x-input-label ::for="`lesson_${index}_block_${blockIndex}_content`" :value="__('Content')" />
+                            <textarea rows="6" class="pd-input mt-2" x-model="block.content" x-bind:id="`lesson_${index}_block_${blockIndex}_content`" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][content]`" placeholder="{{ __('Write the lesson text for this section') }}"></textarea>
                         </div>
 
-                        {{-- Image upload with drag-and-drop + instant preview --}}
                         <div x-show="block.block_type === 'image'" class="sm:col-span-2">
-                            <x-input-label ::for="`lesson_${index}_block_${blockIndex}_image`" :value="__('Content Image Upload')" />
+                            <x-input-label ::for="`lesson_${index}_block_${blockIndex}_image`" :value="__('Image Upload')" />
                             <div
                                 x-data="{ drag: false, fileLabel: '', previewSrc: null }"
                                 @dragover.prevent="drag = true"
                                 @dragleave.prevent="drag = false"
-                                @drop.prevent="drag = false; const f = $event.dataTransfer?.files; if (f?.length && f[0].type.startsWith('image/')) { $refs.fileInput.files = f; fileLabel = f[0].name; previewSrc = URL.createObjectURL(f[0]); }"
+                                @drop.prevent="drag = false; const f = $event.dataTransfer?.files; if (f?.length && f[0].type.startsWith('image/')) { fileLabel = f[0].name; previewSrc = URL.createObjectURL(f[0]); const dt = new DataTransfer(); dt.items.add(f[0]); $refs.fileInput.files = dt.files; uploadBlockLocalFile(index, blockIndex, { target: $refs.fileInput }, 'image'); }"
                                 class="mt-2"
                             >
-                                {{-- Saved image (shown when no new file selected) --}}
                                 <template x-if="block.image_url && !previewSrc">
                                     <div class="mb-2 overflow-hidden rounded-lg border border-white/[0.06] bg-[#08080f]">
                                         <img x-bind:src="block.image_url" x-bind:alt="block.title || lesson.title || '{{ __('Lesson image') }}'" class="max-h-48 w-full object-cover">
-                                        <p class="px-3 py-1 text-[0.58rem] text-boss-ivory/22">{{ __('Current saved image') }}</p>
+                                        <p class="px-3 py-1 text-[0.58rem] text-boss-ivory/22">{{ __('Current image') }}</p>
                                     </div>
                                 </template>
-                                {{-- Instant new-image preview --}}
                                 <template x-if="previewSrc">
                                     <div class="mb-2 overflow-hidden rounded-lg border border-boss-gold/25 bg-[#08080f]">
                                         <img :src="previewSrc" alt="" class="max-h-48 w-full object-cover">
                                         <div class="flex items-center justify-between gap-3 px-3 py-1">
-                                            <p class="text-[0.58rem] text-boss-gold/60">{{ __('New image selected — will replace current image on save') }}</p>
-                                            <button type="button" class="text-[0.58rem] text-boss-ivory/35 transition-colors hover:text-boss-gold" @click="previewSrc = null; fileLabel = ''; $refs.fileInput.value = ''">{{ __('Clear') }}</button>
+                                            <p class="text-[0.58rem] text-boss-gold/60">{{ __('New image — uploading...') }}</p>
+                                            <button type="button" class="text-[0.58rem] text-boss-ivory/35 transition-colors hover:text-boss-gold" @click="previewSrc = null; fileLabel = ''">{{ __('Clear preview') }}</button>
                                         </div>
                                     </div>
                                 </template>
+                                <div x-show="uploads[blockFileUploadKey(index, blockIndex)]" class="mb-2">
+                                    <div class="h-1 overflow-hidden rounded-full bg-white/[0.06]">
+                                        <div class="h-full rounded-full bg-boss-gold transition-all" x-bind:style="`width: ${uploads[blockFileUploadKey(index, blockIndex)]?.progress || 0}%`"></div>
+                                    </div>
+                                    <p class="mt-1 text-[0.6rem]" x-bind:class="uploads[blockFileUploadKey(index, blockIndex)]?.error ? 'text-red-300' : 'text-boss-ivory/32'" x-text="uploads[blockFileUploadKey(index, blockIndex)]?.error || uploads[blockFileUploadKey(index, blockIndex)]?.status"></p>
+                                </div>
                                 <label
                                     class="flex min-h-[7rem] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-5 text-center transition-all duration-200"
                                     :class="drag ? 'border-boss-gold/70 bg-boss-gold/[0.07]' : (previewSrc ? 'border-boss-gold/30 bg-boss-gold/[0.03]' : 'border-white/[0.10] bg-white/[0.025] hover:border-boss-gold/30 hover:bg-white/[0.035]')"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-                                        class="h-6 w-6 transition-colors duration-200"
-                                        :class="drag ? 'text-boss-gold/80' : (previewSrc ? 'text-boss-gold/50' : 'text-boss-ivory/20')">
-                                        <path d="M12 15V3m0 0l-4 4m4-4 4 4"/>
-                                        <path d="M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2"/>
-                                    </svg>
-                                    <span class="text-[0.58rem] font-semibold uppercase tracking-[0.15em] transition-colors duration-200" :class="drag ? 'text-boss-gold' : (previewSrc ? 'text-boss-gold/70' : 'text-boss-gold/55')">
-                                        <span x-text="previewSrc ? '{{ __('CHANGE IMAGE') }}' : '{{ __('DROP IMAGE HERE') }}'"></span>
-                                    </span>
+                                    <span class="text-[0.58rem] font-semibold uppercase tracking-[0.15em] text-boss-gold/60">{{ __('Drop image here') }}</span>
                                     <span class="text-[0.73rem] text-boss-ivory/40">{{ __('Drag and drop, or click to browse') }}</span>
                                     <span class="text-[0.63rem] text-boss-ivory/28" x-text="fileLabel || '{{ __('No file selected') }}'"></span>
-                                    <span class="mt-0.5 text-[0.58rem] text-boss-ivory/18">{{ __('Upload JPG, PNG, WEBP') }}</span>
+                                    <span class="mt-0.5 text-[0.58rem] text-boss-ivory/18">{{ __('Uploads immediately — JPG, PNG, WEBP') }}</span>
                                     <input
                                         type="file"
                                         accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                                         class="sr-only"
                                         x-bind:id="`lesson_${index}_block_${blockIndex}_image`"
-                                        x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][image_upload]`"
                                         x-ref="fileInput"
-                                        @change="const f = $event.target.files; if (f.length) { fileLabel = f[0].name; previewSrc = URL.createObjectURL(f[0]); } else { fileLabel = ''; previewSrc = null; }"
+                                        @change="const f = $event.target.files; if (f.length) { fileLabel = f[0].name; previewSrc = URL.createObjectURL(f[0]); uploadBlockLocalFile(index, blockIndex, $event, 'image'); } else { fileLabel = ''; previewSrc = null; }"
                                     >
                                 </label>
                             </div>
-                            <p class="mt-1 text-[0.6rem] text-boss-ivory/22">{{ __('This image appears inside the lesson flow only. It will not replace the lesson banner.') }}</p>
                         </div>
 
-                        {{-- Gallery upload with drag-and-drop + instant preview --}}
-                        <div x-show="block.block_type === 'gallery'" class="sm:col-span-2">
-                            <x-input-label ::for="`lesson_${index}_block_${blockIndex}_gallery`" :value="__('Image Gallery Uploads')" />
-                            <div
-                                x-data="{ drag: false, fileLabel: '', previewSrcs: [] }"
-                                @dragover.prevent="drag = true"
-                                @dragleave.prevent="drag = false"
-                                @drop.prevent="drag = false; const f = $event.dataTransfer?.files; if (f?.length) { $refs.fileInput.files = f; fileLabel = f.length === 1 ? f[0].name : `${f.length} files selected`; previewSrcs = Array.from(f).filter(fi => fi.type.startsWith('image/')).map(fi => URL.createObjectURL(fi)); }"
-                                class="mt-2"
-                            >
-                                {{-- Saved gallery images --}}
-                                <template x-if="block.gallery_image_urls && block.gallery_image_urls.length && previewSrcs.length === 0">
-                                    <div class="mb-2">
-                                        <p class="mb-1.5 text-[0.58rem] text-boss-ivory/22">{{ __('Current saved image') }}</p>
-                                        <div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                                            <template x-for="imageUrl in block.gallery_image_urls" :key="imageUrl">
-                                                <img x-bind:src="imageUrl" x-bind:alt="lesson.title || '{{ __('Gallery image') }}'" class="h-16 w-full rounded-md border border-white/[0.06] object-cover">
-                                            </template>
-                                        </div>
-                                    </div>
-                                </template>
-                                {{-- Instant gallery preview --}}
-                                <template x-if="previewSrcs.length > 0">
-                                    <div class="mb-2">
-                                        <div class="mb-1.5 flex items-center justify-between gap-3">
-                                            <p class="text-[0.58rem] text-boss-gold/60">{{ __('New image selected — will replace current image on save') }}</p>
-                                            <button type="button" class="text-[0.58rem] text-boss-ivory/35 transition-colors hover:text-boss-gold" @click="previewSrcs = []; fileLabel = ''; $refs.fileInput.value = ''">{{ __('Clear') }}</button>
-                                        </div>
-                                        <div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                                            <template x-for="src in previewSrcs" :key="src">
-                                                <img :src="src" alt="" class="h-16 w-full rounded-md border border-boss-gold/25 object-cover">
-                                            </template>
-                                        </div>
-                                    </div>
-                                </template>
-                                <label
-                                    class="flex min-h-[7rem] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-5 text-center transition-all duration-200"
-                                    :class="drag ? 'border-boss-gold/70 bg-boss-gold/[0.07]' : (previewSrcs.length ? 'border-boss-gold/30 bg-boss-gold/[0.03]' : 'border-white/[0.10] bg-white/[0.025] hover:border-boss-gold/30 hover:bg-white/[0.035]')"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-                                        class="h-6 w-6 transition-colors duration-200"
-                                        :class="drag ? 'text-boss-gold/80' : (previewSrcs.length ? 'text-boss-gold/50' : 'text-boss-ivory/20')">
-                                        <path d="M12 15V3m0 0l-4 4m4-4 4 4"/>
-                                        <path d="M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2"/>
-                                    </svg>
-                                    <span class="text-[0.58rem] font-semibold uppercase tracking-[0.15em] transition-colors duration-200" :class="drag ? 'text-boss-gold' : (previewSrcs.length ? 'text-boss-gold/70' : 'text-boss-gold/55')">
-                                        <span x-text="previewSrcs.length ? '{{ __('CHANGE IMAGES') }}' : '{{ __('DROP IMAGES HERE') }}'"></span>
-                                    </span>
-                                    <span class="text-[0.73rem] text-boss-ivory/40">{{ __('Drag and drop, or click to browse') }}</span>
-                                    <span class="text-[0.63rem] text-boss-ivory/28" x-text="fileLabel || '{{ __('No files selected') }}'"></span>
-                                    <span class="mt-0.5 text-[0.58rem] text-boss-ivory/18">{{ __('Upload JPG, PNG, WEBP — multiple allowed') }}</span>
-                                    <input
-                                        type="file"
-                                        multiple
-                                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                                        class="sr-only"
-                                        x-bind:id="`lesson_${index}_block_${blockIndex}_gallery`"
-                                        x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][gallery_uploads][]`"
-                                        x-ref="fileInput"
-                                        @change="const files = Array.from($event.target.files); fileLabel = files.length ? (files.length === 1 ? files[0].name : `${files.length} files selected`) : ''; previewSrcs = files.filter(f => f.type.startsWith('image/')).map(f => URL.createObjectURL(f));"
-                                    >
-                                </label>
-                            </div>
-                            <x-input-label ::for="`lesson_${index}_block_${blockIndex}_gallery_captions`" :value="__('Optional Captions')" class="mt-3" />
-                            <textarea rows="3" class="pd-input mt-2" x-model="block.gallery_captions" x-bind:id="`lesson_${index}_block_${blockIndex}_gallery_captions`" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][gallery_captions]`" placeholder="{{ __('One caption per line, matching image order') }}"></textarea>
-                        </div>
-
-                        {{-- Bunny video block (unchanged) --}}
                         <div x-show="block.block_type === 'video'" class="sm:col-span-2">
                             <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][bunny_video_id]`" x-bind:value="block.bunny_video_id || ''">
                             <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][bunny_library_id]`" x-bind:value="block.bunny_library_id || ''">
@@ -219,7 +142,7 @@
                             <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][bunny_status]`" x-bind:value="block.bunny_status || ''">
                             <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][duration]`" x-bind:value="block.duration || ''">
 
-                            <x-input-label ::for="`lesson_${index}_block_${blockIndex}_video`" :value="__('Bunny Video Block')" />
+                            <x-input-label ::for="`lesson_${index}_block_${blockIndex}_video`" :value="__('Bunny Video')" />
                             <div class="mt-2 rounded-lg border border-white/[0.06] bg-white/[0.025] p-3">
                                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
                                     <div class="flex h-20 w-full shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/[0.06] bg-[#08080f] text-[0.62rem] text-boss-ivory/25 sm:w-32">
@@ -255,63 +178,49 @@
                             </div>
                         </div>
 
-                        {{-- Canva block (unchanged) --}}
-                        <div x-show="block.block_type === 'canva'" class="sm:col-span-2">
-                            <x-input-label ::for="`lesson_${index}_block_${blockIndex}_presentation`" :value="__('Canva Embed or Share Link')" />
-                            <textarea rows="2" class="pd-input mt-2" x-model="block.presentation_url" x-bind:id="`lesson_${index}_block_${blockIndex}_presentation`" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][presentation_url]`" placeholder="https://www.canva.com/design/... or Canva iframe embed code"></textarea>
-                        </div>
-
-                        {{-- PDF / Resource upload with drag-and-drop --}}
-                        <div x-show="block.block_type === 'pdf_resource'" class="sm:col-span-2">
-                            <x-input-label ::for="`lesson_${index}_block_${blockIndex}_resource`" :value="__('PDF / Resource Upload')" />
-                            <template x-if="block.file_url">
-                                <a x-bind:href="block.file_url" target="_blank" rel="noopener noreferrer" class="mb-2 inline-flex items-center gap-1 text-[0.68rem] text-boss-gold hover:text-boss-gold/80">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="h-3 w-3"><path d="M8.75 2.75a.75.75 0 00-1.5 0v5.69L5.03 6.22a.75.75 0 00-1.06 1.06l3.5 3.5a.75.75 0 001.06 0l3.5-3.5a.75.75 0 00-1.06-1.06L8.75 8.44V2.75z"/><path d="M3.5 9.75a.75.75 0 00-1.5 0v1.5A2.75 2.75 0 004.75 14h6.5A2.75 2.75 0 0014 11.25v-1.5a.75.75 0 00-1.5 0v1.5c0 .69-.56 1.25-1.25 1.25h-6.5c-.69 0-1.25-.56-1.25-1.25v-1.5z"/></svg>
-                                    {{ __('Current resource file') }}
+                        <div x-show="['pdf_resource', 'presentation'].includes(block.block_type)" class="sm:col-span-2">
+                            <label class="pd-label" x-bind:for="`lesson_${index}_block_${blockIndex}_file`">
+                                <span x-text="block.block_type === 'presentation' ? '{{ __('Presentation Upload') }}' : '{{ __('PDF Upload') }}'"></span>
+                            </label>
+                            <template x-if="block.file_url || block.presentation_url">
+                                <a x-bind:href="block.file_url || block.presentation_url" target="_blank" rel="noopener noreferrer" class="mb-2 inline-flex items-center gap-1 text-[0.68rem] text-boss-gold hover:text-boss-gold/80">
+                                    {{ __('Current saved file') }}
                                 </a>
                             </template>
                             <div
                                 x-data="{ drag: false, fileLabel: '' }"
                                 @dragover.prevent="drag = true"
                                 @dragleave.prevent="drag = false"
-                                @drop.prevent="drag = false; const f = $event.dataTransfer?.files; if (f?.length) { $el.querySelector('input[type=file]').files = f; fileLabel = f[0].name; }"
+                                @drop.prevent="drag = false; const f = $event.dataTransfer?.files; if (f?.length) { fileLabel = f[0].name; const dt = new DataTransfer(); dt.items.add(f[0]); $refs.fileInput.files = dt.files; uploadBlockLocalFile(index, blockIndex, { target: $refs.fileInput }, block.block_type === 'presentation' ? 'presentation' : 'pdf'); }"
                                 class="mt-2"
                             >
+                                <div x-show="uploads[blockFileUploadKey(index, blockIndex)]" class="mb-2">
+                                    <div class="h-1 overflow-hidden rounded-full bg-white/[0.06]">
+                                        <div class="h-full rounded-full bg-boss-gold transition-all" x-bind:style="`width: ${uploads[blockFileUploadKey(index, blockIndex)]?.progress || 0}%`"></div>
+                                    </div>
+                                    <p class="mt-1 text-[0.6rem]" x-bind:class="uploads[blockFileUploadKey(index, blockIndex)]?.error ? 'text-red-300' : 'text-boss-ivory/32'" x-text="uploads[blockFileUploadKey(index, blockIndex)]?.error || uploads[blockFileUploadKey(index, blockIndex)]?.status"></p>
+                                </div>
                                 <label
                                     class="flex min-h-[7rem] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-5 text-center transition-all duration-200"
                                     :class="drag ? 'border-boss-gold/70 bg-boss-gold/[0.07]' : 'border-white/[0.10] bg-white/[0.025] hover:border-boss-gold/30 hover:bg-white/[0.035]'"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-                                        class="h-6 w-6 transition-colors duration-200"
-                                        :class="drag ? 'text-boss-gold/80' : 'text-boss-ivory/20'">
-                                        <path d="M12 15V3m0 0l-4 4m4-4 4 4"/>
-                                        <path d="M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2"/>
-                                    </svg>
-                                    <span class="text-[0.58rem] font-semibold uppercase tracking-[0.15em] transition-colors duration-200" :class="drag ? 'text-boss-gold' : 'text-boss-gold/55'">{{ __('DROP FILE HERE') }}</span>
+                                    <span class="text-[0.58rem] font-semibold uppercase tracking-[0.15em] text-boss-gold/60" x-text="block.block_type === 'presentation' ? '{{ __('Drop presentation here') }}' : '{{ __('Drop PDF here') }}'"></span>
                                     <span class="text-[0.73rem] text-boss-ivory/40">{{ __('Drag and drop, or click to browse') }}</span>
                                     <span class="text-[0.63rem] text-boss-ivory/28" x-text="fileLabel || '{{ __('No file selected') }}'"></span>
-                                    <span class="mt-0.5 text-[0.58rem] text-boss-ivory/18">{{ __('Upload PDF, DOC, PPT, XLS, ZIP') }}</span>
+                                    <span class="mt-0.5 text-[0.58rem] text-boss-ivory/18" x-text="block.block_type === 'presentation' ? '{{ __('Uploads immediately — PPT, PPTX, PDF, KEY') }}' : '{{ __('Uploads immediately — PDF') }}'"></span>
                                     <input
                                         type="file"
-                                        accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.zip,application/pdf"
+                                        x-bind:accept="block.block_type === 'presentation' ? '.ppt,.pptx,.pdf,.key,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation' : '.pdf,application/pdf'"
                                         class="sr-only"
-                                        x-bind:id="`lesson_${index}_block_${blockIndex}_resource`"
-                                        x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][file_upload]`"
-                                        @change="fileLabel = $event.target.files.length ? $event.target.files[0].name : ''"
+                                        x-bind:id="`lesson_${index}_block_${blockIndex}_file`"
+                                        x-ref="fileInput"
+                                        @change="if ($event.target.files.length) { fileLabel = $event.target.files[0].name; uploadBlockLocalFile(index, blockIndex, $event, block.block_type === 'presentation' ? 'presentation' : 'pdf'); } else { fileLabel = ''; }"
                                     >
                                 </label>
                             </div>
-                            <x-input-label ::for="`lesson_${index}_block_${blockIndex}_button`" :value="__('Optional Button Label')" class="mt-3" />
-                            <input type="text" class="pd-input mt-2" x-model="block.button_label" x-bind:id="`lesson_${index}_block_${blockIndex}_button`" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][button_label]`" placeholder="{{ __('Open Resource') }}">
-                        </div>
-
-                        {{-- Divider block (unchanged) --}}
-                        <div x-show="block.block_type === 'divider'" class="sm:col-span-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2 text-[0.68rem] text-boss-ivory/30">
-                            {{ __('Divider blocks add a visual pause between lesson sections.') }}
                         </div>
                     </div>
                 </div>
-
             </div>
         </template>
     </div>

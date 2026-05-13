@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CourseEnrollmentFlowTest extends TestCase
@@ -129,10 +130,76 @@ class CourseEnrollmentFlowTest extends TestCase
             ->assertSee('Canva Template')
             ->assertSee('https://www.canva.com/design/example', false)
             ->assertSee('https://example.com/safety-guide', false)
-            ->assertSee('presentation-wrapper', false)
+            ->assertDontSee('presentation-wrapper', false)
             ->assertSee('https://www.canva.com/design/presentation/view?embed', false)
             ->assertSee('rel="noopener noreferrer"', false)
             ->assertDontSee('Video will appear here');
+    }
+
+    public function test_course_outline_and_intro_render_before_lessons_in_learning_flow(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('academy/course-outlines/outline.pdf', "%PDF-1.4\n");
+
+        $member = User::factory()->create(['role' => 'model']);
+        $course = Course::create([
+            'title' => 'Guided Start Course',
+            'slug' => 'guided-start-course',
+            'platform_label' => 'General',
+            'description' => 'A course with pre-lesson materials.',
+            'has_course_outline' => true,
+            'course_outline_url' => 'academy/course-outlines/outline.pdf',
+            'has_intro' => true,
+            'intro_title' => 'Course Orientation',
+            'intro_body' => 'Welcome before lessons.',
+            'intro_bunny_video_id' => 'intro-video',
+            'intro_bunny_library_id' => '654926',
+            'is_published' => true,
+        ]);
+        $module = $course->modules()->create([
+            'title' => 'Module 1',
+            'is_published' => true,
+            'sort_order' => 1,
+        ]);
+        $lesson = $course->lessons()->create([
+            'course_module_id' => $module->id,
+            'title' => 'First Lesson',
+            'overview' => 'The first normal lesson.',
+            'is_published' => true,
+            'sort_order' => 1,
+        ]);
+
+        $this->actingAs($member)
+            ->post(route('member.courses.learn', $course->slug))
+            ->assertRedirect(route('member.courses.learn.show', $course->slug));
+
+        $this->actingAs($member)
+            ->get(route('member.courses.learn.show', $course->slug))
+            ->assertOk()
+            ->assertSee('Course Outline / PDF Guide')
+            ->assertSee('Open Guide')
+            ->assertSee('Course Orientation')
+            ->assertSee('Module 1')
+            ->assertDontSee('Mark Complete');
+
+        $this->actingAs($member)
+            ->get(route('member.courses.learn.show', [$course->slug, 'item' => 'intro']))
+            ->assertOk()
+            ->assertSee('Course Orientation')
+            ->assertSee('Welcome before lessons.')
+            ->assertSee('https://iframe.mediadelivery.net/embed/654926/intro-video', false)
+            ->assertDontSee('Mark Complete');
+
+        $this->actingAs($member)
+            ->get(route('member.courses.lessons.show', [$course->slug, $lesson]))
+            ->assertOk()
+            ->assertSeeInOrder([
+                'Start Here',
+                'Course Outline / PDF Guide',
+                'Course Orientation',
+                'Module 1',
+                'First Lesson',
+            ]);
     }
 
     public function test_learning_pages_hide_main_member_sidebar(): void
@@ -259,7 +326,7 @@ class CourseEnrollmentFlowTest extends TestCase
             ->assertDontSee('Legacy overview should not render when blocks exist.');
     }
 
-    public function test_empty_draft_content_blocks_do_not_replace_legacy_member_layout(): void
+    public function test_empty_draft_content_blocks_still_suppress_legacy_member_layout(): void
     {
         $member = User::factory()->create(['role' => 'model']);
         $course = Course::create([
@@ -285,8 +352,8 @@ class CourseEnrollmentFlowTest extends TestCase
         $this->actingAs($member)
             ->get(route('member.courses.lessons.show', [$course->slug, $lesson]))
             ->assertOk()
-            ->assertSee('This fallback overview should still show.')
-            ->assertSee('Legacy step still works.');
+            ->assertDontSee('This fallback overview should still show.')
+            ->assertDontSee('Legacy step still works.');
     }
 
     public function test_canva_share_link_uses_open_button_without_guessing_embed_url(): void
@@ -311,13 +378,13 @@ class CourseEnrollmentFlowTest extends TestCase
         $this->actingAs($member)
             ->get(route('member.courses.lessons.show', [$course->slug, $lesson]))
             ->assertOk()
-            ->assertSee('Presentation cannot be embedded')
+            ->assertSee('Lesson Slides')
             ->assertSee('Open Presentation')
             ->assertSee('https://www.canva.com/design/sharelink/view', false)
             ->assertDontSee('presentation-wrapper', false);
     }
 
-    public function test_canva_smart_embed_link_renders_iframe(): void
+    public function test_canva_smart_embed_link_uses_open_button_without_iframe(): void
     {
         $member = User::factory()->create(['role' => 'model']);
         $course = Course::create([
@@ -339,9 +406,10 @@ class CourseEnrollmentFlowTest extends TestCase
         $this->actingAs($member)
             ->get(route('member.courses.lessons.show', [$course->slug, $lesson]))
             ->assertOk()
-            ->assertSee('presentation-wrapper', false)
+            ->assertSee('Open Presentation')
             ->assertSee('https://canva.link/example-presentation', false)
-            ->assertSee('x-on:error="presentationBlocked = true"', false);
+            ->assertDontSee('presentation-wrapper', false)
+            ->assertDontSee('x-on:error="presentationBlocked = true"', false);
     }
 
     public function test_non_canva_presentation_url_uses_open_button_without_iframe(): void

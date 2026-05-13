@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Services\BunnyStreamClient;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -31,7 +33,7 @@ class BunnyVideoController extends Controller
                 (int) ($validated['page'] ?? 1),
             ));
         } catch (Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return $this->bunnyErrorResponse($e);
         }
     }
 
@@ -85,7 +87,7 @@ class BunnyVideoController extends Controller
                 'upload' => $this->bunny->uploadAuthorization($video['id']),
             ]);
         } catch (Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return $this->bunnyErrorResponse($e);
         }
     }
 
@@ -98,7 +100,30 @@ class BunnyVideoController extends Controller
                 'video' => $this->bunny->getVideo($videoId),
             ]);
         } catch (Throwable $e) {
+            return $this->bunnyErrorResponse($e);
+        }
+    }
+
+    private function bunnyErrorResponse(Throwable $e): JsonResponse
+    {
+        if ($e instanceof ConnectionException) {
+            return response()->json([
+                'message' => 'Bunny Stream is taking too long to respond. Please try again in a moment.',
+            ], 503);
+        }
+
+        if ($e instanceof RequestException) {
+            return response()->json([
+                'message' => 'Bunny Stream could not complete the request. Please try again in a moment.',
+            ], 502);
+        }
+
+        if ($e instanceof RuntimeException) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
+
+        return response()->json([
+            'message' => 'Bunny Stream could not complete the request. Please try again in a moment.',
+        ], 502);
     }
 }

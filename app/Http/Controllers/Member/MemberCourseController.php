@@ -99,6 +99,13 @@ class MemberCourseController extends Controller
 
         $course = $this->learningCourse($slug);
         $lesson = $this->resumeLesson($course, $request->user()->id);
+        $progress = $this->courseProgress($course, $request->user()->id);
+
+        if ($course->hasPreLessonMaterials() && $progress['completed'] === 0) {
+            return redirect()
+                ->route('member.courses.learn.show', $course->slug)
+                ->with('status', __('You are enrolled in this course.'));
+        }
 
         if ($lesson !== null) {
             return redirect()
@@ -133,7 +140,9 @@ class MemberCourseController extends Controller
     public function learnShow(Request $request, string $slug): View
     {
         $course = $this->learningCourse($slug);
-        $selectedLesson = $this->resumeLesson($course, $request->user()->id);
+        $selectedLesson = $course->hasPreLessonMaterials()
+            ? null
+            : $this->resumeLesson($course, $request->user()->id);
 
         return $this->learningView($request, $course, $selectedLesson);
     }
@@ -168,7 +177,7 @@ class MemberCourseController extends Controller
 
     private function overviewCourse(string $slug): Course
     {
-        return Course::query()
+        $course = Course::query()
             ->where('slug', $slug)
             ->where('is_published', true)
             ->with([
@@ -191,6 +200,10 @@ class MemberCourseController extends Controller
                 'enrollments as enrolled_users_count',
             ])
             ->firstOrFail();
+
+        $course->setRelation('lessons', $course->lessonsInModuleOrder());
+
+        return $course;
     }
 
     private function learningCourse(string $slug): Course
@@ -210,7 +223,9 @@ class MemberCourseController extends Controller
     {
         $progress = $this->courseProgress($course, $request->user()->id);
         $lessonIds = $course->lessons->pluck('id')->values();
-        $selectedLesson ??= $course->lessons->first();
+        if ($selectedLesson === null && ! $course->hasPreLessonMaterials()) {
+            $selectedLesson = $course->lessons->first();
+        }
         if ($selectedLesson !== null) {
             $selectedLesson = $course->lessons->firstWhere('id', $selectedLesson->id)
                 ?: $selectedLesson->loadMissing('contentBlocks');

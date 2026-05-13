@@ -11,7 +11,7 @@ class BunnyStreamClient
 {
     public function listVideos(?string $search = null, int $page = 1, int $itemsPerPage = 50): array
     {
-        $response = $this->request()->get($this->baseUrl().'/videos', [
+        $response = $this->request(retry: true)->get($this->baseUrl().'/videos', [
             'page' => max(1, $page),
             'itemsPerPage' => min(max(1, $itemsPerPage), 100),
             'search' => $search ?? '',
@@ -43,7 +43,7 @@ class BunnyStreamClient
 
     public function getVideo(string $videoId): array
     {
-        $response = $this->request()
+        $response = $this->request(retry: true)
             ->get($this->baseUrl().'/videos/'.$videoId)
             ->throw();
 
@@ -106,17 +106,21 @@ class BunnyStreamClient
             && filled(config('services.bunny.api_key'));
     }
 
-    private function request(): PendingRequest
+    private function request(bool $retry = false): PendingRequest
     {
         if (! $this->configured()) {
             throw new RuntimeException('Bunny Stream is not configured.');
         }
 
-        return Http::acceptJson()
+        $request = Http::acceptJson()
             ->asJson()
+            ->connectTimeout($this->connectTimeout())
+            ->timeout($this->timeout())
             ->withHeaders([
                 'AccessKey' => $this->apiKey(),
             ]);
+
+        return $retry ? $request->retry(2, 300) : $request;
     }
 
     private function baseUrl(): string
@@ -144,6 +148,16 @@ class BunnyStreamClient
     private function uploadSignatureTtl(): int
     {
         return (int) config('services.bunny.upload_signature_ttl', 86400);
+    }
+
+    private function connectTimeout(): int
+    {
+        return max(1, (int) config('services.bunny.connect_timeout', 10));
+    }
+
+    private function timeout(): int
+    {
+        return max($this->connectTimeout(), (int) config('services.bunny.timeout', 30));
     }
 
     private function formatDuration(int $seconds): ?string

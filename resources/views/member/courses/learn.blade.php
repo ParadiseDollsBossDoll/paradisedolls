@@ -55,23 +55,50 @@
 
             return $url;
         };
+        $courseOutlineUrl = $course->courseOutlineUrl();
+        $courseOutlineFileName = $course->courseOutlineFileName() ?: __('Course Outline');
+        $hasCourseOutlineItem = $course->hasCourseOutlineMaterial() && filled($courseOutlineUrl);
+        $courseOutlinePath = $courseOutlineUrl ? (parse_url($courseOutlineUrl, PHP_URL_PATH) ?: $courseOutlineUrl) : '';
+        $courseOutlinePreviewUrl = $hasCourseOutlineItem && str_ends_with(strtolower($courseOutlinePath), '.pdf')
+            ? $pdfEmbedUrl($courseOutlineUrl)
+            : null;
+        $introVideoUrl = $course->hasIntroMaterial() ? $mediaEmbedUrl($course->introVideoEmbedUrl()) : null;
+        $hasIntroItem = $course->hasIntroMaterial();
+        $requestedCourseItem = request()->query('item');
+        $selectedCourseItem = null;
+
+        if (! $selectedLesson) {
+            if ($requestedCourseItem === 'intro' && $hasIntroItem) {
+                $selectedCourseItem = 'intro';
+            } elseif ($requestedCourseItem === 'outline' && $hasCourseOutlineItem) {
+                $selectedCourseItem = 'outline';
+            } elseif ($hasCourseOutlineItem) {
+                $selectedCourseItem = 'outline';
+            } elseif ($hasIntroItem) {
+                $selectedCourseItem = 'intro';
+            }
+        }
+
         $lessonVideoUrl = $selectedLesson ? $mediaEmbedUrl($selectedLesson->videoEmbedUrl()) : null;
         $lessonPdfPreviewUrl = $selectedLesson ? $pdfEmbedUrl($selectedLesson->pdf_url) : null;
         $lessonBannerImage = $selectedLesson?->lessonBannerImageUrl();
         $lessonImageUrls = $selectedLesson?->lessonImageUrls() ?? [];
         $showInlineImageGallery = $lessonImageUrls !== [];
-        $presentationEmbedUrl = $selectedLesson?->canvaPresentationEmbedUrl();
         $presentationOpenUrl = $selectedLesson?->presentationOpenUrl();
         $lessonResourceItems = $selectedLesson?->resourceItems() ?? [];
-        $lessonContentBlocks = ($selectedLesson?->contentBlocks ?? collect())
+        $allLessonContentBlocks = $selectedLesson?->contentBlocks ?? collect();
+        $hasLessonFlowBlocks = $allLessonContentBlocks->isNotEmpty();
+        $lessonContentBlocks = $allLessonContentBlocks
             ->filter(fn ($block) => $block->hasRenderableContent())
             ->values();
-        $hasLessonContentBlocks = $lessonContentBlocks->isNotEmpty();
-        $hasLessonResources = ! $hasLessonContentBlocks && (filled($selectedLesson?->pdf_url) || $lessonResourceItems !== []);
+        $hasLessonResources = ! $hasLessonFlowBlocks && (filled($selectedLesson?->pdf_url) || $lessonResourceItems !== []);
         $unassignedLessons = $course->lessons->whereNull('course_module_id');
         $lessonUrl = fn ($lesson) => $previewMode
             ? route('admin.courses.lessons.preview', [$course, $lesson])
             : route('member.courses.lessons.show', [$course->slug, $lesson]);
+        $courseMaterialUrl = fn (string $item) => $previewMode
+            ? route('admin.courses.preview', [$course, 'item' => $item])
+            : route('member.courses.learn.show', [$course->slug, 'item' => $item]);
         $courseOverviewUrl = $previewMode
             ? route('admin.courses.preview', $course)
             : route('member.courses.show', $course->slug);
@@ -83,6 +110,43 @@
                 ? route('community.channels.show', $communityChannel->slug)
                 : route('member.courses.community', $course->slug)
         );
+        $learningEntries = collect();
+
+        if ($hasCourseOutlineItem) {
+            $learningEntries->push([
+                'key' => 'outline',
+                'type' => 'outline',
+                'title' => __('Course Outline / PDF Guide'),
+                'url' => $courseMaterialUrl('outline'),
+            ]);
+        }
+
+        if ($hasIntroItem) {
+            $learningEntries->push([
+                'key' => 'intro',
+                'type' => 'intro',
+                'title' => $course->intro_title ?: __('Course Introduction'),
+                'url' => $courseMaterialUrl('intro'),
+            ]);
+        }
+
+        foreach ($course->lessons as $entryLesson) {
+            $learningEntries->push([
+                'key' => 'lesson:'.$entryLesson->id,
+                'type' => 'lesson',
+                'title' => $entryLesson->title,
+                'url' => $lessonUrl($entryLesson),
+            ]);
+        }
+
+        $currentEntryKey = $selectedLesson ? 'lesson:'.$selectedLesson->id : $selectedCourseItem;
+        $currentEntryIndex = $learningEntries->search(fn ($entry) => $entry['key'] === $currentEntryKey);
+        $previousEntry = $currentEntryIndex !== false && $currentEntryIndex > 0 ? $learningEntries[$currentEntryIndex - 1] : null;
+        $nextEntry = $currentEntryIndex !== false && $currentEntryIndex < $learningEntries->count() - 1 ? $learningEntries[$currentEntryIndex + 1] : null;
+        $currentItemTitle = $selectedLesson?->title
+            ?: ($selectedCourseItem === 'intro'
+                ? ($course->intro_title ?: __('Course Introduction'))
+                : ($selectedCourseItem === 'outline' ? __('Course Outline / PDF Guide') : __('Lessons')));
     @endphp
 
     <div x-data="{ courseOutlineOpen: false }" class="mx-auto w-full max-w-[1500px] space-y-5">
@@ -113,6 +177,8 @@
                     <h1 class="pd-heading truncate text-[clamp(1.4rem,3vw,2.2rem)] text-boss-ivory">{{ $course->title }}</h1>
                     @if ($selectedLesson)
                         <p class="mt-2 text-[0.78rem] text-boss-ivory/38">{{ __('Current lesson:') }} <span class="text-boss-ivory/70">{{ $selectedLesson->title }}</span></p>
+                    @elseif ($selectedCourseItem)
+                        <p class="mt-2 text-[0.78rem] text-boss-ivory/38">{{ __('Current item:') }} <span class="text-boss-ivory/70">{{ $currentItemTitle }}</span></p>
                     @endif
                 </div>
 
@@ -142,7 +208,7 @@
             >
                 <span>
                     <span class="block text-[0.62rem] uppercase tracking-[0.18em] text-boss-ivory/30">{{ __('Course Outline') }}</span>
-                    <span class="mt-1 block truncate text-[0.84rem] text-boss-ivory/70">{{ $selectedLesson?->title ?: __('Lessons') }}</span>
+                    <span class="mt-1 block truncate text-[0.84rem] text-boss-ivory/70">{{ $currentItemTitle }}</span>
                 </span>
                 <span class="text-[0.75rem] text-boss-gold" x-text="courseOutlineOpen ? @js(__('Hide')) : @js(__('Show'))"></span>
             </button>
@@ -160,6 +226,29 @@
                 </div>
 
                 <div class="space-y-3 overflow-y-auto p-3 lg:max-h-[calc(100vh-11.5rem)]">
+                    @if ($hasCourseOutlineItem || $hasIntroItem)
+                        <section class="rounded-xl border border-boss-gold/15 bg-boss-gold/[0.045] p-3">
+                            <p class="mb-3 text-[0.68rem] uppercase tracking-[0.16em] text-boss-gold/70">{{ __('Start Here') }}</p>
+                            <div class="space-y-1">
+                                @if ($hasCourseOutlineItem)
+                                    @php $isCurrent = $selectedCourseItem === 'outline'; @endphp
+                                    <a href="{{ $courseMaterialUrl('outline') }}" class="group flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors {{ $isCurrent ? 'border-boss-gold/25 bg-boss-gold/[0.08]' : 'border-transparent hover:bg-white/[0.035]' }}">
+                                        <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.58rem] {{ $isCurrent ? 'border-boss-gold/30 text-boss-gold' : 'border-white/[0.12] text-boss-ivory/24' }}">1</span>
+                                        <span class="min-w-0 flex-1 truncate text-[0.76rem] {{ $isCurrent ? 'text-boss-ivory' : 'text-boss-ivory/48 group-hover:text-boss-ivory/70' }}">{{ __('Course Outline / PDF Guide') }}</span>
+                                    </a>
+                                @endif
+
+                                @if ($hasIntroItem)
+                                    @php $isCurrent = $selectedCourseItem === 'intro'; @endphp
+                                    <a href="{{ $courseMaterialUrl('intro') }}" class="group flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors {{ $isCurrent ? 'border-boss-gold/25 bg-boss-gold/[0.08]' : 'border-transparent hover:bg-white/[0.035]' }}">
+                                        <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.58rem] {{ $isCurrent ? 'border-boss-gold/30 text-boss-gold' : 'border-white/[0.12] text-boss-ivory/24' }}">{{ $hasCourseOutlineItem ? '2' : '1' }}</span>
+                                        <span class="min-w-0 flex-1 truncate text-[0.76rem] {{ $isCurrent ? 'text-boss-ivory' : 'text-boss-ivory/48 group-hover:text-boss-ivory/70' }}">{{ $course->intro_title ?: __('Course Introduction') }}</span>
+                                    </a>
+                                @endif
+                            </div>
+                        </section>
+                    @endif
+
                     @forelse ($course->modules as $module)
                         @php
                             $moduleStats = $moduleProgress[$module->id] ?? ['completed' => 0, 'total' => $module->lessons->count(), 'percent' => 0];
@@ -181,7 +270,11 @@
                                     @endphp
                                     <a href="{{ $lessonUrl($lesson) }}" class="group flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors {{ $isCurrent ? 'border-boss-gold/25 bg-boss-gold/[0.08]' : 'border-transparent hover:bg-white/[0.035]' }}">
                                         <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.58rem] {{ $done ? 'border-boss-gold/30 bg-boss-gold text-boss-ink' : ($isCurrent ? 'border-boss-gold/30 text-boss-gold' : 'border-white/[0.12] text-boss-ivory/24') }}">
-                                            {{ $done ? 'OK' : ($isCurrent ? '>' : 'O') }}
+                                            @if ($done)
+                                                &#10003;
+                                            @else
+                                                {{ $isCurrent ? '>' : 'O' }}
+                                            @endif
                                         </span>
                                         <span class="min-w-0 flex-1 truncate text-[0.76rem] {{ $isCurrent ? 'text-boss-ivory' : 'text-boss-ivory/48 group-hover:text-boss-ivory/70' }}">{{ $lesson->title }}</span>
                                     </a>
@@ -206,7 +299,78 @@
             </aside>
 
             <main class="min-w-0 space-y-4">
-                @if ($selectedLesson)
+                @if ($selectedCourseItem === 'outline' && $hasCourseOutlineItem)
+                    <section class="rounded-2xl border border-white/[0.05] bg-boss-panel p-5 md:p-7">
+                        <div class="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                            <div>
+                                <p class="pd-kicker">{{ __('Course Material') }}</p>
+                                <h2 class="pd-heading mt-2 text-[clamp(1.6rem,4vw,2.4rem)] text-boss-ivory">{{ __('Course Outline / PDF Guide') }}</h2>
+                                <p class="mt-2 max-w-3xl text-[0.9rem] leading-relaxed text-boss-ivory/45">{{ $courseOutlineFileName }}</p>
+                            </div>
+                            <a href="{{ $courseOutlineUrl }}" target="_blank" rel="noopener noreferrer" class="pd-btn-secondary shrink-0">{{ __('Open Guide') }}</a>
+                        </div>
+
+                        @if ($courseOutlinePreviewUrl)
+                            <div class="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#08080f]">
+                                <div class="aspect-video w-full">
+                                    <iframe class="h-full w-full" src="{{ $courseOutlinePreviewUrl }}" title="{{ __('Course Outline / PDF Guide') }}" loading="lazy"></iframe>
+                                </div>
+                            </div>
+                        @else
+                            <div class="rounded-xl border border-boss-gold/15 bg-boss-gold/[0.045] p-4">
+                                <p class="text-[0.85rem] text-boss-ivory/55">{{ __('Open the guide in a new tab to view or download it.') }}</p>
+                            </div>
+                        @endif
+                    </section>
+
+                    <section class="rounded-2xl border border-white/[0.05] bg-boss-panel p-5">
+                        <div class="flex flex-wrap items-center justify-end gap-3">
+                            @if ($nextEntry)
+                                <a href="{{ $nextEntry['url'] }}" class="pd-btn-primary">{{ __('Next') }}</a>
+                            @endif
+                        </div>
+                    </section>
+                @elseif ($selectedCourseItem === 'intro' && $hasIntroItem)
+                    @if ($introVideoUrl)
+                        <section class="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#08080f]">
+                            <div class="aspect-video w-full">
+                                <iframe class="h-full w-full" src="{{ $introVideoUrl }}" title="{{ $course->intro_title ?: __('Course Introduction') }}" allowfullscreen loading="lazy"></iframe>
+                            </div>
+                        </section>
+                    @endif
+
+                    <section class="rounded-2xl border border-white/[0.05] bg-boss-panel p-5 md:p-7">
+                        <div class="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                            <div>
+                                <p class="pd-kicker">{{ __('Course Introduction') }}</p>
+                                <h2 class="pd-heading mt-2 text-[clamp(1.6rem,4vw,2.4rem)] text-boss-ivory">{{ $course->intro_title ?: __('Course Introduction') }}</h2>
+                                @if ($course->intro_duration)
+                                    <p class="mt-2 text-[0.76rem] text-boss-ivory/35">{{ $course->intro_duration }}</p>
+                                @endif
+                            </div>
+                            <span class="rounded-full border border-white/[0.07] bg-white/[0.04] px-3 py-1.5 text-[0.72rem] text-boss-ivory/45">
+                                {{ $previewMode ? __('Preview') : __('Start here') }}
+                            </span>
+                        </div>
+
+                        <p class="max-w-3xl whitespace-pre-line text-[0.95rem] leading-8 text-boss-ivory/60">{{ $course->intro_body ?: __('Your course introduction will appear here when details are added.') }}</p>
+                    </section>
+
+                    <section class="rounded-2xl border border-white/[0.05] bg-boss-panel p-5">
+                        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                @if ($previousEntry)
+                                    <a href="{{ $previousEntry['url'] }}" class="pd-btn-secondary">{{ __('Previous') }}</a>
+                                @endif
+                            </div>
+                            <div>
+                                @if ($nextEntry)
+                                    <a href="{{ $nextEntry['url'] }}" class="pd-btn-primary">{{ __('Next') }}</a>
+                                @endif
+                            </div>
+                        </div>
+                    </section>
+                @elseif ($selectedLesson)
                     @if ($lessonBannerImage)
                         <section class="relative min-h-[220px] overflow-hidden rounded-2xl border border-white/[0.06] bg-[#08080f] md:min-h-[300px]">
                             <img src="{{ $lessonBannerImage }}" alt="{{ $selectedLesson->title }}" class="absolute inset-0 h-full w-full object-cover">
@@ -218,7 +382,7 @@
                         </section>
                     @endif
 
-                    @if (! $hasLessonContentBlocks)
+                    @if (! $hasLessonFlowBlocks)
                     @if ($lessonVideoUrl)
                         <section class="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#08080f]">
                             <div class="aspect-video w-full">
@@ -227,71 +391,20 @@
                         </section>
                     @endif
 
-                    @if ($presentationEmbedUrl || $presentationOpenUrl)
-                        <section
-                            class="rounded-2xl border border-white/[0.05] bg-boss-panel p-5 md:p-6"
-                            @if ($presentationEmbedUrl)
-                                x-data="{ presentationBlocked: false, presentationLoaded: false, presentationTimer: null }"
-                                x-init="presentationTimer = window.setTimeout(() => { if (! presentationLoaded) presentationBlocked = true }, 7000)"
-                            @endif
-                        >
-                            <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    @if ($presentationOpenUrl)
+                        <section class="rounded-2xl border border-white/[0.05] bg-boss-panel p-5 md:p-6">
+                            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <p class="pd-kicker">{{ __('Presentation') }}</p>
                                     <h3 class="pd-heading mt-2 text-[1.35rem] text-boss-ivory">{{ __('Lesson Slides') }}</h3>
                                 </div>
-                                @if ($presentationOpenUrl)
-                                    <a href="{{ $presentationOpenUrl }}" target="_blank" rel="noopener noreferrer" class="pd-btn-secondary">{{ __('Open Presentation') }}</a>
-                                @endif
+                                <a href="{{ $presentationOpenUrl }}" target="_blank" rel="noopener noreferrer" class="pd-btn-primary shrink-0">{{ __('Open Presentation') }}</a>
                             </div>
-
-                            @if ($presentationEmbedUrl)
-                                <div x-show="! presentationBlocked" class="presentation-wrapper relative aspect-video w-full overflow-hidden rounded-2xl border border-boss-gold/25 bg-[#0f0d0b]">
-                                    <iframe
-                                        src="{{ $presentationEmbedUrl }}"
-                                        title="{{ $selectedLesson->title }} {{ __('presentation') }}"
-                                        loading="lazy"
-                                        allowfullscreen
-                                        allow="fullscreen"
-                                        frameborder="0"
-                                        class="absolute inset-0 h-full w-full border-0"
-                                        x-on:load="presentationLoaded = true; if (presentationTimer) window.clearTimeout(presentationTimer)"
-                                        x-on:error="presentationBlocked = true"
-                                    ></iframe>
-                                </div>
-                                <div x-cloak x-show="presentationBlocked" class="rounded-2xl border border-boss-gold/20 bg-boss-gold/[0.045] p-5 md:p-6">
-                                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-                                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-boss-gold/25 bg-boss-gold/10 font-display text-[1.25rem] text-boss-gold-light">
-                                            C
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <h4 class="pd-heading text-[1.25rem] text-boss-ivory">{{ __('Presentation cannot be embedded') }}</h4>
-                                            <p class="mt-2 text-[0.82rem] leading-relaxed text-boss-ivory/45">{{ __('Canva is preventing this presentation from loading inside the academy.') }}</p>
-                                        </div>
-                                        @if ($presentationOpenUrl)
-                                            <a href="{{ $presentationOpenUrl }}" target="_blank" rel="noopener noreferrer" class="pd-btn-primary shrink-0">{{ __('Open Presentation') }}</a>
-                                        @endif
-                                    </div>
-                                </div>
-                            @elseif ($presentationOpenUrl)
-                                <div class="rounded-2xl border border-boss-gold/20 bg-boss-gold/[0.045] p-5 md:p-6">
-                                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-                                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-boss-gold/25 bg-boss-gold/10 font-display text-[1.25rem] text-boss-gold-light">
-                                            C
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <h4 class="pd-heading text-[1.25rem] text-boss-ivory">{{ __('Presentation cannot be embedded') }}</h4>
-                                            <p class="mt-2 text-[0.82rem] leading-relaxed text-boss-ivory/45">{{ __('Open the presentation in a new tab to view it on Canva.') }}</p>
-                                        </div>
-                                        <a href="{{ $presentationOpenUrl }}" target="_blank" rel="noopener noreferrer" class="pd-btn-primary shrink-0">{{ __('Open Presentation') }}</a>
-                                    </div>
-                                </div>
-                            @endif
                         </section>
                     @endif
                     @endif
 
-                    @if ($hasLessonContentBlocks)
+                    @if ($hasLessonFlowBlocks)
                     <div class="space-y-4">
                         @foreach ($lessonContentBlocks as $block)
                             @include('member.courses.partials.lesson-content-block', ['block' => $block])
@@ -404,8 +517,8 @@
                     <section class="rounded-2xl border border-white/[0.05] bg-boss-panel p-5">
                         <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                             <div class="flex flex-wrap items-center gap-3">
-                                @if ($previousLesson)
-                                    <a href="{{ $lessonUrl($previousLesson) }}" class="pd-btn-secondary">{{ __('Previous Lesson') }}</a>
+                                @if ($previousEntry)
+                                    <a href="{{ $previousEntry['url'] }}" class="pd-btn-secondary">{{ $previousEntry['type'] === 'lesson' ? __('Previous Lesson') : __('Previous') }}</a>
                                 @endif
 
                                 @if (! $previewMode)
@@ -428,38 +541,13 @@
                                         {{ __('Ask In Community') }}
                                     </a>
                                 @endif
-                                @if ($nextLesson)
-                                    <a href="{{ $lessonUrl($nextLesson) }}" class="pd-btn-primary">{{ __('Next Lesson') }}</a>
+                                @if ($nextEntry)
+                                    <a href="{{ $nextEntry['url'] }}" class="pd-btn-primary">{{ $nextEntry['type'] === 'lesson' ? __('Next Lesson') : __('Next') }}</a>
                                 @endif
                             </div>
                         </div>
                     </section>
 
-                    @if (! $previewMode)
-                    <section class="rounded-2xl border border-white/[0.05] bg-boss-panel p-5">
-                        <div class="mb-4 flex items-center justify-between gap-4">
-                            <div>
-                                <p class="pd-kicker">{{ __('Community') }}</p>
-                                <h3 class="pd-heading mt-2 text-[1.35rem] text-boss-ivory">{{ __('Course Discussion') }}</h3>
-                            </div>
-                            <a href="{{ $communityUrl }}" class="text-[0.76rem] text-boss-gold hover:text-boss-gold-light">{{ __('Open community') }} -></a>
-                        </div>
-
-                        <div class="space-y-3">
-                            @forelse ($messages as $message)
-                                <div class="rounded-xl border border-white/[0.05] bg-white/[0.025] p-3">
-                                    <div class="flex items-baseline gap-2">
-                                        <p class="text-[0.8rem] font-medium text-boss-ivory">{{ $message->user->name }}</p>
-                                        <p class="text-[0.66rem] text-boss-ivory/25">{{ $message->created_at->diffForHumans() }}</p>
-                                    </div>
-                                    <p class="mt-2 line-clamp-2 text-[0.78rem] text-boss-ivory/45">{{ $message->body }}</p>
-                                </div>
-                            @empty
-                                <p class="text-[0.82rem] text-boss-ivory/35">{{ __('No discussion yet. Start with a question or note from this lesson.') }}</p>
-                            @endforelse
-                        </div>
-                    </section>
-                    @endif
                 @else
                     <section class="rounded-2xl border border-white/[0.05] bg-boss-panel p-10 text-center">
                         <p class="pd-heading text-[1.5rem] text-boss-ivory">{{ __('Lessons are coming soon.') }}</p>
