@@ -5,7 +5,7 @@
         @keydown.escape.window="open = false"
     >
 
-        {{-- ── Backdrop ──────────────────────────────────────────── --}}
+        {{-- Backdrop --}}
         <div
             x-show="open"
             x-cloak
@@ -19,7 +19,7 @@
             @click="open = false"
         ></div>
 
-        {{-- ── Slide-over panel ──────────────────────────────────── --}}
+        {{-- Slide-over panel --}}
         <div
             x-show="open"
             x-cloak
@@ -78,6 +78,14 @@
                                 <span class="text-xs text-boss-ivory/38">
                                     &middot; Reviewed by <span x-text="selected.reviewed_by"></span>
                                 </span>
+                            </template>
+                            <template x-if="selected.referrer_name">
+                                <span class="rounded-full border border-boss-gold/15 bg-boss-gold/10 px-2.5 py-1 text-[0.65rem] text-boss-gold">
+                                    Referred by <span x-text="selected.referrer_name"></span>
+                                </span>
+                            </template>
+                            <template x-if="selected.referral_reward_label">
+                                <span class="rounded-full border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[0.65rem] text-boss-ivory/45" x-text="selected.referral_reward_label"></span>
                             </template>
                         </div>
 
@@ -184,13 +192,23 @@
                             </div>
                         </template>
                         <template x-if="selected.status !== 'pending'">
-                            <p class="text-center text-sm text-boss-ivory/35">
-                                Application
-                                <span class="capitalize text-boss-ivory/60" x-text="selected.status"></span>
-                                <template x-if="selected.reviewed_by">
-                                    <span> &middot; Reviewed by <span class="text-boss-ivory/50" x-text="selected.reviewed_by"></span></span>
+                            <div class="space-y-3">
+                                <p class="text-center text-sm text-boss-ivory/35">
+                                    Application
+                                    <span class="capitalize text-boss-ivory/60" x-text="selected.status"></span>
+                                    <template x-if="selected.reviewed_by">
+                                        <span> &middot; Reviewed by <span class="text-boss-ivory/50" x-text="selected.reviewed_by"></span></span>
+                                    </template>
+                                </p>
+                                <template x-if="selected.mark_reward_paid_url">
+                                    <form :action="selected.mark_reward_paid_url" method="POST">
+                                        @csrf
+                                        <button type="submit" class="w-full rounded-xl border border-boss-gold/25 bg-boss-gold/10 px-4 py-2.5 text-sm font-semibold text-boss-gold transition hover:bg-boss-gold hover:text-boss-ink">
+                                            Mark Referral Reward Paid
+                                        </button>
+                                    </form>
                                 </template>
-                            </p>
+                            </div>
                         </template>
                     </div>
 
@@ -198,13 +216,13 @@
             </template>
         </div>
 
-        {{-- ── Page header ───────────────────────────────────────── --}}
+        {{-- Page header --}}
         <header>
             <p class="pd-kicker">{{ __('Recruitment') }}</p>
             <h1 class="pd-heading mt-2 text-[clamp(2rem,4vw,2.6rem)]">{{ __('Applications') }}</h1>
         </header>
 
-        {{-- ── Flash messages ────────────────────────────────────── --}}
+        {{-- Flash messages --}}
         @if (session('status'))
             <div class="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm text-green-200">
                 {{ session('status') }}
@@ -232,7 +250,80 @@
             </div>
         @endif
 
-        {{-- ── Applications table ────────────────────────────────── --}}
+        {{-- Applications table --}}
+        @if ($referralLeads->isNotEmpty())
+            <section class="rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-5">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p class="pd-kicker">{{ __('Referrals') }}</p>
+                        <h2 class="mt-2 font-display text-2xl text-boss-ivory">{{ __('Referral Leads') }}</h2>
+                        <p class="mt-2 text-sm text-boss-ivory/42">{{ __('Member-submitted referrals waiting to become applications.') }}</p>
+                    </div>
+                    <span class="rounded-full border border-boss-gold/15 bg-boss-gold/[0.07] px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.14em] text-boss-gold">
+                        {{ $referralLeads->count() }} {{ __('leads') }}
+                    </span>
+                </div>
+
+                <div class="mt-5 grid gap-3 lg:grid-cols-2">
+                    @foreach ($referralLeads as $lead)
+                        <article class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-4">
+                            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div class="min-w-0">
+                                    <p class="truncate text-sm font-semibold text-boss-ivory">{{ $lead->candidate_name }}</p>
+                                    <p class="mt-1 truncate text-xs text-boss-ivory/40">
+                                        {{ $lead->candidate_email ?? $lead->candidate_phone ?? $lead->candidate_social_handle }}
+                                    </p>
+                                    <p class="mt-2 text-[0.68rem] text-boss-ivory/32">
+                                        {{ __('Referred by') }} <span class="text-boss-gold-light">{{ $lead->referrer?->name }}</span>
+                                    </p>
+                                    <div class="mt-3 flex flex-wrap gap-1.5">
+                                        <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.62rem] text-boss-gold">{{ $lead->statusLabel() }}</span>
+                                        <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/38">{{ count($lead->photo_paths ?? []) }} {{ __('photos') }}</span>
+                                        @if ($lead->candidate_social_handle)
+                                            <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/38">{{ $lead->candidate_social_handle }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                @if ($lead->photo_paths)
+                                    <div class="flex shrink-0 gap-2">
+                                        @foreach (array_slice($lead->photo_paths, 0, 3) as $index => $path)
+                                            <a href="{{ route('admin.applications.referrals.photos.view', [$lead, $index]) }}" target="_blank" rel="noopener" class="block h-12 w-12 overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.03]">
+                                                <img src="{{ route('admin.applications.referrals.photos.view', [$lead, $index]) }}" alt="{{ __('Referral photo') }}" class="h-full w-full object-cover">
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+
+                            @if ($lead->note)
+                                <p class="mt-4 line-clamp-2 text-sm leading-6 text-boss-ivory/50">{{ $lead->note }}</p>
+                            @endif
+
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                @if ($lead->status !== \App\Models\ModelReferral::STATUS_REJECTED)
+                                    @if ($lead->candidate_email)
+                                        <form method="POST" action="{{ route('admin.applications.referrals.convert', $lead) }}">
+                                            @csrf
+                                            <button type="submit" class="rounded-xl bg-boss-gold px-3 py-2 text-[0.68rem] font-semibold text-boss-ink transition hover:opacity-90">{{ __('Convert to Application') }}</button>
+                                        </form>
+                                    @else
+                                        <span class="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-[0.68rem] text-boss-ivory/38">{{ __('Needs email to convert') }}</span>
+                                    @endif
+                                    <form method="POST" action="{{ route('admin.applications.referrals.reject', $lead) }}">
+                                        @csrf
+                                        <button type="submit" class="rounded-xl border border-red-400/25 bg-red-400/10 px-3 py-2 text-[0.68rem] font-semibold text-red-300 transition hover:bg-red-400/20">{{ __('Reject Lead') }}</button>
+                                    </form>
+                                @else
+                                    <span class="rounded-xl border border-red-400/20 bg-red-400/10 px-3 py-2 text-[0.68rem] text-red-300">{{ __('Rejected') }}</span>
+                                @endif
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
         <div class="overflow-hidden rounded-2xl border border-white/[0.06] bg-boss-panel-strong">
             <div class="overflow-x-auto">
                 <table class="pd-table min-w-full">
@@ -257,6 +348,13 @@
                                     'social_handle'        => $application->social_handle,
                                     'age_confirmed'        => $application->age_confirmed,
                                     'status'               => $application->status,
+                                    'referrer_name'        => $application->referral?->referrer?->name,
+                                    'referral_status'      => $application->referral?->status,
+                                    'referral_reward_status' => $application->referral?->reward_status,
+                                    'referral_reward_label' => $application->referral?->rewardStatusLabel(),
+                                    'mark_reward_paid_url' => $application->referral && $application->referral->reward_status === \App\Models\ModelReferral::REWARD_ELIGIBLE
+                                        ? route('admin.applications.referrals.reward-paid', $application->referral)
+                                        : null,
                                     'photo_view_urls'      => collect($application->photo_paths ?? [])
                                         ->keys()
                                         ->map(fn ($i) => route('admin.applications.photos.view', [$application, $i]))
@@ -299,6 +397,14 @@
                                                 @if ($application->photo_paths)
                                                     <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/35">
                                                         {{ count($application->photo_paths) }} {{ count($application->photo_paths) === 1 ? 'photo' : 'photos' }}
+                                                    </span>
+                                                @endif
+                                                @if ($application->referral)
+                                                    <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.62rem] text-boss-gold">
+                                                        {{ __('Referred by') }} {{ $application->referral->referrer?->name }}
+                                                    </span>
+                                                    <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/35">
+                                                        {{ $application->referral->rewardStatusLabel() }}
                                                     </span>
                                                 @endif
                                                 @if ($application->profile)

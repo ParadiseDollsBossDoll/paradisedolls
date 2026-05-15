@@ -116,7 +116,7 @@
             <section class="pd-panel-strong p-5 md:p-6">
                 <div class="mb-5">
                     <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Step 3') }}</p>
-                    <h2 class="pd-heading mt-1 text-[1.35rem] text-boss-ivory">{{ __('Emergency Contact & Community') }}</h2>
+                    <h2 class="pd-heading mt-1 text-[1.35rem] text-boss-ivory">{{ __('Emergency Contact & Discord') }}</h2>
                 </div>
 
                 <div class="grid gap-4 md:grid-cols-2">

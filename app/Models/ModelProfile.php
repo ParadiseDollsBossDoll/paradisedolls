@@ -142,4 +142,37 @@ class ModelProfile extends Model
             default => __('Not requested'),
         };
     }
+
+    public function onboardingStatusLabel(): string
+    {
+        if (! $this->hasInformationForm()) {
+            return __('Complete your model information to start onboarding.');
+        }
+
+        if ($this->verification_status === self::VERIFICATION_REJECTED) {
+            return __('Verification needs resubmission. Review the admin note and upload updated documents.');
+        }
+
+        if (! $this->hasVerificationSubmission()) {
+            return __('Next step: upload your valid ID and verification documents.');
+        }
+
+        if ($this->verification_status === self::VERIFICATION_SUBMITTED) {
+            return __('Submitted for review. The admin team is reviewing your onboarding details and verification IDs.');
+        }
+
+        if ($this->isVerified() && ! $this->isCommunityInvited()) {
+            return __('Verified. Waiting for your Discord Community invitation.');
+        }
+
+        if ($this->isCommunityInvited() && ! $this->isCommunityRoleAssigned()) {
+            return __('Discord Community invitation sent. Join Discord and wait for your role access.');
+        }
+
+        if ($this->isCommunityRoleAssigned()) {
+            return __('Fully onboarded. Your Discord Community role is assigned.');
+        }
+
+        return $this->verificationStatusLabel();
+    }
 };

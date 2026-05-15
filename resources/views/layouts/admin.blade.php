@@ -9,6 +9,17 @@
     $pendingLayoutVerification = \App\Models\ModelProfile::query()
         ->where('verification_status', \App\Models\ModelProfile::VERIFICATION_SUBMITTED)
         ->count();
+    $referralActionCount = \App\Models\ModelReferral::query()
+        ->where(function ($query) {
+            $query
+                ->where(function ($leadQuery) {
+                    $leadQuery
+                        ->where('status', \App\Models\ModelReferral::STATUS_REFERRED)
+                        ->whereNull('model_application_id');
+                })
+                ->orWhere('reward_status', \App\Models\ModelReferral::REWARD_ELIGIBLE);
+        })
+        ->count();
 
     $links = [
         [
@@ -24,6 +35,13 @@
             'active' => request()->routeIs('admin.applications.*'),
             'icon'   => 'applications',
             'count'  => $pendingLayoutApplications,
+        ],
+        [
+            'route'  => 'admin.referrals.index',
+            'label'  => __('Referrals'),
+            'active' => request()->routeIs('admin.referrals.*'),
+            'icon'   => 'referrals',
+            'count'  => $referralActionCount,
         ],
         [
             'route'  => 'admin.onboarding.index',
@@ -55,7 +73,7 @@
         ],
         [
             'route'  => 'community.show',
-            'label'  => __('Community'),
+            'label'  => __('Community Chat'),
             'active' => request()->routeIs('community.*'),
             'icon'   => 'community',
             'count'  => 0,
@@ -78,7 +96,7 @@
     <body class="font-sans antialiased pd-dark-surface min-h-screen" x-data="{ sidebarOpen: false }">
         <div class="flex min-h-screen">
 
-            {{-- ── Sidebar ─────────────────────────────────────────── --}}
+            {{-- Sidebar --}}
             <aside class="elysian-sidebar" :class="sidebarOpen ? 'is-open' : ''">
 
                 <div class="elysian-brand">
@@ -119,6 +137,8 @@
                                 <svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
                             @elseif ($link['icon'] === 'applications')
                                 <svg viewBox="0 0 16 16"><path d="M10 2h2a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1h2"/><rect x="5" y="1" width="6" height="2" rx="1"/><path d="M5 7h6M5 10h4"/></svg>
+                            @elseif ($link['icon'] === 'referrals')
+                                <svg viewBox="0 0 16 16"><circle cx="5" cy="5" r="2.5"/><circle cx="11.5" cy="4.5" r="2"/><path d="M1.5 13c0-2.5 1.8-4.5 4-4.5 1.4 0 2.6.7 3.3 1.8"/><path d="M9.5 10.5h4M11.5 8.5v4"/></svg>
                             @elseif ($link['icon'] === 'onboarding')
                                 <svg viewBox="0 0 16 16"><circle cx="7" cy="5" r="3"/><path d="M2 13c0-2.8 2.2-5 5-5"/><path d="M11 10l1.5 1.5L15 9"/></svg>
                             @elseif ($link['icon'] === 'members')
@@ -160,7 +180,7 @@
             {{-- Mobile backdrop --}}
             <div x-show="sidebarOpen" x-cloak class="elysian-sidebar-backdrop" @click="sidebarOpen = false"></div>
 
-            {{-- ── Main content ─────────────────────────────────────── --}}
+            {{-- Main content --}}
             <div class="flex min-w-0 flex-1 flex-col">
 
                 <header class="elysian-topbar">
