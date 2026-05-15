@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -138,6 +139,31 @@ class AdminCourseController extends Controller
 
     public function update(Request $request, Course $course): RedirectResponse
     {
+        // Detect PHP max_input_vars truncation before any validation.
+        // The frontend sends _lesson_count with the actual total. If fewer lessons
+        // arrived than expected, the payload was silently cut off by PHP — abort
+        // instead of deleting the missing lessons.
+        $claimedCount = (int) $request->input('_lesson_count', 0);
+        $receivedLessons = $request->input('lessons', []);
+        $receivedCount = is_array($receivedLessons) ? count($receivedLessons) : 0;
+
+        if ($claimedCount > 0 && $receivedCount < $claimedCount) {
+            Log::error('Course update payload truncated by PHP max_input_vars', [
+                'course_id' => $course->id,
+                'claimed_lesson_count' => $claimedCount,
+                'received_lesson_count' => $receivedCount,
+                'max_input_vars' => ini_get('max_input_vars'),
+            ]);
+
+            return redirect()->back()->withInput()->withErrors([
+                'lessons' => __(
+                    'Only :received of :total lessons were received — the form was too large and PHP cut it off. '.
+                    'Please contact support or increase php_value max_input_vars in .htaccess. No data was changed.',
+                    ['received' => $receivedCount, 'total' => $claimedCount]
+                ),
+            ]);
+        }
+
         $validated = $this->validateCourse($request, $course->id, validateLessons: true);
         $courseData = $this->normalizedCourseData($request, $validated['course'], $course);
 
@@ -158,6 +184,24 @@ class AdminCourseController extends Controller
         });
 
         return redirect()->route('admin.courses.index')->with('status', __('Course updated.'));
+    }
+
+    public function updateDetails(Request $request, Course $course): JsonResponse
+    {
+        $validated = $this->validateCourse($request, $course->id, validateLessons: false);
+        $courseData = $this->normalizedCourseData($request, $validated['course'], $course);
+
+        $slugInput = $courseData['slug'] ?? null;
+        $slug = $slugInput !== null && $slugInput !== ''
+            ? $this->uniqueSlug(Str::slug($slugInput), $course->id)
+            : $this->uniqueSlug(Str::slug($courseData['title']), $course->id);
+
+        $course->update([
+            ...collect($courseData)->except('slug')->all(),
+            'slug' => $slug,
+        ]);
+
+        return response()->json(['saved' => true, 'slug' => $course->fresh()->slug]);
     }
 
     public function visibility(Request $request, Course $course): RedirectResponse
@@ -322,10 +366,19 @@ class AdminCourseController extends Controller
             $lessonIdRule = ['nullable', 'integer'];
             $moduleIdRule = ['nullable', 'integer'];
             if ($courseId !== null) {
-                $lessonIdRule[] = Rule::exists('lessons', 'id')
-                    ->where(fn ($query) => $query->where('course_id', $courseId));
-                $moduleIdRule[] = Rule::exists('course_modules', 'id')
-                    ->where(fn ($query) => $query->where('course_id', $courseId));
+                // Accept IDs that belong to this course OR don't exist at all (draft
+                // recovery: syncLessons re-creates missing IDs as new records).
+                // Only reject an ID that belongs to a *different* course.
+                $lessonIdRule[] = function ($attribute, $value, $fail) use ($courseId) {
+                    if (filled($value) && Lesson::where('id', (int) $value)->where('course_id', '!=', $courseId)->exists()) {
+                        $fail(__('validation.exists'));
+                    }
+                };
+                $moduleIdRule[] = function ($attribute, $value, $fail) use ($courseId) {
+                    if (filled($value) && CourseModule::where('id', (int) $value)->where('course_id', '!=', $courseId)->exists()) {
+                        $fail(__('validation.exists'));
+                    }
+                };
             }
 
             $rules += [

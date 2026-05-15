@@ -138,6 +138,12 @@
             bunnyVideoUrlTemplate: @js(route('admin.bunny.videos.show', ['videoId' => '__VIDEO_ID__'])),
             blockFileUploadUrl: @js(route('admin.courses.block-file')),
             lessonPreviewUrlTemplate: @js(route('admin.courses.lessons.preview', [$course, '__LESSON_ID__'])),
+            autosaveUrls: {
+                moduleSave: @js(route('admin.courses.modules.store', $course)),
+                moduleDelete: @js(route('admin.courses.modules.store', $course)),
+                lessonSave: @js(route('admin.courses.lessons.autosave', $course)),
+                lessonDelete: @js(route('admin.courses.lessons.destroy', [$course, '__LESSON_ID__'])),
+            },
         })"
     >
         <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -159,6 +165,44 @@
             <div class="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm text-green-200">{{ session('status') }}</div>
         @endif
 
+        {{-- Draft restoration banner --}}
+        <div x-show="draftAvailable" x-cloak
+            class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-boss-gold/25 bg-boss-gold/[0.07] px-4 py-3">
+            <div>
+                <p class="text-[0.82rem] font-medium text-boss-gold">{{ __('Unsaved draft found') }}</p>
+                <p class="mt-0.5 text-[0.68rem] text-boss-ivory/50"
+                    x-text="`${draftAvailable?.lessonCount} lesson(s), ${draftAvailable?.moduleCount} module(s) — saved ${draftAvailable ? new Date(draftAvailable.timestamp).toLocaleString() : ''}`">
+                </p>
+            </div>
+            <div class="flex gap-2">
+                <button type="button" @click="restoreDraft()"
+                    class="rounded-lg border border-boss-gold/30 bg-boss-gold/15 px-3 py-1.5 text-[0.72rem] text-boss-gold transition-colors hover:bg-boss-gold/20">
+                    {{ __('Restore draft') }}
+                </button>
+                <button type="button" @click="discardDraft()"
+                    class="rounded-lg border border-white/[0.07] bg-white/[0.04] px-3 py-1.5 text-[0.72rem] text-boss-ivory/45 transition-colors hover:text-boss-ivory">
+                    {{ __('Discard') }}
+                </button>
+            </div>
+        </div>
+
+        {{-- Autosave status bar --}}
+        <div x-show="autosaveStatusLabel" x-cloak
+            class="flex items-center gap-2 rounded-lg px-3 py-2 text-[0.68rem] transition-all"
+            :class="{
+                'border border-green-400/15 bg-green-400/[0.06] text-green-300': autosave.status === 'saved',
+                'border border-boss-gold/15 bg-boss-gold/[0.05] text-boss-gold/70': autosave.status === 'saving',
+                'border border-red-400/15 bg-red-400/[0.06] text-red-300': autosave.status === 'error',
+                'border border-amber-400/15 bg-amber-400/[0.06] text-amber-300': autosave.status === 'offline',
+                'border border-white/[0.06] bg-white/[0.02] text-boss-ivory/40': autosave.status === 'idle',
+            }">
+            <span x-show="autosave.status === 'saving'" class="inline-block h-3 w-3 animate-spin rounded-full border border-current border-t-transparent"></span>
+            <span x-show="autosave.status === 'saved'">&#10003;</span>
+            <span x-show="autosave.status === 'error'">&#9888;</span>
+            <span x-show="autosave.status === 'offline'">&#9888;</span>
+            <span x-text="autosaveStatusLabel"></span>
+        </div>
+
         {{-- Step indicator --}}
         <div class="flex flex-wrap items-center gap-2 text-[0.68rem] text-boss-ivory/30">
             <span class="rounded-full px-2.5 py-0.5" x-bind:style="`background-color: ${platformColor}20; color: ${platformColor};`">① Course Details</span>
@@ -171,6 +215,11 @@
         <form method="POST" action="{{ route('admin.courses.update', $course) }}" enctype="multipart/form-data" class="space-y-5">
             @csrf
             @method('PUT')
+            {{-- Safety: tells the backend how many lessons the frontend sent.
+                 If PHP's max_input_vars truncated the payload, this count will
+                 not match and the backend will reject the save instead of
+                 silently deleting the missing lessons. --}}
+            <input type="hidden" name="_lesson_count" :value="lessons.length">
 
             {{-- ① COURSE DETAILS — 2-column layout --}}
             <section class="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0E0E1A]">
@@ -519,6 +568,7 @@
                 x-data="{ activeSection: 'modules', activeModuleTab: 0, lessonModuleFilter: 0, activeLessonKey: null }"
                 x-init="lessonModuleFilter = activeModuleKey(activeModuleTab); activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
                 x-effect="activeLessonKey = lessonsForFilter(lessonModuleFilter).some((lesson) => lessonKey(lesson) === activeLessonKey) ? activeLessonKey : firstLessonKeyForFilter(lessonModuleFilter)"
+                @pd:lesson-id-updated.window="if (activeLessonKey === $event.detail.oldKey) activeLessonKey = $event.detail.newKey"
                 class="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0E0E1A]"
             >
                 {{-- Section switcher header --}}
@@ -559,7 +609,9 @@
 
                     {{-- Module forms — all in DOM (x-show preserves data), only active visible --}}
                     <template x-for="(module, moduleIndex) in modules" :key="module.client_key">
-                        <div x-show="activeModuleTab === moduleIndex" class="p-5">
+                        <div x-show="activeModuleTab === moduleIndex" class="p-5"
+                             @input.debounce.1800ms="scheduleAutosaveModule(module, $event)"
+                             @change.debounce.400ms="scheduleAutosaveModule(module, $event)">
                             <input type="hidden" x-bind:name="`modules[${moduleIndex}][id]`" x-bind:value="module.id || ''">
                             <input type="hidden" x-bind:name="`modules[${moduleIndex}][client_key]`" x-bind:value="module.client_key">
                             <input type="hidden" x-bind:name="`modules[${moduleIndex}][sort_order]`" x-bind:value="moduleIndex + 1">
@@ -687,7 +739,10 @@
                     </div>
 
                     <template x-for="(lesson, index) in lessons" :key="lessonKey(lesson)">
-                        <div x-show="activeLessonKey === lessonKey(lesson) && lessonMatchesFilter(lesson, lessonModuleFilter)" class="p-5">
+                        <div x-show="activeLessonKey === lessonKey(lesson) && lessonMatchesFilter(lesson, lessonModuleFilter)"
+                             class="p-5"
+                             @input.debounce.1800ms="scheduleAutosaveLesson(lesson, $event)"
+                             @change.debounce.400ms="scheduleAutosaveLesson(lesson, $event)">
                             <input type="hidden" x-bind:name="`lessons[${index}][id]`" x-bind:value="lesson.id || ''">
                             <input type="hidden" x-bind:name="`lessons[${index}][course_id]`" x-bind:value="lesson.course_id || ''">
 
@@ -725,7 +780,7 @@
 
                                 <div>
                                     <x-input-label ::for="`lesson_module_${index}`" :value="__('Module')" />
-                                    <input type="hidden" x-bind:name="`lessons[${index}][course_module_id]`" x-bind:value="moduleIdForKey(lesson.module_key)">
+                                    <input type="hidden" x-bind:name="`lessons[${index}][course_module_id]`" x-bind:value="lesson.course_module_id || moduleIdForKey(lesson.module_key)">
                                     <input type="hidden" x-bind:name="`lessons[${index}][module_title]`" x-bind:value="moduleTitleForKey(lesson.module_key)">
                                     <select class="pd-input mt-2"
                                         x-model="lesson.module_key"

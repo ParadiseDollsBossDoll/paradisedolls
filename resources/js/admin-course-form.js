@@ -20,17 +20,376 @@ window.adminCourseForm = function adminCourseForm(config) {
         uploads: {},
         lessonMoveNotice: null,
 
+        // ── Autosave state ──────────────────────────────────────────────────
+        autosave: {
+            status: 'idle',   // 'idle' | 'saving' | 'saved' | 'error' | 'offline'
+            message: '',
+            lastSaved: null,
+            timers: {},       // debounce timers keyed by lesson client_key
+            unsaved: {},      // lessons waiting to flush when online: { client_key: lesson }
+            isOnline: true,
+        },
+        draftAvailable: null, // { lessonCount, moduleCount, timestamp, draft }
+
+        // ── Lifecycle ───────────────────────────────────────────────────────
+
         init() {
             this.introVideo = this.normalizedIntroVideo(config.introVideo ?? {});
             this.modules = this.normalizedModules(config.modules ?? [], config.lessons ?? []);
             this.lessons = (config.lessons ?? []).map((lesson, index) => this.normalizedLesson(lesson, index));
+
+            // Online / offline detection
+            this.autosave.isOnline = navigator.onLine;
+            window.addEventListener('online', () => {
+                this.autosave.isOnline = true;
+                this.setAutosaveStatus('idle', '');
+                this.flushPendingAutosaves();
+            });
+            window.addEventListener('offline', () => {
+                this.autosave.isOnline = false;
+                this.setAutosaveStatus('offline', 'Offline — changes saved locally');
+            });
+
+            // Restore localStorage draft if available and newer than server data
+            this.loadLocalDraft();
+
+            // Periodic local backup every 15 seconds
+            setInterval(() => this.saveLocalDraft(), 15000);
         },
+
+        // ── Autosave status helpers ─────────────────────────────────────────
+
+        setAutosaveStatus(status, message = '') {
+            this.autosave.status = status;
+            this.autosave.message = message;
+            if (status === 'saved') {
+                this.autosave.lastSaved = new Date().toLocaleTimeString();
+            }
+        },
+
+        get autosaveStatusLabel() {
+            if (this.autosave.status === 'saving') return 'Saving…';
+            if (this.autosave.status === 'saved') return `Saved at ${this.autosave.lastSaved}`;
+            if (this.autosave.status === 'error') return this.autosave.message || 'Save failed';
+            if (this.autosave.status === 'offline') return 'Offline — changes saved locally';
+            if (Object.keys(this.autosave.unsaved).length > 0) return 'Unsaved changes';
+            return '';
+        },
+
+        // ── localStorage draft ──────────────────────────────────────────────
+
+        draftKey() {
+            return `pd_course_draft_${config.courseId || 'new'}`;
+        },
+
+        saveLocalDraft() {
+            if (!config.courseId) return;
+            try {
+                const draft = {
+                    timestamp: Date.now(),
+                    courseId: config.courseId,
+                    modules: this.modules,
+                    lessons: this.lessons,
+                };
+                localStorage.setItem(this.draftKey(), JSON.stringify(draft));
+            } catch (_) {
+                // Ignore quota errors (private mode, storage full, etc.)
+            }
+        },
+
+        clearLocalDraft() {
+            try {
+                localStorage.removeItem(this.draftKey());
+            } catch (_) {}
+        },
+
+        loadLocalDraft() {
+            if (!config.courseId) return;
+            try {
+                const stored = localStorage.getItem(this.draftKey());
+                if (!stored) return;
+                const draft = JSON.parse(stored);
+
+                // Ignore drafts older than 24 hours
+                if (Date.now() - draft.timestamp > 86400000) {
+                    this.clearLocalDraft();
+                    return;
+                }
+
+                // Only prompt if the draft has MORE lessons than what the server returned,
+                // which indicates unsaved work from a previous session.
+                const draftLessons = draft.lessons?.length ?? 0;
+                const serverLessons = this.lessons.length;
+
+                if (draftLessons > serverLessons) {
+                    this.draftAvailable = {
+                        lessonCount: draftLessons,
+                        moduleCount: draft.modules?.length ?? 0,
+                        timestamp: draft.timestamp,
+                        draft,
+                    };
+                }
+            } catch (_) {}
+        },
+
+        restoreDraft() {
+            if (!this.draftAvailable) return;
+            const { draft } = this.draftAvailable;
+            this.modules = this.normalizedModules(draft.modules ?? [], draft.lessons ?? []);
+            this.lessons = (draft.lessons ?? []).map((lesson, index) => this.normalizedLesson(lesson, index));
+            this.draftAvailable = null;
+            this.setAutosaveStatus('idle', 'Draft restored — review your lessons and save.');
+        },
+
+        discardDraft() {
+            this.clearLocalDraft();
+            this.draftAvailable = null;
+        },
+
+        // ── Per-lesson autosave ─────────────────────────────────────────────
+
+        scheduleAutosaveLesson(lesson, event) {
+            // Ignore file input changes — those are handled by dedicated upload handlers
+            if (event?.target?.type === 'file') return;
+            if (!config.autosaveUrls?.lessonSave) {
+                this.saveLocalDraft();
+                return;
+            }
+
+            const key = lesson.client_key;
+            this.autosave.unsaved[key] = lesson;
+            this.setAutosaveStatus('saving', 'Saving…');
+            this.saveLocalDraft();
+
+            clearTimeout(this.autosave.timers[key]);
+            this.autosave.timers[key] = setTimeout(() => {
+                this.autosaveLessonNow(lesson);
+            }, 1800);
+        },
+
+        async autosaveLessonNow(lesson) {
+            if (!config.autosaveUrls?.lessonSave) return;
+
+            if (!this.autosave.isOnline) {
+                this.saveLocalDraft();
+                return;
+            }
+
+            const isNew = !lesson.id;
+            const clientKey = lesson.client_key;
+
+            try {
+                this.setAutosaveStatus('saving', 'Saving…');
+
+                const url = isNew
+                    ? config.autosaveUrls.lessonSave
+                    : config.autosaveUrls.lessonSave.replace('/autosave', `/${lesson.id}/autosave`);
+
+                const response = await fetch(url, {
+                    method: isNew ? 'POST' : 'PUT',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': this.csrfToken(),
+                    },
+                    body: JSON.stringify(this.lessonAutosavePayload(lesson)),
+                });
+
+                const data = await this.jsonResponse(response);
+
+                // Stamp the lesson with its server ID so future saves use PUT
+                if (isNew && data.id) {
+                    const found = this.lessons.find((l) => l.client_key === clientKey);
+                    if (found) {
+                        const oldKey = this.lessonKey(found);
+                        found.id = data.id;
+                        found.course_id = config.courseId;
+                        // Notify nested components that this lesson's tab key changed
+                        window.dispatchEvent(new CustomEvent('pd:lesson-id-updated', {
+                            detail: { oldKey, newKey: this.lessonKey(found) },
+                        }));
+                    }
+                }
+
+                delete this.autosave.unsaved[clientKey];
+                this.clearLocalDraft();
+                this.setAutosaveStatus('saved');
+
+            } catch (error) {
+                this.setAutosaveStatus('error', `Save failed: ${error.message}`);
+                this.saveLocalDraft();
+            }
+        },
+
+        lessonAutosavePayload(lesson) {
+            return {
+                title: lesson.title,
+                course_module_id: lesson.course_module_id || null,
+                module_title: lesson.module_title || null,
+                body: lesson.body || '',
+                overview: lesson.overview || '',
+                steps: lesson.steps || '',
+                tips: lesson.tips || '',
+                safety_notes: lesson.safety_notes || '',
+                resource_links: lesson.resource_links || '',
+                is_published: lesson.is_published,
+                bunny_video_id: lesson.bunny_video_id || null,
+                bunny_library_id: lesson.bunny_library_id || null,
+                bunny_video_title: lesson.bunny_video_title || null,
+                bunny_thumbnail_url: lesson.bunny_thumbnail_url || null,
+                bunny_upload_fingerprint: lesson.bunny_upload_fingerprint || null,
+                bunny_status: lesson.bunny_status || null,
+                duration: lesson.duration || null,
+                pdf_url: lesson.pdf_url || null,
+                presentation_url: lesson.presentation_url || null,
+                sort_order: lesson.sort_order,
+                content_blocks_enabled: true,
+                content_blocks: (lesson.content_blocks ?? []).map((block) => ({
+                    id: block.id || null,
+                    block_type: block.block_type,
+                    title: block.title || null,
+                    content: block.content || null,
+                    image_path: block.image_path || null,
+                    file_path: block.file_path || null,
+                    presentation_url: block.presentation_url || null,
+                    bunny_video_id: block.bunny_video_id || null,
+                    bunny_library_id: block.bunny_library_id || null,
+                    bunny_video_title: block.bunny_video_title || null,
+                    bunny_thumbnail_url: block.bunny_thumbnail_url || null,
+                    bunny_upload_fingerprint: block.bunny_upload_fingerprint || null,
+                    bunny_status: block.bunny_status || null,
+                    duration: block.duration || null,
+                    sort_order: block.sort_order,
+                })),
+            };
+        },
+
+        // ── Module autosave ─────────────────────────────────────────────────
+
+        async autosaveModule(module) {
+            if (!config.autosaveUrls?.moduleSave) {
+                this.saveLocalDraft();
+                return;
+            }
+            if (!this.autosave.isOnline) {
+                this.saveLocalDraft();
+                return;
+            }
+
+            const isNew = !module.id;
+            const clientKey = module.client_key;
+
+            try {
+                this.setAutosaveStatus('saving', 'Saving module…');
+
+                const url = isNew
+                    ? config.autosaveUrls.moduleSave
+                    : `${config.autosaveUrls.moduleSave}/${module.id}`;
+
+                const response = await fetch(url, {
+                    method: isNew ? 'POST' : 'PUT',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': this.csrfToken(),
+                    },
+                    body: JSON.stringify({
+                        client_key: clientKey,
+                        title: module.title || 'Core Training',
+                        description: module.description || null,
+                        is_published: module.is_published,
+                        sort_order: module.sort_order,
+                    }),
+                });
+
+                const data = await this.jsonResponse(response);
+
+                if (isNew && data.id) {
+                    const found = this.modules.find((m) => m.client_key === clientKey);
+                    if (found) {
+                        found.id = data.id;
+                        // Update any lessons that used client_key to reference this module
+                        this.lessons.forEach((lesson) => {
+                            if (lesson.module_key === clientKey) {
+                                lesson.course_module_id = data.id;
+                            }
+                        });
+                    }
+                }
+
+                this.setAutosaveStatus('saved');
+
+            } catch (error) {
+                this.setAutosaveStatus('error', `Module save failed: ${error.message}`);
+                this.saveLocalDraft();
+            }
+        },
+
+        scheduleAutosaveModule(module, event) {
+            if (event?.target?.type === 'file') return;
+            if (!config.autosaveUrls?.moduleSave) {
+                this.saveLocalDraft();
+                return;
+            }
+            const key = module.client_key;
+            this.setAutosaveStatus('saving', 'Saving…');
+            this.saveLocalDraft();
+
+            clearTimeout(this.autosave.timers[`module-${key}`]);
+            this.autosave.timers[`module-${key}`] = setTimeout(() => {
+                this.autosaveModule(module);
+            }, 1800);
+        },
+
+        async deleteModuleServer(module) {
+            if (!module.id || !config.autosaveUrls?.moduleDelete) return;
+            try {
+                await fetch(`${config.autosaveUrls.moduleDelete}/${module.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN': this.csrfToken(),
+                    },
+                });
+            } catch (error) {
+                // Non-fatal: the full form save will clean up orphaned modules
+                console.warn('[autosave] Module delete failed:', error.message);
+            }
+        },
+
+        async deleteLessonServer(lesson) {
+            if (!lesson.id || !config.autosaveUrls?.lessonDelete) return;
+            try {
+                const url = config.autosaveUrls.lessonDelete.replace('__LESSON_ID__', lesson.id);
+                await fetch(url, {
+                    method: 'DELETE',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN': this.csrfToken(),
+                    },
+                });
+            } catch (error) {
+                console.warn('[autosave] Lesson delete failed:', error.message);
+            }
+        },
+
+        // Flush queued saves after coming back online
+        async flushPendingAutosaves() {
+            const pending = Object.values(this.autosave.unsaved);
+            for (const lesson of pending) {
+                await this.autosaveLessonNow(lesson);
+            }
+        },
+
+        // ── Platform ────────────────────────────────────────────────────────
 
         pickPlatform(name, color) {
             this.platform = name;
             this.platformColor = color;
             this.showSuggestions = false;
         },
+
+        // ── Module helpers ──────────────────────────────────────────────────
 
         blankModule(sortOrder) {
             return {
@@ -44,7 +403,7 @@ window.adminCourseForm = function adminCourseForm(config) {
         },
 
         blankLesson(sortOrder, moduleKey = null) {
-            const module = this.modules.find((candidate) => candidate.client_key === moduleKey)
+            const module = this.moduleFromFilter(moduleKey)
                 || this.modules[0]
                 || this.blankModule(1);
 
@@ -166,6 +525,8 @@ window.adminCourseForm = function adminCourseForm(config) {
             return normalized;
         },
 
+        // ── Content blocks ──────────────────────────────────────────────────
+
         blankContentBlock(sortOrder, type = 'text') {
             return {
                 id: null,
@@ -281,11 +642,9 @@ window.adminCourseForm = function adminCourseForm(config) {
             }));
         },
 
-        moduleKeyForLesson(lesson) {
-            if (lesson.module_key && this.modules.some((module) => module.client_key === lesson.module_key)) {
-                return lesson.module_key;
-            }
+        // ── Module resolution ───────────────────────────────────────────────
 
+        moduleKeyForLesson(lesson) {
             if (lesson.course_module_id) {
                 const moduleById = this.modules.find((module) => String(module.id) === String(lesson.course_module_id));
                 if (moduleById) {
@@ -293,6 +652,11 @@ window.adminCourseForm = function adminCourseForm(config) {
                 }
             }
 
+            if (lesson.module_key && this.modules.some((module) => module.client_key === lesson.module_key)) {
+                return lesson.module_key;
+            }
+
+            // Legacy drafts may only have a module title. Real saved lessons use course_module_id.
             if (lesson.module_title) {
                 const moduleByTitle = this.modules.find((module) => module.title === lesson.module_title);
                 if (moduleByTitle) {
@@ -311,9 +675,18 @@ window.adminCourseForm = function adminCourseForm(config) {
             return value === true || value === 1 || value === '1' || value === 'true';
         },
 
+        // ── Lesson CRUD ─────────────────────────────────────────────────────
+
         addLesson(moduleKey = null) {
             const lesson = this.blankLesson(this.lessons.length + 1, moduleKey);
             this.lessons.push(lesson);
+
+            // Immediately autosave to get a server ID
+            if (config.autosaveUrls?.lessonSave && this.autosave.isOnline) {
+                this.$nextTick(() => this.autosaveLessonNow(lesson));
+            } else {
+                this.saveLocalDraft();
+            }
 
             return this.lessonKey(lesson);
         },
@@ -331,8 +704,15 @@ window.adminCourseForm = function adminCourseForm(config) {
         },
 
         removeLesson(index) {
+            const removed = this.lessons[index];
             this.lessons.splice(index, 1);
             this.lessons = this.lessons.map((lesson, i) => ({ ...lesson, sort_order: i + 1 }));
+
+            // Delete from server if it has a DB id
+            if (removed?.id) {
+                this.deleteLessonServer(removed);
+            }
+            this.saveLocalDraft();
         },
 
         removeLessonForFilter(index, filter = 0) {
@@ -341,9 +721,19 @@ window.adminCourseForm = function adminCourseForm(config) {
             return this.firstLessonKeyForFilter(filter);
         },
 
+        // ── Module CRUD ─────────────────────────────────────────────────────
+
         addModule() {
             this.modules.push(this.blankModule(this.modules.length + 1));
             this.reorderModules();
+
+            // Immediately autosave the new module to get a server ID
+            const newModule = this.modules[this.modules.length - 1];
+            if (config.autosaveUrls?.moduleSave && this.autosave.isOnline) {
+                this.$nextTick(() => this.autosaveModule(newModule));
+            } else {
+                this.saveLocalDraft();
+            }
         },
 
         removeModule(index) {
@@ -356,13 +746,23 @@ window.adminCourseForm = function adminCourseForm(config) {
 
             const fallbackKey = this.modules[0].client_key;
             this.lessons = this.lessons.map((lesson) => {
-                if (lesson.module_key !== removed.client_key) {
+                const belongedToRemoved = removed?.id
+                    ? String(lesson.course_module_id || '') === String(removed.id)
+                    : lesson.module_key === removed?.client_key;
+
+                if (!belongedToRemoved) {
                     return lesson;
                 }
 
                 return this.lessonWithModule(lesson, fallbackKey);
             });
             this.reorderModules();
+
+            // Delete from server if it has a DB id
+            if (removed?.id) {
+                this.deleteModuleServer(removed);
+            }
+            this.saveLocalDraft();
         },
 
         moveModule(index, direction) {
@@ -385,6 +785,8 @@ window.adminCourseForm = function adminCourseForm(config) {
             }));
         },
 
+        // ── Module/lesson linkage ───────────────────────────────────────────
+
         syncLessonModule(lesson) {
             Object.assign(lesson, this.lessonWithModule(lesson, lesson.module_key));
         },
@@ -395,17 +797,29 @@ window.adminCourseForm = function adminCourseForm(config) {
                 ?? this.blankModule(1).client_key;
         },
 
-        moduleKeyFromFilter(filter = 0) {
+        moduleFromFilter(filter = 0) {
             if (filter && filter !== 'all' && this.modules.some((module) => module.client_key === filter)) {
-                return filter;
+                return this.modules.find((module) => module.client_key === filter) ?? null;
             }
 
             const numericIndex = Number(filter);
             if (Number.isInteger(numericIndex) && numericIndex >= 0 && numericIndex < this.modules.length) {
-                return this.activeModuleKey(numericIndex);
+                return this.modules[numericIndex];
             }
 
-            return this.activeModuleKey(0);
+            if (filter && filter !== 'all') {
+                const moduleById = this.modules.find((module) => module.id && String(module.id) === String(filter));
+                if (moduleById) {
+                    return moduleById;
+                }
+            }
+
+            return this.modules[0] ?? null;
+        },
+
+        moduleKeyFromFilter(filter = 0) {
+            return this.moduleFromFilter(filter)?.client_key
+                ?? this.activeModuleKey(0);
         },
 
         moduleLabel(moduleIndex = 0) {
@@ -441,7 +855,17 @@ window.adminCourseForm = function adminCourseForm(config) {
         },
 
         lessonBelongsToModule(lesson, moduleKeyOrIndex = 0) {
-            return lesson.module_key === this.moduleKeyFromFilter(moduleKeyOrIndex);
+            const module = this.moduleFromFilter(moduleKeyOrIndex);
+
+            if (!lesson || !module) {
+                return false;
+            }
+
+            if (module.id) {
+                return String(lesson.course_module_id || '') === String(module.id);
+            }
+
+            return lesson.module_key === module.client_key;
         },
 
         isAllLessonsFilter(filter) {
@@ -453,9 +877,7 @@ window.adminCourseForm = function adminCourseForm(config) {
         },
 
         lessonsForModule(moduleKeyOrIndex = 0) {
-            const moduleKey = this.moduleKeyFromFilter(moduleKeyOrIndex);
-
-            return this.lessons.filter((lesson) => lesson.module_key === moduleKey);
+            return this.lessons.filter((lesson) => this.lessonBelongsToModule(lesson, moduleKeyOrIndex));
         },
 
         lessonsForFilter(filter = 0) {
@@ -474,8 +896,37 @@ window.adminCourseForm = function adminCourseForm(config) {
             return index >= 0 ? index : 0;
         },
 
+        moduleForLesson(lesson) {
+            if (!lesson) {
+                return null;
+            }
+
+            if (lesson.course_module_id) {
+                const moduleById = this.modules.find((module) => module.id && String(module.id) === String(lesson.course_module_id));
+                if (moduleById) {
+                    return moduleById;
+                }
+            }
+
+            if (lesson.module_key) {
+                return this.modules.find((module) => module.client_key === lesson.module_key) ?? null;
+            }
+
+            return null;
+        },
+
+        moduleIndexForLesson(lesson) {
+            const module = this.moduleForLesson(lesson);
+            const index = module ? this.modules.findIndex((candidate) => candidate.client_key === module.client_key) : -1;
+
+            return index >= 0 ? index : 0;
+        },
+
         lessonNumberInModule(lesson) {
-            const moduleLessons = this.lessons.filter((candidate) => candidate.module_key === lesson.module_key);
+            const module = this.moduleForLesson(lesson);
+            const moduleLessons = module
+                ? this.lessons.filter((candidate) => this.lessonBelongsToModule(candidate, module.client_key))
+                : [];
             const lessonKey = this.lessonKey(lesson);
             const index = moduleLessons.findIndex((candidate) => this.lessonKey(candidate) === lessonKey);
 
@@ -489,7 +940,7 @@ window.adminCourseForm = function adminCourseForm(config) {
                 return lessonLabel;
             }
 
-            return `M${this.moduleIndexForKey(lesson.module_key) + 1} - ${lessonLabel}`;
+            return `M${this.moduleIndexForLesson(lesson) + 1} - ${lessonLabel}`;
         },
 
         changeLessonModuleForFilter(lesson, filter = 0) {
@@ -501,26 +952,30 @@ window.adminCourseForm = function adminCourseForm(config) {
                 return this.lessonKey(lesson);
             }
 
-            this.lessonMoveNotice = `This lesson was moved to ${this.moduleLabel(this.moduleIndexForKey(lesson.module_key))}.`;
+            this.lessonMoveNotice = `This lesson was moved to ${this.moduleLabel(this.moduleIndexForLesson(lesson))}.`;
 
             return this.firstLessonKeyForFilter(filter);
         },
 
         lessonWithModule(lesson, moduleKey) {
+            const module = this.moduleFromFilter(moduleKey)
+                || this.modules[0]
+                || this.blankModule(1);
+
             return {
                 ...lesson,
-                module_key: moduleKey,
-                course_module_id: this.moduleIdForKey(moduleKey),
-                module_title: this.moduleTitleForKey(moduleKey),
+                module_key: module.client_key,
+                course_module_id: module.id ?? '',
+                module_title: module.title || 'Core Training',
             };
         },
 
         moduleIdForKey(moduleKey) {
-            return this.modules.find((module) => module.client_key === moduleKey)?.id ?? '';
+            return this.moduleFromFilter(moduleKey)?.id ?? '';
         },
 
         moduleTitleForKey(moduleKey) {
-            return this.modules.find((module) => module.client_key === moduleKey)?.title || 'Core Training';
+            return this.moduleFromFilter(moduleKey)?.title || 'Core Training';
         },
 
         newModuleKey(sortOrder) {
@@ -530,6 +985,8 @@ window.adminCourseForm = function adminCourseForm(config) {
         newLessonKey(sortOrder) {
             return `lesson-new-${Date.now()}-${sortOrder}-${Math.random().toString(36).slice(2, 8)}`;
         },
+
+        // ── Bunny video picker ──────────────────────────────────────────────
 
         openBunnyPicker(index) {
             this.openBunnyPickerFor('lesson', index);
@@ -833,6 +1290,8 @@ window.adminCourseForm = function adminCourseForm(config) {
             }
         },
 
+        // ── Preview / misc ──────────────────────────────────────────────────
+
         lessonPreviewUrl(lesson) {
             if (!lesson?.id || !config.lessonPreviewUrlTemplate) {
                 return '#';
@@ -856,6 +1315,8 @@ window.adminCourseForm = function adminCourseForm(config) {
 
             return data.video;
         },
+
+        // ── TUS upload ──────────────────────────────────────────────────────
 
         async uploadFileToBunnyTus(index, file, upload, title) {
             const authHeaders = {
@@ -937,12 +1398,16 @@ window.adminCourseForm = function adminCourseForm(config) {
             return btoa(unescape(encodeURIComponent(value)));
         },
 
+        // ── Upload state ────────────────────────────────────────────────────
+
         setUpload(index, state) {
             this.uploads = {
                 ...this.uploads,
                 [index]: state,
             };
         },
+
+        // ── Utilities ───────────────────────────────────────────────────────
 
         csrfToken() {
             return document.querySelector('meta[name="csrf-token"]')?.content ?? '';

@@ -1,3 +1,8 @@
+# Raise input variable limit so large course forms (6+ modules, 36+ lessons) are not silently truncated.
+# PHP default is 1000; a full course payload can exceed 3000 variables.
+php_value max_input_vars 10000
+php_value max_input_nesting_level 128
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

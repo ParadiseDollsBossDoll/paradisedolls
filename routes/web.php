@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminCourseController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminLessonController;
 use App\Http\Controllers\Admin\AdminModelProgressController;
+use App\Http\Controllers\Admin\AdminModuleController;
 use App\Http\Controllers\Admin\AdminOnboardingController;
 use App\Http\Controllers\Admin\AdminTestimonialController;
 use App\Http\Controllers\Admin\BunnyVideoController;
@@ -116,6 +117,23 @@ Route::middleware(['auth', 'verified', 'community.perf'])->prefix('community')->
 
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
+
+    // ── Autosave endpoints (higher rate limit, JSON responses) ───────────────
+    // These fire on every change; keep them outside the strict throttle:admin-actions group.
+    Route::middleware('throttle:120,1')->group(function () {
+        // Module CRUD
+        Route::post('/courses/{course}/modules', [AdminModuleController::class, 'store'])->name('courses.modules.store');
+        Route::put('/courses/{course}/modules/{module}', [AdminModuleController::class, 'update'])->name('courses.modules.update');
+        Route::delete('/courses/{course}/modules/{module}', [AdminModuleController::class, 'destroy'])->name('courses.modules.destroy');
+        Route::patch('/courses/{course}/modules/reorder', [AdminModuleController::class, 'reorder'])->name('courses.modules.reorder');
+
+        // Lesson autosave (JSON)
+        Route::post('/courses/{course}/lessons/autosave', [AdminLessonController::class, 'autosave'])->name('courses.lessons.autosave');
+        Route::put('/courses/{course}/lessons/{lesson}/autosave', [AdminLessonController::class, 'autosaveUpdate'])->name('courses.lessons.autosave.update');
+
+        // Course details-only save (JSON, no lesson/module sync)
+        Route::patch('/courses/{course}/details', [AdminCourseController::class, 'updateDetails'])->name('courses.update-details');
+    });
 
     Route::get('/applications', [AdminApplicationController::class, 'index'])->name('applications.index');
     Route::get('/applications/{application}/photos/{index}', [AdminApplicationController::class, 'downloadPhoto'])
