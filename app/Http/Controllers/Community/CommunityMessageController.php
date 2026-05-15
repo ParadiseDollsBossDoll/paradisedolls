@@ -251,9 +251,9 @@ class CommunityMessageController extends Controller
         $channel = $message->channel;
 
         abort_unless(
-            $user && (
+            $user && $channel->isAccessibleTo($user) && (
                 $message->user_id === $user->id
-                || ($user->canModerateCommunity() && $channel->isAccessibleTo($user))
+                || $user->canModerateCommunity()
             ),
             403
         );
@@ -401,20 +401,38 @@ class CommunityMessageController extends Controller
     public function serveAttachment(Request $request, CommunityMessage $message): StreamedResponse
     {
         $user = $request->user();
+        $message->loadMissing('channel');
         $channel = $message->channel;
 
         abort_unless($channel && $channel->isAccessibleTo($user), 403);
         abort_unless(is_array($message->attachment) && isset($message->attachment['path']), 404);
 
         $path = $message->attachment['path'];
-        $disk = $message->attachment['disk'] ?? 'local';
-        $mime = $message->attachment['mime_type'] ?? 'application/octet-stream';
-        $name = $message->attachment['original_name'] ?? basename($path);
+
+        $allowedDisks = ['local', 'public'];
+        $disk = in_array($message->attachment['disk'] ?? '', $allowedDisks, true)
+            ? $message->attachment['disk']
+            : 'local';
+
+        $safeMimes = [
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'text/plain', 'application/zip',
+        ];
+        $rawMime = $message->attachment['mime_type'] ?? 'application/octet-stream';
+        $mime = in_array($rawMime, $safeMimes, true) ? $rawMime : 'application/octet-stream';
+
+        $name = basename(preg_replace('/[^\w.\- ]/', '_', $message->attachment['original_name'] ?? basename($path)));
 
         abort_unless(Storage::disk($disk)->exists($path), 404);
 
         return Storage::disk($disk)->response($path, $name, [
             'Content-Type' => $mime,
+            'Content-Disposition' => 'attachment; filename="' . $name . '"',
             'Cache-Control' => 'private, max-age=3600',
         ]);
     }

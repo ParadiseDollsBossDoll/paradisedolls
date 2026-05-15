@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminLessonController;
 use App\Http\Controllers\Admin\AdminModelProgressController;
 use App\Http\Controllers\Admin\AdminModuleController;
 use App\Http\Controllers\Admin\AdminOnboardingController;
+use App\Http\Controllers\Admin\AdminReferralController;
 use App\Http\Controllers\Admin\AdminTestimonialController;
 use App\Http\Controllers\Admin\BunnyVideoController;
 use App\Http\Controllers\ApplyController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\Member\LessonProgressController;
 use App\Http\Controllers\Member\MemberCourseController;
 use App\Http\Controllers\Member\MemberDashboardController;
 use App\Http\Controllers\Member\MemberOnboardingController;
+use App\Http\Controllers\Member\MemberReferralController;
 use App\Http\Controllers\Member\MemberTestimonialController;
 use App\Http\Controllers\Member\MemberVerificationController;
 use App\Http\Controllers\ProfileController;
@@ -64,6 +66,10 @@ Route::middleware(['auth', 'verified', 'model'])->prefix('member')->name('member
     Route::post('/testimonials', [MemberTestimonialController::class, 'store'])
         ->middleware('throttle:profile-updates')
         ->name('testimonials.store');
+    Route::get('/referrals', [MemberReferralController::class, 'index'])->name('referrals.index');
+    Route::post('/referrals', [MemberReferralController::class, 'store'])
+        ->middleware('throttle:profile-updates')
+        ->name('referrals.store');
     Route::get('/courses', [MemberCourseController::class, 'index'])->name('courses.index');
     Route::get('/courses/{slug}', [MemberCourseController::class, 'show'])->name('courses.show');
     Route::post('/courses/{slug}/learn', [MemberCourseController::class, 'learn'])
@@ -97,7 +103,7 @@ Route::middleware(['auth', 'verified', 'community.perf'])->prefix('community')->
     Route::post('/messages/{message}/reactions/toggle', [MessageReactionController::class, 'toggle'])->name('messages.reactions.toggle');
     Route::delete('/messages/{message}', [CommunityMessageController::class, 'destroy'])->name('messages.destroy');
     Route::post('/messages/{message}/pin', [CommunityMessageController::class, 'pin'])->name('messages.pin');
-    Route::get('/messages/{message}/attachment', [CommunityMessageController::class, 'serveAttachment'])->name('messages.attachment');
+    Route::get('/messages/{message}/attachment', [CommunityMessageController::class, 'serveAttachment'])->middleware('throttle:60,1')->name('messages.attachment');
 
     Route::get('/presence', [CommunityPresenceController::class, 'index'])->name('presence.index');
     Route::post('/presence/ping', [CommunityPresenceController::class, 'ping'])->name('presence.ping');
@@ -136,6 +142,21 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     });
 
     Route::get('/applications', [AdminApplicationController::class, 'index'])->name('applications.index');
+    Route::post('/applications/referrals/{referral}/convert', [AdminApplicationController::class, 'convertReferral'])
+        ->middleware('throttle:admin-actions')
+        ->name('applications.referrals.convert');
+    Route::post('/applications/referrals/{referral}/reject', [AdminApplicationController::class, 'rejectReferral'])
+        ->middleware('throttle:admin-actions')
+        ->name('applications.referrals.reject');
+    Route::post('/applications/referrals/{referral}/reward-paid', [AdminApplicationController::class, 'markReferralRewardPaid'])
+        ->middleware('throttle:admin-actions')
+        ->name('applications.referrals.reward-paid');
+    Route::get('/applications/referrals/{referral}/photos/{index}', [AdminApplicationController::class, 'downloadReferralPhoto'])
+        ->whereNumber('index')
+        ->name('applications.referrals.photos.show');
+    Route::get('/applications/referrals/{referral}/photos/{index}/view', [AdminApplicationController::class, 'viewReferralPhoto'])
+        ->whereNumber('index')
+        ->name('applications.referrals.photos.view');
     Route::get('/applications/{application}/photos/{index}', [AdminApplicationController::class, 'downloadPhoto'])
         ->whereNumber('index')
         ->name('applications.photos.show');
@@ -148,6 +169,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/applications/{application}/reject', [AdminApplicationController::class, 'reject'])
         ->middleware('throttle:admin-actions')
         ->name('applications.reject');
+
+    Route::get('/referrals', [AdminReferralController::class, 'index'])->name('referrals.index');
 
     Route::get('/models/progress', [AdminModelProgressController::class, 'index'])->name('models.progress');
     Route::get('/onboarding', [AdminOnboardingController::class, 'index'])->name('onboarding.index');

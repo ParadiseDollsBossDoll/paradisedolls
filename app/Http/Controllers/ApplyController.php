@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Mail\ApplicationSubmittedMail;
 use App\Models\ModelApplication;
+use App\Models\ModelReferral;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -13,9 +15,11 @@ use Throwable;
 
 class ApplyController extends Controller
 {
-    public function create(): RedirectResponse
+    public function create(Request $request): RedirectResponse
     {
-        return redirect()->route('home')->withFragment('apply');
+        return redirect()->route('home', array_filter([
+            'ref' => $request->query('ref'),
+        ]))->withFragment('apply');
     }
 
     public function store(Request $request): RedirectResponse
@@ -33,6 +37,7 @@ class ApplyController extends Controller
             'photos' => ['nullable', 'array', 'max:6'],
             'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'age_confirmed' => ['accepted'],
+            'referral_code' => ['nullable', 'string', 'max:32'],
         ], [
             'email.email' => __('Please enter a valid email address, like name@example.com.'),
             'phone_country.required_with' => __('Please choose a country code for your phone number.'),
@@ -71,7 +76,7 @@ class ApplyController extends Controller
 
         $photoPaths = [];
         foreach ($request->file('photos', []) as $photo) {
-            $photoPaths[] = $photo->store('applications/photos');
+            $photoPaths[] = $photo->store('applications/photos', 'local');
         }
 
         $application = ModelApplication::create([
@@ -85,6 +90,7 @@ class ApplyController extends Controller
             'photo_paths' => $photoPaths,
         ]);
 
+        $this->connectReferral($application, $validated, $phone, $photoPaths);
         $this->notifyOnboardingTeam($application);
 
         return redirect()->route('home')->withFragment('apply')->with('application_sent', true);
@@ -124,5 +130,61 @@ class ApplyController extends Controller
         } catch (Throwable $e) {
             report($e);
         }
+    }
+
+    private function connectReferral(ModelApplication $application, array $validated, ?string $phone, array $photoPaths): void
+    {
+        $referralCode = trim((string) ($validated['referral_code'] ?? ''));
+
+        if ($referralCode === '') {
+            return;
+        }
+
+        $referrer = User::query()
+            ->where('role', 'model')
+            ->where('referral_code', $referralCode)
+            ->first(['id']);
+
+        if (! $referrer) {
+            return;
+        }
+
+        $referral = ModelReferral::query()
+            ->where('referrer_id', $referrer->id)
+            ->whereNull('model_application_id')
+            ->where('candidate_email', $validated['email'])
+            ->where('status', ModelReferral::STATUS_REFERRED)
+            ->latest()
+            ->first();
+
+        $payload = [
+            'model_application_id' => $application->id,
+            'candidate_name' => $validated['name'],
+            'candidate_email' => $validated['email'],
+            'candidate_phone' => $phone,
+            'candidate_social_handle' => $validated['social_handle'] ?? null,
+            'experience_level' => $validated['experience_level'],
+            'note' => $validated['message'] ?? null,
+            'consent_confirmed' => true,
+            'status' => ModelReferral::STATUS_PENDING,
+            'reward_status' => ModelReferral::REWARD_NOT_ELIGIBLE,
+        ];
+
+        if ($photoPaths !== []) {
+            $payload['photo_paths'] = $photoPaths;
+        }
+
+        if ($referral) {
+            $referral->forceFill($payload)->save();
+
+            return;
+        }
+
+        ModelReferral::create([
+            ...$payload,
+            'referrer_id' => $referrer->id,
+            'photo_paths' => $photoPaths,
+            'source' => ModelReferral::SOURCE_APPLY_LINK,
+        ]);
     }
 }

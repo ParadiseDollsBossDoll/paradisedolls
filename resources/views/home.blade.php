@@ -332,6 +332,14 @@
             @else
                 <form method="POST" action="{{ route('apply.store') }}" enctype="multipart/form-data" class="space-y-5" data-application-form>
                     @csrf
+                    <input type="hidden" name="referral_code" value="{{ old('referral_code', $referralCode) }}">
+
+                    @if ($referralReferrer)
+                        <div class="border border-boss-gold/25 bg-boss-cream px-4 py-3 text-[0.82rem] leading-relaxed text-boss-dark/65">
+                            {{ __('You were referred by :name. Submit your application below and the onboarding team will review it privately.', ['name' => $referralReferrer->name]) }}
+                        </div>
+                    @endif
+
                     <div class="grid gap-5 md:grid-cols-2">
                         <div>
                             <label for="application-name" class="pd-label-light">{{ __('Full Name') }} *</label>

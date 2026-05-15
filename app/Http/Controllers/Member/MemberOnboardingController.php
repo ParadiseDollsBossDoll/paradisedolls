@@ -57,8 +57,8 @@ class MemberOnboardingController extends Controller
         $this->sendConfirmation($profile);
 
         return redirect()
-            ->route('member.dashboard')
-            ->with('status', __('Model Information Form submitted. The onboarding team can now request verification when ready.'));
+            ->route('member.verification.edit')
+            ->with('status', __('Model Information Form submitted. Please complete your verification documents next.'));
     }
 
     private function profile(): ModelProfile
