@@ -75,8 +75,8 @@
         <title>{{ isset($title) ? $title.' - '.config('app.name') : config('app.name') }}</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased pd-dark-surface min-h-screen" x-data="{ sidebarOpen: false }">
-        <div class="flex min-h-screen">
+    <body class="font-sans antialiased pd-dark-surface {{ $player ? 'h-screen overflow-hidden' : 'min-h-screen' }}" x-data="{ sidebarOpen: false }">
+        <div class="flex {{ $player ? 'h-screen' : 'min-h-screen' }}">
             @unless ($hideSidebar)
                 <aside class="elysian-sidebar" data-member-sidebar="main" :class="sidebarOpen ? 'is-open' : ''">
                     <div class="elysian-brand">
@@ -187,7 +187,7 @@
                     </div>
                 </header>
 
-                <main class="flex-1 overflow-auto {{ $hideSidebar ? 'p-4 sm:p-5 lg:p-6 xl:p-8' : 'p-5 lg:p-8' }}">
+                <main class="{{ $player ? 'flex-1 overflow-hidden p-0' : ('flex-1 overflow-auto ' . ($hideSidebar ? 'p-4 sm:p-5 lg:p-6 xl:p-8' : 'p-5 lg:p-8')) }}">
                     @isset($header)
                         <div class="mb-7">{{ $header }}</div>
                     @endisset
