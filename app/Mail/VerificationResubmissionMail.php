@@ -10,27 +10,26 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class CommunityAccessMail extends Mailable implements ShouldQueue
+class VerificationResubmissionMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
     public function __construct(
         public ModelProfile $profile,
-        public string $communityUrl,
-        public string $roleName,
+        public string $verificationUrl,
     ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('Discord Community access'),
+            subject: __('Verification resubmission requested'),
         );
     }
 
     public function content(): Content
     {
         return new Content(
-            html: 'emails.community-access',
+            html: 'emails.verification-resubmission',
         );
     }
 }

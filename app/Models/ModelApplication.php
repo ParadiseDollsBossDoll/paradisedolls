@@ -48,4 +48,9 @@ class ModelApplication extends Model
     {
         return $this->hasOne(ModelProfile::class, 'model_application_id');
     }
+
+    public function referral(): HasOne
+    {
+        return $this->hasOne(ModelReferral::class, 'model_application_id');
+    }
 }

@@ -9,6 +9,60 @@
             ->implode('') ?: 'M';
         $continueCourses = $courses->filter(fn ($course) => ($courseProgress[$course->id]['completed'] ?? 0) > 0 && ($courseProgress[$course->id]['completed'] ?? 0) < ($courseProgress[$course->id]['total'] ?? 0));
         $freshCourses = $courses->filter(fn ($course) => ($courseProgress[$course->id]['completed'] ?? 0) === 0)->take(3);
+        $discordInviteUrl = config('paradise.community_url');
+
+        $onboardingAction = null;
+
+        if (! $profile->hasInformationForm()) {
+            $onboardingAction = [
+                'url' => route('member.onboarding.edit'),
+                'label' => __('Complete information'),
+                'style' => 'primary',
+                'external' => false,
+            ];
+        } elseif ($profile->verification_status === \App\Models\ModelProfile::VERIFICATION_REJECTED) {
+            $onboardingAction = [
+                'url' => route('member.verification.edit'),
+                'label' => __('Resubmit verification'),
+                'style' => 'primary',
+                'external' => false,
+            ];
+        } elseif (! $profile->hasVerificationSubmission()) {
+            $onboardingAction = [
+                'url' => route('member.verification.edit'),
+                'label' => __('Complete verification'),
+                'style' => 'primary',
+                'external' => false,
+            ];
+        } elseif ($profile->verification_status === \App\Models\ModelProfile::VERIFICATION_SUBMITTED) {
+            $onboardingAction = [
+                'url' => route('member.verification.edit'),
+                'label' => __('View verification'),
+                'style' => 'secondary',
+                'external' => false,
+            ];
+        } elseif ($profile->isCommunityInvited() && ! $profile->isCommunityRoleAssigned() && $discordInviteUrl) {
+            $onboardingAction = [
+                'url' => $discordInviteUrl,
+                'label' => __('Open Discord invite'),
+                'style' => 'primary',
+                'external' => true,
+            ];
+        } elseif ($profile->isCommunityRoleAssigned()) {
+            $onboardingAction = [
+                'url' => route('community.show'),
+                'label' => __('Open Community Chat'),
+                'style' => 'secondary',
+                'external' => false,
+            ];
+        } elseif ($profile->isVerified()) {
+            $onboardingAction = [
+                'url' => route('member.verification.edit'),
+                'label' => __('View verification'),
+                'style' => 'secondary',
+                'external' => false,
+            ];
+        }
     @endphp
 
     <div class="mx-auto max-w-5xl space-y-6">
@@ -21,7 +75,7 @@
                 <div>
                     <p class="pd-kicker text-boss-ivory/35">{{ __('Boss Doll Blueprint') }}</p>
                     <h2 class="pd-heading mt-2 text-[clamp(1.45rem,3vw,2rem)] text-boss-ivory">{{ __('Onboarding Path') }}</h2>
-                    <p class="mt-2 text-[0.82rem] text-boss-ivory/35">{{ $profile->verificationStatusLabel() }}</p>
+                    <p class="mt-2 max-w-xl text-[0.82rem] text-boss-ivory/35">{{ $profile->onboardingStatusLabel() }}</p>
                 </div>
                 <div class="w-full lg:w-72">
                     <div class="mb-2 flex items-center justify-between text-[0.66rem] uppercase tracking-[0.12em] text-boss-ivory/30">
@@ -32,16 +86,25 @@
                         <div class="pd-progress-bar" style="width: {{ $profile->onboardingPercent() }}%"></div>
                     </div>
                     <div class="mt-4 flex flex-wrap gap-2">
-                        @if (! $profile->hasInformationForm())
-                            <a href="{{ route('member.onboarding.edit') }}" class="pd-btn-primary">{{ __('Complete information') }}</a>
-                        @elseif (! $profile->hasVerificationSubmission())
-                            <a href="{{ route('member.verification.edit') }}" class="pd-btn-primary">{{ __('Complete verification') }}</a>
-                        @else
-                            <a href="{{ route('member.verification.edit') }}" class="pd-btn-secondary">{{ __('View verification') }}</a>
+                        @if ($onboardingAction)
+                            <a
+                                href="{{ $onboardingAction['url'] }}"
+                                class="{{ $onboardingAction['style'] === 'primary' ? 'pd-btn-primary' : 'pd-btn-secondary' }}"
+                                @if ($onboardingAction['external']) target="_blank" rel="noopener" @endif
+                            >
+                                {{ $onboardingAction['label'] }}
+                            </a>
                         @endif
                     </div>
                 </div>
             </div>
+
+            @if ($profile->verification_notes && $profile->verification_status === \App\Models\ModelProfile::VERIFICATION_REJECTED)
+                <div class="mt-5 rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-100">
+                    <p class="font-semibold">{{ __('Resubmission instructions') }}</p>
+                    <p class="mt-1 whitespace-pre-line text-red-100/75">{{ $profile->verification_notes }}</p>
+                </div>
+            @endif
         </section>
 
         <section class="pd-panel relative overflow-hidden p-6 md:p-8">

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\AccountApprovalMail;
 use App\Mail\CommunityAccessMail;
 use App\Mail\VerificationRequestMail;
+use App\Mail\VerificationResubmissionMail;
 use App\Models\ModelProfile;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -101,13 +102,19 @@ class AdminOnboardingController extends Controller
             'verification_notes' => $validated['verification_notes'],
         ])->save();
 
-        return redirect()->back()->with('status', __('Verification marked for resubmission.'));
+        $profile->load('user');
+        $this->sendMail($profile, new VerificationResubmissionMail(
+            profile: $profile,
+            verificationUrl: route('member.verification.edit'),
+        ));
+
+        return redirect()->back()->with('status', __('Resubmission instructions saved and sent to the member.'));
     }
 
     public function communityInvite(ModelProfile $profile): RedirectResponse
     {
         if (! $profile->isVerified()) {
-            return redirect()->back()->withErrors(['profile' => __('The member must be verified before community access is sent.')]);
+            return redirect()->back()->withErrors(['profile' => __('The member must be verified before Discord Community access is sent.')]);
         }
 
         $profile->forceFill([
@@ -121,20 +128,20 @@ class AdminOnboardingController extends Controller
             roleName: config('paradise.community_role_name'),
         ));
 
-        return redirect()->back()->with('status', __('Community Access Email sent.'));
+        return redirect()->back()->with('status', __('Discord Community access email sent.'));
     }
 
     public function markCommunityRoleAssigned(ModelProfile $profile): RedirectResponse
     {
         if (! $profile->isCommunityInvited()) {
-            return redirect()->back()->withErrors(['profile' => __('Send community access before marking the role assigned.')]);
+            return redirect()->back()->withErrors(['profile' => __('Send Discord Community access before marking the role assigned.')]);
         }
 
         $profile->forceFill([
             'community_role_assigned_at' => now(),
         ])->save();
 
-        return redirect()->back()->with('status', __('Community role assignment recorded.'));
+        return redirect()->back()->with('status', __('Discord Community role assignment recorded.'));
     }
 
     public function downloadDocument(ModelProfile $profile, string $document): StreamedResponse

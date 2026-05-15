@@ -85,10 +85,10 @@
                                         <span x-text="selected.profile.is_verified ? '✓' : '○'"></span> Verified
                                     </span>
                                     <span :class="selected.profile.community_invited_at ? 'text-green-300' : 'text-boss-ivory/30'">
-                                        <span x-text="selected.profile.community_invited_at ? '✓' : '○'"></span> Community Invited
+                                        <span x-text="selected.profile.community_invited_at ? '✓' : '○'"></span> Discord Invited
                                     </span>
                                     <span :class="selected.profile.community_role_assigned_at ? 'text-green-300' : 'text-boss-ivory/30'">
-                                        <span x-text="selected.profile.community_role_assigned_at ? '✓' : '○'"></span> Role Assigned
+                                        <span x-text="selected.profile.community_role_assigned_at ? '✓' : '○'"></span> Discord Role Assigned
                                     </span>
                                 </div>
                             </div>
@@ -303,10 +303,10 @@
                             </div>
                         </template>
 
-                        {{-- Community --}}
+                        {{-- Discord Community --}}
                         <template x-if="selected.profile && (selected.profile.community_invited_at || selected.profile.discord_username || selected.profile.discord_user_id)">
                             <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-5 space-y-3">
-                                <p class="text-[0.68rem] uppercase tracking-[0.14em] text-boss-ivory/35">Community</p>
+                                <p class="text-[0.68rem] uppercase tracking-[0.14em] text-boss-ivory/35">Discord Community</p>
                                 <div class="grid grid-cols-2 gap-3">
                                     <template x-if="selected.profile.discord_username">
                                         <div>
@@ -322,13 +322,13 @@
                                     </template>
                                     <template x-if="selected.profile.community_invited_at">
                                         <div>
-                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Community Invited</p>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Discord Invited</p>
                                             <p class="mt-0.5 text-sm text-green-300" x-text="selected.profile.community_invited_at"></p>
                                         </div>
                                     </template>
                                     <template x-if="selected.profile.community_role_assigned_at">
                                         <div>
-                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Role Assigned</p>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Discord Role Assigned</p>
                                             <p class="mt-0.5 text-sm text-boss-gold" x-text="selected.profile.community_role_assigned_at"></p>
                                         </div>
                                     </template>
@@ -373,20 +373,26 @@
                                             type="button"
                                             @click="showReject = !showReject"
                                             class="w-full rounded-xl border border-red-400/25 bg-red-400/[0.07] px-4 py-2.5 text-sm font-medium text-red-300/80 transition hover:bg-red-400/[0.12]"
-                                            x-text="showReject ? 'Cancel' : 'Reject — Request Resubmission'"
+                                            x-text="showReject ? 'Cancel' : 'Request Resubmission'"
                                         ></button>
                                         <div x-show="showReject" x-cloak class="mt-2 space-y-2">
                                             <form :action="selected.profile.reject_verification_url" method="POST">
                                                 @csrf
+                                                <label class="block text-[0.62rem] uppercase tracking-[0.14em] text-red-200/65">
+                                                    Resubmission instructions for the model
+                                                </label>
+                                                <p class="text-[0.72rem] leading-relaxed text-red-100/45">
+                                                    Tell them exactly which file or detail needs to be updated. This note will appear in their dashboard and email.
+                                                </p>
                                                 <textarea
                                                     name="verification_notes"
                                                     rows="3"
-                                                    placeholder="Explain what needs to be resubmitted..."
+                                                    placeholder="Example: Please upload a clearer valid ID photo and make sure all corners are visible."
                                                     required
                                                     class="pd-input w-full text-sm"
                                                 ></textarea>
                                                 <button type="submit" class="mt-2 w-full rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-400/20">
-                                                    Confirm Rejection
+                                                    Send Resubmission Request
                                                 </button>
                                             </form>
                                         </div>
@@ -394,12 +400,12 @@
                                 </div>
                             </template>
 
-                            {{-- Community invite --}}
+                            {{-- Discord Community invite --}}
                             <template x-if="selected.profile.can_community_invite">
                                 <form :action="selected.profile.community_invite_url" method="POST">
                                     @csrf
                                     <button type="submit" class="w-full rounded-xl bg-boss-gold px-4 py-2.5 text-sm font-semibold text-boss-ink transition hover:opacity-90">
-                                        Send Community Access Email
+                                        Send Discord Community Access Email
                                     </button>
                                 </form>
                             </template>
@@ -456,8 +462,8 @@
                 [__('Info Forms'), $stats['information_submitted']],
                 [__('Verification Review'), $stats['verification_submitted']],
                 [__('Verified'), $stats['verified']],
-                [__('Community Invites'), $stats['community_invited']],
-                [__('Roles Assigned'), $stats['role_assigned']],
+                [__('Discord Invites'), $stats['community_invited']],
+                [__('Discord Roles'), $stats['role_assigned']],
             ] as $stat)
                 <div class="pd-stat">
                     <p class="font-display text-[2rem] leading-none text-boss-gold">{{ $stat[1] }}</p>
@@ -573,13 +579,13 @@
                                             <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/28">Verify</span>
                                         @endif
 
-                                        {{-- Community step --}}
+                                        {{-- Discord Community step --}}
                                         @if ($profile?->community_role_assigned_at)
                                             <span class="rounded-full bg-green-400/10 px-2 py-0.5 text-[0.62rem] text-green-300">Active ✓</span>
                                         @elseif ($profile?->community_invited_at)
-                                            <span class="rounded-full bg-green-400/[0.07] px-2 py-0.5 text-[0.62rem] text-green-400/60">Invited</span>
+                                            <span class="rounded-full bg-green-400/[0.07] px-2 py-0.5 text-[0.62rem] text-green-400/60">Discord invited</span>
                                         @else
-                                            <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/28">Community</span>
+                                            <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/28">Discord</span>
                                         @endif
                                     </div>
                                 </td>

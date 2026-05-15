@@ -4,11 +4,11 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -29,6 +29,7 @@ class User extends Authenticatable
         'password',
         'role',
         'profile_photo_path',
+        'referral_code',
     ];
 
     /**
@@ -52,6 +53,35 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (User $user): void {
+            if (blank($user->referral_code)) {
+                $user->referral_code = static::generateReferralCode();
+            }
+        });
+    }
+
+    public static function generateReferralCode(): string
+    {
+        do {
+            $code = 'PD'.Str::upper(Str::random(8));
+        } while (static::query()->where('referral_code', $code)->exists());
+
+        return $code;
+    }
+
+    public function ensureReferralCode(): string
+    {
+        if (blank($this->referral_code)) {
+            $this->forceFill([
+                'referral_code' => static::generateReferralCode(),
+            ])->save();
+        }
+
+        return $this->referral_code;
     }
 
     public function isAdmin(): bool
@@ -116,6 +146,11 @@ class User extends Authenticatable
         return $this->hasMany(Testimonial::class, 'submitted_by');
     }
 
+    public function modelReferrals(): HasMany
+    {
+        return $this->hasMany(ModelReferral::class, 'referrer_id');
+    }
+
     public function communityMessageReads(): HasMany
     {
         return $this->hasMany(CommunityMessageRead::class);
@@ -176,14 +211,14 @@ class User extends Authenticatable
     public function toCommunityMemberArray(bool $online, bool $isSelf = false): array
     {
         return [
-            'id'       => $this->id,
-            'name'     => $this->name,
+            'id' => $this->id,
+            'name' => $this->name,
             'initials' => $this->initials(),
-            'accent'   => $this->communityAccent(),
+            'accent' => $this->communityAccent(),
             'profile_photo_url' => $this->profilePhotoUrl(),
-            'role'     => $this->role,
-            'online'   => $online,
-            'is_self'  => $isSelf,
+            'role' => $this->role,
+            'online' => $online,
+            'is_self' => $isSelf,
         ];
     }
 }
