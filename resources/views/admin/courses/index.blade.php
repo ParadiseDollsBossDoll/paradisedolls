@@ -1,126 +1,230 @@
 <x-admin-layout>
-    <div class="mx-auto max-w-6xl space-y-6 text-boss-ivory">
+    @php
+        $pageCollection  = $courses->getCollection();
+        $publishedCount  = $pageCollection->where('is_published', true)->count();
+        $draftCount      = $pageCollection->where('is_published', false)->count();
+        $totalLessons    = $pageCollection->sum('lessons_count');
+    @endphp
+
+    <div class="mx-auto max-w-6xl space-y-8 text-boss-ivory">
+
+        {{-- ── Page header ─────────────────────────────────────────────── --}}
         <header class="flex items-start justify-between gap-4">
             <div>
                 <p class="pd-kicker">{{ __('Admin') }}</p>
-                <h1 class="pd-heading mt-2 text-[clamp(1.8rem,4vw,2.5rem)]">{{ __('Courses') }}</h1>
-                <p class="mt-2 text-[0.82rem] text-boss-ivory/35">
+                <h1 class="pd-heading pd-text-gradient mt-1.5 text-[clamp(1.6rem,3.5vw,2.3rem)]">{{ __('Courses') }}</h1>
+                <p class="mt-1 text-[0.76rem] text-boss-ivory/32">
                     {{ trans_choice(':count total course|:count total courses', $courses->total(), ['count' => $courses->total()]) }}
                 </p>
             </div>
-            <a href="{{ route('admin.courses.create') }}" class="pd-btn-primary shrink-0">{{ __('New Course') }}</a>
+            <a href="{{ route('admin.courses.create') }}"
+               class="inline-flex shrink-0 items-center gap-2 rounded-full border border-boss-gold/35 bg-boss-gold/[0.12] px-5 py-2.5 text-[0.76rem] font-semibold text-boss-gold transition-colors hover:bg-boss-gold/[0.22]">
+                <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[2.2]"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg>
+                {{ __('New Course') }}
+            </a>
         </header>
 
         @if (session('status'))
             <div class="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm text-green-200">{{ session('status') }}</div>
         @endif
 
-        @if ($courses->isEmpty())
-            <div class="rounded-sm border border-white/[0.06] bg-[#141419] py-20 text-center">
-                <p class="text-[0.9rem] text-boss-ivory/35">{{ __('No courses yet.') }}</p>
-                <a href="{{ route('admin.courses.create') }}" class="mt-4 inline-flex text-[0.82rem] text-boss-gold hover:text-boss-gold-light">{{ __('Create your first course') }} -></a>
+        {{-- ── Quick stats ─────────────────────────────────────────────── --}}
+        @if ($courses->total() > 0)
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                @foreach ([
+                    ['label' => __('Total Courses'),   'value' => $courses->total(), 'gold' => false],
+                    ['label' => __('Published'),        'value' => $publishedCount,   'gold' => $publishedCount > 0],
+                    ['label' => __('Drafts'),           'value' => $draftCount,       'gold' => false],
+                    ['label' => __('Total Lessons'),    'value' => $totalLessons,     'gold' => false],
+                ] as $stat)
+                    <div class="rounded-2xl border border-white/[0.05] bg-boss-panel px-5 py-4">
+                        <p class="text-[0.56rem] uppercase tracking-[0.16em] text-boss-ivory/25">{{ $stat['label'] }}</p>
+                        <p class="mt-1.5 font-display text-[1.7rem] font-semibold leading-none {{ $stat['gold'] ? 'text-boss-gold' : 'text-boss-ivory/80' }}">{{ $stat['value'] }}</p>
+                    </div>
+                @endforeach
             </div>
         @endif
 
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            @foreach ($courses as $course)
-                @php
-                    $stats = $courseStats[$course->id] ?? ['started' => 0, 'finished' => 0, 'messages' => 0];
-                    $color = $course->displayColor();
-                    $bg = $course->displayColorBackground();
-                    $image = $course->overviewImageUrl();
-                @endphp
+        {{-- ── Course grid ─────────────────────────────────────────────── --}}
+        @if ($courses->isEmpty())
+            <div class="rounded-2xl border border-white/[0.05] bg-boss-ink px-6 py-20 text-center">
+                <p class="font-display text-[1.1rem] text-boss-ivory/30">{{ __('No courses yet.') }}</p>
+                <a href="{{ route('admin.courses.create') }}"
+                   class="mt-4 inline-flex items-center gap-1.5 text-[0.8rem] text-boss-gold hover:text-boss-gold-light">
+                    {{ __('Create your first course') }} →
+                </a>
+            </div>
+        @else
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                @foreach ($courses as $course)
+                    @php
+                        $stats = $courseStats[$course->id] ?? ['started' => 0, 'finished' => 0, 'messages' => 0];
+                        $color = $course->displayColor();
+                        $bg    = $course->displayColorBackground();
+                        $image = $course->overviewImageUrl();
+                    @endphp
 
-                <article class="group flex flex-col overflow-hidden rounded-sm border border-white/[0.06] bg-[#141419] transition-all duration-200 hover:shadow-glow" style="--platform-color: {{ $color }};">
-                    <div class="relative h-32 shrink-0 overflow-hidden">
-                        @if ($image)
-                            <img src="{{ $image }}" alt="{{ $course->title }}" class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105">
-                            <div class="absolute inset-0 bg-gradient-to-t from-[#141419] via-[#141419]/35 to-black/10"></div>
-                        @else
-                            <div class="absolute inset-0" style="background: linear-gradient(135deg, {{ $course->displayColorBackground(0.28) }}, rgba(255,255,255,0.03));"></div>
-                        @endif
-                        <div class="absolute bottom-0 left-0 right-0 h-1" style="background: linear-gradient(90deg, {{ $color }}, {{ $color }}40);"></div>
-                    </div>
+                    <article class="group flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-boss-ink transition-all duration-300 hover:border-white/[0.10] hover:shadow-glow">
 
-                    <div class="flex flex-1 flex-col gap-3 p-4">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="rounded-full border px-2 py-0.5 text-[0.65rem]" style="background-color: {{ $bg }}; color: {{ $color }}; border-color: {{ $color }}30;">
-                                {{ $course->displayPlatform() }}
-                            </span>
-                            <span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.65rem] {{ $course->is_published ? 'border-green-400/20 bg-green-400/[0.08] text-green-300' : 'border-white/[0.06] bg-white/[0.04] text-boss-ivory/35' }}">
-                                <span class="inline-block h-1.5 w-1.5 rounded-full {{ $course->is_published ? 'bg-green-300' : 'bg-boss-ivory/30' }}"></span>
-                                {{ $course->is_published ? __('Live') : __('Draft') }}
-                            </span>
-                            <span class="ml-auto text-[0.65rem] text-boss-ivory/30">
-                                {{ trans_choice(':count lesson|:count lessons', $course->lessons_count, ['count' => $course->lessons_count]) }}
-                            </span>
+                        {{-- ── Image area ─────────────────────────────────── --}}
+                        <div class="relative h-[210px] shrink-0 overflow-hidden">
+                            @if ($image)
+                                <img
+                                    src="{{ $image }}"
+                                    alt="{{ $course->title }}"
+                                    class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+                                >
+                                <div class="absolute inset-0 bg-gradient-to-t from-boss-ink via-boss-ink/15 to-transparent"></div>
+                            @else
+                                <div class="absolute inset-0" style="background: linear-gradient(135deg, {{ $course->displayColorBackground(0.45) }}, rgba(8,8,15,0.95) 70%);"></div>
+                                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,rgba(232,200,138,0.10),transparent_55%)]"></div>
+                                <div class="absolute inset-0 flex items-center justify-center overflow-hidden px-6">
+                                    <p class="select-none text-center font-display text-[2rem] font-bold leading-tight text-white opacity-[0.04]">{{ $course->title }}</p>
+                                </div>
+                            @endif
+
+                            {{-- Top-left: platform + publish status --}}
+                            <div class="absolute left-4 top-4 flex items-center gap-2">
+                                <span class="rounded-full border px-2.5 py-0.5 text-[0.6rem] font-medium backdrop-blur-sm"
+                                      style="background: {{ $bg }}; color: {{ $color }}; border-color: {{ $color }}22;">
+                                    {{ $course->displayPlatform() }}
+                                </span>
+                                @if ($course->is_published)
+                                    <span class="flex items-center gap-1 rounded-full border border-emerald-400/25 bg-black/40 px-2.5 py-0.5 text-[0.6rem] text-emerald-400 backdrop-blur-sm">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                                        {{ __('Live') }}
+                                    </span>
+                                @else
+                                    <span class="flex items-center gap-1 rounded-full border border-white/[0.10] bg-black/40 px-2.5 py-0.5 text-[0.6rem] text-boss-ivory/45 backdrop-blur-sm">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-boss-ivory/30"></span>
+                                        {{ __('Draft') }}
+                                    </span>
+                                @endif
+                            </div>
+
+                            {{-- Top-right: lesson count --}}
+                            <div class="absolute right-4 top-4">
+                                <span class="rounded-full border border-white/[0.08] bg-black/40 px-2.5 py-0.5 text-[0.6rem] text-boss-ivory/45 backdrop-blur-sm">
+                                    {{ trans_choice(':count lesson|:count lessons', $course->lessons_count, ['count' => $course->lessons_count]) }}
+                                </span>
+                            </div>
+
+                            {{-- Bottom accent line --}}
+                            <div class="absolute inset-x-0 bottom-0 h-[2px] opacity-50 transition-opacity duration-300 group-hover:opacity-90"
+                                 style="background: linear-gradient(90deg, {{ $color }}, {{ $color }}22);"></div>
                         </div>
 
-                        <h2 class="pd-heading line-clamp-2 text-[1.05rem] leading-snug text-boss-ivory">{{ $course->title }}</h2>
-                        <p class="line-clamp-2 flex-1 text-[0.75rem] leading-relaxed text-boss-ivory/35">{{ $course->description ?: __('No description provided.') }}</p>
+                        {{-- ── Content area ────────────────────────────────── --}}
+                        <div class="flex flex-1 flex-col p-5">
 
-                        <div class="grid grid-cols-3 gap-2 border-t border-white/[0.05] pt-3">
-                            <div class="rounded-sm bg-white/[0.02] py-2 text-center">
-                                <span class="block text-[0.78rem] font-semibold text-boss-ivory">{{ $stats['started'] }}</span>
-                                <span class="text-[0.58rem] text-boss-ivory/30">{{ __('started') }}</span>
+                            {{-- Title + description --}}
+                            <div class="flex-1">
+                                <h2 class="pd-heading line-clamp-2 text-[1.05rem] leading-snug text-boss-ivory transition-colors duration-300 group-hover:text-boss-gold-light">
+                                    {{ $course->title }}
+                                </h2>
+                                <p class="mt-2 line-clamp-2 text-[0.74rem] leading-relaxed text-boss-ivory/30">
+                                    {{ $course->description ?: __('No description provided.') }}
+                                </p>
                             </div>
-                            <div class="rounded-sm bg-white/[0.02] py-2 text-center">
-                                <span class="block text-[0.78rem] font-semibold text-boss-ivory">{{ $stats['finished'] }}</span>
-                                <span class="text-[0.58rem] text-boss-ivory/30">{{ __('finished') }}</span>
-                            </div>
-                            <div class="rounded-sm bg-white/[0.02] py-2 text-center">
-                                <span class="block text-[0.78rem] font-semibold text-boss-ivory">{{ $stats['messages'] }}</span>
-                                <span class="text-[0.58rem] text-boss-ivory/30">{{ __('messages') }}</span>
+
+                            {{-- Admin engagement stats ───────────────────── --}}
+                            <div class="mt-4 flex items-center border-t border-white/[0.04] pt-4">
+                                <div class="flex flex-1 flex-col items-center">
+                                    <span class="font-display text-[1.05rem] font-semibold text-boss-ivory">{{ $stats['started'] }}</span>
+                                    <span class="mt-0.5 text-[0.56rem] uppercase tracking-[0.12em] text-boss-ivory/25">{{ __('started') }}</span>
+                                </div>
+                                <div class="h-6 w-px bg-white/[0.05]"></div>
+                                <div class="flex flex-1 flex-col items-center">
+                                    <span class="font-display text-[1.05rem] font-semibold {{ $stats['finished'] > 0 ? 'text-boss-gold' : 'text-boss-ivory' }}">{{ $stats['finished'] }}</span>
+                                    <span class="mt-0.5 text-[0.56rem] uppercase tracking-[0.12em] text-boss-ivory/25">{{ __('finished') }}</span>
+                                </div>
+                                <div class="h-6 w-px bg-white/[0.05]"></div>
+                                <div class="flex flex-1 flex-col items-center">
+                                    <span class="font-display text-[1.05rem] font-semibold text-boss-ivory">{{ $stats['messages'] }}</span>
+                                    <span class="mt-0.5 text-[0.56rem] uppercase tracking-[0.12em] text-boss-ivory/25">{{ __('messages') }}</span>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-2 pt-1">
-                            <form method="POST" action="{{ route('admin.courses.visibility', $course) }}" class="flex-1">
-                                @csrf
-                                @method('PATCH')
-                                <input type="hidden" name="is_published" value="{{ $course->is_published ? 0 : 1 }}">
-                                <button type="submit" class="flex w-full items-center justify-center rounded-sm border px-3 py-1.5 text-[0.7rem] transition-colors {{ $course->is_published ? 'border-green-400/20 bg-green-400/[0.08] text-green-300 hover:bg-green-400/[0.12]' : 'border-white/[0.07] bg-white/[0.04] text-boss-ivory/42 hover:border-boss-gold/25 hover:text-boss-gold' }}">
-                                    {{ $course->is_published ? __('Published') : __('Publish') }}
-                                </button>
-                            </form>
+                        {{-- ── Admin action toolbar ─────────────────────────── --}}
+                        <div class="shrink-0 border-t border-white/[0.04] px-5 py-3.5">
+                            <div class="flex items-center gap-2">
 
-                            {{-- Preview --}}
-                            <a href="{{ route('admin.courses.preview', $course) }}" target="_blank"
-                               class="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-white/[0.07] bg-white/[0.04] text-boss-ivory/40 transition-colors hover:border-boss-gold/25 hover:text-boss-gold/80"
-                               title="{{ __('Preview course') }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5">
-                                    <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/>
-                                    <path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </a>
+                                {{-- Publish / Draft toggle --}}
+                                <form method="POST" action="{{ route('admin.courses.visibility', $course) }}" class="flex-1">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="is_published" value="{{ $course->is_published ? 0 : 1 }}">
+                                    <button
+                                        type="submit"
+                                        class="flex w-full items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-[0.68rem] font-medium transition-colors
+                                            {{ $course->is_published
+                                                ? 'border-emerald-400/20 bg-emerald-400/[0.07] text-emerald-400 hover:bg-emerald-400/[0.13]'
+                                                : 'border-white/[0.07] bg-white/[0.03] text-boss-ivory/40 hover:border-boss-gold/28 hover:text-boss-gold' }}"
+                                    >
+                                        @if ($course->is_published)
+                                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                                            {{ __('Published') }}
+                                        @else
+                                            <svg viewBox="0 0 16 16" class="h-3 w-3 fill-none stroke-current stroke-[2]"><path d="M8 2v12M3 7l5-5 5 5"/></svg>
+                                            {{ __('Publish') }}
+                                        @endif
+                                    </button>
+                                </form>
 
-                            {{-- Edit --}}
-                            <a href="{{ route('admin.courses.edit', $course) }}"
-                               class="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-boss-gold/20 bg-boss-gold/[0.08] transition-colors hover:bg-boss-gold/15"
-                               title="{{ __('Edit course') }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5 text-boss-gold">
-                                    <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z"/>
-                                    <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z"/>
-                                </svg>
-                            </a>
+                                {{-- Divider --}}
+                                <div class="h-5 w-px shrink-0 bg-white/[0.06]"></div>
 
-                            <form method="POST" action="{{ route('admin.courses.destroy', $course) }}" onsubmit="return confirm('{{ __('Delete this course?') }}');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit"
-                                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-white/[0.06] bg-white/[0.03] text-red-400/60 transition-colors hover:border-red-400/20 hover:bg-red-400/[0.08] hover:text-red-300"
-                                    title="{{ __('Delete course') }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5">
-                                        <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd"/>
+                                {{-- Preview --}}
+                                <a
+                                    href="{{ route('admin.courses.preview', $course) }}"
+                                    target="_blank"
+                                    title="{{ __('Preview course') }}"
+                                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.03] text-boss-ivory/38 transition-colors hover:border-white/[0.14] hover:text-boss-ivory/80"
+                                >
+                                    <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[1.7]">
+                                        <path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z"/>
+                                        <circle cx="8" cy="8" r="2"/>
                                     </svg>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </article>
-            @endforeach
-        </div>
+                                </a>
 
-        <div class="px-2">{{ $courses->links() }}</div>
+                                {{-- Edit --}}
+                                <a
+                                    href="{{ route('admin.courses.edit', $course) }}"
+                                    title="{{ __('Edit course') }}"
+                                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-boss-gold/22 bg-boss-gold/[0.08] text-boss-gold transition-colors hover:bg-boss-gold/[0.18]"
+                                >
+                                    <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[1.7]">
+                                        <path d="M11 2l3 3-8 8H3v-3L11 2z"/>
+                                    </svg>
+                                </a>
+
+                                {{-- Delete --}}
+                                <form method="POST" action="{{ route('admin.courses.destroy', $course) }}"
+                                      onsubmit="return confirm('{{ __('Delete this course? This cannot be undone.') }}');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button
+                                        type="submit"
+                                        title="{{ __('Delete course') }}"
+                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.02] text-red-400/50 transition-colors hover:border-red-400/22 hover:bg-red-400/[0.08] hover:text-red-400"
+                                    >
+                                        <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[1.7]">
+                                            <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+        @endif
+
+        {{-- ── Pagination ───────────────────────────────────────────────── --}}
+        @if ($courses->hasPages())
+            <div class="px-1">{{ $courses->links() }}</div>
+        @endif
+
     </div>
 </x-admin-layout>

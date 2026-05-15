@@ -7,9 +7,11 @@ use Illuminate\View\View;
 
 class MemberLayout extends Component
 {
-    public function __construct(public bool $hideSidebar = false)
-    {
-    }
+    public function __construct(
+        public bool $hideSidebar = false,
+        public bool $player = false,
+    ) {}
+
 
     public function render(): View
     {

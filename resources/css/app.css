@@ -659,3 +659,56 @@ body {
     top: 0;
     z-index: 20;
 }
+
+/* ── Module collapse animation ─────────────────────────────────────────── */
+
+.pd-collapse {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 240ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.pd-collapse > * {
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* ── Themed scrollbars (dark/gold premium style) ──────────────────────── */
+
+/* Firefox */
+.pd-dark-surface,
+.pd-dark-surface *,
+.pd-scroll,
+.pd-scroll * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201, 169, 110, 0.18) transparent;
+}
+
+/* WebKit (Chrome, Safari, Edge) */
+.pd-dark-surface ::-webkit-scrollbar,
+.pd-scroll::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+.pd-dark-surface ::-webkit-scrollbar-track,
+.pd-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.pd-dark-surface ::-webkit-scrollbar-thumb,
+.pd-scroll::-webkit-scrollbar-thumb {
+    background: rgba(201, 169, 110, 0.18);
+    border-radius: 10px;
+    transition: background 200ms ease;
+}
+
+.pd-dark-surface ::-webkit-scrollbar-thumb:hover,
+.pd-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(201, 169, 110, 0.38);
+}
+
+.pd-dark-surface ::-webkit-scrollbar-corner,
+.pd-scroll::-webkit-scrollbar-corner {
+    background: transparent;
+}
