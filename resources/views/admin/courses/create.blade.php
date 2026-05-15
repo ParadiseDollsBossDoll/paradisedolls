@@ -636,7 +636,7 @@
 
                                 <div>
                                     <x-input-label ::for="`lesson_module_${index}`" :value="__('Module')" />
-                                    <input type="hidden" x-bind:name="`lessons[${index}][course_module_id]`" x-bind:value="moduleIdForKey(lesson.module_key)">
+                                    <input type="hidden" x-bind:name="`lessons[${index}][course_module_id]`" x-bind:value="lesson.course_module_id || moduleIdForKey(lesson.module_key)">
                                     <input type="hidden" x-bind:name="`lessons[${index}][module_title]`" x-bind:value="moduleTitleForKey(lesson.module_key)">
                                     <select class="pd-input mt-2"
                                         x-model="lesson.module_key"

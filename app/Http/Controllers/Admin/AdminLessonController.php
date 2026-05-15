@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\CourseModule;
 use App\Models\Lesson;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -124,6 +125,102 @@ class AdminLessonController extends Controller
         $lesson->delete();
 
         return redirect()->route('admin.courses.edit', $course)->with('status', __('Lesson removed.'));
+    }
+
+    // ── Autosave JSON endpoints ─────────────────────────────────────────────
+
+    public function autosave(Request $request, Course $course): JsonResponse
+    {
+        $rules = $this->lessonValidationRules($course);
+        $rules += $this->lessonContentBlockRules('content_blocks');
+        $validated = $request->validate($rules);
+
+        $lesson = $course->lessons()->create([
+            ...$this->normalizedLessonData($validated),
+            'course_module_id' => $this->moduleIdFor(
+                $course,
+                $validated['module_title'] ?? null,
+                $validated['course_module_id'] ?? null
+            ),
+            'sort_order' => $validated['sort_order'] ?? ($course->lessons()->max('sort_order') + 1),
+        ]);
+
+        if ($this->shouldSyncContentBlocks($validated)) {
+            $this->syncLessonContentBlocks($lesson, $validated['content_blocks'] ?? []);
+        }
+
+        return response()->json([
+            'id' => $lesson->id,
+            'title' => $lesson->title,
+            'course_module_id' => $lesson->course_module_id,
+            'sort_order' => $lesson->sort_order,
+            'saved' => true,
+        ], 201);
+    }
+
+    public function autosaveUpdate(Request $request, Course $course, Lesson $lesson): JsonResponse
+    {
+        abort_unless($lesson->course_id === $course->id, 404);
+
+        $rules = $this->lessonValidationRules($course);
+        $rules += $this->lessonContentBlockRules('content_blocks');
+        $validated = $request->validate($rules);
+
+        $lesson->update([
+            ...$this->normalizedLessonData($validated, $lesson),
+            'course_module_id' => $this->moduleIdFor(
+                $course,
+                $validated['module_title'] ?? null,
+                $validated['course_module_id'] ?? null
+            ),
+        ]);
+
+        if ($this->shouldSyncContentBlocks($validated)) {
+            $this->syncLessonContentBlocks($lesson, $validated['content_blocks'] ?? []);
+        }
+
+        return response()->json([
+            'id' => $lesson->id,
+            'title' => $lesson->title,
+            'course_module_id' => $lesson->course_module_id,
+            'sort_order' => $lesson->sort_order,
+            'saved' => true,
+        ]);
+    }
+
+    private function lessonValidationRules(Course $course): array
+    {
+        return [
+            'title' => ['required', 'string', 'max:255'],
+            'course_module_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('course_modules', 'id')->where(fn ($q) => $q->where('course_id', $course->id)),
+            ],
+            'module_title' => ['nullable', 'string', 'max:255'],
+            'body' => ['nullable', 'string', 'max:50000'],
+            'overview' => ['nullable', 'string', 'max:50000'],
+            'steps' => ['nullable', 'string', 'max:50000'],
+            'tips' => ['nullable', 'string', 'max:50000'],
+            'safety_notes' => ['nullable', 'string', 'max:50000'],
+            'resource_links' => ['nullable', 'string', 'max:50000'],
+            'lesson_banner_image_upload' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+            'lesson_images_upload' => ['nullable', 'array', 'max:12'],
+            'lesson_images_upload.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+            'is_published' => ['nullable', 'boolean'],
+            'video_url' => ['nullable', 'string', 'max:2000'],
+            'bunny_video_id' => ['nullable', 'string', 'max:64'],
+            'bunny_library_id' => ['nullable', 'string', 'max:64'],
+            'bunny_video_title' => ['nullable', 'string', 'max:255'],
+            'bunny_thumbnail_url' => ['nullable', 'string', 'max:2000'],
+            'bunny_upload_fingerprint' => ['nullable', 'string', 'max:255'],
+            'bunny_status' => ['nullable', 'integer', 'min:0', 'max:255'],
+            'duration' => ['nullable', 'string', 'max:64'],
+            'has_pdf' => ['nullable', 'boolean'],
+            'pdf_url' => ['nullable', 'string', 'max:2000'],
+            'presentation_url' => ['nullable', 'string', 'max:50000'],
+            'sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
+        ];
     }
 
     private function normalizedLessonData(array $lesson, ?Lesson $existingLesson = null): array
