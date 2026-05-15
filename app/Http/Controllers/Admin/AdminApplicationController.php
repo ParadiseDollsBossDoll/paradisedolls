@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\MemberApplicationApprovedMail;
 use App\Models\ModelApplication;
 use App\Models\ModelProfile;
+use App\Models\ModelReferral;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -23,10 +24,21 @@ class AdminApplicationController extends Controller
     {
         $applications = ModelApplication::query()
             ->latest()
-            ->with(['reviewer:id,name', 'profile:id,model_application_id,information_submitted_at,verification_status'])
+            ->with([
+                'reviewer:id,name',
+                'profile:id,model_application_id,information_submitted_at,verification_status',
+                'referral.referrer:id,name,email',
+            ])
             ->paginate(20);
 
-        return view('admin.applications.index', compact('applications'));
+        $referralLeads = ModelReferral::query()
+            ->whereNull('model_application_id')
+            ->with('referrer:id,name,email')
+            ->latest()
+            ->take(12)
+            ->get();
+
+        return view('admin.applications.index', compact('applications', 'referralLeads'));
     }
 
     public function approve(ModelApplication $application): RedirectResponse
@@ -62,21 +74,15 @@ class AdminApplicationController extends Controller
                 'model_application_id' => $application->id,
                 'phone' => $application->phone,
             ]);
+
+            $application->referral?->markJoined();
         });
 
-        if (config('mail.default') === 'resend' && ! filled(config('services.resend.key'))) {
+        if ($configurationHint = $this->approvalMailConfigurationHint()) {
             return $this->redirectWithApprovalMailFailure(
                 $application,
                 $temporaryPassword,
-                __('RESEND_API_KEY is empty. Create a key at resend.com/api-keys, add it to your .env file, run php artisan config:clear, then approve another application or contact the member manually.')
-            );
-        }
-
-        if (config('mail.default') === 'smtp' && ! filled(config('mail.mailers.smtp.password'))) {
-            return $this->redirectWithApprovalMailFailure(
-                $application,
-                $temporaryPassword,
-                __('MAIL_PASSWORD is empty. For Gmail you must use an App Password from Google Account > Security > App passwords. Paste it into MAIL_PASSWORD in .env, run php artisan config:clear, then try again.')
+                $configurationHint
             );
         }
 
@@ -137,6 +143,61 @@ class AdminApplicationController extends Controller
         return __('Check RESEND_API_KEY, verify your sending domain in the Resend dashboard, and see storage/logs/laravel.log for details.');
     }
 
+    private function approvalMailConfigurationHint(): ?string
+    {
+        $mailer = (string) config('mail.default');
+
+        if (in_array($mailer, ['log', 'array'], true)) {
+            return __('MAIL_MAILER is set to :mailer, which does not deliver email to real inboxes. For the no-API Gmail setup, set MAIL_MAILER=smtp with valid Gmail/Google Workspace SMTP credentials, run php artisan config:clear, then approve another application or contact the member manually.', [
+                'mailer' => $mailer,
+            ]);
+        }
+
+        if ($mailer === 'resend' && ! filled(config('services.resend.key'))) {
+            return __('RESEND_API_KEY is empty. Create a key at resend.com/api-keys, add it to your .env file, run php artisan config:clear, then approve another application or contact the member manually.');
+        }
+
+        if ($mailer === 'smtp') {
+            $host = trim((string) config('mail.mailers.smtp.host'));
+            $port = (int) config('mail.mailers.smtp.port');
+
+            if ($this->mailConfigValueIsMissing($host) || in_array($host, ['127.0.0.1', 'localhost'], true)) {
+                return __('MAIL_HOST is still local or empty. For Gmail/Google Workspace SMTP, set MAIL_HOST=smtp.gmail.com, MAIL_PORT=465, and MAIL_SCHEME=smtps, then run php artisan config:clear.');
+            }
+
+            if ($this->mailConfigValueIsMissing(config('mail.mailers.smtp.username'))) {
+                return __('MAIL_USERNAME is empty or still a placeholder. Put the Gmail/Google Workspace email address that will send approval emails in MAIL_USERNAME, then run php artisan config:clear.');
+            }
+
+            if ($this->mailConfigValueIsMissing(config('mail.mailers.smtp.password'))) {
+                return __('MAIL_PASSWORD is empty or still a placeholder. Create a Google App Password and paste the 16-character app password into MAIL_PASSWORD, then run php artisan config:clear.');
+            }
+
+            if ($this->mailConfigValueIsMissing(config('mail.from.address'))) {
+                return __('MAIL_FROM_ADDRESS is empty or still a placeholder. For Gmail SMTP, use the same email address as MAIL_USERNAME unless the mailbox has a configured sending alias, then run php artisan config:clear.');
+            }
+
+            if ($host === 'smtp.gmail.com' && ! in_array($port, [465, 587], true)) {
+                return __('MAIL_PORT is not a Gmail SMTP port. Use MAIL_PORT=465 with MAIL_SCHEME=smtps, or MAIL_PORT=587 with MAIL_SCHEME=smtp, then run php artisan config:clear.');
+            }
+        }
+
+        return null;
+    }
+
+    private function mailConfigValueIsMissing(mixed $value): bool
+    {
+        $value = trim((string) $value);
+        $lowerValue = Str::lower($value);
+
+        return $value === ''
+            || in_array($lowerValue, ['null', 'fill_in', 'change_me', 'changeme', 'placeholder'], true)
+            || str_contains($lowerValue, 'your_')
+            || str_contains($lowerValue, 'your-')
+            || str_contains($lowerValue, 'fill_in')
+            || str_contains($lowerValue, 'change_me');
+    }
+
     public function reject(ModelApplication $application): RedirectResponse
     {
         if ($application->status !== ModelApplication::STATUS_PENDING) {
@@ -149,7 +210,71 @@ class AdminApplicationController extends Controller
             'reviewed_at' => now(),
         ])->save();
 
+        $application->referral?->markRejected();
+
         return redirect()->back()->with('status', __('Application rejected.'));
+    }
+
+    public function convertReferral(ModelReferral $referral): RedirectResponse
+    {
+        if ($referral->model_application_id) {
+            return redirect()->back()->withErrors(['referral' => __('This referral is already linked to an application.')]);
+        }
+
+        if ($referral->status === ModelReferral::STATUS_REJECTED) {
+            return redirect()->back()->withErrors(['referral' => __('Rejected referrals cannot be converted.')]);
+        }
+
+        if (blank($referral->candidate_email)) {
+            return redirect()->back()->withErrors(['referral' => __('A candidate email is required before this referral can be converted.')]);
+        }
+
+        DB::transaction(function () use ($referral): void {
+            $application = ModelApplication::create([
+                'name' => $referral->candidate_name,
+                'email' => $referral->candidate_email,
+                'phone' => $referral->candidate_phone,
+                'message' => $referral->note,
+                'experience_level' => $referral->experience_level,
+                'social_handle' => $referral->candidate_social_handle,
+                'age_confirmed' => $referral->consent_confirmed,
+                'photo_paths' => $referral->photo_paths ?? [],
+            ]);
+
+            $referral->forceFill([
+                'model_application_id' => $application->id,
+                'status' => ModelReferral::STATUS_PENDING,
+                'reward_status' => ModelReferral::REWARD_NOT_ELIGIBLE,
+            ])->save();
+        });
+
+        return redirect()->back()->with('status', __('Referral converted into a pending application.'));
+    }
+
+    public function rejectReferral(ModelReferral $referral): RedirectResponse
+    {
+        if ($referral->model_application_id) {
+            return redirect()->back()->withErrors(['referral' => __('Reject the linked application instead of the referral lead.')]);
+        }
+
+        $referral->markRejected();
+
+        return redirect()->back()->with('status', __('Referral lead rejected.'));
+    }
+
+    public function markReferralRewardPaid(ModelReferral $referral): RedirectResponse
+    {
+        if ($referral->reward_status !== ModelReferral::REWARD_ELIGIBLE) {
+            return redirect()->back()->withErrors(['referral' => __('Only eligible referral rewards can be marked paid.')]);
+        }
+
+        $referral->forceFill([
+            'reward_status' => ModelReferral::REWARD_PAID,
+            'reward_marked_paid_at' => now(),
+            'reward_marked_paid_by' => auth()->id(),
+        ])->save();
+
+        return redirect()->back()->with('status', __('Referral reward marked as paid.'));
     }
 
     public function downloadPhoto(ModelApplication $application, int $index): StreamedResponse
@@ -164,6 +289,24 @@ class AdminApplicationController extends Controller
     public function viewPhoto(ModelApplication $application, int $index): StreamedResponse
     {
         $path = $application->photo_paths[$index] ?? null;
+
+        abort_unless(filled($path) && Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->response($path);
+    }
+
+    public function downloadReferralPhoto(ModelReferral $referral, int $index): StreamedResponse
+    {
+        $path = $referral->photo_paths[$index] ?? null;
+
+        abort_unless(filled($path) && Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->download($path);
+    }
+
+    public function viewReferralPhoto(ModelReferral $referral, int $index): StreamedResponse
+    {
+        $path = $referral->photo_paths[$index] ?? null;
 
         abort_unless(filled($path) && Storage::disk('local')->exists($path), 404);
 

@@ -22,13 +22,20 @@ class MemberVerificationController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $profile = $this->profile();
+
+        if (! $profile->hasInformationForm()) {
+            return redirect()
+                ->route('member.onboarding.edit')
+                ->withErrors(['profile' => __('Submit the Model Information Form before uploading verification documents.')]);
+        }
+
         $validated = $request->validate([
             'id_document' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
             'selfie_with_id' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'platform_codes' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
         ]);
 
-        $profile = $this->profile();
         $directory = 'verifications/'.$profile->user_id;
 
         $paths = [

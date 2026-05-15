@@ -5,6 +5,10 @@
             <h1 class="pd-heading pd-text-gradient mt-2 text-[clamp(2rem,4vw,2.6rem)]">{{ __('Verification') }}</h1>
         </header>
 
+        @if (session('status'))
+            <div class="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm text-green-200">{{ session('status') }}</div>
+        @endif
+
         @if ($errors->any())
             <div class="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">
                 @foreach ($errors->all() as $error)
@@ -39,45 +43,47 @@
 
             @if ($profile->verification_notes && $profile->verification_status === \App\Models\ModelProfile::VERIFICATION_REJECTED)
                 <div class="mt-5 rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-100">
-                    <p class="font-medium">{{ __('Admin note') }}</p>
+                    <p class="font-medium">{{ __('Resubmission instructions') }}</p>
                     <p class="mt-1 whitespace-pre-line text-red-100/70">{{ $profile->verification_notes }}</p>
                 </div>
             @endif
         </section>
 
-        <form method="POST" action="{{ route('member.verification.store') }}" enctype="multipart/form-data" class="pd-panel p-5 md:p-6">
-            @csrf
+        @if ($profile->hasInformationForm())
+            <form method="POST" action="{{ route('member.verification.store') }}" enctype="multipart/form-data" class="pd-panel p-5 md:p-6">
+                @csrf
 
-            <div class="space-y-5">
-                <div>
-                    <label for="id_document" class="pd-label">{{ __('Valid ID') }}</label>
-                    <input id="id_document" type="file" name="id_document" accept=".jpg,.jpeg,.png,.pdf" class="pd-input mt-2" required>
-                    @if ($profile->id_document_path)
-                        <p class="mt-2 text-[0.72rem] text-boss-ivory/28">{{ __('Existing file on record') }}</p>
-                    @endif
+                <div class="space-y-5">
+                    <div>
+                        <label for="id_document" class="pd-label">{{ __('Valid ID') }}</label>
+                        <input id="id_document" type="file" name="id_document" accept=".jpg,.jpeg,.png,.pdf" class="pd-input mt-2" required>
+                        @if ($profile->id_document_path)
+                            <p class="mt-2 text-[0.72rem] text-boss-ivory/28">{{ __('Existing file on record') }}</p>
+                        @endif
+                    </div>
+
+                    <div>
+                        <label for="selfie_with_id" class="pd-label">{{ __('Selfie holding ID') }}</label>
+                        <input id="selfie_with_id" type="file" name="selfie_with_id" accept=".jpg,.jpeg,.png,.webp" class="pd-input mt-2" required>
+                        @if ($profile->selfie_with_id_path)
+                            <p class="mt-2 text-[0.72rem] text-boss-ivory/28">{{ __('Existing file on record') }}</p>
+                        @endif
+                    </div>
+
+                    <div>
+                        <label for="platform_codes" class="pd-label">{{ __('Platform codes') }}</label>
+                        <input id="platform_codes" type="file" name="platform_codes" accept=".jpg,.jpeg,.png,.pdf" class="pd-input mt-2">
+                        @if ($profile->platform_codes_path)
+                            <p class="mt-2 text-[0.72rem] text-boss-ivory/28">{{ __('Existing file on record') }}</p>
+                        @endif
+                    </div>
                 </div>
 
-                <div>
-                    <label for="selfie_with_id" class="pd-label">{{ __('Selfie holding ID') }}</label>
-                    <input id="selfie_with_id" type="file" name="selfie_with_id" accept=".jpg,.jpeg,.png,.webp" class="pd-input mt-2" required>
-                    @if ($profile->selfie_with_id_path)
-                        <p class="mt-2 text-[0.72rem] text-boss-ivory/28">{{ __('Existing file on record') }}</p>
-                    @endif
+                <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+                    <a href="{{ route('member.dashboard') }}" class="pd-btn-secondary">{{ __('Back to dashboard') }}</a>
+                    <button type="submit" class="pd-btn-primary">{{ __('Submit Verification') }}</button>
                 </div>
-
-                <div>
-                    <label for="platform_codes" class="pd-label">{{ __('Platform codes') }}</label>
-                    <input id="platform_codes" type="file" name="platform_codes" accept=".jpg,.jpeg,.png,.pdf" class="pd-input mt-2">
-                    @if ($profile->platform_codes_path)
-                        <p class="mt-2 text-[0.72rem] text-boss-ivory/28">{{ __('Existing file on record') }}</p>
-                    @endif
-                </div>
-            </div>
-
-            <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
-                <a href="{{ route('member.dashboard') }}" class="pd-btn-secondary">{{ __('Back to dashboard') }}</a>
-                <button type="submit" class="pd-btn-primary">{{ __('Submit Verification') }}</button>
-            </div>
-        </form>
+            </form>
+        @endif
     </div>
 </x-member-layout>

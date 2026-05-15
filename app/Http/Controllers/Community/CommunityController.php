@@ -150,7 +150,7 @@ class CommunityController extends Controller
                 ],
                 'progress' => [
                     'percent' => $overallProgress,
-                    'label' => $user->canModerateCommunity() ? __('Community access') : __('Overall progress'),
+                    'label' => $user->canModerateCommunity() ? __('Community Chat access') : __('Overall progress'),
                     'subtext' => $user->canModerateCommunity() ? __('Moderation tools enabled') : __('Academy completion across published lessons'),
                 ],
                 'channels' => $channels->map(fn (CommunityChannel $item) => $item->toFrontendArray($user, $unreadCounts[$item->id] ?? 0))->all(),

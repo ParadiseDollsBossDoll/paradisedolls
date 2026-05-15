@@ -14,7 +14,7 @@
             ['href' => route('admin.models.progress'),    'label' => __('Members'),       'icon' => 'members',       'active' => false, 'count' => 0],
             ['href' => route('admin.courses.index'),      'label' => __('Courses'),       'icon' => 'courses',       'active' => false, 'count' => 0],
             ['href' => route('admin.testimonials.index'), 'label' => __('Stories'),       'icon' => 'stories',       'active' => false, 'count' => 0],
-            ['href' => route('community.show'),           'label' => __('Community'),     'icon' => 'community',     'active' => true,  'count' => 0],
+            ['href' => route('community.show'),           'label' => __('Community Chat'), 'icon' => 'community',     'active' => true,  'count' => 0],
         ];
         $sidebarSubtitle  = __('Admin Panel');
         $sidebarRole      = __('Administrator');
@@ -35,7 +35,7 @@
             ['href' => route('member.dashboard'),       'label' => __('Dashboard'),  'icon' => 'dashboard',  'active' => false, 'count' => 0],
             ['href' => route('member.onboarding.edit'), 'label' => __('Onboarding'), 'icon' => 'onboarding', 'active' => false, 'count' => 0],
             ['href' => route('member.courses.index'),   'label' => __('Academy'),    'icon' => 'academy',    'active' => false, 'count' => 0],
-            ['href' => route('community.show'),         'label' => __('Community'),  'icon' => 'community',  'active' => true,  'count' => 0],
+            ['href' => route('community.show'),         'label' => __('Community Chat'), 'icon' => 'community',  'active' => true,  'count' => 0],
             ['href' => route('profile.edit'),           'label' => __('Profile'),    'icon' => 'profile',    'active' => false, 'count' => 0],
         ];
         $sidebarSubtitle = __('Members Area');
@@ -48,7 +48,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>{{ __('Community').' - '.config('app.name') }}</title>
+        <title>{{ __('Community Chat').' - '.config('app.name') }}</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="min-h-screen overflow-hidden bg-[#080808] text-[#f0ede8] font-sans antialiased">
@@ -146,7 +146,7 @@
                         <span></span>
                         <span></span>
                     </button>
-                    <span class="elysian-breadcrumb">{{ __('Members') }} / {{ __('Community') }}</span>
+                    <span class="elysian-breadcrumb">{{ __('Members') }} / {{ __('Community Chat') }}</span>
                     <div class="elysian-topbar-right">
                         <div class="elysian-topbar-greeting">
                             <p>{{ __('Welcome back,') }}</p>

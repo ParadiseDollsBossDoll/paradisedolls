@@ -10,6 +10,6 @@
     <p style="margin: 0 0 2rem;">
         <a href="{{ $dashboardUrl }}" style="display: inline-block; background-color: #c9a96e; color: #ffffff; text-decoration: none; padding: 0.65rem 1.25rem; font-weight: 600;">{{ __('Go to dashboard') }}</a>
     </p>
-    <p style="margin: 0; font-size: 0.875rem; color: #717182;">{{ __('Your community access invite will follow separately once the team has assigned the correct role.') }}</p>
+    <p style="margin: 0; font-size: 0.875rem; color: #717182;">{{ __('Your Discord Community access invite will follow separately once the team has assigned the correct role.') }}</p>
 </body>
 </html>

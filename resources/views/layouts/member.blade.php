@@ -44,8 +44,14 @@
             'icon'   => 'stories',
         ],
         [
+            'route'  => 'member.referrals.index',
+            'label'  => __('Referrals'),
+            'active' => request()->routeIs('member.referrals.*'),
+            'icon'   => 'referrals',
+        ],
+        [
             'route'  => 'community.show',
-            'label'  => __('Community'),
+            'label'  => __('Community Chat'),
             'active' => request()->routeIs('community.*'),
             'icon'   => 'community',
         ],
@@ -124,6 +130,8 @@
                                     <svg viewBox="0 0 16 16"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/></svg>
                                 @elseif ($link['icon'] === 'stories')
                                     <svg viewBox="0 0 16 16"><path d="M3 2h10v12H3z"/><path d="M5.5 5h5M5.5 8h5M5.5 11h3"/></svg>
+                                @elseif ($link['icon'] === 'referrals')
+                                    <svg viewBox="0 0 16 16"><circle cx="5.5" cy="5" r="2.5"/><path d="M1.5 13c0-2.4 1.8-4.3 4-4.3s4 1.9 4 4.3"/><path d="M10.5 4.5h4M12.5 2.5v4"/><path d="M10.5 10.5h4M12.5 8.5v4"/></svg>
                                 @elseif ($link['icon'] === 'community')
                                     <svg viewBox="0 0 16 16"><path d="M14 10c0 1.1-.9 2-2 2H4l-3 3V4c0-1.1.9-2 2-2h9c1.1 0 2 .9 2 2v6z"/></svg>
                                 @elseif ($link['icon'] === 'profile')
@@ -167,7 +175,7 @@
                             <p>{{ __('Welcome back,') }}</p>
                             <p>{{ $user->name }}</p>
                         </div>
-                        <a href="{{ route('home') }}#apply" class="hidden rounded-full border border-boss-gold/20 bg-boss-gold/10 px-4 py-2 text-[0.66rem] uppercase tracking-[0.14em] text-boss-gold transition-colors hover:bg-boss-gold hover:text-boss-ink sm:inline-flex">
+                        <a href="{{ route('member.referrals.index') }}" class="hidden rounded-full border border-boss-gold/20 bg-boss-gold/10 px-4 py-2 text-[0.66rem] uppercase tracking-[0.14em] text-boss-gold transition-colors hover:bg-boss-gold hover:text-boss-ink sm:inline-flex">
                             {{ __('Refer') }}
                         </a>
                         <div class="elysian-topbar-avatar">

@@ -1248,7 +1248,7 @@ document.addEventListener('alpine:init', () => {
 
         communityPerformance() {
             return {
-                presence_refresh_interval_ms: 30000,
+                presence_refresh_interval_ms: 45000,
                 search_min_chars: 2,
                 search_preview_limit: 8,
                 image_preview_max_bytes: 4 * 1024 * 1024,
