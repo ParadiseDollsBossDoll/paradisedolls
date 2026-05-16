@@ -6,14 +6,21 @@
     if ($user->isAdmin()) {
         $pendingApps = \App\Models\ModelApplication::where('status', \App\Models\ModelApplication::STATUS_PENDING)->count();
         $pendingVerif = \App\Models\ModelProfile::where('verification_status', \App\Models\ModelProfile::VERIFICATION_SUBMITTED)->count();
+        $pendingReferrals = \App\Models\ModelReferral::query()
+            ->where(function ($q) {
+                $q->where(function ($lead) {
+                    $lead->where('status', \App\Models\ModelReferral::STATUS_REFERRED)->whereNull('model_application_id');
+                })->orWhere('reward_status', \App\Models\ModelReferral::REWARD_ELIGIBLE);
+            })->count();
 
         $sidebarLinks = [
-            ['href' => route('admin.dashboard'),          'label' => __('Overview'),      'icon' => 'overview',      'active' => false, 'count' => 0],
-            ['href' => route('admin.applications.index'), 'label' => __('Applications'),  'icon' => 'applications',  'active' => false, 'count' => $pendingApps],
-            ['href' => route('admin.onboarding.index'),   'label' => __('Onboarding'),    'icon' => 'onboarding',    'active' => false, 'count' => $pendingVerif],
-            ['href' => route('admin.models.progress'),    'label' => __('Members'),       'icon' => 'members',       'active' => false, 'count' => 0],
-            ['href' => route('admin.courses.index'),      'label' => __('Courses'),       'icon' => 'courses',       'active' => false, 'count' => 0],
-            ['href' => route('admin.testimonials.index'), 'label' => __('Stories'),       'icon' => 'stories',       'active' => false, 'count' => 0],
+            ['href' => route('admin.dashboard'),          'label' => __('Overview'),       'icon' => 'overview',      'active' => false, 'count' => 0],
+            ['href' => route('admin.applications.index'), 'label' => __('Applications'),   'icon' => 'applications',  'active' => false, 'count' => $pendingApps],
+            ['href' => route('admin.onboarding.index'),   'label' => __('Onboarding'),     'icon' => 'onboarding',    'active' => false, 'count' => $pendingVerif],
+            ['href' => route('admin.models.progress'),    'label' => __('Members'),        'icon' => 'members',       'active' => false, 'count' => 0],
+            ['href' => route('admin.courses.index'),      'label' => __('Courses'),        'icon' => 'courses',       'active' => false, 'count' => 0],
+            ['href' => route('admin.testimonials.index'), 'label' => __('Stories'),        'icon' => 'stories',       'active' => false, 'count' => 0],
+            ['href' => route('admin.referrals.index'),    'label' => __('Referrals'),      'icon' => 'referrals',     'active' => false, 'count' => $pendingReferrals],
             ['href' => route('community.show'),           'label' => __('Community Chat'), 'icon' => 'community',     'active' => true,  'count' => 0],
         ];
         $sidebarSubtitle  = __('Admin Panel');
@@ -32,11 +39,13 @@
         $sidebarProgress  = $totalLessons > 0 ? (int) round(($doneLessons / $totalLessons) * 100) : 0;
 
         $sidebarLinks = [
-            ['href' => route('member.dashboard'),       'label' => __('Dashboard'),  'icon' => 'dashboard',  'active' => false, 'count' => 0],
-            ['href' => route('member.onboarding.edit'), 'label' => __('Onboarding'), 'icon' => 'onboarding', 'active' => false, 'count' => 0],
-            ['href' => route('member.courses.index'),   'label' => __('Academy'),    'icon' => 'academy',    'active' => false, 'count' => 0],
-            ['href' => route('community.show'),         'label' => __('Community Chat'), 'icon' => 'community',  'active' => true,  'count' => 0],
-            ['href' => route('profile.edit'),           'label' => __('Profile'),    'icon' => 'profile',    'active' => false, 'count' => 0],
+            ['href' => route('member.dashboard'),          'label' => __('Dashboard'),    'icon' => 'dashboard',  'active' => false, 'count' => 0],
+            ['href' => route('member.onboarding.edit'),    'label' => __('Onboarding'),   'icon' => 'onboarding', 'active' => false, 'count' => 0],
+            ['href' => route('member.courses.index'),      'label' => __('Academy'),      'icon' => 'academy',    'active' => false, 'count' => 0],
+            ['href' => route('member.testimonials.create'),'label' => __('My Testimony'), 'icon' => 'stories',    'active' => false, 'count' => 0],
+            ['href' => route('member.referrals.index'),    'label' => __('Referrals'),    'icon' => 'referrals',  'active' => false, 'count' => 0],
+            ['href' => route('community.show'),            'label' => __('Community Chat'),'icon' => 'community', 'active' => true,  'count' => 0],
+            ['href' => route('profile.edit'),              'label' => __('Profile'),      'icon' => 'profile',    'active' => false, 'count' => 0],
         ];
         $sidebarSubtitle = __('Members Area');
         $sidebarRole     = __('Paradise Dolls Member');
@@ -112,7 +121,9 @@
                             @elseif ($link['icon'] === 'members')
                                 <svg viewBox="0 0 16 16"><circle cx="5.5" cy="5" r="2.5"/><path d="M1 13c0-2.5 2-4.5 4.5-4.5S10 10.5 10 13"/><circle cx="11.5" cy="5.5" r="2"/><path d="M10 12.5c.2-1.4 1.3-2.5 2.7-2.5 1.5 0 2.8 1.1 2.8 2.5"/></svg>
                             @elseif ($link['icon'] === 'stories')
-                                <svg viewBox="0 0 16 16"><path d="M8 1l1.85 3.75L14 5.75l-3 2.9.7 4.1L8 10.75l-3.7 2 .7-4.1L2 5.75l4.15-.5z"/></svg>
+                                <svg viewBox="0 0 16 16"><path d="M3 2h10v12H3z"/><path d="M5.5 5h5M5.5 8h5M5.5 11h3"/></svg>
+                            @elseif ($link['icon'] === 'referrals')
+                                <svg viewBox="0 0 16 16"><circle cx="5" cy="5" r="2.5"/><circle cx="11.5" cy="4.5" r="2"/><path d="M1.5 13c0-2.5 1.8-4.5 4-4.5 1.4 0 2.6.7 3.3 1.8"/><path d="M9.5 10.5h4M11.5 8.5v4"/></svg>
                             @endif
                             <span class="flex-1">{{ $link['label'] }}</span>
                             @if ($link['count'] > 0)
