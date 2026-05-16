@@ -332,7 +332,6 @@
             @else
                 <form method="POST" action="{{ route('apply.store') }}" enctype="multipart/form-data" class="space-y-5" data-application-form>
                     @csrf
-                    <input type="hidden" name="referral_code" value="{{ old('referral_code', $referralCode) }}">
 
                     @if ($referralReferrer)
                         <div class="border border-boss-gold/25 bg-boss-cream px-4 py-3 text-[0.82rem] leading-relaxed text-boss-dark/65">
@@ -448,10 +447,26 @@
                         </div>
                     </div>
 
+                    <div class="grid gap-5 md:grid-cols-2">
+                        <div>
+                            <label for="application-instagram" class="pd-label-light">{{ __('Instagram Handle') }}</label>
+                            <input id="application-instagram" type="text" name="instagram_handle" value="{{ old('instagram_handle') }}" autocomplete="off" placeholder="@yourinstagram" class="pd-input-light mt-2">
+                            <x-input-error class="mt-1.5" :messages="$errors->get('instagram_handle')" />
+                        </div>
+                        <div>
+                            <label for="application-tiktok" class="pd-label-light">{{ __('TikTok Handle') }}</label>
+                            <input id="application-tiktok" type="text" name="tiktok_handle" value="{{ old('tiktok_handle') }}" autocomplete="off" placeholder="@yourtiktok" class="pd-input-light mt-2">
+                            <x-input-error class="mt-1.5" :messages="$errors->get('tiktok_handle')" />
+                        </div>
+                    </div>
+
                     <div>
-                        <label for="application-social-handle" class="pd-label-light">{{ __('Instagram / TikTok Handle') }}</label>
-                        <input id="application-social-handle" type="text" name="social_handle" value="{{ old('social_handle') }}" autocomplete="off" placeholder="@yourhandle" class="pd-input-light mt-2">
-                        <x-input-error class="mt-1.5" :messages="$errors->get('social_handle')" />
+                        <label for="application-referral-code" class="pd-label-light">
+                            {{ __('Referral Code') }}
+                            <span class="ml-1 text-[0.72rem] normal-case tracking-normal font-normal text-boss-dark/40">({{ __('optional') }})</span>
+                        </label>
+                        <input id="application-referral-code" type="text" name="referral_code" value="{{ old('referral_code', $referralCode) }}" autocomplete="off" placeholder="{{ __('e.g. ABC123') }}" class="pd-input-light mt-2" data-referral-code>
+                        <x-input-error class="mt-1.5" :messages="$errors->get('referral_code')" />
                     </div>
 
                     <div>
@@ -491,6 +506,15 @@
                     <button type="submit" class="w-full bg-boss-gold py-4 text-[0.75rem] uppercase tracking-[0.2em] text-white transition-colors hover:bg-boss-gold-hover">{{ __('Submit Application') }}</button>
                     <p class="text-center text-[0.75rem] text-boss-dark/40">{{ __('Approved applicants receive account instructions and the Model Information Form next.') }}</p>
                 </form>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var input = document.querySelector('[data-referral-code]');
+                        if (!input || input.value.trim() !== '') return;
+                        var params = new URLSearchParams(window.location.search);
+                        var code = params.get('ref') || params.get('referral') || params.get('referralCode') || '';
+                        if (code.trim()) input.value = code.trim();
+                    });
+                </script>
             @endif
         </div>
     </section>

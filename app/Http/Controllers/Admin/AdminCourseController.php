@@ -33,26 +33,35 @@ class AdminCourseController extends Controller
             ->orderBy('title')
             ->paginate(20);
 
-        $courseStats = $courses->getCollection()->mapWithKeys(function (Course $course) {
+        $lessonToCourse = [];
+        $courseLessonCounts = [];
+        foreach ($courses->getCollection() as $course) {
             $lessonIds = $course->lessons->pluck('id');
-            $totalLessons = $lessonIds->count();
+            $courseLessonCounts[$course->id] = $lessonIds->count();
+            foreach ($lessonIds as $lessonId) {
+                $lessonToCourse[$lessonId] = $course->id;
+            }
+        }
 
-            $started = LessonProgress::query()
-                ->whereIn('lesson_id', $lessonIds)
+        $progressByCourse = [];
+        if ($lessonToCourse !== []) {
+            LessonProgress::query()
+                ->select('lesson_id', 'user_id')
+                ->whereIn('lesson_id', array_keys($lessonToCourse))
                 ->whereNotNull('completed_at')
-                ->distinct('user_id')
-                ->count('user_id');
+                ->each(function (LessonProgress $row) use ($lessonToCourse, &$progressByCourse): void {
+                    $progressByCourse[$lessonToCourse[$row->lesson_id]][$row->user_id][$row->lesson_id] = true;
+                });
+        }
 
-            $finished = $totalLessons === 0
-                ? 0
-                : LessonProgress::query()
-                    ->select('user_id')
-                    ->whereIn('lesson_id', $lessonIds)
-                    ->whereNotNull('completed_at')
-                    ->groupBy('user_id')
-                    ->havingRaw('COUNT(DISTINCT lesson_id) >= ?', [$totalLessons])
-                    ->get()
-                    ->count();
+        $courseStats = $courses->getCollection()->mapWithKeys(function (Course $course) use ($progressByCourse, $courseLessonCounts) {
+            $totalLessons = $courseLessonCounts[$course->id] ?? 0;
+            $userProgress = $progressByCourse[$course->id] ?? [];
+            $started = count($userProgress);
+            $finished = $totalLessons === 0 ? 0 : count(array_filter(
+                $userProgress,
+                fn (array $lessons) => count($lessons) >= $totalLessons
+            ));
 
             return [$course->id => [
                 'started' => $started,

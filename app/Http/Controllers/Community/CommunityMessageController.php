@@ -125,10 +125,12 @@ class CommunityMessageController extends Controller
             $hasMore = $channel->messages()->where('community_messages.id', '<', $messages->first()->id)->exists();
         }
 
+        $isInitialLoad = $beforeId === 0 && $afterId === 0 && $aroundId === 0 && $search === '';
+
         return response()->json([
             'channel' => $channel->toFrontendArray($user),
             'messages' => $messages->map(fn (CommunityMessage $message) => $message->toFrontendArray($user))->all(),
-            'pinned_messages' => $this->pinnedMessagesFor($channel, $user),
+            'pinned_messages' => $isInitialLoad ? $this->pinnedMessagesFor($channel, $user) : [],
             'has_more' => $hasMore,
             'first_unread_message_id' => $search === '' ? $firstUnreadMessageId : null,
             'search' => [

@@ -27,7 +27,10 @@ class HomeController extends Controller
             $testimonials = Collection::make();
         }
 
-        $requestedReferralCode = trim((string) old('referral_code', $request->query('ref', '')));
+        $requestedReferralCode = trim((string) old(
+            'referral_code',
+            $request->query('ref') ?? $request->query('referral') ?? $request->query('referralCode') ?? ''
+        ));
         $referralReferrer = null;
         $referralCode = '';
 

@@ -83,14 +83,16 @@ class CommunityController extends Controller
         $messages = $rawMessages->map(fn (CommunityMessage $message) => $message->toFrontendArray($user))->all();
         $pinnedMessages = $selectedChannel ? $this->pinnedMessagesFor($selectedChannel, $user) : [];
 
-        $courses = Course::query()
-            ->where('is_published', true)
-            ->withCount('lessons')
-            ->orderBy('sort_order')
-            ->get();
+        $courses = $user->isModel()
+            ? Course::query()
+                ->where('is_published', true)
+                ->with('lessons:id,course_id,is_published')
+                ->orderBy('sort_order')
+                ->get()
+            : collect();
 
         $overallProgress = $user->isModel() && $courses->isNotEmpty()
-            ? (int) round($courses->avg(fn (Course $course) => $course->progressPercentFor($user)))
+            ? (int) round(array_sum(Course::batchProgressPercentsForUser($user, $courses)) / $courses->count())
             : 100;
 
         $archivedChannels = $user->canModerateCommunity()

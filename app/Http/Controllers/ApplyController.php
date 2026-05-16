@@ -33,7 +33,8 @@ class ApplyController extends Controller
             'phone_number' => ['nullable', 'string', 'max:32'],
             'message' => ['nullable', 'string', 'max:5000'],
             'experience_level' => ['required', 'string', 'max:64'],
-            'social_handle' => ['nullable', 'string', 'max:255'],
+            'instagram_handle' => ['nullable', 'string', 'max:255'],
+            'tiktok_handle' => ['nullable', 'string', 'max:255'],
             'photos' => ['nullable', 'array', 'max:6'],
             'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'age_confirmed' => ['accepted'],
@@ -74,6 +75,11 @@ class ApplyController extends Controller
         $validated = $validator->validate();
         $phone = $this->normalizePhone($validated, $callingCodes);
 
+        $socialHandle = implode(' / ', array_filter([
+            trim((string) ($validated['instagram_handle'] ?? '')),
+            trim((string) ($validated['tiktok_handle'] ?? '')),
+        ])) ?: null;
+
         $photoPaths = [];
         foreach ($request->file('photos', []) as $photo) {
             $photoPaths[] = $photo->store('applications/photos', 'local');
@@ -85,12 +91,12 @@ class ApplyController extends Controller
             'phone' => $phone,
             'message' => $validated['message'] ?? null,
             'experience_level' => $validated['experience_level'],
-            'social_handle' => $validated['social_handle'] ?? null,
+            'social_handle' => $socialHandle,
             'age_confirmed' => true,
             'photo_paths' => $photoPaths,
         ]);
 
-        $this->connectReferral($application, $validated, $phone, $photoPaths);
+        $this->connectReferral($application, $validated, $phone, $photoPaths, $socialHandle);
         $this->notifyOnboardingTeam($application);
 
         return redirect()->route('home')->withFragment('apply')->with('application_sent', true);
@@ -123,7 +129,7 @@ class ApplyController extends Controller
         }
 
         try {
-            Mail::to($email)->send(new ApplicationSubmittedMail(
+            Mail::to($email)->queue(new ApplicationSubmittedMail(
                 application: $application,
                 adminUrl: route('admin.applications.index'),
             ));
@@ -132,7 +138,7 @@ class ApplyController extends Controller
         }
     }
 
-    private function connectReferral(ModelApplication $application, array $validated, ?string $phone, array $photoPaths): void
+    private function connectReferral(ModelApplication $application, array $validated, ?string $phone, array $photoPaths, ?string $socialHandle = null): void
     {
         $referralCode = trim((string) ($validated['referral_code'] ?? ''));
 
@@ -162,7 +168,7 @@ class ApplyController extends Controller
             'candidate_name' => $validated['name'],
             'candidate_email' => $validated['email'],
             'candidate_phone' => $phone,
-            'candidate_social_handle' => $validated['social_handle'] ?? null,
+            'candidate_social_handle' => $socialHandle,
             'experience_level' => $validated['experience_level'],
             'note' => $validated['message'] ?? null,
             'consent_confirmed' => true,

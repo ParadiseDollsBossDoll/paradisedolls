@@ -140,11 +140,12 @@ class MemberCourseController extends Controller
     public function learnShow(Request $request, string $slug): View
     {
         $course = $this->learningCourse($slug);
+        $progress = $this->courseProgress($course, $request->user()->id);
         $selectedLesson = $course->hasPreLessonMaterials()
             ? null
-            : $this->resumeLesson($course, $request->user()->id);
+            : $this->resumeLessonFromProgress($course, $progress['completedLessonIds']);
 
-        return $this->learningView($request, $course, $selectedLesson);
+        return $this->learningView($request, $course, $selectedLesson, $progress);
     }
 
     public function lesson(Request $request, string $slug, Lesson $lesson): View
@@ -219,9 +220,9 @@ class MemberCourseController extends Controller
             ->firstOrFail();
     }
 
-    private function learningView(Request $request, Course $course, ?Lesson $selectedLesson): View
+    private function learningView(Request $request, Course $course, ?Lesson $selectedLesson, ?array $progress = null): View
     {
-        $progress = $this->courseProgress($course, $request->user()->id);
+        $progress ??= $this->courseProgress($course, $request->user()->id);
         $lessonIds = $course->lessons->pluck('id')->values();
         if ($selectedLesson === null && ! $course->hasPreLessonMaterials()) {
             $selectedLesson = $course->lessons->first();
@@ -273,6 +274,17 @@ class MemberCourseController extends Controller
             'messages',
             'communityChannel'
         ));
+    }
+
+    private function resumeLessonFromProgress(Course $course, array $completedLessonIds): ?Lesson
+    {
+        if ($course->lessons->isEmpty()) {
+            return null;
+        }
+
+        return $course->lessons
+            ->first(fn (Lesson $lesson) => ! in_array($lesson->id, $completedLessonIds, true))
+            ?: $course->lessons->last();
     }
 
     private function resumeLesson(Course $course, int $userId): ?Lesson
