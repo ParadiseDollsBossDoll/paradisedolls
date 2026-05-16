@@ -126,6 +126,102 @@ body {
         padding: 1.25rem;
     }
 
+    .pd-dashboard-hero {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.5rem;
+        overflow: hidden;
+        border-radius: 0.9rem;
+        border: 1px solid rgba(255, 255, 255, 0.065);
+        background:
+            linear-gradient(135deg, rgba(26, 18, 24, 0.94), rgba(19, 15, 18, 0.92)),
+            radial-gradient(circle at 78% 15%, rgba(201, 169, 110, 0.18), transparent 34%);
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.22);
+        padding: clamp(1.35rem, 3vw, 2rem);
+    }
+
+    .pd-dashboard-hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.035), transparent 42%);
+    }
+
+    .pd-dashboard-hero-copy,
+    .pd-dashboard-hero-meter {
+        position: relative;
+        z-index: 1;
+    }
+
+    .pd-dashboard-hero-copy h1 {
+        font-size: clamp(2rem, 4vw, 3rem);
+    }
+
+    .pd-dashboard-hero-meter {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        min-width: 0;
+    }
+
+    .pd-dashboard-ring {
+        width: 7rem;
+        height: 7rem;
+        flex-shrink: 0;
+        border-radius: 50%;
+        background: conic-gradient(var(--pd-gold-light) var(--progress), rgba(255, 255, 255, 0.07) 0);
+        padding: 1px;
+        box-shadow: inset 0 0 0 1px rgba(201, 169, 110, 0.1);
+    }
+
+    .pd-dashboard-ring > div {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #171116;
+        text-align: center;
+    }
+
+    .pd-dashboard-ring strong {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 1.65rem;
+        line-height: 1;
+        color: var(--pd-gold);
+    }
+
+    .pd-dashboard-ring span {
+        margin-top: 0.25rem;
+        font-size: 0.55rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(240, 237, 232, 0.32);
+    }
+
+    .pd-dashboard-readiness {
+        display: flex;
+        flex-direction: column;
+        gap: 1.1rem;
+        border-radius: 0.8rem;
+        border: 1px solid rgba(255, 255, 255, 0.055);
+        background: rgba(26, 18, 24, 0.82);
+        padding: 1.1rem;
+    }
+
+    .pd-dashboard-readiness-meter {
+        width: 100%;
+    }
+
+    .pd-dashboard-stat {
+        min-height: 7rem;
+        background: linear-gradient(145deg, rgba(26, 18, 24, 0.96), rgba(19, 15, 18, 0.96));
+    }
+
     .pd-btn-primary {
         display: inline-flex;
         align-items: center;
@@ -429,6 +525,37 @@ body {
         text-overflow: ellipsis;
     }
 
+    .elysian-side-progress {
+        margin-top: 0.65rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.055);
+        padding-top: 0.55rem;
+        font-size: 0.52rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(240, 237, 232, 0.25);
+    }
+
+    .elysian-side-progress strong {
+        color: #c9a96e;
+        font-size: 0.6rem;
+        letter-spacing: 0;
+    }
+
+    .elysian-side-progress-track {
+        height: 0.25rem;
+        width: 100%;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.055);
+    }
+
+    .elysian-side-progress-track > div {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #c9a96e, #e8c88a);
+        transition: width 500ms ease;
+    }
+
     .elysian-nav {
         flex: 1;
         padding: 0.65rem 0.6rem;
@@ -540,6 +667,23 @@ body {
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
+        border: 1px solid rgba(201, 169, 110, 0.18);
+        border-radius: 999px;
+        background: rgba(201, 169, 110, 0.075);
+        color: var(--pd-gold);
+        padding: 0.55rem 0.9rem;
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        line-height: 1;
+        text-transform: uppercase;
+        transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+    }
+
+    .elysian-topbar-refer:hover {
+        border-color: rgba(201, 169, 110, 0.34);
+        background: rgba(201, 169, 110, 0.14);
+        color: var(--pd-gold-light);
     }
 
     .elysian-mobile-toggle {
@@ -618,6 +762,79 @@ body {
         letter-spacing: 0.04em;
         flex-shrink: 0;
         overflow: hidden;
+        cursor: pointer;
+        padding: 0;
+    }
+
+    .elysian-profile-menu {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .elysian-profile-dropdown {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 0.55rem);
+        z-index: 60;
+        width: min(13.5rem, calc(100vw - 2rem));
+        overflow: hidden;
+        border-radius: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: #151015;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.42);
+    }
+
+    .elysian-profile-dropdown-head {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 0.75rem 0.85rem;
+    }
+
+    .elysian-profile-dropdown-head p {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--pd-ivory);
+    }
+
+    .elysian-profile-dropdown-head span {
+        margin-top: 0.2rem;
+        display: block;
+        font-size: 0.62rem;
+        color: rgba(240, 237, 232, 0.35);
+    }
+
+    .elysian-profile-dropdown a,
+    .elysian-profile-dropdown button {
+        display: block;
+        width: 100%;
+        padding: 0.66rem 0.85rem;
+        text-align: left;
+        font-size: 0.74rem;
+        color: rgba(240, 237, 232, 0.55);
+        transition: background 150ms ease, color 150ms ease;
+    }
+
+    .elysian-profile-dropdown button {
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+    }
+
+    .elysian-profile-dropdown a:hover,
+    .elysian-profile-dropdown button:hover {
+        background: rgba(201, 169, 110, 0.08);
+        color: var(--pd-gold-light);
+    }
+
+    .elysian-profile-dropdown form {
+        border-top: 1px solid rgba(255, 255, 255, 0.055);
+    }
+
+    .elysian-profile-dropdown form button:hover {
+        background: rgba(239, 68, 68, 0.08);
+        color: #fca5a5;
     }
 
     .elysian-topbar--course .elysian-topbar-main {
@@ -669,6 +886,25 @@ body {
 @media (min-width: 640px) {
     .elysian-topbar-greeting {
         display: flex;
+    }
+}
+
+@media (min-width: 768px) {
+    .pd-dashboard-hero {
+        grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.42fr);
+        align-items: center;
+    }
+
+    .pd-dashboard-readiness {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.15rem 1.25rem;
+    }
+
+    .pd-dashboard-readiness-meter {
+        max-width: 20rem;
+        flex-shrink: 0;
     }
 }
 

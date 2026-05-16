@@ -60,7 +60,7 @@ class MemberReferralController extends Controller
 
         $photoPaths = [];
         foreach ($request->file('photos', []) as $photo) {
-            $photoPaths[] = $photo->store('referrals/photos');
+            $photoPaths[] = $photo->store('referrals/photos', 'local');
         }
 
         $request->user()->modelReferrals()->create([

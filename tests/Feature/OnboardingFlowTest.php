@@ -116,7 +116,7 @@ class OnboardingFlowTest extends TestCase
             'user_id' => $member->id,
             'model_application_id' => $application->id,
         ]);
-        Mail::assertSent(MemberApplicationApprovedMail::class);
+        Mail::assertQueued(MemberApplicationApprovedMail::class);
     }
 
     public function test_admin_approval_shows_temporary_password_when_mailer_cannot_deliver(): void
@@ -188,7 +188,8 @@ class OnboardingFlowTest extends TestCase
                 'legal_name' => 'Legal Name',
                 'stage_name' => 'Stage Name',
                 'date_of_birth' => now()->subYears(21)->format('Y-m-d'),
-                'phone' => '+447700900555',
+                'phone_country' => 'GB',
+                'phone_number' => '7700 900555',
                 'country' => 'United Kingdom',
                 'city' => 'London',
                 'timezone' => 'Europe/London',
@@ -197,6 +198,9 @@ class OnboardingFlowTest extends TestCase
                 'availability' => 'Evenings and weekends.',
                 'goals' => 'Build a consistent online income.',
                 'experience_notes' => 'Beginner.',
+                'emergency_contact_name' => 'Emergency Contact',
+                'emergency_contact_phone_country' => 'PH',
+                'emergency_contact_phone_number' => '985 474 7065',
                 'discord_username' => 'stage-name',
                 'discord_user_id' => '1234567890',
             ])
@@ -204,6 +208,8 @@ class OnboardingFlowTest extends TestCase
 
         $profile = $member->modelProfile()->first();
         $this->assertNotNull($profile->information_submitted_at);
+        $this->assertSame('+447700900555', $profile->phone);
+        $this->assertSame('+639854747065', $profile->emergency_contact_phone);
         $this->assertSame(['Stripchat', 'OnlyFans'], $profile->platforms);
         $this->assertSame('stage-name', $profile->discord_username);
         Mail::assertQueued(ModelInformationSubmittedMail::class);
@@ -226,6 +232,59 @@ class OnboardingFlowTest extends TestCase
             ->get(route('member.dashboard'))
             ->assertOk()
             ->assertSeeText('Submitted for review. The admin team is reviewing your onboarding details and verification IDs.');
+    }
+
+    public function test_member_onboarding_rejects_invalid_phone_numbers(): void
+    {
+        Mail::fake();
+
+        $member = User::factory()->create(['role' => 'model']);
+
+        $this->actingAs($member)
+            ->put(route('member.onboarding.update'), [
+                'legal_name' => 'Legal Name',
+                'stage_name' => 'Stage Name',
+                'date_of_birth' => now()->subYears(21)->format('Y-m-d'),
+                'phone_country' => 'GB',
+                'phone_number' => 'call me maybe',
+                'country' => 'United Kingdom',
+                'city' => 'London',
+                'timezone' => 'Europe/London',
+                'availability' => 'Evenings and weekends.',
+                'goals' => 'Build a consistent online income.',
+            ])
+            ->assertSessionHasErrors('phone_number');
+
+        $this->assertNull($member->modelProfile()->first()?->information_submitted_at);
+        Mail::assertNothingQueued();
+    }
+
+    public function test_member_onboarding_rejects_invalid_emergency_contact_phone_numbers(): void
+    {
+        Mail::fake();
+
+        $member = User::factory()->create(['role' => 'model']);
+
+        $this->actingAs($member)
+            ->put(route('member.onboarding.update'), [
+                'legal_name' => 'Legal Name',
+                'stage_name' => 'Stage Name',
+                'date_of_birth' => now()->subYears(21)->format('Y-m-d'),
+                'phone_country' => 'GB',
+                'phone_number' => '7700 900555',
+                'country' => 'United Kingdom',
+                'city' => 'London',
+                'timezone' => 'Europe/London',
+                'availability' => 'Evenings and weekends.',
+                'goals' => 'Build a consistent online income.',
+                'emergency_contact_name' => 'Emergency Contact',
+                'emergency_contact_phone_country' => 'PH',
+                'emergency_contact_phone_number' => 'call me maybe',
+            ])
+            ->assertSessionHasErrors('emergency_contact_phone_number');
+
+        $this->assertNull($member->modelProfile()->first()?->information_submitted_at);
+        Mail::assertNothingQueued();
     }
 
     public function test_member_cannot_submit_verification_before_information_form(): void

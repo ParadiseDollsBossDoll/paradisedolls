@@ -16,11 +16,11 @@
         $sidebarLinks = [
             ['href' => route('admin.dashboard'),          'label' => __('Overview'),       'icon' => 'overview',      'active' => false, 'count' => 0],
             ['href' => route('admin.applications.index'), 'label' => __('Applications'),   'icon' => 'applications',  'active' => false, 'count' => $pendingApps],
+            ['href' => route('admin.referrals.index'),    'label' => __('Referrals'),      'icon' => 'referrals',     'active' => false, 'count' => $pendingReferrals],
             ['href' => route('admin.onboarding.index'),   'label' => __('Onboarding'),     'icon' => 'onboarding',    'active' => false, 'count' => $pendingVerif],
             ['href' => route('admin.models.progress'),    'label' => __('Members'),        'icon' => 'members',       'active' => false, 'count' => 0],
             ['href' => route('admin.courses.index'),      'label' => __('Courses'),        'icon' => 'courses',       'active' => false, 'count' => 0],
-            ['href' => route('admin.testimonials.index'), 'label' => __('Stories'),        'icon' => 'stories',       'active' => false, 'count' => 0],
-            ['href' => route('admin.referrals.index'),    'label' => __('Referrals'),      'icon' => 'referrals',     'active' => false, 'count' => $pendingReferrals],
+            ['href' => route('admin.testimonials.index'), 'label' => __('Testimonials'),   'icon' => 'stories',       'active' => false, 'count' => 0],
             ['href' => route('community.show'),           'label' => __('Community Chat'), 'icon' => 'community',     'active' => true,  'count' => 0],
         ];
         $sidebarSubtitle  = __('Admin Panel');

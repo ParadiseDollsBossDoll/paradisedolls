@@ -66,7 +66,7 @@
         ],
         [
             'route'  => 'admin.testimonials.index',
-            'label'  => __('Stories'),
+            'label'  => __('Testimonials'),
             'active' => request()->routeIs('admin.testimonials.*'),
             'icon'   => 'stories',
             'count'  => 0,
