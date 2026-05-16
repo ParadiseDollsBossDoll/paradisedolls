@@ -9,9 +9,12 @@ use App\Models\CourseModule;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Services\CourseCommunityService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -84,7 +87,7 @@ class AdminCourseController extends Controller
             $moduleMap = $this->syncModules($course, $validated['modules'] ?? [], $validated['lessons'] ?? []);
 
             foreach ($validated['lessons'] ?? [] as $index => $lesson) {
-                $createdLesson = $course->lessons()->create($this->normalizedLessonData($lesson, $index, $moduleMap));
+                $createdLesson = $course->lessons()->create($this->normalizedLessonData($course, $lesson, $index, $moduleMap));
 
                 if ($this->shouldSyncContentBlocks($lesson)) {
                     $this->syncLessonContentBlocks($createdLesson, $lesson['content_blocks'] ?? []);
@@ -93,7 +96,7 @@ class AdminCourseController extends Controller
         });
 
         if ($course) {
-            $community->ensureForCourse($course);
+            $community->ensureForCourse($course, $request->user());
         }
 
         return redirect()->route('admin.courses.index')->with('status', __('Course created.'));
@@ -115,8 +118,11 @@ class AdminCourseController extends Controller
     public function preview(Course $course): View
     {
         $course = $this->previewCoursePayload($course);
+        $selectedLesson = $course->hasPreLessonMaterials()
+            ? null
+            : $course->lessons->first();
 
-        return $this->previewLearningView($course, $course->lessons->first());
+        return $this->previewLearningView($course, $selectedLesson);
     }
 
     public function previewLesson(Course $course, Lesson $lesson): View
@@ -133,6 +139,31 @@ class AdminCourseController extends Controller
 
     public function update(Request $request, Course $course): RedirectResponse
     {
+        // Detect PHP max_input_vars truncation before any validation.
+        // The frontend sends _lesson_count with the actual total. If fewer lessons
+        // arrived than expected, the payload was silently cut off by PHP — abort
+        // instead of deleting the missing lessons.
+        $claimedCount = (int) $request->input('_lesson_count', 0);
+        $receivedLessons = $request->input('lessons', []);
+        $receivedCount = is_array($receivedLessons) ? count($receivedLessons) : 0;
+
+        if ($claimedCount > 0 && $receivedCount < $claimedCount) {
+            Log::error('Course update payload truncated by PHP max_input_vars', [
+                'course_id' => $course->id,
+                'claimed_lesson_count' => $claimedCount,
+                'received_lesson_count' => $receivedCount,
+                'max_input_vars' => ini_get('max_input_vars'),
+            ]);
+
+            return redirect()->back()->withInput()->withErrors([
+                'lessons' => __(
+                    'Only :received of :total lessons were received — the form was too large and PHP cut it off. '.
+                    'Please contact support or increase php_value max_input_vars in .htaccess. No data was changed.',
+                    ['received' => $receivedCount, 'total' => $claimedCount]
+                ),
+            ]);
+        }
+
         $validated = $this->validateCourse($request, $course->id, validateLessons: true);
         $courseData = $this->normalizedCourseData($request, $validated['course'], $course);
 
@@ -155,6 +186,24 @@ class AdminCourseController extends Controller
         return redirect()->route('admin.courses.index')->with('status', __('Course updated.'));
     }
 
+    public function updateDetails(Request $request, Course $course): JsonResponse
+    {
+        $validated = $this->validateCourse($request, $course->id, validateLessons: false);
+        $courseData = $this->normalizedCourseData($request, $validated['course'], $course);
+
+        $slugInput = $courseData['slug'] ?? null;
+        $slug = $slugInput !== null && $slugInput !== ''
+            ? $this->uniqueSlug(Str::slug($slugInput), $course->id)
+            : $this->uniqueSlug(Str::slug($courseData['title']), $course->id);
+
+        $course->update([
+            ...collect($courseData)->except('slug')->all(),
+            'slug' => $slug,
+        ]);
+
+        return response()->json(['saved' => true, 'slug' => $course->fresh()->slug]);
+    }
+
     public function visibility(Request $request, Course $course): RedirectResponse
     {
         $course->update([
@@ -162,6 +211,35 @@ class AdminCourseController extends Controller
         ]);
 
         return redirect()->route('admin.courses.index')->with('status', __('Course visibility updated.'));
+    }
+
+    public function uploadBlockFile(Request $request): JsonResponse
+    {
+        $type = $request->input('type');
+
+        $fileRule = match ($type) {
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+            'pdf' => ['required', 'file', 'mimes:pdf', 'max:20480'],
+            default => ['required', 'file', 'mimes:pdf,ppt,pptx,key', 'max:20480'],
+        };
+
+        $request->validate([
+            'type' => ['required', 'string', Rule::in(['image', 'pdf', 'presentation'])],
+            'file' => $fileRule,
+        ]);
+
+        $directory = match ($type) {
+            'image' => 'academy/lesson-content/images',
+            'pdf' => 'academy/lesson-content/pdfs',
+            default => 'academy/lesson-content/presentations',
+        };
+
+        $path = $request->file('file')->store($directory, 'public');
+
+        return response()->json([
+            'path' => $path,
+            'url' => Storage::disk('public')->url($path),
+        ]);
     }
 
     public function destroy(Course $course, CourseCommunityService $community): RedirectResponse
@@ -174,7 +252,7 @@ class AdminCourseController extends Controller
 
     private function previewCoursePayload(Course $course): Course
     {
-        return Course::query()
+        $course = Course::query()
             ->whereKey($course->id)
             ->with([
                 'lessons' => fn ($query) => $query
@@ -193,12 +271,18 @@ class AdminCourseController extends Controller
                 'enrollments as enrolled_users_count',
             ])
             ->firstOrFail();
+
+        $course->setRelation('lessons', $course->lessonsInModuleOrder());
+
+        return $course;
     }
 
     private function previewLearningView(Course $course, ?Lesson $selectedLesson): View
     {
         $lessonIds = $course->lessons->pluck('id')->values();
-        $selectedLesson ??= $course->lessons->first();
+        if ($selectedLesson === null && ! $course->hasPreLessonMaterials()) {
+            $selectedLesson = $course->lessons->first();
+        }
         $selectedIndex = $selectedLesson ? $lessonIds->search($selectedLesson->id) : false;
         $previousLesson = $selectedIndex !== false && $selectedIndex > 0
             ? $course->lessons->firstWhere('id', $lessonIds[$selectedIndex - 1])
@@ -258,6 +342,12 @@ class AdminCourseController extends Controller
             'requirements' => ['nullable', 'string', 'max:50000'],
             'has_course_outline' => ['nullable', 'boolean'],
             'course_outline_url' => ['nullable', 'string', 'max:2000'],
+            'course_outline_upload' => [
+                Rule::requiredIf(fn () => $request->boolean('has_course_outline') && blank($request->input('course_outline_url'))),
+                'file',
+                'mimes:pdf,doc,docx,ppt,pptx',
+                'max:20480',
+            ],
             'has_intro' => ['nullable', 'boolean'],
             'intro_title' => ['nullable', 'string', 'max:255'],
             'intro_video_url' => ['nullable', 'string', 'max:2000'],
@@ -276,10 +366,19 @@ class AdminCourseController extends Controller
             $lessonIdRule = ['nullable', 'integer'];
             $moduleIdRule = ['nullable', 'integer'];
             if ($courseId !== null) {
-                $lessonIdRule[] = Rule::exists('lessons', 'id')
-                    ->where(fn ($query) => $query->where('course_id', $courseId));
-                $moduleIdRule[] = Rule::exists('course_modules', 'id')
-                    ->where(fn ($query) => $query->where('course_id', $courseId));
+                // Accept IDs that belong to this course OR don't exist at all (draft
+                // recovery: syncLessons re-creates missing IDs as new records).
+                // Only reject an ID that belongs to a *different* course.
+                $lessonIdRule[] = function ($attribute, $value, $fail) use ($courseId) {
+                    if (filled($value) && Lesson::where('id', (int) $value)->where('course_id', '!=', $courseId)->exists()) {
+                        $fail(__('validation.exists'));
+                    }
+                };
+                $moduleIdRule[] = function ($attribute, $value, $fail) use ($courseId) {
+                    if (filled($value) && CourseModule::where('id', (int) $value)->where('course_id', '!=', $courseId)->exists()) {
+                        $fail(__('validation.exists'));
+                    }
+                };
             }
 
             $rules += [
@@ -292,6 +391,9 @@ class AdminCourseController extends Controller
                 'modules.*.sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
                 'lessons' => ['required', 'array', 'min:1'],
                 'lessons.*.id' => $lessonIdRule,
+                'lessons.*.course_id' => $courseId !== null
+                    ? ['nullable', 'integer', Rule::in([$courseId])]
+                    : ['nullable', 'integer'],
                 'lessons.*.course_module_id' => $moduleIdRule,
                 'lessons.*.module_key' => ['nullable', 'string', 'max:80'],
                 'lessons.*.title' => ['required', 'string', 'max:255'],
@@ -391,6 +493,11 @@ class AdminCourseController extends Controller
 
         if (! $course['has_course_outline']) {
             $course['course_outline_url'] = null;
+        } else {
+            $outlineUpload = $request->file('course_outline_upload');
+            if ($outlineUpload instanceof UploadedFile) {
+                $course['course_outline_url'] = $this->storePublicDocument($outlineUpload, 'academy/course-outlines');
+            }
         }
 
         if (! $course['has_intro']) {
@@ -435,12 +542,7 @@ class AdminCourseController extends Controller
                 ? $existingLessonsById->get((int) $lesson['id'])
                 : null;
 
-            // Keep lesson IDs stable if a course edit arrives without hidden IDs.
-            if ($existingLesson === null && ! $hasSubmittedIds) {
-                $existingLesson = $existingLessons->get($index);
-            }
-
-            $lessonData = $this->normalizedLessonData($lesson, $index, $moduleMap, $existingLesson);
+            $lessonData = $this->normalizedLessonData($course, $lesson, $index, $moduleMap, $existingLesson);
 
             if ($existingLesson !== null) {
                 $existingLesson->update($lessonData);
@@ -466,42 +568,50 @@ class AdminCourseController extends Controller
         }
     }
 
-    private function normalizedLessonData(array $lesson, int $index, array $moduleMap = [], ?Lesson $existingLesson = null): array
+    private function normalizedLessonData(Course $course, array $lesson, int $index, array $moduleMap = [], ?Lesson $existingLesson = null): array
     {
-        $bunnyVideoId = $lesson['bunny_video_id'] ?? null;
-        $bunnyLibraryId = $lesson['bunny_library_id'] ?? null;
-        $videoUrl = $lesson['video_url'] ?? null;
+        $lessonValue = fn (string $key) => array_key_exists($key, $lesson)
+            ? $lesson[$key]
+            : $existingLesson?->{$key};
+
+        $bunnyVideoId = $lessonValue('bunny_video_id');
+        $bunnyLibraryId = $lessonValue('bunny_library_id');
+        $videoUrl = $lessonValue('video_url');
         $moduleId = $this->moduleIdForLesson($lesson, $moduleMap);
         $lessonVisuals = $this->normalizedLessonVisuals($lesson, $existingLesson);
+        $pdfUrl = $lessonValue('pdf_url');
 
         if (filled($bunnyVideoId) && filled($bunnyLibraryId)) {
             $videoUrl = 'https://iframe.mediadelivery.net/embed/'.$bunnyLibraryId.'/'.$bunnyVideoId.'?autoplay=false&loop=false&muted=false&preload=true&responsive=true';
         }
 
         return [
+            'course_id' => $course->id,
             'course_module_id' => $moduleId,
             'title' => $lesson['title'],
-            'body' => $lesson['body'] ?? null,
-            'overview' => $lesson['overview'] ?? null,
-            'steps' => $lesson['steps'] ?? null,
-            'tips' => $lesson['tips'] ?? null,
-            'safety_notes' => $lesson['safety_notes'] ?? null,
-            'resource_links' => $lesson['resource_links'] ?? null,
+            'body' => $lessonValue('body'),
+            'overview' => $lessonValue('overview'),
+            'steps' => $lessonValue('steps'),
+            'tips' => $lessonValue('tips'),
+            'safety_notes' => $lessonValue('safety_notes'),
+            'resource_links' => $lessonValue('resource_links'),
             'lesson_banner_image' => $lessonVisuals['lesson_banner_image'],
             'lesson_images' => $lessonVisuals['lesson_images'],
-            'is_published' => array_key_exists('is_published', $lesson) ? (bool) $lesson['is_published'] : true,
+            'is_published' => array_key_exists('is_published', $lesson) ? (bool) $lesson['is_published'] : (bool) ($existingLesson?->is_published ?? true),
             'video_url' => $videoUrl,
             'bunny_video_id' => $bunnyVideoId,
             'bunny_library_id' => $bunnyLibraryId,
-            'bunny_video_title' => $lesson['bunny_video_title'] ?? null,
-            'bunny_thumbnail_url' => $lesson['bunny_thumbnail_url'] ?? null,
-            'bunny_upload_fingerprint' => $lesson['bunny_upload_fingerprint'] ?? null,
-            'bunny_status' => $lesson['bunny_status'] ?? null,
-            'duration' => $lesson['duration'] ?? null,
-            'has_pdf' => array_key_exists('has_pdf', $lesson) ? (bool) $lesson['has_pdf'] : filled($lesson['pdf_url'] ?? null),
-            'pdf_url' => $lesson['pdf_url'] ?? null,
-            'presentation_url' => Lesson::normalizePresentationUrl($lesson['presentation_url'] ?? null),
-            'sort_order' => $lesson['sort_order'] ?? ($index + 1),
+            'bunny_video_title' => $lessonValue('bunny_video_title'),
+            'bunny_thumbnail_url' => $lessonValue('bunny_thumbnail_url'),
+            'bunny_upload_fingerprint' => $lessonValue('bunny_upload_fingerprint'),
+            'bunny_status' => $lessonValue('bunny_status'),
+            'duration' => $lessonValue('duration'),
+            'has_pdf' => array_key_exists('has_pdf', $lesson)
+                ? (bool) $lesson['has_pdf']
+                : (array_key_exists('pdf_url', $lesson) ? filled($pdfUrl) : (bool) ($existingLesson?->has_pdf ?? filled($pdfUrl))),
+            'pdf_url' => $pdfUrl,
+            'presentation_url' => Lesson::normalizePresentationUrl($lessonValue('presentation_url')),
+            'sort_order' => $lesson['sort_order'] ?? $existingLesson?->sort_order ?? ($index + 1),
         ];
     }
 
@@ -530,6 +640,15 @@ class AdminCourseController extends Controller
     private function storePublicImage(UploadedFile $file, string $directory): string
     {
         return $file->store($directory, 'public');
+    }
+
+    private function storePublicDocument(UploadedFile $file, string $directory): string
+    {
+        $name = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'file');
+        $filename = Str::slug($name) ?: 'course-outline';
+
+        return $file->storeAs($directory, $filename.'-'.Str::random(8).'.'.$extension, 'public');
     }
 
     /**
@@ -626,19 +745,17 @@ class AdminCourseController extends Controller
      */
     private function moduleIdForLesson(array $lesson, array $moduleMap): ?int
     {
-        $moduleKey = $lesson['module_key'] ?? null;
-        if (is_string($moduleKey) && isset($moduleMap[$moduleKey])) {
-            return $moduleMap[$moduleKey];
-        }
-
         $moduleId = $lesson['course_module_id'] ?? null;
         if ($moduleId !== null && isset($moduleMap['id:'.(int) $moduleId])) {
             return $moduleMap['id:'.(int) $moduleId];
         }
 
-        $titleKey = $this->moduleKey($lesson['module_title'] ?? null);
+        $moduleKey = $lesson['module_key'] ?? null;
+        if (is_string($moduleKey) && isset($moduleMap[$moduleKey])) {
+            return $moduleMap[$moduleKey];
+        }
 
-        return $moduleMap[$titleKey] ?? null;
+        return null;
     }
 
     private function moduleTitle(?string $title): string

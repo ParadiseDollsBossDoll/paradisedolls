@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminCourseController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminLessonController;
 use App\Http\Controllers\Admin\AdminModelProgressController;
+use App\Http\Controllers\Admin\AdminModuleController;
 use App\Http\Controllers\Admin\AdminOnboardingController;
 use App\Http\Controllers\Admin\AdminReferralController;
 use App\Http\Controllers\Admin\AdminTestimonialController;
@@ -123,6 +124,23 @@ Route::middleware(['auth', 'verified', 'community.perf'])->prefix('community')->
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
 
+    // ── Autosave endpoints (higher rate limit, JSON responses) ───────────────
+    // These fire on every change; keep them outside the strict throttle:admin-actions group.
+    Route::middleware('throttle:120,1')->group(function () {
+        // Module CRUD
+        Route::post('/courses/{course}/modules', [AdminModuleController::class, 'store'])->name('courses.modules.store');
+        Route::put('/courses/{course}/modules/{module}', [AdminModuleController::class, 'update'])->name('courses.modules.update');
+        Route::delete('/courses/{course}/modules/{module}', [AdminModuleController::class, 'destroy'])->name('courses.modules.destroy');
+        Route::patch('/courses/{course}/modules/reorder', [AdminModuleController::class, 'reorder'])->name('courses.modules.reorder');
+
+        // Lesson autosave (JSON)
+        Route::post('/courses/{course}/lessons/autosave', [AdminLessonController::class, 'autosave'])->name('courses.lessons.autosave');
+        Route::put('/courses/{course}/lessons/{lesson}/autosave', [AdminLessonController::class, 'autosaveUpdate'])->name('courses.lessons.autosave.update');
+
+        // Course details-only save (JSON, no lesson/module sync)
+        Route::patch('/courses/{course}/details', [AdminCourseController::class, 'updateDetails'])->name('courses.update-details');
+    });
+
     Route::get('/applications', [AdminApplicationController::class, 'index'])->name('applications.index');
     Route::post('/applications/referrals/{referral}/convert', [AdminApplicationController::class, 'convertReferral'])
         ->middleware('throttle:admin-actions')
@@ -181,6 +199,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         Route::patch('/courses/{course}/visibility', [AdminCourseController::class, 'visibility'])->name('courses.visibility');
         Route::get('/courses/{course}/preview', [AdminCourseController::class, 'preview'])->name('courses.preview');
         Route::get('/courses/{course}/lessons/{lesson}/preview', [AdminCourseController::class, 'previewLesson'])->name('courses.lessons.preview');
+        Route::post('/courses/block-file', [AdminCourseController::class, 'uploadBlockFile'])->name('courses.block-file');
         Route::resource('courses', AdminCourseController::class)->except(['show']);
 
         Route::post('/courses/{course}/lessons', [AdminLessonController::class, 'store'])->name('courses.lessons.store');

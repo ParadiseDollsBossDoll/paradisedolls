@@ -40,6 +40,8 @@ return [
         'api_key' => env('BUNNY_API_KEY'),
         'cdn_hostname' => env('BUNNY_CDN_HOSTNAME'),
         'upload_signature_ttl' => (int) env('BUNNY_UPLOAD_SIGNATURE_TTL', 86400),
+        'connect_timeout' => (int) env('BUNNY_CONNECT_TIMEOUT', 10),
+        'timeout' => (int) env('BUNNY_TIMEOUT', 30),
     ],
 
 ];

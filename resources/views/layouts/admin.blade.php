@@ -106,7 +106,7 @@
                     </div>
                 </div>
 
-                <div class="elysian-side-profile">
+                <a href="{{ route('profile.edit') }}" class="elysian-side-profile group" title="{{ __('Edit your profile') }}" @click="sidebarOpen = false">
                     <div class="elysian-side-profile-inner">
                         <div class="elysian-side-profile-row">
                             <div class="elysian-avatar-wrap">
@@ -120,11 +120,14 @@
                             </div>
                             <div class="min-w-0 flex-1">
                                 <div class="elysian-side-name">{{ $user->name }}</div>
-                                <div class="elysian-side-sub">{{ __('Administrator') }}</div>
+                                <div class="elysian-side-sub flex items-center justify-between gap-1">
+                                    <span>{{ __('Administrator') }}</span>
+                                    <span class="text-[0.55rem] opacity-0 transition-opacity group-hover:opacity-60">{{ __('Edit profile →') }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
 
                 <nav class="elysian-nav">
                     @foreach ($links as $link)
@@ -159,11 +162,15 @@
                 </nav>
 
                 <div class="elysian-side-footer">
-                    <a href="{{ route('admin.courses.create') }}" class="elysian-side-footer-btn" style="color: rgba(201,169,110,0.7);">
+                    <a href="{{ route('admin.courses.create') }}" class="elysian-side-footer-btn" style="color: rgba(201,169,110,0.7);" @click="sidebarOpen = false">
                         <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v6M5 8h6"/></svg>
                         <span>{{ __('New Course') }}</span>
                     </a>
-                    <a href="{{ route('home') }}" class="elysian-side-footer-btn">
+                    <a href="{{ route('profile.edit') }}" class="elysian-side-footer-btn {{ request()->routeIs('profile.*') ? 'active' : '' }}" @click="sidebarOpen = false">
+                        <svg viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="3"/><path d="M2.5 14c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5"/></svg>
+                        <span>{{ __('My Profile') }}</span>
+                    </a>
+                    <a href="{{ route('home') }}" class="elysian-side-footer-btn" @click="sidebarOpen = false">
                         <svg viewBox="0 0 16 16"><path d="M8 1L1 8h2.5v6h3.5v-4h2v4h3.5V8H15L8 1z"/></svg>
                         <span>{{ __('Main Site') }}</span>
                     </a>
@@ -195,12 +202,12 @@
                             <p>{{ __('Admin Panel') }}</p>
                             <p>{{ $user->name }}</p>
                         </div>
-                        <div class="elysian-topbar-avatar">
+                        <a href="{{ route('profile.edit') }}" class="elysian-topbar-avatar" title="{{ __('Edit your profile') }}">
                             <span>{{ $initials }}</span>
                             @if ($profilePhotoUrl)
                                 <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
                             @endif
-                        </div>
+                        </a>
                     </div>
                 </header>
 

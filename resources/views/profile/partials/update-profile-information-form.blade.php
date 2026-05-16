@@ -1,69 +1,74 @@
-<section class="h-full">
-    <header class="flex items-start gap-3">
-        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-boss-gold/15 bg-boss-gold/[0.08] text-boss-gold">
-            <svg viewBox="0 0 16 16" class="h-4 w-4 fill-none stroke-current stroke-[1.7]"><circle cx="8" cy="5" r="3"></circle><path d="M2.5 14c0-3.2 2.5-5.5 5.5-5.5s5.5 2.3 5.5 5.5"></path></svg>
+<form
+    method="POST"
+    action="{{ route('profile.update') }}"
+    enctype="multipart/form-data"
+    class="space-y-4"
+    x-data="{
+        saving: false,
+        saved: {{ session('status') === 'profile-updated' ? 'true' : 'false' }},
+    }"
+    @submit="saving = true"
+>
+    @csrf
+    @method('PATCH')
+
+    {{-- Name --}}
+    <div>
+        <label for="name" class="block text-[0.68rem] uppercase tracking-[0.14em] text-boss-ivory/50">
+            {{ __('Display Name') }}
+        </label>
+        <x-text-input
+            id="name"
+            name="name"
+            type="text"
+            class="mt-2 block w-full"
+            :value="old('name', $user->name)"
+            required
+            autofocus
+            autocomplete="name"
+        />
+        <x-input-error class="mt-1.5" :messages="$errors->get('name')" />
+    </div>
+
+    {{-- Email — read-only display, submitted as hidden field --}}
+    <input type="hidden" name="email" value="{{ $user->email }}">
+    <div>
+        <label class="block text-[0.68rem] uppercase tracking-[0.14em] text-boss-ivory/50">
+            {{ __('Email Address') }}
+        </label>
+        <div class="mt-2 flex items-center gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5">
+            <span class="flex-1 truncate text-sm text-boss-ivory/50">{{ $user->email }}</span>
+            <span class="shrink-0 rounded border border-white/[0.07] bg-white/[0.03] px-2 py-0.5 text-[0.58rem] uppercase tracking-[0.12em] text-boss-ivory/25">{{ __('fixed') }}</span>
+        </div>
+        <p class="mt-1.5 text-[0.61rem] text-boss-ivory/25">{{ __('Contact support to change your email address.') }}</p>
+    </div>
+
+    {{-- Save row --}}
+    <div class="flex items-center gap-3 pt-1">
+        <button
+            type="submit"
+            :disabled="saving"
+            class="inline-flex items-center gap-2 rounded-full border px-5 py-2 text-[0.75rem] font-medium tracking-wide transition-all disabled:opacity-50"
+            style="border-color: rgba(201,169,110,0.35); background: rgba(201,169,110,0.11); color: #C9A96E;"
+            onmouseover="this.style.background='rgba(201,169,110,0.20)'"
+            onmouseout="this.style.background='rgba(201,169,110,0.11)'"
+        >
+            <svg x-show="saving" class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="32" stroke-dashoffset="12"/>
+            </svg>
+            <span x-text="saving ? '{{ __('Saving…') }}' : '{{ __('Save Changes') }}'"></span>
+        </button>
+
+        <span
+            x-show="saved && !saving"
+            x-transition
+            x-init="saved && setTimeout(() => saved = false, 3000)"
+            class="flex items-center gap-1.5 text-[0.72rem] text-emerald-300"
+        >
+            <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[2.2]">
+                <path d="M3 8.5l3.5 3.5L13 5"/>
+            </svg>
+            {{ __('Saved') }}
         </span>
-        <div>
-            <h2 class="pd-heading text-[1.28rem] text-boss-ivory">
-                {{ __('Profile Information') }}
-            </h2>
-
-            <p class="mt-2 text-sm leading-6 text-boss-ivory/42">
-                {{ __("Update your public account details and contact email.") }}
-            </p>
-        </div>
-    </header>
-
-    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
-        @csrf
-    </form>
-
-    <form method="post" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="mt-7 space-y-5">
-        @csrf
-        @method('patch')
-
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" name="name" type="text" class="mt-2 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
-        </div>
-
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-2 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
-
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div>
-                    <p class="text-sm mt-2 text-boss-ivory/50">
-                        {{ __('Your email address is unverified.') }}
-
-                        <button form="send-verification" class="underline text-sm text-boss-gold hover:text-boss-gold-light rounded-md">
-                            {{ __('Click here to re-send the verification email.') }}
-                        </button>
-                    </p>
-
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-green-300">
-                            {{ __('A new verification link has been sent to your email address.') }}
-                        </p>
-                    @endif
-                </div>
-            @endif
-        </div>
-
-        <div class="flex flex-wrap items-center gap-4 pt-1">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
-
-            @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="rounded-full border border-emerald-400/15 bg-emerald-400/10 px-3 py-1 text-sm text-emerald-200"
-                >{{ __('Saved.') }}</p>
-            @endif
-        </div>
-    </form>
-</section>
+    </div>
+</form>

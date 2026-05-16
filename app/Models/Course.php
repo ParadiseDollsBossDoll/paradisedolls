@@ -186,6 +186,60 @@ class Course extends Model
         return $this->publicImageUrl($this->course_cover_image);
     }
 
+    public function courseOutlineUrl(): ?string
+    {
+        return $this->publicImageUrl($this->course_outline_url);
+    }
+
+    public function courseOutlineFileName(): ?string
+    {
+        if (blank($this->course_outline_url)) {
+            return null;
+        }
+
+        $path = parse_url($this->course_outline_url, PHP_URL_PATH) ?: $this->course_outline_url;
+        $path = str_replace('\\', '/', rawurldecode($path));
+
+        return basename($path) ?: null;
+    }
+
+    public function hasCourseOutlineMaterial(): bool
+    {
+        return (bool) $this->has_course_outline && filled($this->course_outline_url);
+    }
+
+    public function hasIntroMaterial(): bool
+    {
+        return (bool) $this->has_intro;
+    }
+
+    public function hasPreLessonMaterials(): bool
+    {
+        return $this->hasCourseOutlineMaterial() || $this->hasIntroMaterial();
+    }
+
+    public function lessonsInModuleOrder(): Collection
+    {
+        if (! $this->relationLoaded('modules') || ! $this->relationLoaded('lessons')) {
+            return $this->lessons;
+        }
+
+        $moduleLessons = $this->modules
+            ->flatMap(fn (CourseModule $module) => $module->relationLoaded('lessons') ? $module->lessons : collect())
+            ->values();
+
+        $moduleLessonIds = $moduleLessons
+            ->pluck('id')
+            ->map(fn ($lessonId) => (int) $lessonId)
+            ->all();
+
+        $unassignedLessons = $this->lessons
+            ->reject(fn (Lesson $lesson) => in_array((int) $lesson->id, $moduleLessonIds, true))
+            ->values();
+
+        return $moduleLessons->concat($unassignedLessons)->values();
+    }
+
     public function learningPoints(): array
     {
         return $this->linesFromText($this->what_you_will_learn);

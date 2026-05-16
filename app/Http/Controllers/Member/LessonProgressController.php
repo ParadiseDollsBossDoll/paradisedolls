@@ -25,6 +25,35 @@ class LessonProgressController extends Controller
         $progress->completed_at = $completed ? now() : null;
         $progress->save();
 
+        if ($completed) {
+            $course->load([
+                'lessons' => fn ($query) => $query
+                    ->publishedForMembers()
+                    ->orderBy('sort_order'),
+                'modules' => fn ($query) => $query
+                    ->where('is_published', true)
+                    ->with(['lessons' => fn ($lessonQuery) => $lessonQuery
+                        ->publishedForMembers()
+                        ->orderBy('sort_order')])
+                    ->orderBy('sort_order'),
+            ]);
+            $course->setRelation('lessons', $course->lessonsInModuleOrder());
+
+            $lessonIds = $course->lessons->pluck('id')->values();
+            $selectedIndex = $lessonIds->search($lesson->id);
+            $nextLesson = $selectedIndex !== false && $selectedIndex < $lessonIds->count() - 1
+                ? $course->lessons->firstWhere('id', $lessonIds[$selectedIndex + 1])
+                : null;
+
+            if ($nextLesson !== null) {
+                return redirect()
+                    ->route('member.courses.lessons.show', [$course->slug, $nextLesson])
+                    ->with('status', __('Lesson completed.'));
+            }
+
+            return redirect()->back()->with('status', __('Course completed.'));
+        }
+
         return redirect()->back()->with('status', __('Progress updated.'));
     }
 }
