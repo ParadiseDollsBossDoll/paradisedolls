@@ -161,7 +161,7 @@
             @endunless
 
             <div class="flex min-w-0 flex-1 flex-col">
-                <header class="elysian-topbar">
+                <header class="elysian-topbar {{ $player ? 'elysian-topbar--course' : '' }}">
                     @unless ($hideSidebar)
                         <button type="button" class="elysian-mobile-toggle" @click="sidebarOpen = true" aria-label="{{ __('Menu') }}">
                             <span></span>
@@ -169,22 +169,43 @@
                             <span></span>
                         </button>
                     @endunless
-                    <span class="elysian-breadcrumb">{{ __('Members') }} / {{ $currentLabel }}</span>
-                    <div class="elysian-topbar-right">
-                        <div class="elysian-topbar-greeting">
-                            <p>{{ __('Welcome back,') }}</p>
-                            <p>{{ $user->name }}</p>
+                    @if ($player)
+                        <div class="elysian-topbar-main">
+                            <span class="elysian-breadcrumb">{{ __('Members') }} / {{ $currentLabel }}</span>
+                            <div class="elysian-topbar-right">
+                                <a href="{{ route('member.referrals.index') }}" class="elysian-topbar-refer rounded-full border border-boss-gold/20 bg-boss-gold/10 px-4 py-2 text-[0.66rem] uppercase tracking-[0.14em] text-boss-gold transition-colors hover:bg-boss-gold hover:text-boss-ink">
+                                    {{ __('Refer') }}
+                                </a>
+                                <div class="elysian-topbar-greeting">
+                                    <p>{{ __('Welcome back,') }}</p>
+                                    <p>{{ $user->name }}</p>
+                                </div>
+                                <div class="elysian-topbar-avatar">
+                                    <span>{{ $initials }}</span>
+                                    @if ($profilePhotoUrl)
+                                        <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
+                                    @endif
+                                </div>
+                            </div>
                         </div>
-                        <a href="{{ route('member.referrals.index') }}" class="hidden rounded-full border border-boss-gold/20 bg-boss-gold/10 px-4 py-2 text-[0.66rem] uppercase tracking-[0.14em] text-boss-gold transition-colors hover:bg-boss-gold hover:text-boss-ink sm:inline-flex">
-                            {{ __('Refer') }}
-                        </a>
-                        <div class="elysian-topbar-avatar">
-                            <span>{{ $initials }}</span>
-                            @if ($profilePhotoUrl)
-                                <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
-                            @endif
+                    @else
+                        <span class="elysian-breadcrumb">{{ __('Members') }} / {{ $currentLabel }}</span>
+                        <div class="elysian-topbar-right">
+                            <a href="{{ route('member.referrals.index') }}" class="hidden rounded-full border border-boss-gold/20 bg-boss-gold/10 px-4 py-2 text-[0.66rem] uppercase tracking-[0.14em] text-boss-gold transition-colors hover:bg-boss-gold hover:text-boss-ink sm:inline-flex">
+                                {{ __('Refer') }}
+                            </a>
+                            <div class="elysian-topbar-greeting">
+                                <p>{{ __('Welcome back,') }}</p>
+                                <p>{{ $user->name }}</p>
+                            </div>
+                            <div class="elysian-topbar-avatar">
+                                <span>{{ $initials }}</span>
+                                @if ($profilePhotoUrl)
+                                    <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
+                                @endif
+                            </div>
                         </div>
-                    </div>
+                    @endif
                 </header>
 
                 <main class="{{ $player ? 'flex-1 overflow-hidden p-0' : ('flex-1 overflow-auto ' . ($hideSidebar ? 'p-4 sm:p-5 lg:p-6 xl:p-8' : 'p-5 lg:p-8')) }}">

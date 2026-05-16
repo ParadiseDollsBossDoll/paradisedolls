@@ -104,7 +104,7 @@ class MemberOnboardingController extends Controller
     private function sendConfirmation(ModelProfile $profile): void
     {
         try {
-            Mail::to($profile->user->email)->send(new ModelInformationSubmittedMail($profile));
+            Mail::to($profile->user->email)->queue(new ModelInformationSubmittedMail($profile));
         } catch (Throwable $e) {
             report($e);
         }

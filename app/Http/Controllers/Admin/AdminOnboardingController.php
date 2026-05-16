@@ -177,7 +177,7 @@ class AdminOnboardingController extends Controller
     private function sendMail(ModelProfile $profile, mixed $mail): void
     {
         try {
-            Mail::to($profile->user->email)->send($mail);
+            Mail::to($profile->user->email)->queue($mail);
         } catch (Throwable $e) {
             report($e);
         }

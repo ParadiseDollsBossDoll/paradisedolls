@@ -71,7 +71,7 @@ class MemberVerificationController extends Controller
     private function sendConfirmation(ModelProfile $profile): void
     {
         try {
-            Mail::to($profile->user->email)->send(new VerificationSubmissionReceivedMail($profile));
+            Mail::to($profile->user->email)->queue(new VerificationSubmissionReceivedMail($profile));
         } catch (Throwable $e) {
             report($e);
         }

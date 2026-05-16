@@ -87,7 +87,7 @@ class AdminApplicationController extends Controller
         }
 
         try {
-            Mail::to($application->email)->send(new MemberApplicationApprovedMail(
+            Mail::to($application->email)->queue(new MemberApplicationApprovedMail(
                 memberName: $application->name,
                 temporaryPassword: $temporaryPassword,
                 loginUrl: route('login'),

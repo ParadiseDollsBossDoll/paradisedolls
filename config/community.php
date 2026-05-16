@@ -14,6 +14,6 @@ return [
         'search_preview_limit' => (int) env('COMMUNITY_SEARCH_PREVIEW_LIMIT', 8),
         'image_preview_max_bytes' => (int) env('COMMUNITY_IMAGE_PREVIEW_MAX_BYTES', 4194304),
         'presence_cache_store' => env('COMMUNITY_PRESENCE_CACHE_STORE', 'file'),
-        'presence_refresh_interval_ms' => (int) env('COMMUNITY_PRESENCE_REFRESH_INTERVAL_MS', 30000),
+        'presence_refresh_interval_ms' => (int) env('COMMUNITY_PRESENCE_REFRESH_INTERVAL_MS', 45000),
     ],
 ];
