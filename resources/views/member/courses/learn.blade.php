@@ -36,16 +36,25 @@
                     return 'https://drive.google.com/file/d/'.rawurlencode($fileId).'/preview';
                 }
             }
-            if (str_ends_with(strtolower($parts['path'] ?? ''), '.pdf')) {
-                return $url.(str_contains($url, '#') ? '&' : '#').'page=1&view=FitH';
-            }
             return $url;
+        };
+        $pdfCanvasUrl = function (?string $url): ?string {
+            if (blank($url)) return null;
+            $url = trim($url);
+            $parts = parse_url($url);
+            $host = strtolower($parts['host'] ?? '');
+
+            if ($host === 'drive.google.com') return null;
+
+            return str_ends_with(strtolower($parts['path'] ?? $url), '.pdf') ? $url : null;
         };
         $courseOutlineUrl        = $course->courseOutlineUrl();
         $courseOutlineFileName   = $course->courseOutlineFileName() ?: __('Course Outline');
         $hasCourseOutlineItem    = $course->hasCourseOutlineMaterial() && filled($courseOutlineUrl);
         $courseOutlinePath       = $courseOutlineUrl ? (parse_url($courseOutlineUrl, PHP_URL_PATH) ?: $courseOutlineUrl) : '';
-        $courseOutlinePreviewUrl = $hasCourseOutlineItem && str_ends_with(strtolower($courseOutlinePath), '.pdf')
+        $courseOutlineCanvasUrl  = $hasCourseOutlineItem && str_ends_with(strtolower($courseOutlinePath), '.pdf')
+            ? $pdfCanvasUrl($courseOutlineUrl) : null;
+        $courseOutlinePreviewUrl = $hasCourseOutlineItem && ! $courseOutlineCanvasUrl && str_ends_with(strtolower($courseOutlinePath), '.pdf')
             ? $pdfEmbedUrl($courseOutlineUrl) : null;
         $introVideoUrl   = $course->hasIntroMaterial() ? $mediaEmbedUrl($course->introVideoEmbedUrl()) : null;
         $hasIntroItem    = $course->hasIntroMaterial();
@@ -58,7 +67,8 @@
             elseif ($hasIntroItem) $selectedCourseItem = 'intro';
         }
         $lessonVideoUrl        = $selectedLesson ? $mediaEmbedUrl($selectedLesson->videoEmbedUrl()) : null;
-        $lessonPdfPreviewUrl   = $selectedLesson ? $pdfEmbedUrl($selectedLesson->pdf_url) : null;
+        $lessonPdfCanvasUrl    = $selectedLesson ? $pdfCanvasUrl($selectedLesson->pdf_url) : null;
+        $lessonPdfPreviewUrl   = $selectedLesson && ! $lessonPdfCanvasUrl ? $pdfEmbedUrl($selectedLesson->pdf_url) : null;
         $lessonBannerImage     = $selectedLesson?->lessonBannerImageUrl();
         $lessonImageUrls       = $selectedLesson?->lessonImageUrls() ?? [];
         $showInlineImageGallery = $lessonImageUrls !== [];
@@ -360,7 +370,25 @@
 
                         {{-- ── COURSE OUTLINE ITEM ──────────────────────────── --}}
                         @if ($selectedCourseItem === 'outline' && $hasCourseOutlineItem)
-                            @if ($courseOutlinePreviewUrl)
+                            @if ($courseOutlineCanvasUrl)
+                                <div
+                                    x-data="pdfLessonViewer({{ Js::from($courseOutlineCanvasUrl) }})"
+                                    x-init="init()"
+                                    class="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#08080f]"
+                                >
+                                    <div x-show="loading && !error" class="flex items-center justify-center gap-3 bg-[#060610] py-16">
+                                        <svg class="h-5 w-5 animate-spin text-boss-gold/50" viewBox="0 0 24 24" fill="none">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                        </svg>
+                                        <span class="text-[0.8rem] text-boss-ivory/40">{{ __('Loading PDF...') }}</span>
+                                    </div>
+                                    <div x-show="error" class="bg-[#060610] px-5 py-5 text-[0.78rem] text-red-300/70" x-text="error"></div>
+                                    <div x-show="!loading && !error" x-ref="wrap" class="pd-scroll overflow-y-auto bg-[#060610]" style="height: min(76vh, 860px); min-height: min(520px, 68vh); scrollbar-gutter: stable; scroll-behavior: smooth">
+                                        <div x-ref="pages" class="mx-auto flex w-full max-w-[1120px] flex-col items-center gap-5 px-4 py-5 sm:gap-6 sm:px-6"></div>
+                                    </div>
+                                </div>
+                            @elseif ($courseOutlinePreviewUrl)
                                 <div class="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#08080f]">
                                     <div class="aspect-video w-full">
                                         <iframe class="h-full w-full" src="{{ $courseOutlinePreviewUrl }}" title="{{ __('Course Outline') }}" loading="lazy"></iframe>
@@ -536,7 +564,25 @@
                                             <a href="{{ $selectedLesson->pdf_url }}" target="_blank" rel="noopener noreferrer" class="pd-btn-secondary shrink-0">{{ __('Open PDF') }}</a>
                                         @endif
                                     </div>
-                                    @if ($lessonPdfPreviewUrl)
+                                    @if ($lessonPdfCanvasUrl)
+                                        <div
+                                            x-data="pdfLessonViewer({{ Js::from($lessonPdfCanvasUrl) }})"
+                                            x-init="init()"
+                                            class="mb-4 overflow-hidden rounded-xl border border-white/[0.06] bg-[#08080f]"
+                                        >
+                                            <div x-show="loading && !error" class="flex items-center justify-center gap-3 bg-[#060610] py-16">
+                                                <svg class="h-5 w-5 animate-spin text-boss-gold/50" viewBox="0 0 24 24" fill="none">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                                </svg>
+                                                <span class="text-[0.8rem] text-boss-ivory/40">{{ __('Loading PDF...') }}</span>
+                                            </div>
+                                            <div x-show="error" class="bg-[#060610] px-5 py-5 text-[0.78rem] text-red-300/70" x-text="error"></div>
+                                            <div x-show="!loading && !error" x-ref="wrap" class="pd-scroll overflow-y-auto bg-[#060610]" style="height: min(76vh, 860px); min-height: min(520px, 68vh); scrollbar-gutter: stable; scroll-behavior: smooth">
+                                                <div x-ref="pages" class="mx-auto flex w-full max-w-[1120px] flex-col items-center gap-5 px-4 py-5 sm:gap-6 sm:px-6"></div>
+                                            </div>
+                                        </div>
+                                    @elseif ($lessonPdfPreviewUrl)
                                         <div class="mb-4 overflow-hidden rounded-xl border border-white/[0.06] bg-[#08080f]">
                                             <div class="aspect-video w-full">
                                                 <iframe class="h-full w-full" src="{{ $lessonPdfPreviewUrl }}" title="{{ __('PDF Guide') }}" loading="lazy"></iframe>

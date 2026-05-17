@@ -80,6 +80,8 @@ class AdminCourseController extends Controller
 
     public function store(Request $request, CourseCommunityService $community): RedirectResponse
     {
+        $this->assertLessonContentBlockPayloadIsComplete($request, 'lessons');
+
         $validated = $this->validateCourse($request, validateLessons: true);
         $courseData = $this->normalizedCourseData($request, $validated['course']);
 
@@ -173,6 +175,8 @@ class AdminCourseController extends Controller
             ]);
         }
 
+        $this->assertLessonContentBlockPayloadIsComplete($request, 'lessons');
+
         $validated = $this->validateCourse($request, $course->id, validateLessons: true);
         $courseData = $this->normalizedCourseData($request, $validated['course'], $course);
 
@@ -229,7 +233,9 @@ class AdminCourseController extends Controller
         $fileRule = match ($type) {
             'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
             'pdf' => ['required', 'file', 'mimes:pdf', 'max:20480'],
-            default => ['required', 'file', 'mimes:pdf,ppt,pptx,key', 'max:20480'],
+            // Presentation: PDF only — admin exports PowerPoint to PDF before uploading.
+            'presentation' => ['required', 'file', 'mimes:pdf', 'max:102400'],
+            default => ['required', 'file', 'mimes:pdf', 'max:20480'],
         };
 
         $request->validate([
@@ -244,10 +250,14 @@ class AdminCourseController extends Controller
         };
 
         $path = $request->file('file')->store($directory, 'public');
+        $slideImages = $type === 'presentation'
+            ? $this->createPresentationSlideImages($path)
+            : [];
 
         return response()->json([
             'path' => $path,
             'url' => Storage::disk('public')->url($path),
+            'slide_images' => $slideImages,
         ]);
     }
 
@@ -665,8 +675,8 @@ class AdminCourseController extends Controller
      */
     private function shouldSyncContentBlocks(array $lesson): bool
     {
-        return array_key_exists('content_blocks_enabled', $lesson)
-            || array_key_exists('content_blocks', $lesson);
+        return array_key_exists('content_blocks', $lesson)
+            || array_key_exists('_content_block_count', $lesson);
     }
 
     /**

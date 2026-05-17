@@ -4,7 +4,10 @@ import './application-form';
 import './community';
 
 import Alpine from 'alpinejs';
+import { pdfLessonViewer } from './pdf-viewer';
 
 window.Alpine = Alpine;
+
+Alpine.data('pdfLessonViewer', pdfLessonViewer);
 
 Alpine.start();

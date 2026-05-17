@@ -47,6 +47,7 @@
             'gallery_captions' => $block->galleryCaptions() !== [] ? implode("\n", $block->galleryCaptions()) : '',
             'file_path' => $block->file_path,
             'file_url' => $block->fileUrl(),
+            'slide_images' => $block->settings['slide_images'] ?? [],
             'button_label' => $block->buttonLabel(''),
             'bunny_video_id' => $block->bunny_video_id,
             'bunny_library_id' => $block->bunny_library_id,
@@ -212,7 +213,7 @@
             <span class="rounded-full px-2.5 py-0.5" x-bind:style="`background-color: ${platformColor}20; color: ${platformColor};`">③ Modules + Lessons</span>
         </div>
 
-        <form method="POST" action="{{ route('admin.courses.update', $course) }}" enctype="multipart/form-data" class="space-y-5">
+        <form method="POST" action="{{ route('admin.courses.update', $course) }}" enctype="multipart/form-data" class="space-y-5" @submit="rebuildBlockHiddenInputs($event.target); debugCourseSubmit($event.target)">
             @csrf
             @method('PUT')
             {{-- Safety: tells the backend how many lessons the frontend sent.
