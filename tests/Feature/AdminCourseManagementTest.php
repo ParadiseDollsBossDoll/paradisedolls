@@ -28,6 +28,11 @@ class AdminCourseManagementTest extends TestCase
             'platform_color' => '#FF3E4D',
             'short_description' => 'A premium onboarding path for new members.',
             'description' => 'Master the platform from setup to private shows.',
+            'course_access_requirements' => "Submit the platform QR code.\nComplete Kayla's callback.",
+            'access_registration_instructions' => 'Register the account and keep the login ready.',
+            'access_callback_instructions' => 'Join Kayla on a video call before QR verification.',
+            'access_onboarding_instructions' => 'Complete the setup checklist Kayla gives you.',
+            'access_verification_instructions' => 'Submit QR screenshots quickly before codes expire.',
             'has_course_outline' => '1',
             'course_outline_upload' => $this->fakePdfUpload('outline.pdf'),
             'has_intro' => '1',
@@ -74,6 +79,11 @@ class AdminCourseManagementTest extends TestCase
         $this->assertTrue($course->is_published);
         $this->assertSame('#FF3E4D', $course->platform_color);
         $this->assertSame('A premium onboarding path for new members.', $course->short_description);
+        $this->assertSame("Submit the platform QR code.\nComplete Kayla's callback.", $course->course_access_requirements);
+        $this->assertSame('Register the account and keep the login ready.', $course->access_registration_instructions);
+        $this->assertSame('Join Kayla on a video call before QR verification.', $course->access_callback_instructions);
+        $this->assertSame('Complete the setup checklist Kayla gives you.', $course->access_onboarding_instructions);
+        $this->assertSame('Submit QR screenshots quickly before codes expire.', $course->access_verification_instructions);
         $this->assertTrue($course->has_course_outline);
         $this->assertStringStartsWith('academy/course-outlines/', $course->course_outline_url);
         $this->assertStringStartsWith('outline-', $course->courseOutlineFileName());
@@ -95,6 +105,7 @@ class AdminCourseManagementTest extends TestCase
     public function test_admin_can_toggle_course_visibility_from_index_cards(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
         $course = Course::create([
             'title' => 'OnlyFans Blueprint',
             'slug' => 'onlyfans-blueprint',
@@ -109,6 +120,17 @@ class AdminCourseManagementTest extends TestCase
         ])->assertRedirect(route('admin.courses.index'));
 
         $this->assertTrue($course->fresh()->is_published);
+
+        $notification = $member->notifications()->first();
+        $this->assertNotNull($notification);
+        $this->assertSame('new_course', $notification->data['category']);
+        $this->assertSame('New course available', $notification->data['title']);
+
+        $this->actingAs($member)
+            ->get(route('notifications.open', $notification))
+            ->assertRedirect(route('member.courses.show', $course->slug, false));
+
+        $this->assertNotNull($notification->fresh()->read_at);
     }
 
     public function test_admin_can_upload_course_and_lesson_visual_images(): void

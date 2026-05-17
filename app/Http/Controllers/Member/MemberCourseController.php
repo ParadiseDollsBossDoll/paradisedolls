@@ -3,14 +3,19 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
+use App\Mail\CourseAccessRequestedMail;
 use App\Models\Course;
+use App\Models\CourseAccessRequest;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
+use App\Models\User;
+use App\Notifications\SystemNotification;
 use App\Services\CourseCommunityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
+use Throwable;
 
 class MemberCourseController extends Controller
 {
@@ -70,12 +75,19 @@ class MemberCourseController extends Controller
             ->map(fn ($courseId) => (int) $courseId)
             ->all();
 
+        $accessRequestsByCourse = $request->user()
+            ->courseAccessRequests()
+            ->whereIn('course_id', $courses->pluck('id'))
+            ->get()
+            ->keyBy('course_id');
+
         return view('member.courses.index', compact(
             'courses',
             'filteredCourses',
             'courseProgress',
             'completedLessonIds',
             'enrolledCourseIds',
+            'accessRequestsByCourse',
             'filter'
         ));
     }
@@ -83,19 +95,21 @@ class MemberCourseController extends Controller
     public function learn(Request $request, string $slug, CourseCommunityService $community): RedirectResponse
     {
         $course = $this->publishedCourse($slug);
+        $profile = $request->user()->modelProfile()->first();
 
-        DB::transaction(function () use ($course, $request): void {
-            $course->chatRoom()->firstOrCreate([], [
-                'name' => $course->title.' Community',
-            ]);
+        if (! $profile?->isVerified()) {
+            return redirect()
+                ->route('member.courses.show', $course->slug)
+                ->with('status', __('Verification must be approved before Kayla can unlock this course.'));
+        }
 
-            $course->enrollments()->firstOrCreate(
-                ['user_id' => $request->user()->id],
-                ['enrolled_at' => now()]
-            );
-        });
+        if (! $course->isEnrolledBy($request->user())) {
+            return redirect()
+                ->route('member.courses.show', $course->slug)
+                ->with('status', __('Locked pending Kayla approval.'));
+        }
 
-        $community->ensureForCourse($course, $request->user());
+        $community->joinCourse($request->user(), $course);
 
         $course = $this->learningCourse($slug);
         $lesson = $this->resumeLesson($course, $request->user()->id);
@@ -122,6 +136,8 @@ class MemberCourseController extends Controller
     {
         $course = $this->overviewCourse($slug);
         $isEnrolled = $course->isEnrolledBy($request->user());
+        $isVerified = (bool) $request->user()->modelProfile()->first()?->isVerified();
+        $courseAccessRequest = $course->accessRequestFor($request->user());
         $progress = $this->courseProgress($course, $request->user()->id);
         $resumeLesson = $this->resumeLesson($course, $request->user()->id);
         $communityChannel = $course->communityChannels()
@@ -131,10 +147,52 @@ class MemberCourseController extends Controller
         return view('member.courses.show', compact(
             'course',
             'isEnrolled',
+            'isVerified',
+            'courseAccessRequest',
             'progress',
             'resumeLesson',
             'communityChannel'
         ));
+    }
+
+    public function requestAccess(Request $request, string $slug): RedirectResponse
+    {
+        $course = $this->publishedCourse($slug);
+        $profile = $request->user()->modelProfile()->first();
+
+        if (! $profile?->isVerified()) {
+            return redirect()
+                ->route('member.courses.show', $course->slug)
+                ->with('status', __('Verification must be approved before Kayla can review course access.'));
+        }
+
+        if ($course->isEnrolledBy($request->user())) {
+            return redirect()
+                ->route('member.courses.show', $course->slug)
+                ->with('status', __('This course is already unlocked for you.'));
+        }
+
+        $validated = $request->validate([
+            'member_notes' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $accessRequest = CourseAccessRequest::query()->updateOrCreate([
+            'course_id' => $course->id,
+            'user_id' => $request->user()->id,
+        ], [
+            'status' => CourseAccessRequest::STATUS_PENDING,
+            'member_notes' => $validated['member_notes'] ?? null,
+            'reviewed_by' => null,
+            'reviewed_at' => null,
+            'admin_notes' => null,
+        ]);
+
+        $accessRequest->load(['course', 'user']);
+        $this->notifyAdminOfAccessRequest($accessRequest);
+
+        return redirect()
+            ->route('member.courses.show', $course->slug)
+            ->with('status', __('Access request sent. Kayla will review your course requirements and unlock it when approved.'));
     }
 
     public function learnShow(Request $request, string $slug): View
@@ -218,6 +276,30 @@ class MemberCourseController extends Controller
             ->where('slug', $slug)
             ->where('is_published', true)
             ->firstOrFail();
+    }
+
+    private function notifyAdminOfAccessRequest(CourseAccessRequest $accessRequest): void
+    {
+        User::query()
+            ->where('role', 'admin')
+            ->each(fn (User $admin) => $admin->notify(new SystemNotification(
+                title: __('Course access requested'),
+                body: __(':model requested access to :course.', [
+                    'model' => $accessRequest->user->name,
+                    'course' => $accessRequest->course->title,
+                ]),
+                actionUrl: route('admin.onboarding.index', ['model' => $accessRequest->user_id], false),
+                category: 'course_access_requested',
+            )));
+
+        try {
+            Mail::to(config('paradise.onboarding_email'))->queue(new CourseAccessRequestedMail(
+                accessRequest: $accessRequest,
+                adminUrl: route('admin.onboarding.index'),
+            ));
+        } catch (Throwable $e) {
+            report($e);
+        }
     }
 
     private function learningView(Request $request, Course $course, ?Lesson $selectedLesson, ?array $progress = null): View

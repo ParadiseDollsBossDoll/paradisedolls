@@ -20,12 +20,8 @@ const MESSAGE_TIMESTAMP_FORMATTER = new Intl.DateTimeFormat(undefined, {
     minute: '2-digit',
 });
 
-const escapeHtml = (value) => String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+const _escapeHtmlMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, c => _escapeHtmlMap[c]);
 
 const escapeRegExp = (value) => String(value ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -1054,7 +1050,7 @@ document.addEventListener('alpine:init', () => {
             }
 
             rendered = rendered
-                .replace(/(@[a-zA-Z0-9._-]+)/g, (_, mention) => `<span class="rounded-full bg-[#c9a96e]/12 px-2 py-0.5 text-[#f4dfb8]">${mention.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}</span>`)
+                .replace(/(@[a-zA-Z0-9._-]+)/g, (_, mention) => `<span class="rounded-full bg-[#c9a96e]/12 px-2 py-0.5 text-[#f4dfb8]">${mention}</span>`)
                 .replace(/\n/g, '<br>');
 
             return rendered;

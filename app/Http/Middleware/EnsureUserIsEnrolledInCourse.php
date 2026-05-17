@@ -18,17 +18,26 @@ class EnsureUserIsEnrolledInCourse
             abort(404);
         }
 
+        if (! $request->user()?->modelProfile()->first()?->isVerified()) {
+            return $this->deny($request, $course, __('Verification must be approved before Kayla can unlock this course.'));
+        }
+
         if ($request->user()?->enrolledCourses()->whereKey($course->id)->exists()) {
             return $next($request);
         }
 
+        return $this->deny($request, $course, __('Locked pending Kayla approval.'));
+    }
+
+    private function deny(Request $request, Course $course, string $message): Response
+    {
         if ($request->isMethod('GET')) {
             return redirect()
                 ->route('member.courses.show', $course->slug)
-                ->with('status', __('Click Start Learning first to enter this course.'));
+                ->with('status', $message);
         }
 
-        abort(403, __('You must be enrolled in this course to access its community.'));
+        abort(403, $message);
     }
 
     private function courseFromRoute(Request $request): ?Course

@@ -1,7 +1,7 @@
 <x-admin-layout>
     <div
         class="mx-auto max-w-full space-y-6 text-boss-ivory"
-        x-data="{ open: false, selected: null, showReject: false }"
+        x-data="{ open: false, selected: null, showReject: false, stageOptions: @js($stageOptions) }"
         @keydown.escape.window="open = false"
     >
 
@@ -91,6 +91,29 @@
                                         <span x-text="selected.profile.community_role_assigned_at ? '✓' : '○'"></span> Discord Role Assigned
                                     </span>
                                 </div>
+                            </div>
+                        </template>
+
+                        {{-- Manual onboarding controls --}}
+                        <template x-if="selected.profile">
+                            <div class="space-y-4 rounded-xl border border-white/[0.06] bg-white/[0.025] p-5">
+                                <div>
+                                    <p class="text-[0.68rem] uppercase tracking-[0.14em] text-boss-ivory/35">Manual Access Controls</p>
+                                    <p class="mt-1 text-[0.72rem] leading-relaxed text-boss-ivory/35">Move this model through Kayla's manual onboarding phases. Course-specific verification requirements are managed from each course.</p>
+                                </div>
+
+                                <form :action="selected.profile.stage_url" method="POST" class="space-y-2">
+                                    @csrf
+                                    <label class="block text-[0.62rem] uppercase tracking-[0.14em] text-boss-ivory/35">Current phase</label>
+                                    <select name="onboarding_stage" x-model="selected.profile.onboarding_stage" class="pd-input w-full text-sm">
+                                        <template x-for="option in stageOptions" :key="option.value">
+                                            <option :value="option.value" x-text="option.label"></option>
+                                        </template>
+                                    </select>
+                                    <button type="submit" class="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-boss-ivory/70 transition hover:bg-white/[0.07] hover:text-boss-ivory">
+                                        Save Phase
+                                    </button>
+                                </form>
                             </div>
                         </template>
 
@@ -336,6 +359,90 @@
                             </div>
                         </template>
 
+                        {{-- Website walkthrough access --}}
+                        <template x-if="selected.profile && selected.profile.course_access && selected.profile.course_access.length">
+                            <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-5">
+                                <div class="mb-4">
+                                    <p class="text-[0.68rem] uppercase tracking-[0.14em] text-boss-ivory/35">Website Walkthrough Access</p>
+                                    <p class="mt-1 text-[0.72rem] leading-relaxed text-boss-ivory/35">Unlock only the website walkthroughs this model is cleared to access.</p>
+                                </div>
+                                <div class="space-y-2">
+                                    <template x-for="course in selected.profile.course_access" :key="course.id">
+                                        <div class="rounded-xl border border-white/[0.05] bg-white/[0.02] px-3 py-3">
+                                            <div class="flex items-center justify-between gap-3">
+                                                <div class="min-w-0">
+                                                    <p class="truncate text-sm font-medium text-boss-ivory/75" x-text="course.title"></p>
+                                                    <p class="mt-0.5 text-[0.62rem] uppercase tracking-[0.12em]" :class="course.is_unlocked ? 'text-green-300/70' : (course.access_request_status === 'pending' ? 'text-boss-gold/75' : (course.access_request_status === 'rejected' ? 'text-red-300/70' : 'text-boss-ivory/28'))" x-text="course.is_unlocked ? 'Unlocked' : (course.access_request_label || 'Locked pending Kayla approval')"></p>
+                                                </div>
+                                                <template x-if="course.is_unlocked">
+                                                    <form :action="course.lock_url" method="POST" class="shrink-0">
+                                                        @csrf
+                                                        <button type="submit" class="rounded-lg border border-red-400/20 bg-red-400/[0.07] px-3 py-1.5 text-[0.68rem] font-semibold text-red-300/80 transition hover:bg-red-400/[0.12]">
+                                                            Lock
+                                                        </button>
+                                                    </form>
+                                                </template>
+                                                <template x-if="!course.is_unlocked">
+                                                    <form :action="course.unlock_url" method="POST" class="shrink-0">
+                                                        @csrf
+                                                        <button
+                                                            type="submit"
+                                                            :disabled="!selected.profile.is_verified"
+                                                            class="rounded-lg px-3 py-1.5 text-[0.68rem] font-semibold transition disabled:cursor-not-allowed disabled:border disabled:border-white/[0.06] disabled:bg-white/[0.03] disabled:text-boss-ivory/24"
+                                                            :class="selected.profile.is_verified ? 'bg-boss-gold text-boss-ink hover:opacity-90' : ''"
+                                                            x-text="selected.profile.is_verified ? (course.access_request_status === 'pending' ? 'Approve & Unlock' : 'Unlock') : 'Verify first'"
+                                                        ></button>
+                                                    </form>
+                                                </template>
+                                            </div>
+                                            <template x-if="course.access_requirements">
+                                                <p class="mt-2 whitespace-pre-line rounded-lg border border-white/[0.04] bg-black/10 px-3 py-2 text-[0.68rem] leading-relaxed text-boss-ivory/34" x-text="course.access_requirements"></p>
+                                            </template>
+                                            <template x-if="course.access_phases && course.access_phases.length">
+                                                <div class="mt-2 space-y-1.5">
+                                                    <template x-for="phase in course.access_phases" :key="phase.key">
+                                                        <div class="rounded-lg border border-boss-gold/10 bg-boss-gold/[0.035] px-3 py-2">
+                                                            <p class="text-[0.58rem] uppercase tracking-[0.12em] text-boss-gold/55" x-text="phase.label"></p>
+                                                            <p class="mt-1 whitespace-pre-line text-[0.68rem] leading-relaxed text-boss-ivory/40" x-text="phase.instructions"></p>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                            <template x-if="course.access_request_notes">
+                                                <div class="mt-2 rounded-lg border border-boss-gold/10 bg-boss-gold/[0.04] px-3 py-2">
+                                                    <p class="text-[0.58rem] uppercase tracking-[0.12em] text-boss-gold/55">Model access note</p>
+                                                    <p class="mt-1 whitespace-pre-line text-[0.72rem] leading-relaxed text-boss-ivory/55" x-text="course.access_request_notes"></p>
+                                                </div>
+                                            </template>
+                                            <template x-if="course.access_admin_notes">
+                                                <div class="mt-2 rounded-lg border border-red-400/10 bg-red-400/[0.04] px-3 py-2">
+                                                    <p class="text-[0.58rem] uppercase tracking-[0.12em] text-red-200/55">Kayla resubmission note</p>
+                                                    <p class="mt-1 whitespace-pre-line text-[0.72rem] leading-relaxed text-red-100/60" x-text="course.access_admin_notes"></p>
+                                                </div>
+                                            </template>
+                                            <template x-if="!course.is_unlocked && course.access_request_status">
+                                                <form :action="course.resubmission_url" method="POST" class="mt-2 space-y-2 rounded-lg border border-white/[0.04] bg-black/10 p-3">
+                                                    @csrf
+                                                    <label class="block text-[0.58rem] uppercase tracking-[0.12em] text-boss-ivory/30">Request resubmission</label>
+                                                    <textarea
+                                                        name="admin_notes"
+                                                        rows="3"
+                                                        required
+                                                        class="pd-input min-h-[84px] text-[0.72rem]"
+                                                        :placeholder="'Tell ' + selected.name + ' what to fix, upload, or explain before this course can be unlocked.'"
+                                                        x-text="course.access_admin_notes || ''"
+                                                    ></textarea>
+                                                    <button type="submit" class="w-full rounded-lg border border-red-400/20 bg-red-400/[0.08] px-3 py-2 text-[0.68rem] font-semibold text-red-200 transition hover:bg-red-400/[0.13]">
+                                                        Request Resubmission
+                                                    </button>
+                                                </form>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
                         {{-- Member since --}}
                         <p class="text-center text-[0.65rem] text-boss-ivory/22">
                             Member since <span x-text="selected.joined"></span>
@@ -488,6 +595,11 @@
                         @forelse ($models as $model)
                             @php
                                 $profile = $model->modelProfile;
+                                $unlockedCourseIds = $model->courseEnrollments
+                                    ->pluck('course_id')
+                                    ->map(fn ($courseId) => (int) $courseId)
+                                    ->all();
+                                $accessRequestsByCourse = $model->courseAccessRequests->keyBy('course_id');
 
                                 $modelData = [
                                     'id'      => $model->id,
@@ -512,6 +624,11 @@
                                         'emergency_contact_phone'     => $profile->emergency_contact_phone,
                                         'discord_username'            => $profile->discord_username,
                                         'discord_user_id'             => $profile->discord_user_id,
+                                        'onboarding_stage'            => $profile->onboarding_stage ?: \App\Models\ModelProfile::STAGE_REGISTRATION,
+                                        'onboarding_stage_label'      => $profile->onboardingStageLabel(),
+                                        'stage_url'                   => route('admin.onboarding.stage', $profile),
+                                        'verification_request_instructions' => $profile->verification_request_instructions,
+                                        'verification_instructions_url' => route('admin.onboarding.verification-instructions', $profile),
                                         'has_information_form'        => $profile->hasInformationForm(),
                                         'information_submitted_at'    => $profile->information_submitted_at?->toFormattedDateString(),
                                         'verification_status'         => $profile->verification_status,
@@ -529,6 +646,26 @@
                                         'community_invited_at'        => $profile->community_invited_at?->toFormattedDateString(),
                                         'community_role_assigned_at'  => $profile->community_role_assigned_at?->toFormattedDateString(),
                                         'onboarding_percent'          => $profile->onboardingPercent(),
+                                        'course_access'               => $publishedCourses->map(function ($course) use ($accessRequestsByCourse, $profile, $unlockedCourseIds) {
+                                            $accessRequest = $accessRequestsByCourse->get($course->id);
+
+                                            return [
+                                                'id'          => $course->id,
+                                                'title'       => $course->title,
+                                                'platform'    => $course->displayPlatform(),
+                                                'access_requirements' => $course->course_access_requirements,
+                                                'access_phases' => $course->accessPhaseInstructions(),
+                                                'access_request_status' => $accessRequest?->status,
+                                                'access_request_label' => $accessRequest?->statusLabel(),
+                                                'access_request_notes' => $accessRequest?->member_notes,
+                                                'access_admin_notes' => $accessRequest?->admin_notes,
+                                                'access_requested_at' => $accessRequest?->created_at?->toFormattedDateString(),
+                                                'is_unlocked' => in_array((int) $course->id, $unlockedCourseIds, true),
+                                                'unlock_url'  => route('admin.onboarding.courses.unlock', [$profile, $course]),
+                                                'lock_url'    => route('admin.onboarding.courses.lock', [$profile, $course]),
+                                                'resubmission_url' => route('admin.onboarding.courses.resubmission', [$profile, $course]),
+                                            ];
+                                        })->values()->all(),
                                         'request_verification_url'    => route('admin.onboarding.request-verification', $profile),
                                         'verify_url'                  => route('admin.onboarding.verify', $profile),
                                         'reject_verification_url'     => route('admin.onboarding.reject-verification', $profile),
@@ -537,7 +674,7 @@
                                         'can_request_verification'    => $profile->hasInformationForm() && ! $profile->isVerified() && $profile->verification_status !== \App\Models\ModelProfile::VERIFICATION_SUBMITTED,
                                         'can_verify'                  => $profile->verification_status === \App\Models\ModelProfile::VERIFICATION_SUBMITTED,
                                         'can_community_invite'        => $profile->isVerified() && ! $profile->community_invited_at,
-                                        'can_role_assign'             => (bool) $profile->community_invited_at && ! $profile->community_role_assigned_at,
+                                        'can_role_assign'             => $profile->isVerified() && (bool) $profile->community_invited_at && ! $profile->community_role_assigned_at,
                                     ] : null,
                                 ];
                             @endphp

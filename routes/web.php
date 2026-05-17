@@ -26,6 +26,7 @@ use App\Http\Controllers\Member\MemberOnboardingController;
 use App\Http\Controllers\Member\MemberReferralController;
 use App\Http\Controllers\Member\MemberTestimonialController;
 use App\Http\Controllers\Member\MemberVerificationController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TestimonialController;
 use Illuminate\Support\Facades\Route;
@@ -75,6 +76,9 @@ Route::middleware(['auth', 'verified', 'model'])->prefix('member')->name('member
     Route::post('/courses/{slug}/learn', [MemberCourseController::class, 'learn'])
         ->middleware('throttle:member-progress')
         ->name('courses.learn');
+    Route::post('/courses/{slug}/request-access', [MemberCourseController::class, 'requestAccess'])
+        ->middleware('throttle:member-progress')
+        ->name('courses.request-access');
 
     Route::middleware('course.enrolled')->group(function () {
         Route::get('/courses/{slug}/learn', [MemberCourseController::class, 'learnShow'])->name('courses.learn.show');
@@ -89,7 +93,7 @@ Route::middleware(['auth', 'verified', 'model'])->prefix('member')->name('member
     });
 });
 
-Route::middleware(['auth', 'verified', 'community.perf'])->prefix('community')->name('community.')->group(function () {
+Route::middleware(['auth', 'verified', 'community.access', 'community.perf'])->prefix('community')->name('community.')->group(function () {
     Route::get('/', [CommunityController::class, 'show'])->name('show');
     Route::get('/channels', [CommunityChannelController::class, 'index'])->name('channels.index');
     Route::get('/channels/{channel:slug}', [CommunityController::class, 'show'])->name('channels.show');
@@ -119,6 +123,12 @@ Route::middleware(['auth', 'verified', 'community.perf'])->prefix('community')->
     Route::post('/members/{user}/timeout', [CommunityModerationController::class, 'timeout'])->name('members.timeout');
     Route::post('/timeouts/{timeout}/revoke', [CommunityModerationController::class, 'revoke'])->name('timeouts.revoke');
     Route::get('/moderation/history', [CommunityModerationController::class, 'history'])->name('moderation.history');
+});
+
+Route::middleware(['auth', 'verified'])->prefix('notifications')->name('notifications.')->group(function () {
+    Route::get('/', [NotificationController::class, 'index'])->name('index');
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllRead'])->name('mark-all-read');
+    Route::get('/{notification}', [NotificationController::class, 'open'])->name('open');
 });
 
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -180,6 +190,16 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         ->name('onboarding.documents.view');
 
     Route::middleware('throttle:admin-actions')->group(function () {
+        Route::post('/onboarding/{profile}/stage', [AdminOnboardingController::class, 'updateStage'])
+            ->name('onboarding.stage');
+        Route::post('/onboarding/{profile}/verification-instructions', [AdminOnboardingController::class, 'updateVerificationInstructions'])
+            ->name('onboarding.verification-instructions');
+        Route::post('/onboarding/{profile}/courses/{course}/unlock', [AdminOnboardingController::class, 'unlockCourse'])
+            ->name('onboarding.courses.unlock');
+        Route::post('/onboarding/{profile}/courses/{course}/lock', [AdminOnboardingController::class, 'lockCourse'])
+            ->name('onboarding.courses.lock');
+        Route::post('/onboarding/{profile}/courses/{course}/resubmission', [AdminOnboardingController::class, 'requestCourseResubmission'])
+            ->name('onboarding.courses.resubmission');
         Route::post('/onboarding/{profile}/request-verification', [AdminOnboardingController::class, 'requestVerification'])
             ->name('onboarding.request-verification');
         Route::post('/onboarding/{profile}/verify', [AdminOnboardingController::class, 'verify'])

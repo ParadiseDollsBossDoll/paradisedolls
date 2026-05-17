@@ -204,6 +204,7 @@
                         $isCompleted = $progress['status'] === 'completed';
                         $isInProgress = $progress['status'] === 'in-progress';
                         $isEnrolled  = in_array($course->id, $enrolledCourseIds, true);
+                        $accessRequest = $accessRequestsByCourse->get($course->id);
                         $color       = $course->displayColor();
                         $bg          = $course->displayColorBackground();
                         $image       = $course->overviewImageUrl();
@@ -216,7 +217,8 @@
                                 : route('member.courses.learn.show', $course->slug))
                             : route('member.courses.show', $course->slug);
                         $ctaLabel = match (true) {
-                            ! $isEnrolled => __('Preview Course'),
+                            ! $isEnrolled && $accessRequest?->isPending() => __('View Request'),
+                            ! $isEnrolled => __('Request Access'),
                             $isCompleted  => __('Review Course'),
                             $isInProgress => __('Continue Learning'),
                             default       => __('Start Course'),
@@ -255,6 +257,8 @@
                                     <span class="rounded-full border border-white/[0.10] bg-black/35 px-2.5 py-0.5 text-[0.6rem] text-boss-ivory/55 backdrop-blur-sm">{{ __('In Progress') }}</span>
                                 @elseif ($isEnrolled)
                                     <span class="rounded-full border border-boss-gold/22 bg-black/35 px-2.5 py-0.5 text-[0.6rem] text-boss-gold/80 backdrop-blur-sm">{{ __('Enrolled') }}</span>
+                                @else
+                                    <span class="rounded-full border border-boss-gold/22 bg-black/35 px-2.5 py-0.5 text-[0.6rem] text-boss-gold/80 backdrop-blur-sm">{{ __('Locked') }}</span>
                                 @endif
                             </div>
 
@@ -328,7 +332,7 @@
                                 </div>
                             @else
                                 <div class="mt-4 rounded-xl border border-white/[0.04] bg-white/[0.015] px-3 py-2.5">
-                                    <p class="text-[0.7rem] text-boss-ivory/30">{{ __('Enroll to unlock this course') }}</p>
+                                    <p class="text-[0.7rem] text-boss-ivory/30">{{ $accessRequest?->isPending() ? __('Access request sent') : __('Locked pending Kayla approval') }}</p>
                                 </div>
                             @endif
                         </div>

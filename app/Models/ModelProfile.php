@@ -7,6 +7,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ModelProfile extends Model
 {
+    public const STAGE_REGISTRATION = 'registration';
+
+    public const STAGE_CALLBACK = 'callback';
+
+    public const STAGE_ONBOARDING = 'onboarding';
+
+    public const STAGE_VERIFICATION = 'verification';
+
+    public const STAGE_ACTIVE = 'active';
+
     public const VERIFICATION_NOT_REQUESTED = 'not_requested';
 
     public const VERIFICATION_REQUESTED = 'requested';
@@ -36,6 +46,7 @@ class ModelProfile extends Model
         'emergency_contact_phone',
         'discord_username',
         'discord_user_id',
+        'onboarding_stage',
         'information_submitted_at',
         'verification_status',
         'id_document_path',
@@ -45,6 +56,7 @@ class ModelProfile extends Model
         'verification_reviewed_by',
         'verification_reviewed_at',
         'verification_notes',
+        'verification_request_instructions',
         'community_invited_at',
         'community_role_assigned_at',
     ];
@@ -103,6 +115,39 @@ class ModelProfile extends Model
     public function isCommunityRoleAssigned(): bool
     {
         return $this->community_role_assigned_at !== null;
+    }
+
+    public function hasCommunityChatAccess(): bool
+    {
+        return $this->isVerified() && $this->isCommunityRoleAssigned();
+    }
+
+    public static function onboardingStages(): array
+    {
+        return [
+            self::STAGE_REGISTRATION,
+            self::STAGE_CALLBACK,
+            self::STAGE_ONBOARDING,
+            self::STAGE_VERIFICATION,
+            self::STAGE_ACTIVE,
+        ];
+    }
+
+    public static function onboardingStageOptions(): array
+    {
+        return [
+            self::STAGE_REGISTRATION => __('Registration'),
+            self::STAGE_CALLBACK => __('Callback'),
+            self::STAGE_ONBOARDING => __('Onboarding'),
+            self::STAGE_VERIFICATION => __('Website verification'),
+            self::STAGE_ACTIVE => __('Active'),
+        ];
+    }
+
+    public function onboardingStageLabel(): string
+    {
+        return self::onboardingStageOptions()[$this->onboarding_stage ?: self::STAGE_REGISTRATION]
+            ?? __('Registration');
     }
 
     public function onboardingPercent(): int

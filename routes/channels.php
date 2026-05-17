@@ -5,6 +5,10 @@ use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('community.channel.{channelId}', function (User $user, int $channelId) {
+    if (! $user->canModerateCommunity() && ! $user->modelProfile()->first()?->hasCommunityChatAccess()) {
+        return false;
+    }
+
     $channel = CommunityChannel::query()
         ->with('accessGrants')
         ->find($channelId);
@@ -17,6 +21,10 @@ Broadcast::channel('community.channel.{channelId}', function (User $user, int $c
 });
 
 Broadcast::channel('community.presence', function (User $user) {
+    if (! $user->canModerateCommunity() && ! $user->modelProfile()->first()?->hasCommunityChatAccess()) {
+        return false;
+    }
+
     return [
         'id' => $user->id,
         'name' => $user->name,

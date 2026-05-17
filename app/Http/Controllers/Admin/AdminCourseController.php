@@ -8,6 +8,8 @@ use App\Models\Course;
 use App\Models\CourseModule;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
+use App\Models\User;
+use App\Notifications\SystemNotification;
 use App\Services\CourseCommunityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -106,6 +108,10 @@ class AdminCourseController extends Controller
 
         if ($course) {
             $community->ensureForCourse($course, $request->user());
+
+            if ($course->is_published) {
+                $this->notifyModelsOfPublishedCourse($course);
+            }
         }
 
         return redirect()->route('admin.courses.index')->with('status', __('Course created.'));
@@ -148,6 +154,8 @@ class AdminCourseController extends Controller
 
     public function update(Request $request, Course $course): RedirectResponse
     {
+        $wasPublished = (bool) $course->is_published;
+
         // Detect PHP max_input_vars truncation before any validation.
         // The frontend sends _lesson_count with the actual total. If fewer lessons
         // arrived than expected, the payload was silently cut off by PHP — abort
@@ -192,6 +200,11 @@ class AdminCourseController extends Controller
             $this->syncLessons($course, $validated['lessons'] ?? [], $moduleMap);
         });
 
+        $course->refresh();
+        if (! $wasPublished && $course->is_published) {
+            $this->notifyModelsOfPublishedCourse($course);
+        }
+
         return redirect()->route('admin.courses.index')->with('status', __('Course updated.'));
     }
 
@@ -215,9 +228,15 @@ class AdminCourseController extends Controller
 
     public function visibility(Request $request, Course $course): RedirectResponse
     {
+        $wasPublished = (bool) $course->is_published;
+
         $course->update([
             'is_published' => $request->boolean('is_published'),
         ]);
+
+        if (! $wasPublished && $course->is_published) {
+            $this->notifyModelsOfPublishedCourse($course);
+        }
 
         return redirect()->route('admin.courses.index')->with('status', __('Course visibility updated.'));
     }
@@ -349,6 +368,11 @@ class AdminCourseController extends Controller
             'estimated_duration' => ['nullable', 'string', 'max:64'],
             'what_you_will_learn' => ['nullable', 'string', 'max:50000'],
             'requirements' => ['nullable', 'string', 'max:50000'],
+            'course_access_requirements' => ['nullable', 'string', 'max:50000'],
+            'access_registration_instructions' => ['nullable', 'string', 'max:50000'],
+            'access_callback_instructions' => ['nullable', 'string', 'max:50000'],
+            'access_onboarding_instructions' => ['nullable', 'string', 'max:50000'],
+            'access_verification_instructions' => ['nullable', 'string', 'max:50000'],
             'has_course_outline' => ['nullable', 'boolean'],
             'course_outline_url' => ['nullable', 'string', 'max:2000'],
             'course_outline_upload' => [
@@ -448,6 +472,11 @@ class AdminCourseController extends Controller
                 'estimated_duration',
                 'what_you_will_learn',
                 'requirements',
+                'course_access_requirements',
+                'access_registration_instructions',
+                'access_callback_instructions',
+                'access_onboarding_instructions',
+                'access_verification_instructions',
                 'has_course_outline',
                 'course_outline_url',
                 'has_intro',
@@ -479,6 +508,11 @@ class AdminCourseController extends Controller
             'estimated_duration' => null,
             'what_you_will_learn' => null,
             'requirements' => null,
+            'course_access_requirements' => null,
+            'access_registration_instructions' => null,
+            'access_callback_instructions' => null,
+            'access_onboarding_instructions' => null,
+            'access_verification_instructions' => null,
             'intro_title' => null,
             'intro_video_url' => null,
             'intro_bunny_video_id' => null,
@@ -828,5 +862,19 @@ class AdminCourseController extends Controller
                 '#6366F1',
             ],
         ];
+    }
+
+    private function notifyModelsOfPublishedCourse(Course $course): void
+    {
+        User::query()
+            ->where('role', 'model')
+            ->each(fn (User $model) => $model->notify(new SystemNotification(
+                title: __('New course available'),
+                body: __(':course has been added to the academy. Open it to review Kayla access requirements and request access.', [
+                    'course' => $course->title,
+                ]),
+                actionUrl: route('member.courses.show', $course->slug, false),
+                category: 'new_course',
+            )));
     }
 }

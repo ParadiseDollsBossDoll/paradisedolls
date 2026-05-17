@@ -2,6 +2,7 @@
     $user = auth()->user();
     $initials = $user->initials();
     $profilePhotoUrl = $user->profilePhotoUrl();
+    $canAccessCommunity = $user->canModerateCommunity() || (bool) $user->modelProfile?->hasCommunityChatAccess();
 
     $links = [
         [
@@ -39,6 +40,7 @@
             'label'  => __('Community Chat'),
             'active' => request()->routeIs('community.*'),
             'icon'   => 'community',
+            'visible' => $canAccessCommunity,
         ],
         [
             'route'  => 'profile.edit',
@@ -48,7 +50,11 @@
         ],
     ];
 
-    $currentLabel = collect($links)->firstWhere('active', true)['label'] ?? __('Dashboard');
+    $links = array_values(array_filter($links, fn ($link) => $link['visible'] ?? true));
+
+    $currentLabel = request()->routeIs('notifications.*')
+        ? __('Notifications')
+        : (collect($links)->firstWhere('active', true)['label'] ?? __('Dashboard'));
     $hideSidebar = (bool) ($hideSidebar ?? false);
 @endphp
 <!DOCTYPE html>
@@ -158,6 +164,7 @@
                         <div class="elysian-topbar-main">
                             <span class="elysian-breadcrumb">{{ __('Members') }} / {{ $currentLabel }}</span>
                             <div class="elysian-topbar-right">
+                                @include('layouts.partials.notification-bell')
                                 <a href="{{ route('member.referrals.index') }}" class="elysian-topbar-refer">
                                     {{ __('Refer') }}
                                 </a>
@@ -167,6 +174,7 @@
                     @else
                         <span class="elysian-breadcrumb">{{ __('Members') }} / {{ $currentLabel }}</span>
                         <div class="elysian-topbar-right">
+                            @include('layouts.partials.notification-bell')
                             <a href="{{ route('member.referrals.index') }}" class="elysian-topbar-refer hidden sm:inline-flex">
                                 {{ __('Refer') }}
                             </a>

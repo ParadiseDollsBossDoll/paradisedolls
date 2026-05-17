@@ -8,6 +8,7 @@ use App\Models\ModelApplication;
 use App\Models\ModelProfile;
 use App\Models\ModelReferral;
 use App\Models\User;
+use App\Notifications\SystemNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -77,6 +78,14 @@ class AdminApplicationController extends Controller
 
             $application->referral?->markJoined();
         });
+
+        $application->refresh()->load('user');
+        $application->user?->notify(new SystemNotification(
+            title: __('Application approved'),
+            body: __('Your Paradise Dolls application was approved. Complete your onboarding form to continue.'),
+            actionUrl: route('member.onboarding.edit', absolute: false),
+            category: 'application_approved',
+        ));
 
         if ($configurationHint = $this->approvalMailConfigurationHint()) {
             return $this->redirectWithApprovalMailFailure(

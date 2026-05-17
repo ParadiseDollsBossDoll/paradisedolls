@@ -4,14 +4,19 @@
     $profilePhotoUrl = $user->profilePhotoUrl();
 
     if ($user->isAdmin()) {
-        $pendingApps = \App\Models\ModelApplication::where('status', \App\Models\ModelApplication::STATUS_PENDING)->count();
-        $pendingVerif = \App\Models\ModelProfile::where('verification_status', \App\Models\ModelProfile::VERIFICATION_SUBMITTED)->count();
-        $pendingReferrals = \App\Models\ModelReferral::query()
-            ->where(function ($q) {
-                $q->where(function ($lead) {
-                    $lead->where('status', \App\Models\ModelReferral::STATUS_REFERRED)->whereNull('model_application_id');
-                })->orWhere('reward_status', \App\Models\ModelReferral::REWARD_ELIGIBLE);
-            })->count();
+        [$pendingApps, $pendingVerif, $pendingReferrals] = \Illuminate\Support\Facades\Cache::remember(
+            'admin_sidebar_counts', 60,
+            fn () => [
+                \App\Models\ModelApplication::where('status', \App\Models\ModelApplication::STATUS_PENDING)->count(),
+                \App\Models\ModelProfile::where('verification_status', \App\Models\ModelProfile::VERIFICATION_SUBMITTED)->count(),
+                \App\Models\ModelReferral::query()
+                    ->where(function ($q) {
+                        $q->where(function ($lead) {
+                            $lead->where('status', \App\Models\ModelReferral::STATUS_REFERRED)->whereNull('model_application_id');
+                        })->orWhere('reward_status', \App\Models\ModelReferral::REWARD_ELIGIBLE);
+                    })->count(),
+            ]
+        );
 
         $sidebarLinks = [
             ['href' => route('admin.dashboard'),          'label' => __('Overview'),       'icon' => 'overview',      'active' => false, 'count' => 0],

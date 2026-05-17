@@ -25,6 +25,11 @@ class Course extends Model
         'estimated_duration',
         'what_you_will_learn',
         'requirements',
+        'course_access_requirements',
+        'access_registration_instructions',
+        'access_callback_instructions',
+        'access_onboarding_instructions',
+        'access_verification_instructions',
         'has_course_outline',
         'course_outline_url',
         'has_intro',
@@ -105,6 +110,11 @@ class Course extends Model
         return $this->hasMany(CourseEnrollment::class);
     }
 
+    public function accessRequests(): HasMany
+    {
+        return $this->hasMany(CourseAccessRequest::class);
+    }
+
     public function communityChannels(): HasMany
     {
         return $this->hasMany(CommunityChannel::class);
@@ -170,6 +180,14 @@ class Course extends Model
     {
         return $this->enrollments()
             ->where('user_id', $user->id)
+            ->first();
+    }
+
+    public function accessRequestFor(User $user): ?CourseAccessRequest
+    {
+        return $this->accessRequests()
+            ->where('user_id', $user->id)
+            ->latest()
             ->first();
     }
 
@@ -248,6 +266,40 @@ class Course extends Model
     public function requirementItems(): array
     {
         return $this->linesFromText($this->requirements);
+    }
+
+    public function accessRequirementItems(): array
+    {
+        return $this->linesFromText($this->course_access_requirements);
+    }
+
+    public function accessPhaseInstructions(): array
+    {
+        return collect([
+            [
+                'key' => 'registration',
+                'label' => __('Registration phase'),
+                'instructions' => $this->access_registration_instructions,
+            ],
+            [
+                'key' => 'callback',
+                'label' => __('Callback phase'),
+                'instructions' => $this->access_callback_instructions,
+            ],
+            [
+                'key' => 'onboarding',
+                'label' => __('Onboarding phase'),
+                'instructions' => $this->access_onboarding_instructions,
+            ],
+            [
+                'key' => 'verification',
+                'label' => __('Verification phase'),
+                'instructions' => $this->access_verification_instructions,
+            ],
+        ])
+            ->filter(fn (array $phase) => filled($phase['instructions']))
+            ->values()
+            ->all();
     }
 
     private function linesFromText(?string $text): array

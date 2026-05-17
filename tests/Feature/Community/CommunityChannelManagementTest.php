@@ -15,6 +15,7 @@ class CommunityChannelManagementTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $member = User::factory()->create(['role' => 'model']);
+        $this->grantCommunityAccess($member);
 
         $this->actingAs($admin)
             ->postJson('/community/channels', [
@@ -64,5 +65,39 @@ class CommunityChannelManagementTest extends TestCase
         $this->assertDatabaseMissing('community_channels', [
             'id' => $channel->id,
         ]);
+    }
+
+    public function test_admin_can_create_channel_with_slowmode(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        $this->grantCommunityAccess($member);
+
+        $response = $this->actingAs($admin)
+            ->postJson('/community/channels', [
+                'name' => 'slow-chat',
+                'description' => 'A slower room.',
+                'category' => 'Community',
+                'access_mode' => CommunityChannel::ACCESS_MEMBERS,
+                'denied_behavior' => CommunityChannel::DENIED_HIDDEN,
+                'slowmode_seconds' => 30,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('channel.slowmode_seconds', 30);
+
+        $slug = $response->json('channel.slug');
+
+        $this->assertDatabaseHas('community_channels', [
+            'slug' => $slug,
+            'slowmode_seconds' => 30,
+        ]);
+
+        $this->actingAs($member)
+            ->getJson('/community/channels')
+            ->assertOk()
+            ->assertJsonFragment([
+                'slug' => $slug,
+                'slowmode_seconds' => 30,
+            ]);
     }
 }

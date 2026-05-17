@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\EnsureCommunityAccessIsAssigned;
 use App\Http\Middleware\EnsureUserIsEnrolledInCourse;
 use App\Http\Middleware\EnsureUserIsModel;
 use App\Http\Middleware\SecurityHeaders;
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
+            'community.access' => EnsureCommunityAccessIsAssigned::class,
             'course.enrolled' => EnsureUserIsEnrolledInCourse::class,
             'community.perf' => \App\Http\Middleware\LogCommunityRequestPerformance::class,
             'model' => EnsureUserIsModel::class,

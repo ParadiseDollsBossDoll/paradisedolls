@@ -80,9 +80,11 @@
         ],
     ];
 
-    $currentLabel = request()->routeIs('profile.*')
+    $currentLabel = request()->routeIs('notifications.*')
+        ? __('Notifications')
+        : (request()->routeIs('profile.*')
         ? __('Profile')
-        : (collect($links)->firstWhere('active', true)['label'] ?? __('Overview'));
+        : (collect($links)->firstWhere('active', true)['label'] ?? __('Overview')));
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -198,6 +200,7 @@
                     </button>
                     <span class="elysian-breadcrumb">{{ __('Admin') }} / {{ $currentLabel }}</span>
                     <div class="elysian-topbar-right">
+                        @include('layouts.partials.notification-bell')
                         <div class="elysian-topbar-greeting">
                             <p>{{ __('Admin Panel') }}</p>
                             <p>{{ $user->name }}</p>

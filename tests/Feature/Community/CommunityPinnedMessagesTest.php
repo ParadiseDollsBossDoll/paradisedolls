@@ -72,6 +72,7 @@ class CommunityPinnedMessagesTest extends TestCase
             'role' => 'model',
             'profile_photo_path' => 'profile-photos/member.jpg',
         ]);
+        $this->grantCommunityAccess($member);
         $channel = $this->createChannel($admin);
 
         $this->createMessage($channel, $member, 'Photo payload check', now());
