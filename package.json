@@ -10,6 +10,9 @@
         "laravel-echo": "^2.3.4",
         "pusher-js": "^8.5.0"
     },
+    "overrides": {
+        "ws": "^8.20.1"
+    },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",
         "@tailwindcss/vite": "^4.0.0",
