@@ -3,9 +3,22 @@
 use App\Models\CommunityChannel;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Cache;
 
-Broadcast::channel('community.channel.{channelId}', function (User $user, int $channelId) {
-    if (! $user->canModerateCommunity() && ! $user->modelProfile()->first()?->hasCommunityChatAccess()) {
+$hasCommunityAccess = function (User $user): bool {
+    if ($user->canModerateCommunity()) {
+        return true;
+    }
+
+    return Cache::remember(
+        'broadcast_community_access_'.$user->id,
+        now()->addSeconds(60),
+        fn () => $user->hasCommunityChatAccess()
+    );
+};
+
+Broadcast::channel('community.channel.{channelId}', function (User $user, int $channelId) use ($hasCommunityAccess) {
+    if (! $hasCommunityAccess($user)) {
         return false;
     }
 
@@ -20,8 +33,8 @@ Broadcast::channel('community.channel.{channelId}', function (User $user, int $c
     return true;
 });
 
-Broadcast::channel('community.presence', function (User $user) {
-    if (! $user->canModerateCommunity() && ! $user->modelProfile()->first()?->hasCommunityChatAccess()) {
+Broadcast::channel('community.presence', function (User $user) use ($hasCommunityAccess) {
+    if (! $hasCommunityAccess($user)) {
         return false;
     }
 

@@ -1,9 +1,24 @@
 @php
     $notificationUser = auth()->user();
-    $unreadNotificationCount = $notificationUser?->unreadNotifications()->count() ?? 0;
-    $recentNotifications = $notificationUser
-        ? $notificationUser->notifications()->latest()->take(6)->get()
-        : collect();
+    [$unreadNotificationCount, $recentNotifications] = $notificationUser
+        ? \Illuminate\Support\Facades\Cache::remember(
+            'notification_bell_'.$notificationUser->id,
+            now()->addSeconds(15),
+            fn () => [
+                $notificationUser->unreadNotifications()->count(),
+                $notificationUser->notifications()
+                    ->latest()
+                    ->take(6)
+                    ->get()
+                    ->map(fn ($notification) => [
+                        'id' => $notification->id,
+                        'data' => $notification->data,
+                        'read_at' => $notification->read_at,
+                        'created_at' => $notification->created_at,
+                    ]),
+            ]
+        )
+        : [0, collect()];
 @endphp
 
 <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false" @click.outside="open = false">
@@ -54,28 +69,31 @@
         <div class="max-h-[24rem] overflow-y-auto">
             @forelse ($recentNotifications as $notification)
                 @php
-                    $data = $notification->data;
-                    $isUnread = $notification->read_at === null;
+                    $data = $notification['data'];
+                    $isUnread = $notification['read_at'] === null;
                 @endphp
-                <a
-                    href="{{ route('notifications.open', $notification) }}"
-                    role="menuitem"
-                    class="block border-b border-white/[0.05] px-4 py-3 transition last:border-b-0 hover:bg-white/[0.035] {{ $isUnread ? 'bg-boss-gold/[0.045]' : '' }}"
-                    @click="open = false"
-                >
+                <form method="POST" action="{{ route('notifications.open', $notification['id']) }}" class="border-b border-white/[0.05] last:border-b-0">
+                    @csrf
+                    <button
+                        type="submit"
+                        role="menuitem"
+                        class="block w-full px-4 py-3 text-left transition hover:bg-white/[0.035] {{ $isUnread ? 'bg-boss-gold/[0.045]' : '' }}"
+                        @click="open = false"
+                    >
                     <div class="flex gap-3">
                         <span class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full {{ $isUnread ? 'bg-boss-gold shadow-[0_0_16px_rgba(201,169,110,0.55)]' : 'bg-white/12' }}"></span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-start justify-between gap-3">
                                 <p class="line-clamp-1 text-sm font-semibold text-boss-ivory/82">{{ $data['title'] ?? __('Notification') }}</p>
-                                <span class="shrink-0 text-[0.62rem] text-boss-ivory/24">{{ $notification->created_at?->diffForHumans(null, true) }}</span>
+                                <span class="shrink-0 text-[0.62rem] text-boss-ivory/24">{{ $notification['created_at']?->diffForHumans(null, true) }}</span>
                             </div>
                             @if (filled($data['body'] ?? null))
                                 <p class="mt-1 line-clamp-2 text-[0.75rem] leading-relaxed text-boss-ivory/40">{{ $data['body'] }}</p>
                             @endif
                         </div>
                     </div>
-                </a>
+                    </button>
+                </form>
             @empty
                 <div class="px-4 py-10 text-center">
                     <p class="text-sm font-medium text-boss-ivory/45">{{ __('No notifications yet') }}</p>

@@ -27,10 +27,12 @@
                     $data = $notification->data;
                     $isUnread = $notification->read_at === null;
                 @endphp
-                <a
-                    href="{{ route('notifications.open', $notification) }}"
-                    class="block border-b border-white/[0.05] px-5 py-4 transition hover:bg-white/[0.025] last:border-b-0 {{ $isUnread ? 'bg-boss-gold/[0.035]' : '' }}"
-                >
+                <form method="POST" action="{{ route('notifications.open', $notification) }}" class="border-b border-white/[0.05] last:border-b-0">
+                    @csrf
+                    <button
+                        type="submit"
+                        class="block w-full px-5 py-4 text-left transition hover:bg-white/[0.025] {{ $isUnread ? 'bg-boss-gold/[0.035]' : '' }}"
+                    >
                     <div class="flex items-start gap-3">
                         <span class="mt-1 h-2.5 w-2.5 shrink-0 rounded-full {{ $isUnread ? 'bg-boss-gold' : 'bg-white/15' }}"></span>
                         <div class="min-w-0 flex-1">
@@ -44,7 +46,8 @@
                             <p class="mt-2 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-boss-gold/70">{{ __('Open') }}</p>
                         </div>
                     </div>
-                </a>
+                    </button>
+                </form>
             @empty
                 <div class="px-5 py-14 text-center">
                     <p class="pd-heading text-xl text-boss-ivory/35">{{ __('No notifications yet') }}</p>

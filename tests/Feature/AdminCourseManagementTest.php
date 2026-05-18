@@ -17,7 +17,7 @@ class AdminCourseManagementTest extends TestCase
 
     public function test_admin_can_create_course_with_zip_style_lesson_fields(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
 
         $admin = User::factory()->create(['role' => 'admin']);
 
@@ -88,7 +88,7 @@ class AdminCourseManagementTest extends TestCase
         $this->assertStringStartsWith('academy/course-outlines/', $course->course_outline_url);
         $this->assertStringStartsWith('outline-', $course->courseOutlineFileName());
         $this->assertStringEndsWith('.pdf', $course->courseOutlineFileName());
-        Storage::disk('public')->assertExists($course->course_outline_url);
+        Storage::disk('local')->assertExists($course->course_outline_url);
         $this->assertTrue($course->has_intro);
         $this->assertSame('Course Orientation', $course->intro_title);
         $this->assertSame('https://www.youtube.com/embed/intro', $course->intro_video_url);
@@ -127,7 +127,7 @@ class AdminCourseManagementTest extends TestCase
         $this->assertSame('New course available', $notification->data['title']);
 
         $this->actingAs($member)
-            ->get(route('notifications.open', $notification))
+            ->post(route('notifications.open', $notification))
             ->assertRedirect(route('member.courses.show', $course->slug, false));
 
         $this->assertNotNull($notification->fresh()->read_at);
@@ -136,6 +136,7 @@ class AdminCourseManagementTest extends TestCase
     public function test_admin_can_upload_course_and_lesson_visual_images(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $admin = User::factory()->create(['role' => 'admin']);
 
@@ -180,15 +181,15 @@ class AdminCourseManagementTest extends TestCase
         $this->assertCount(2, $lesson->lesson_images);
 
         Storage::disk('public')->assertExists($course->course_cover_image);
-        Storage::disk('public')->assertExists($lesson->lesson_banner_image);
+        Storage::disk('local')->assertExists($lesson->lesson_banner_image);
         foreach ($lesson->lesson_images as $imagePath) {
-            Storage::disk('public')->assertExists($imagePath);
+            Storage::disk('local')->assertExists($imagePath);
         }
     }
 
     public function test_admin_can_create_lesson_content_blocks(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
 
         $admin = User::factory()->create(['role' => 'admin']);
 
@@ -267,9 +268,9 @@ class AdminCourseManagementTest extends TestCase
         $this->assertNotNull($blocks[3]->file_path);
         $this->assertNotNull($blocks[4]->file_path);
 
-        Storage::disk('public')->assertExists($blocks[1]->image_path);
-        Storage::disk('public')->assertExists($blocks[3]->file_path);
-        Storage::disk('public')->assertExists($blocks[4]->file_path);
+        Storage::disk('local')->assertExists($blocks[1]->image_path);
+        Storage::disk('local')->assertExists($blocks[3]->file_path);
+        Storage::disk('local')->assertExists($blocks[4]->file_path);
     }
 
     public function test_admin_added_empty_content_block_is_saved_as_draft(): void

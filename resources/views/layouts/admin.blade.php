@@ -3,23 +3,26 @@
     $initials = $user->initials();
     $profilePhotoUrl = $user->profilePhotoUrl();
 
-    $pendingLayoutApplications = \App\Models\ModelApplication::query()
-        ->where('status', \App\Models\ModelApplication::STATUS_PENDING)
-        ->count();
-    $pendingLayoutVerification = \App\Models\ModelProfile::query()
-        ->where('verification_status', \App\Models\ModelProfile::VERIFICATION_SUBMITTED)
-        ->count();
-    $referralActionCount = \App\Models\ModelReferral::query()
-        ->where(function ($query) {
-            $query
-                ->where(function ($leadQuery) {
-                    $leadQuery
-                        ->where('status', \App\Models\ModelReferral::STATUS_REFERRED)
-                        ->whereNull('model_application_id');
+    [$pendingLayoutApplications, $pendingLayoutVerification, $referralActionCount] =
+        \Illuminate\Support\Facades\Cache::remember('admin_sidebar_counts', 60, fn () => [
+            \App\Models\ModelApplication::query()
+                ->where('status', \App\Models\ModelApplication::STATUS_PENDING)
+                ->count(),
+            \App\Models\ModelProfile::query()
+                ->where('verification_status', \App\Models\ModelProfile::VERIFICATION_SUBMITTED)
+                ->count(),
+            \App\Models\ModelReferral::query()
+                ->where(function ($query) {
+                    $query
+                        ->where(function ($leadQuery) {
+                            $leadQuery
+                                ->where('status', \App\Models\ModelReferral::STATUS_REFERRED)
+                                ->whereNull('model_application_id');
+                        })
+                        ->orWhere('reward_status', \App\Models\ModelReferral::REWARD_ELIGIBLE);
                 })
-                ->orWhere('reward_status', \App\Models\ModelReferral::REWARD_ELIGIBLE);
-        })
-        ->count();
+                ->count(),
+        ]);
 
     $links = [
         [

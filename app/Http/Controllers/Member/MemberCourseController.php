@@ -21,7 +21,7 @@ class MemberCourseController extends Controller
 {
     public function index(Request $request): View
     {
-        $courses = Course::query()
+        $coursesPaginator = Course::query()
             ->where('is_published', true)
             ->with([
                 'lessons' => fn ($q) => $q
@@ -36,7 +36,10 @@ class MemberCourseController extends Controller
             ])
             ->orderBy('sort_order')
             ->orderBy('title')
-            ->get();
+            ->paginate(12)
+            ->withQueryString();
+
+        $courses = $coursesPaginator->getCollection();
 
         $progressPercents = Course::batchProgressPercentsForUser($request->user(), $courses);
 
@@ -88,7 +91,8 @@ class MemberCourseController extends Controller
             'completedLessonIds',
             'enrolledCourseIds',
             'accessRequestsByCourse',
-            'filter'
+            'filter',
+            'coursesPaginator'
         ));
     }
 
@@ -176,16 +180,33 @@ class MemberCourseController extends Controller
             'member_notes' => ['nullable', 'string', 'max:5000'],
         ]);
 
-        $accessRequest = CourseAccessRequest::query()->updateOrCreate([
+        $accessRequest = CourseAccessRequest::query()
+            ->where('course_id', $course->id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if ($accessRequest?->isPending()) {
+            $accessRequest->forceFill([
+                'member_notes' => $validated['member_notes'] ?? $accessRequest->member_notes,
+            ])->save();
+
+            return redirect()
+                ->route('member.courses.show', $course->slug)
+                ->with('status', __('Your access request is already pending. Kayla will review it soon.'));
+        }
+
+        $accessRequest ??= new CourseAccessRequest([
             'course_id' => $course->id,
             'user_id' => $request->user()->id,
-        ], [
+        ]);
+
+        $accessRequest->forceFill([
             'status' => CourseAccessRequest::STATUS_PENDING,
             'member_notes' => $validated['member_notes'] ?? null,
             'reviewed_by' => null,
             'reviewed_at' => null,
             'admin_notes' => null,
-        ]);
+        ])->save();
 
         $accessRequest->load(['course', 'user']);
         $this->notifyAdminOfAccessRequest($accessRequest);
@@ -242,13 +263,12 @@ class MemberCourseController extends Controller
             ->with([
                 'lessons' => fn ($query) => $query
                     ->publishedForMembers()
-                    ->with(['module', 'contentBlocks'])
+                    ->with('module')
                     ->orderBy('sort_order'),
                 'modules' => fn ($query) => $query
                     ->where('is_published', true)
                     ->with(['lessons' => fn ($lessonQuery) => $lessonQuery
                         ->publishedForMembers()
-                        ->with('contentBlocks')
                         ->orderBy('sort_order')])
                     ->orderBy('sort_order'),
                 'chatRoom',

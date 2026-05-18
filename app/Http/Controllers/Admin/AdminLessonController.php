@@ -19,6 +19,8 @@ class AdminLessonController extends Controller
 
     public function store(Request $request, Course $course): RedirectResponse
     {
+        $httpUrlRule = $this->httpUrlRule();
+
         $rules = [
             'title' => ['required', 'string', 'max:255'],
             'course_module_id' => [
@@ -37,17 +39,17 @@ class AdminLessonController extends Controller
             'lesson_images_upload' => ['nullable', 'array', 'max:12'],
             'lesson_images_upload.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
             'is_published' => ['nullable', 'boolean'],
-            'video_url' => ['nullable', 'string', 'max:2000'],
+            'video_url' => ['nullable', 'string', 'max:2000', $httpUrlRule],
             'bunny_video_id' => ['nullable', 'string', 'max:64'],
             'bunny_library_id' => ['nullable', 'string', 'max:64'],
             'bunny_video_title' => ['nullable', 'string', 'max:255'],
-            'bunny_thumbnail_url' => ['nullable', 'string', 'max:2000'],
+            'bunny_thumbnail_url' => ['nullable', 'string', 'max:2000', $httpUrlRule],
             'bunny_upload_fingerprint' => ['nullable', 'string', 'max:255'],
             'bunny_status' => ['nullable', 'integer', 'min:0', 'max:255'],
             'duration' => ['nullable', 'string', 'max:64'],
             'has_pdf' => ['nullable', 'boolean'],
-            'pdf_url' => ['nullable', 'string', 'max:2000'],
-            'presentation_url' => ['nullable', 'string', 'max:50000'],
+            'pdf_url' => ['nullable', 'string', 'max:2000', $httpUrlRule],
+            'presentation_url' => ['nullable', 'string', 'max:50000', $httpUrlRule],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
         ];
         $rules += $this->lessonContentBlockRules('content_blocks');
@@ -71,6 +73,8 @@ class AdminLessonController extends Controller
     {
         abort_unless($lesson->course_id === $course->id, 404);
 
+        $httpUrlRule = $this->httpUrlRule();
+
         $rules = [
             'title' => ['required', 'string', 'max:255'],
             'course_module_id' => [
@@ -89,17 +93,17 @@ class AdminLessonController extends Controller
             'lesson_images_upload' => ['nullable', 'array', 'max:12'],
             'lesson_images_upload.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
             'is_published' => ['nullable', 'boolean'],
-            'video_url' => ['nullable', 'string', 'max:2000'],
+            'video_url' => ['nullable', 'string', 'max:2000', $httpUrlRule],
             'bunny_video_id' => ['nullable', 'string', 'max:64'],
             'bunny_library_id' => ['nullable', 'string', 'max:64'],
             'bunny_video_title' => ['nullable', 'string', 'max:255'],
-            'bunny_thumbnail_url' => ['nullable', 'string', 'max:2000'],
+            'bunny_thumbnail_url' => ['nullable', 'string', 'max:2000', $httpUrlRule],
             'bunny_upload_fingerprint' => ['nullable', 'string', 'max:255'],
             'bunny_status' => ['nullable', 'integer', 'min:0', 'max:255'],
             'duration' => ['nullable', 'string', 'max:64'],
             'has_pdf' => ['nullable', 'boolean'],
-            'pdf_url' => ['nullable', 'string', 'max:2000'],
-            'presentation_url' => ['nullable', 'string', 'max:50000'],
+            'pdf_url' => ['nullable', 'string', 'max:2000', $httpUrlRule],
+            'presentation_url' => ['nullable', 'string', 'max:50000', $httpUrlRule],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
         ];
         $rules += $this->lessonContentBlockRules('content_blocks');
@@ -190,6 +194,8 @@ class AdminLessonController extends Controller
 
     private function lessonValidationRules(Course $course): array
     {
+        $httpUrlRule = $this->httpUrlRule();
+
         return [
             'title' => ['required', 'string', 'max:255'],
             'course_module_id' => [
@@ -208,17 +214,17 @@ class AdminLessonController extends Controller
             'lesson_images_upload' => ['nullable', 'array', 'max:12'],
             'lesson_images_upload.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
             'is_published' => ['nullable', 'boolean'],
-            'video_url' => ['nullable', 'string', 'max:2000'],
+            'video_url' => ['nullable', 'string', 'max:2000', $httpUrlRule],
             'bunny_video_id' => ['nullable', 'string', 'max:64'],
             'bunny_library_id' => ['nullable', 'string', 'max:64'],
             'bunny_video_title' => ['nullable', 'string', 'max:255'],
-            'bunny_thumbnail_url' => ['nullable', 'string', 'max:2000'],
+            'bunny_thumbnail_url' => ['nullable', 'string', 'max:2000', $httpUrlRule],
             'bunny_upload_fingerprint' => ['nullable', 'string', 'max:255'],
             'bunny_status' => ['nullable', 'integer', 'min:0', 'max:255'],
             'duration' => ['nullable', 'string', 'max:64'],
             'has_pdf' => ['nullable', 'boolean'],
-            'pdf_url' => ['nullable', 'string', 'max:2000'],
-            'presentation_url' => ['nullable', 'string', 'max:50000'],
+            'pdf_url' => ['nullable', 'string', 'max:2000', $httpUrlRule],
+            'presentation_url' => ['nullable', 'string', 'max:50000', $httpUrlRule],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
         ];
     }
@@ -263,12 +269,12 @@ class AdminLessonController extends Controller
 
         $bannerUpload = $lesson['lesson_banner_image_upload'] ?? null;
         if ($bannerUpload instanceof UploadedFile) {
-            $bannerImage = $this->storePublicImage($bannerUpload, 'academy/lesson-banners');
+            $bannerImage = $this->storePrivateImage($bannerUpload, 'academy/lesson-banners');
         }
 
         foreach ($lesson['lesson_images_upload'] ?? [] as $galleryUpload) {
             if ($galleryUpload instanceof UploadedFile) {
-                $galleryImages[] = $this->storePublicImage($galleryUpload, 'academy/lesson-images');
+                $galleryImages[] = $this->storePrivateImage($galleryUpload, 'academy/lesson-images');
             }
         }
 
@@ -278,9 +284,22 @@ class AdminLessonController extends Controller
         ];
     }
 
-    private function storePublicImage(UploadedFile $file, string $directory): string
+    private function storePrivateImage(UploadedFile $file, string $directory): string
     {
-        return $file->store($directory, 'public');
+        return $file->store($directory, 'local');
+    }
+
+    private function httpUrlRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if (blank($value)) {
+                return;
+            }
+
+            if (Lesson::normalizePresentationUrl((string) $value) === null) {
+                $fail(__('The :attribute must be a valid HTTP or HTTPS URL.', ['attribute' => str_replace('_', ' ', $attribute)]));
+            }
+        };
     }
 
     /**

@@ -175,7 +175,7 @@
                     <p class="pd-kicker">{{ __('Training Academy') }}</p>
                     <h1 class="pd-heading pd-text-gradient mt-1.5 text-[clamp(1.5rem,3vw,2.1rem)]">{{ __('Course Library') }}</h1>
                     <p class="mt-1 text-[0.76rem] text-boss-ivory/30">
-                        {{ trans_choice(':count course available|:count courses available', $courses->count(), ['count' => $courses->count()]) }}
+                        {{ trans_choice(':count course available|:count courses available', $coursesPaginator->total(), ['count' => $coursesPaginator->total()]) }}
                     </p>
                 </div>
 
@@ -367,6 +367,12 @@
                     </div>
                 @endforelse
             </div>
+
+            @if ($coursesPaginator->hasPages())
+                <div class="mt-6">
+                    {{ $coursesPaginator->links() }}
+                </div>
+            @endif
         </section>
 
     </div>

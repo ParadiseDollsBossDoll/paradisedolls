@@ -152,6 +152,6 @@ trait ManagesLessonContentBlocks
 
     private function storeLessonBlockFile(UploadedFile $file, string $directory): string
     {
-        return $file->store($directory, 'public');
+        return $file->store($directory, 'local');
     }
 }

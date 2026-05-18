@@ -1,7 +1,33 @@
 <x-admin-layout>
     <div
         class="mx-auto max-w-full space-y-6 text-boss-ivory"
-        x-data="{ open: false, selected: null, showReject: false, stageOptions: @js($stageOptions) }"
+        x-data="{
+            open: false,
+            selected: null,
+            showReject: false,
+            stageOptions: @js($stageOptions),
+            async selectModel(model) {
+                this.selected = model;
+                this.open = true;
+                this.showReject = false;
+
+                if (!model.profile || !model.profile.details_url || model.profile.course_access_loaded) {
+                    return;
+                }
+
+                this.selected.profile.course_access_loading = true;
+
+                try {
+                    const response = await fetch(model.profile.details_url, { headers: { Accept: 'application/json' } });
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    this.selected.profile.course_access = data.course_access || [];
+                    this.selected.profile.course_access_loaded = true;
+                } finally {
+                    this.selected.profile.course_access_loading = false;
+                }
+            }
+        }"
         @keydown.escape.window="open = false"
     >
 
@@ -360,6 +386,12 @@
                         </template>
 
                         {{-- Website walkthrough access --}}
+                        <template x-if="selected.profile && selected.profile.course_access_loading">
+                            <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-5 text-sm text-boss-ivory/40">
+                                Loading website walkthrough access...
+                            </div>
+                        </template>
+
                         <template x-if="selected.profile && selected.profile.course_access && selected.profile.course_access.length">
                             <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-5">
                                 <div class="mb-4">
@@ -595,12 +627,6 @@
                         @forelse ($models as $model)
                             @php
                                 $profile = $model->modelProfile;
-                                $unlockedCourseIds = $model->courseEnrollments
-                                    ->pluck('course_id')
-                                    ->map(fn ($courseId) => (int) $courseId)
-                                    ->all();
-                                $accessRequestsByCourse = $model->courseAccessRequests->keyBy('course_id');
-
                                 $modelData = [
                                     'id'      => $model->id,
                                     'name'    => $model->name,
@@ -629,6 +655,7 @@
                                         'stage_url'                   => route('admin.onboarding.stage', $profile),
                                         'verification_request_instructions' => $profile->verification_request_instructions,
                                         'verification_instructions_url' => route('admin.onboarding.verification-instructions', $profile),
+                                        'details_url'                  => route('admin.onboarding.details', $profile),
                                         'has_information_form'        => $profile->hasInformationForm(),
                                         'information_submitted_at'    => $profile->information_submitted_at?->toFormattedDateString(),
                                         'verification_status'         => $profile->verification_status,
@@ -646,26 +673,9 @@
                                         'community_invited_at'        => $profile->community_invited_at?->toFormattedDateString(),
                                         'community_role_assigned_at'  => $profile->community_role_assigned_at?->toFormattedDateString(),
                                         'onboarding_percent'          => $profile->onboardingPercent(),
-                                        'course_access'               => $publishedCourses->map(function ($course) use ($accessRequestsByCourse, $profile, $unlockedCourseIds) {
-                                            $accessRequest = $accessRequestsByCourse->get($course->id);
-
-                                            return [
-                                                'id'          => $course->id,
-                                                'title'       => $course->title,
-                                                'platform'    => $course->displayPlatform(),
-                                                'access_requirements' => $course->course_access_requirements,
-                                                'access_phases' => $course->accessPhaseInstructions(),
-                                                'access_request_status' => $accessRequest?->status,
-                                                'access_request_label' => $accessRequest?->statusLabel(),
-                                                'access_request_notes' => $accessRequest?->member_notes,
-                                                'access_admin_notes' => $accessRequest?->admin_notes,
-                                                'access_requested_at' => $accessRequest?->created_at?->toFormattedDateString(),
-                                                'is_unlocked' => in_array((int) $course->id, $unlockedCourseIds, true),
-                                                'unlock_url'  => route('admin.onboarding.courses.unlock', [$profile, $course]),
-                                                'lock_url'    => route('admin.onboarding.courses.lock', [$profile, $course]),
-                                                'resubmission_url' => route('admin.onboarding.courses.resubmission', [$profile, $course]),
-                                            ];
-                                        })->values()->all(),
+                                        'course_access'               => [],
+                                        'course_access_loaded'        => false,
+                                        'course_access_loading'       => false,
                                         'request_verification_url'    => route('admin.onboarding.request-verification', $profile),
                                         'verify_url'                  => route('admin.onboarding.verify', $profile),
                                         'reject_verification_url'     => route('admin.onboarding.reject-verification', $profile),
@@ -680,7 +690,7 @@
                             @endphp
                             <tr
                                 class="cursor-pointer transition hover:bg-white/[0.025]"
-                                @click="selected = {{ Js::from($modelData) }}; open = true; showReject = false"
+                                @click="selectModel({{ Js::from($modelData) }})"
                             >
                                 <td class="align-middle">
                                     <div class="flex items-center gap-3">

@@ -12,9 +12,11 @@ use App\Models\CourseAccessRequest;
 use App\Models\ModelProfile;
 use App\Models\User;
 use App\Notifications\SystemNotification;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -30,6 +32,33 @@ class AdminOnboardingController extends Controller
             ->with(['courseAccessRequests.course', 'courseEnrollments', 'modelProfile.application', 'modelProfile.verificationReviewer'])
             ->orderBy('name')
             ->paginate(20);
+
+        $stageOptions = collect(ModelProfile::onboardingStageOptions())
+            ->map(fn (string $label, string $value) => ['value' => $value, 'label' => $label])
+            ->values()
+            ->all();
+
+        $stats = [
+            'members' => User::where('role', 'model')->count(),
+            'information_submitted' => ModelProfile::whereNotNull('information_submitted_at')->count(),
+            'verification_submitted' => ModelProfile::where('verification_status', ModelProfile::VERIFICATION_SUBMITTED)->count(),
+            'verified' => ModelProfile::where('verification_status', ModelProfile::VERIFICATION_VERIFIED)->count(),
+            'community_invited' => ModelProfile::whereNotNull('community_invited_at')->count(),
+            'role_assigned' => ModelProfile::whereNotNull('community_role_assigned_at')->count(),
+        ];
+
+        return view('admin.onboarding.index', compact('models', 'stageOptions', 'stats'));
+    }
+
+    public function details(ModelProfile $profile): JsonResponse
+    {
+        $profile->loadMissing('user.courseAccessRequests.course', 'user.courseEnrollments');
+
+        $unlockedCourseIds = $profile->user->courseEnrollments
+            ->pluck('course_id')
+            ->map(fn ($courseId) => (int) $courseId)
+            ->all();
+        $accessRequestsByCourse = $profile->user->courseAccessRequests->keyBy('course_id');
 
         $publishedCourses = Course::query()
             ->where('is_published', true)
@@ -48,21 +77,28 @@ class AdminOnboardingController extends Controller
                 'is_published',
             ]);
 
-        $stageOptions = collect(ModelProfile::onboardingStageOptions())
-            ->map(fn (string $label, string $value) => ['value' => $value, 'label' => $label])
-            ->values()
-            ->all();
+        return response()->json([
+            'course_access' => $publishedCourses->map(function (Course $course) use ($accessRequestsByCourse, $profile, $unlockedCourseIds) {
+                $accessRequest = $accessRequestsByCourse->get($course->id);
 
-        $stats = [
-            'members' => User::where('role', 'model')->count(),
-            'information_submitted' => ModelProfile::whereNotNull('information_submitted_at')->count(),
-            'verification_submitted' => ModelProfile::where('verification_status', ModelProfile::VERIFICATION_SUBMITTED)->count(),
-            'verified' => ModelProfile::where('verification_status', ModelProfile::VERIFICATION_VERIFIED)->count(),
-            'community_invited' => ModelProfile::whereNotNull('community_invited_at')->count(),
-            'role_assigned' => ModelProfile::whereNotNull('community_role_assigned_at')->count(),
-        ];
-
-        return view('admin.onboarding.index', compact('models', 'publishedCourses', 'stageOptions', 'stats'));
+                return [
+                    'id' => $course->id,
+                    'title' => $course->title,
+                    'platform' => $course->displayPlatform(),
+                    'access_requirements' => $course->course_access_requirements,
+                    'access_phases' => $course->accessPhaseInstructions(),
+                    'access_request_status' => $accessRequest?->status,
+                    'access_request_label' => $accessRequest?->statusLabel(),
+                    'access_request_notes' => $accessRequest?->member_notes,
+                    'access_admin_notes' => $accessRequest?->admin_notes,
+                    'access_requested_at' => $accessRequest?->created_at?->toFormattedDateString(),
+                    'is_unlocked' => in_array((int) $course->id, $unlockedCourseIds, true),
+                    'unlock_url' => route('admin.onboarding.courses.unlock', [$profile, $course]),
+                    'lock_url' => route('admin.onboarding.courses.lock', [$profile, $course]),
+                    'resubmission_url' => route('admin.onboarding.courses.resubmission', [$profile, $course]),
+                ];
+            })->values(),
+        ]);
     }
 
     public function updateStage(Request $request, ModelProfile $profile): RedirectResponse
@@ -223,6 +259,7 @@ class AdminOnboardingController extends Controller
             'verification_reviewed_at' => now(),
             'verification_notes' => $validated['verification_notes'] ?? null,
         ])->save();
+        Cache::forget('broadcast_community_access_'.$profile->user_id);
 
         $profile->load('user');
         $profile->user->notify(new SystemNotification(
@@ -251,6 +288,7 @@ class AdminOnboardingController extends Controller
             'verification_reviewed_at' => now(),
             'verification_notes' => $validated['verification_notes'],
         ])->save();
+        Cache::forget('broadcast_community_access_'.$profile->user_id);
 
         $profile->load('user');
         $this->sendMail($profile, new VerificationResubmissionMail(
@@ -294,6 +332,7 @@ class AdminOnboardingController extends Controller
         $profile->forceFill([
             'community_role_assigned_at' => now(),
         ])->save();
+        Cache::forget('broadcast_community_access_'.$profile->user_id);
 
         return redirect()->back()->with('status', __('Discord Community role assignment recorded.'));
     }

@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Storage;
 
 class Lesson extends Model
 {
@@ -183,13 +182,13 @@ class Lesson extends Model
 
     public function lessonBannerImageUrl(): ?string
     {
-        return $this->publicImageUrl($this->lesson_banner_image);
+        return $this->protectedImageUrl($this->lesson_banner_image, 'banner');
     }
 
     public function lessonImageUrls(): array
     {
         return collect($this->lesson_images ?? [])
-            ->map(fn (?string $path) => $this->publicImageUrl($path))
+            ->map(fn (?string $path, int $index) => $this->protectedImageUrl($path, 'image', $index))
             ->filter()
             ->values()
             ->all();
@@ -232,16 +231,36 @@ class Lesson extends Model
             ->all();
     }
 
-    private function publicImageUrl(?string $path): ?string
+    private function protectedImageUrl(?string $path, string $kind, ?int $index = null): ?string
     {
         if (blank($path)) {
             return null;
         }
 
-        if (preg_match('/^(https?:)?\/\//', $path) || str_starts_with($path, '/')) {
+        $path = trim(str_replace('\\', '/', (string) $path), '/');
+
+        if (preg_match('/^https?:\/\//i', $path)) {
             return $path;
         }
 
-        return Storage::disk('public')->url($path);
+        if (! str_starts_with($path, 'academy/') || str_contains($path, '..')) {
+            return null;
+        }
+
+        if (auth()->user()?->isAdmin()) {
+            return route('admin.academy-files.show', ['path' => $path]);
+        }
+
+        $course = $this->relationLoaded('course') ? $this->course : $this->course()->first();
+        if (! $course) {
+            return null;
+        }
+
+        return route('member.courses.lessons.media', array_filter([
+            'slug' => $course->slug,
+            'lesson' => $this,
+            'kind' => $kind,
+            'index' => $index,
+        ], fn ($value) => $value !== null));
     }
 }

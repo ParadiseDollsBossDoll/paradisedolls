@@ -20,7 +20,7 @@ class EnsureCommunityAccessIsAssigned
             return $next($request);
         }
 
-        if ($user->isModel() && $user->modelProfile()->first()?->hasCommunityChatAccess()) {
+        if ($user->hasCommunityChatAccess()) {
             return $next($request);
         }
 

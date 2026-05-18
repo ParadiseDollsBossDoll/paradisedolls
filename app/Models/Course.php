@@ -206,7 +206,7 @@ class Course extends Model
 
     public function courseOutlineUrl(): ?string
     {
-        return $this->publicImageUrl($this->course_outline_url);
+        return $this->protectedCourseOutlineUrl($this->course_outline_url);
     }
 
     public function courseOutlineFileName(): ?string
@@ -367,6 +367,29 @@ class Course extends Model
         }
 
         return Storage::disk('public')->url($path);
+    }
+
+    private function protectedCourseOutlineUrl(?string $path): ?string
+    {
+        if (blank($path)) {
+            return null;
+        }
+
+        $path = trim(str_replace('\\', '/', (string) $path), '/');
+
+        if (preg_match('/^https?:\/\//i', $path)) {
+            return $path;
+        }
+
+        if (! str_starts_with($path, 'academy/') || str_contains($path, '..')) {
+            return null;
+        }
+
+        if (auth()->user()?->isAdmin()) {
+            return route('admin.academy-files.show', ['path' => $path]);
+        }
+
+        return route('member.courses.outline', $this->slug);
     }
 
     /**

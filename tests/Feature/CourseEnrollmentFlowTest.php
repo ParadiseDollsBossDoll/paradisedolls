@@ -138,12 +138,19 @@ class CourseEnrollmentFlowTest extends TestCase
             ])
             ->assertRedirect(route('member.courses.show', $course->slug));
 
+        $this->actingAs($member)
+            ->post(route('member.courses.request-access', $course->slug), [
+                'member_notes' => 'Adding one more detail while Kayla reviews.',
+            ])
+            ->assertRedirect(route('member.courses.show', $course->slug));
+
         $this->assertDatabaseHas('course_access_requests', [
             'course_id' => $course->id,
             'user_id' => $member->id,
             'status' => CourseAccessRequest::STATUS_PENDING,
-            'member_notes' => 'I submitted the QR code after my callback.',
+            'member_notes' => 'Adding one more detail while Kayla reviews.',
         ]);
+        $this->assertSame(1, $admin->notifications()->where('type', \App\Notifications\SystemNotification::class)->count());
         $adminNotification = $admin->notifications()->first();
         $this->assertNotNull($adminNotification);
         $this->assertSame('course_access_requested', $adminNotification->data['category']);
@@ -159,6 +166,7 @@ class CourseEnrollmentFlowTest extends TestCase
         ]);
         Mail::assertQueued(CourseAccessRequestedMail::class, fn (CourseAccessRequestedMail $mail) => $mail->accessRequest->course_id === $course->id
             && $mail->accessRequest->user_id === $member->id);
+        Mail::assertQueued(CourseAccessRequestedMail::class, 1);
 
         $this->actingAs($member)
             ->get(route('member.courses.show', $course->slug))
@@ -166,7 +174,7 @@ class CourseEnrollmentFlowTest extends TestCase
             ->assertSee('Access request sent');
 
         $this->actingAs($admin)
-            ->get(route('notifications.open', $adminNotification))
+            ->post(route('notifications.open', $adminNotification))
             ->assertRedirect(route('admin.onboarding.index', ['model' => $member->id], false));
 
         $this->assertNotNull($adminNotification->fresh()->read_at);
@@ -336,8 +344,8 @@ class CourseEnrollmentFlowTest extends TestCase
 
     public function test_course_outline_and_intro_render_before_lessons_in_learning_flow(): void
     {
-        Storage::fake('public');
-        Storage::disk('public')->put('academy/course-outlines/outline.pdf', "%PDF-1.4\n");
+        Storage::fake('local');
+        Storage::disk('local')->put('academy/course-outlines/outline.pdf', "%PDF-1.4\n");
 
         $member = User::factory()->create(['role' => 'model']);
         $course = Course::create([
@@ -381,6 +389,11 @@ class CourseEnrollmentFlowTest extends TestCase
             ->assertSee('Course Orientation')
             ->assertSee('Module 1')
             ->assertDontSee('Mark Complete');
+
+        $this->actingAs($member)
+            ->get(route('member.courses.outline', $course->slug))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
 
         $this->actingAs($member)
             ->get(route('member.courses.learn.show', [$course->slug, 'item' => 'intro']))

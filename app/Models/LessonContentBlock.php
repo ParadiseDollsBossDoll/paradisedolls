@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class LessonContentBlock extends Model
 {
@@ -90,12 +89,12 @@ class LessonContentBlock extends Model
 
     public function imageUrl(): ?string
     {
-        return $this->publicFileUrl($this->image_path);
+        return $this->protectedFileUrl($this->image_path, 'image');
     }
 
     public function fileUrl(): ?string
     {
-        return $this->publicFileUrl($this->file_path);
+        return $this->protectedFileUrl($this->file_path, 'file');
     }
 
     public function videoEmbedUrl(): ?string
@@ -145,7 +144,7 @@ class LessonContentBlock extends Model
     public function galleryImageUrls(): array
     {
         return collect($this->settings['gallery_images'] ?? [])
-            ->map(fn (?string $path) => $this->publicFileUrl($path))
+            ->map(fn (?string $path, int $index) => $this->protectedFileUrl($path, 'gallery', $index))
             ->filter()
             ->values()
             ->all();
@@ -171,16 +170,38 @@ class LessonContentBlock extends Model
         return $label !== '' ? $label : $fallback;
     }
 
-    private function publicFileUrl(?string $path): ?string
+    private function protectedFileUrl(?string $path, string $field, ?int $index = null): ?string
     {
         if (blank($path)) {
             return null;
         }
 
-        if (preg_match('/^(https?:)?\/\//', $path) || str_starts_with($path, '/')) {
+        $path = trim(str_replace('\\', '/', (string) $path), '/');
+
+        if (preg_match('/^https?:\/\//i', $path)) {
             return $path;
         }
 
-        return Storage::disk('public')->url($path);
+        if (! str_starts_with($path, 'academy/') || str_contains($path, '..')) {
+            return null;
+        }
+
+        if (auth()->user()?->isAdmin()) {
+            return route('admin.academy-files.show', ['path' => $path]);
+        }
+
+        $lesson = $this->relationLoaded('lesson') ? $this->lesson : $this->lesson()->with('course')->first();
+        $course = $lesson?->relationLoaded('course') ? $lesson->course : $lesson?->course()->first();
+
+        if (! $course) {
+            return null;
+        }
+
+        return route('member.courses.content-blocks.media', array_filter([
+            'slug' => $course->slug,
+            'block' => $this,
+            'field' => $field,
+            'index' => $index,
+        ], fn ($value) => $value !== null));
     }
 }

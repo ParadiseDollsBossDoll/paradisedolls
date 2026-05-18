@@ -6,9 +6,9 @@
     if (filled($outlinePath)) {
         $pathPart = parse_url($outlinePath, PHP_URL_PATH) ?: $outlinePath;
         $outlineFileName = basename(str_replace('\\', '/', rawurldecode($pathPart))) ?: __('Saved file');
-        $outlineUrl = preg_match('/^(https?:)?\/\//', $outlinePath) || str_starts_with($outlinePath, '/')
+        $outlineUrl = preg_match('/^https?:\/\//', $outlinePath)
             ? $outlinePath
-            : \Illuminate\Support\Facades\Storage::disk('public')->url($outlinePath);
+            : route('admin.academy-files.show', ['path' => $outlinePath]);
     }
 @endphp
 

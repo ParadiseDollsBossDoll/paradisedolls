@@ -694,6 +694,16 @@ document.addEventListener('alpine:init', () => {
             } else {
                 this.messages.splice(insertAt, 0, nextMessage);
             }
+
+            this.pruneMessageDom();
+        },
+
+        pruneMessageDom() {
+            if (this.messages.length <= MAX_MESSAGES_IN_DOM) {
+                return;
+            }
+
+            this.messages = this.messages.slice(-MAX_MESSAGES_IN_DOM);
         },
 
         quickChannels() {

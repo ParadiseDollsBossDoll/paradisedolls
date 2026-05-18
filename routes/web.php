@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminApplicationController;
+use App\Http\Controllers\Admin\AdminAcademyFileController;
 use App\Http\Controllers\Admin\AdminCourseController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminLessonController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Community\CommunityPresenceController;
 use App\Http\Controllers\Community\MessageReactionController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Member\CourseChatController;
+use App\Http\Controllers\Member\CourseAssetController;
 use App\Http\Controllers\Member\LessonProgressController;
 use App\Http\Controllers\Member\MemberCourseController;
 use App\Http\Controllers\Member\MemberDashboardController;
@@ -77,12 +79,19 @@ Route::middleware(['auth', 'verified', 'model'])->prefix('member')->name('member
         ->middleware('throttle:member-progress')
         ->name('courses.learn');
     Route::post('/courses/{slug}/request-access', [MemberCourseController::class, 'requestAccess'])
-        ->middleware('throttle:member-progress')
+        ->middleware('throttle:course-access-requests')
         ->name('courses.request-access');
 
     Route::middleware('course.enrolled')->group(function () {
         Route::get('/courses/{slug}/learn', [MemberCourseController::class, 'learnShow'])->name('courses.learn.show');
         Route::get('/courses/{slug}/lessons/{lesson}', [MemberCourseController::class, 'lesson'])->name('courses.lessons.show');
+        Route::get('/courses/{slug}/outline', [CourseAssetController::class, 'outline'])->name('courses.outline');
+        Route::get('/courses/{slug}/lessons/{lesson}/media/{kind}/{index?}', [CourseAssetController::class, 'lessonMedia'])
+            ->whereNumber('index')
+            ->name('courses.lessons.media');
+        Route::get('/courses/{slug}/content-blocks/{block}/{field}/{index?}', [CourseAssetController::class, 'contentBlock'])
+            ->whereNumber('index')
+            ->name('courses.content-blocks.media');
         Route::get('/courses/{slug}/community', [MemberCourseController::class, 'community'])->name('courses.community');
         Route::patch('/lessons/{lesson}/progress', [LessonProgressController::class, 'update'])
             ->middleware('throttle:member-progress')
@@ -128,7 +137,7 @@ Route::middleware(['auth', 'verified', 'community.access', 'community.perf'])->p
 Route::middleware(['auth', 'verified'])->prefix('notifications')->name('notifications.')->group(function () {
     Route::get('/', [NotificationController::class, 'index'])->name('index');
     Route::post('/mark-all-read', [NotificationController::class, 'markAllRead'])->name('mark-all-read');
-    Route::get('/{notification}', [NotificationController::class, 'open'])->name('open');
+    Route::post('/{notification}', [NotificationController::class, 'open'])->name('open');
 });
 
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -184,6 +193,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     Route::get('/models/progress', [AdminModelProgressController::class, 'index'])->name('models.progress');
     Route::get('/onboarding', [AdminOnboardingController::class, 'index'])->name('onboarding.index');
+    Route::get('/onboarding/{profile}/details', [AdminOnboardingController::class, 'details'])->name('onboarding.details');
+    Route::get('/academy-files', [AdminAcademyFileController::class, 'show'])->name('academy-files.show');
     Route::get('/onboarding/{profile}/documents/{document}', [AdminOnboardingController::class, 'downloadDocument'])
         ->name('onboarding.documents.show');
     Route::get('/onboarding/{profile}/documents/{document}/view', [AdminOnboardingController::class, 'viewDocument'])
