@@ -1,7 +1,11 @@
 @php
     $heroImg   = 'https://images.unsplash.com/photo-1679931992295-a8d77544a807?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920';
     $storyImg  = 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=85&w=900';
-    $luxeImg   = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=85&w=900';
+    $myStoryImages = [
+        asset('images/our-story/my-story-laptop-beach-1.jpeg'),
+        asset('images/our-story/my-story-laptop-beach-2.jpeg'),
+        asset('images/our-story/my-story-laptop-beach-3.jpeg'),
+    ];
 @endphp
 <x-layouts.marketing :title="__('Our Story')">
 
@@ -47,20 +51,35 @@
     {{-- Kayla's personal story --}}
     <section class="bg-boss-cream py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="mx-auto max-w-3xl">
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('My Story') }}</p>
-                <h2 class="font-display text-[clamp(1.8rem,3.5vw,2.75rem)] leading-tight text-boss-dark">{{ __('From nothing… to building a global business') }}</h2>
-                <div class="mt-10 space-y-6 text-[0.95rem] leading-relaxed text-boss-dark/70">
-                    <p>{{ __("I didn't come from money, connections, or qualifications.") }}</p>
-                    <p>{{ __("I left home early, carrying my own struggles and trauma like many of us do. I left school and college with no GCSEs, no certificates, and no safety net. All I had was hustle, instinct, resilience, and a fire inside me that refused to accept struggle as a permanent state.") }}</p>
-                    <p>{{ __("So I learned this industry fast. I built networks. I connected with major names behind the scenes. And yes… I failed many times too.") }}</p>
-                    <p>{{ __("But every setback taught me something valuable.") }}</p>
-                    <p>{{ __("Over the years, I successfully built multiple businesses generating millions, creating a strong foundation in growth, branding, online marketing, and strategy. I also navigated major economic shifts and the impact of COVID, which sharpened my ability to adapt, rebuild, and scale even stronger than before.") }}</p>
-                    <p>{{ __("What started as survival eventually became something much bigger.") }}</p>
-                    <p>{{ __("I went from having nothing… to building my own global multi-streaming business, helping models earn across multiple platforms at once and create real financial freedom for themselves.") }}</p>
-                    <p>{{ __("I turned my personal brand into opportunities I once only dreamed about — including becoming an official Playboy cover model and internationally published feature model.") }}</p>
-                    <p class="font-medium text-boss-dark text-[1rem]">{{ __("But the biggest achievement for me isn't the features, the money, the followers, or the lifestyle.") }}</p>
-                    <p class="font-medium text-boss-dark text-[1rem]">{{ __("It's being able to help other girls realise they are capable of building a completely different life too.") }}</p>
+            <div class="grid gap-14 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+                <div>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('My Story') }}</p>
+                    <h2 class="font-display text-[clamp(1.8rem,3.5vw,2.75rem)] leading-tight text-boss-dark">{{ __('From nothing... to building a global business') }}</h2>
+                    <div class="mt-10 space-y-6 text-[0.95rem] leading-relaxed text-boss-dark/70">
+                        <p>{{ __("I didn't come from money, connections, or a perfect start.") }}</p>
+                        <p>{{ __("I left school early and had to figure life out for myself at a young age. Everything I've built came from learning as I went, trusting my instincts, staying resilient, and refusing to give up on creating a bigger life for myself.") }}</p>
+                        <p>{{ __("Over the years, I built networks, learned this industry from the ground up, and turned my passion into multiple successful businesses focused on branding, online marketing, and multi-streaming. Of course there were setbacks along the way, but every challenge taught me something valuable and pushed me to grow even more.") }}</p>
+                        <p>{{ __("What started as simply wanting more for myself eventually became something much bigger.") }}</p>
+                        <p>{{ __("Today, Paradise Dolls and the Boss Doll Blueprint are built to help women create confidence, freedom, friendships, opportunities, and online success from anywhere in the world.") }}</p>
+                        <p>
+                            {{ __("I also turned my personal brand into opportunities I once only dreamed about. Including becoming an official Playboy cover model and internationally published feature model, which you can read more about here:") }}
+                            <a href="https://playboy.co.za/2026/04/30/sets-the-tone/" target="_blank" rel="noopener noreferrer" class="font-medium text-boss-gold underline decoration-boss-gold/40 underline-offset-4 transition-colors hover:text-boss-gold-hover">{{ __('Playboy feature') }}</a>
+                        </p>
+                        <p class="font-medium text-boss-dark text-[1rem]">{{ __("But the biggest achievement for me has never been the features, followers, or lifestyle. It's being able to inspire other women to realise they are capable of building a bigger life too.") }}</p>
+                        <p>{{ __("No matter your background, your past, your age, your body, or where you're starting from, you are still allowed to dream bigger. You are still allowed to become confident, successful, feminine, independent, powerful, and completely yourself all at once.") }}</p>
+                        <p>{{ __("Paradise Dolls was created to remind women that they don't have to fit into one box to be successful. You can be soft and strong. Feminine and ambitious. Beautiful and business-minded. This is more than just a platform. It's a movement built to empower women to believe in themselves again.") }}</p>
+                    </div>
+                </div>
+                <div class="grid gap-4 sm:grid-cols-2 lg:sticky lg:top-28">
+                    <div class="aspect-[4/5] overflow-hidden sm:col-span-2">
+                        <img src="{{ $myStoryImages[0] }}" alt="{{ __('Kayla working from the beach at sunset') }}" class="h-full w-full object-cover">
+                    </div>
+                    <div class="aspect-[4/3] overflow-hidden">
+                        <img src="{{ $myStoryImages[1] }}" alt="{{ __('Kayla on the beach with a laptop at sunset') }}" class="h-full w-full object-cover">
+                    </div>
+                    <div class="aspect-[4/3] overflow-hidden">
+                        <img src="{{ $myStoryImages[2] }}" alt="{{ __('Kayla building her online business by the ocean') }}" class="h-full w-full object-cover">
+                    </div>
                 </div>
             </div>
         </div>
@@ -106,12 +125,13 @@
                 <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('The Journey') }}</p>
                 <h2 class="font-display text-[clamp(1.8rem,3vw,2.5rem)] text-boss-dark">{{ __('From ambition to agency') }}</h2>
             </div>
-            <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
                 @foreach ([
-                    ['2018', __('The Beginning'), __('Started with ambition and the belief that performers deserve more. Built early networks and tested what really worked.')],
-                    ['2020', __('Going Digital'), __('Scaled audiences online during a global shift. Earned from anywhere — and proved the model worked.')],
-                    ['2022', __('Building the Agency'), __('Formalised training, mentorship, and the Boss Doll Blueprint. The system that turned experience into education.')],
-                    ['2024', __('Global Vision'), __('International growth, a worldwide sisterhood, and a mission to reach women everywhere who deserve better guidance.')],
+                    ['2012', __('The Beginning'), __('Left home early and started building my own path through music, modelling, dancing, and live TV work. I learned quickly how powerful confidence, performance, and personal branding could be.')],
+                    ['2016', __('Going Online'), __('As the world shifted online, I started exploring streaming, content creation, and digital platforms. I realised women could create income and freedom from anywhere in the world with just a phone, consistency, and confidence.')],
+                    ['2018', __('Building Businesses'), __('I opened studios, created agencies, and developed systems that helped models grow online. I also invested into multiple businesses including clubs, beauty, photography, and online ventures across different countries.')],
+                    ['2019-2021', __('Adapting & Evolving'), __('The industry changed fast. Covid, social media growth, and content creation completely transformed the online world. I spent years testing platforms, learning what actually worked, adapting to the changes, and rebuilding stronger.')],
+                    ['2025-2026', __('The Boss Doll Blueprint Era'), __('After stepping away for a few years, I came back with a whole new vision, combining multi-streaming, content creation, social media growth, mentorship, and online education into one supportive girls-girl community and Academy.')],
                 ] as $t)
                     <div class="border border-boss-pink/40 bg-boss-muted p-6">
                         <p class="font-display text-[2rem] leading-none text-boss-gold">{{ $t[0] }}</p>
@@ -119,6 +139,11 @@
                         <p class="mt-3 text-[0.86rem] leading-relaxed text-boss-dark/60">{{ $t[2] }}</p>
                     </div>
                 @endforeach
+            </div>
+            <div class="mx-auto mt-14 max-w-3xl space-y-5 text-center text-[0.95rem] leading-relaxed text-boss-dark/65">
+                <p>{{ __("This journey hasn't been easy, but it's taught me everything.") }}</p>
+                <p>{{ __("For over 15 years I've tested platforms, studied the industry, built businesses, failed, rebuilt, learned the systems myself, and discovered what truly works online.") }}</p>
+                <p class="font-medium text-boss-dark">{{ __("Now I'm passing that knowledge, structure, and experience onto other women, so they can build confidence, freedom, income and a life bigger than they ever imagined.") }}</p>
             </div>
         </div>
     </section>
