@@ -1,4 +1,4 @@
-@php($hero = 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=85&w=1920')
+@php($hero = asset('images/15.jpeg'))
 <x-layouts.marketing :title="__('Success Stories')">
     <section class="relative flex min-h-[58vh] items-center justify-center overflow-hidden pt-24">
         <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ $hero }}');"></div>

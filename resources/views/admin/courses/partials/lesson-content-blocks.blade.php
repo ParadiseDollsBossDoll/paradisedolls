@@ -1,5 +1,6 @@
 <div class="sm:col-span-2 rounded-xl border border-boss-gold/10 bg-boss-gold/[0.035] p-3">
     <input type="hidden" x-bind:name="`lessons[${index}][content_blocks_enabled]`" value="1">
+    <input type="hidden" x-bind:name="`lessons[${index}][_content_block_count]`" x-bind:value="lesson.content_blocks.length">
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -26,7 +27,7 @@
 
     <div x-show="lesson.content_blocks.length > 0" class="mt-3 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2 text-[0.68rem] leading-relaxed text-boss-ivory/32">
         {{ __('Preview order:') }}
-        <template x-for="(block, blockIndex) in lesson.content_blocks" :key="`preview-${block.id || blockIndex}`">
+        <template x-for="(block, blockIndex) in lesson.content_blocks" :key="`preview-${block.id || block.temp_id}`">
             <span>
                 <span class="text-boss-gold" x-text="`${blockIndex + 1}. ${blockTypeLabel(block.block_type)}`"></span><span x-show="blockIndex < lesson.content_blocks.length - 1"> / </span>
             </span>
@@ -34,7 +35,7 @@
     </div>
 
     <div class="mt-3 space-y-2">
-        <template x-for="(block, blockIndex) in lesson.content_blocks" :key="block.id || `${index}-${blockIndex}`">
+        <template x-for="(block, blockIndex) in lesson.content_blocks" :key="block.id || block.temp_id">
             <div x-data="{ expanded: true }" class="overflow-hidden rounded-lg border border-white/[0.06] bg-[#0E0E1A]">
                 <div class="flex flex-wrap items-center gap-2 border-b border-white/[0.05] bg-white/[0.015] px-3 py-2">
                     <span class="flex h-5 w-5 items-center justify-center rounded-full border border-boss-gold/25 bg-boss-gold/10 text-[0.58rem] text-boss-gold" x-text="blockIndex + 1"></span>
@@ -58,16 +59,15 @@
 
                 <div x-show="expanded" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
                     <div class="grid gap-3 p-3 sm:grid-cols-2">
-                        <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][id]`" x-bind:value="block.id || ''">
-                        <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][sort_order]`" x-bind:value="blockIndex + 1">
-                        <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][image_path]`" x-bind:value="block.image_path || ''">
-                        <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][file_path]`" x-bind:value="block.file_path || ''">
-                        <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][presentation_url]`" x-bind:value="block.presentation_url || ''">
+                        {{-- Block media fields (id, paths, video ids, slide_images) are injected
+                             from canonical JS state via rebuildBlockHiddenInputs() on form submit.
+                             Do not add hidden inputs here — they would rely on Alpine x-bind
+                             evaluation which can be deferred for non-active lesson panels. --}}
 
                         <div>
                             <x-input-label ::for="`lesson_${index}_block_${blockIndex}_type`" :value="__('Block Type')" />
                             <select class="pd-input mt-2" x-model="block.block_type" x-bind:id="`lesson_${index}_block_${blockIndex}_type`" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][block_type]`">
-                                <template x-for="type in contentBlockTypes()" :key="type">
+                                <template x-for="type in (contentBlockTypes().includes(block.block_type) ? contentBlockTypes() : [...contentBlockTypes(), block.block_type])" :key="type">
                                     <option x-bind:value="type" x-text="blockTypeLabel(type)"></option>
                                 </template>
                             </select>
@@ -95,7 +95,7 @@
                                 <template x-if="block.image_url && !previewSrc">
                                     <div class="mb-2 overflow-hidden rounded-lg border border-white/[0.06] bg-[#08080f]">
                                         <img x-bind:src="block.image_url" x-bind:alt="block.title || lesson.title || '{{ __('Lesson image') }}'" class="max-h-48 w-full object-cover">
-                                        <p class="px-3 py-1 text-[0.58rem] text-boss-ivory/22">{{ __('Current image') }}</p>
+                                        <p class="px-3 py-1 text-[0.58rem] text-boss-ivory/22">{{ __('Current saved image') }}</p>
                                     </div>
                                 </template>
                                 <template x-if="previewSrc">
@@ -108,8 +108,17 @@
                                     </div>
                                 </template>
                                 <div x-show="uploads[blockFileUploadKey(index, blockIndex)]" class="mb-2">
-                                    <div class="h-1 overflow-hidden rounded-full bg-white/[0.06]">
-                                        <div class="h-full rounded-full bg-boss-gold transition-all" x-bind:style="`width: ${uploads[blockFileUploadKey(index, blockIndex)]?.progress || 0}%`"></div>
+                                    <div class="flex items-center gap-2">
+                                        <div class="h-1 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+                                            <div class="h-full rounded-full bg-boss-gold transition-all" x-bind:style="`width: ${uploads[blockFileUploadKey(index, blockIndex)]?.progress || 0}%`"></div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            x-show="(uploads[blockFileUploadKey(index, blockIndex)]?.progress ?? 0) > 0 && (uploads[blockFileUploadKey(index, blockIndex)]?.progress ?? 0) < 100 && !uploads[blockFileUploadKey(index, blockIndex)]?.error"
+                                            @click="cancelBlockUpload(blockFileUploadKey(index, blockIndex))"
+                                            class="shrink-0 rounded border border-red-400/15 bg-red-400/[0.06] px-2 py-0.5 text-[0.58rem] text-red-300/75 transition-colors hover:border-red-400/30 hover:text-red-200">
+                                            {{ __('Cancel') }}
+                                        </button>
                                     </div>
                                     <p class="mt-1 text-[0.6rem]" x-bind:class="uploads[blockFileUploadKey(index, blockIndex)]?.error ? 'text-red-300' : 'text-boss-ivory/32'" x-text="uploads[blockFileUploadKey(index, blockIndex)]?.error || uploads[blockFileUploadKey(index, blockIndex)]?.status"></p>
                                 </div>
@@ -134,23 +143,25 @@
                         </div>
 
                         <div x-show="block.block_type === 'video'" class="sm:col-span-2">
-                            <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][bunny_video_id]`" x-bind:value="block.bunny_video_id || ''">
-                            <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][bunny_library_id]`" x-bind:value="block.bunny_library_id || ''">
-                            <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][bunny_video_title]`" x-bind:value="block.bunny_video_title || ''">
-                            <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][bunny_thumbnail_url]`" x-bind:value="block.bunny_thumbnail_url || ''">
-                            <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][bunny_upload_fingerprint]`" x-bind:value="block.bunny_upload_fingerprint || ''">
-                            <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][bunny_status]`" x-bind:value="block.bunny_status || ''">
-                            <input type="hidden" x-bind:name="`lessons[${index}][content_blocks][${blockIndex}][duration]`" x-bind:value="block.duration || ''">
-
                             <x-input-label ::for="`lesson_${index}_block_${blockIndex}_video`" :value="__('Bunny Video')" />
                             <div class="mt-2 rounded-lg border border-white/[0.06] bg-white/[0.025] p-3">
+                                <template x-if="block.bunny_video_id">
+                                    <a
+                                        x-bind:href="block.bunny_library_id && block.bunny_video_id ? `https://iframe.mediadelivery.net/embed/${block.bunny_library_id}/${block.bunny_video_id}` : '#'"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="mb-2 inline-flex items-center gap-1 text-[0.68rem] text-boss-gold hover:text-boss-gold/80"
+                                    >
+                                        {{ __('Current saved video') }}
+                                    </a>
+                                </template>
                                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
                                     <div class="flex h-20 w-full shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/[0.06] bg-[#08080f] text-[0.62rem] text-boss-ivory/25 sm:w-32">
                                         <img x-show="block.bunny_thumbnail_url" x-bind:src="block.bunny_thumbnail_url" x-bind:alt="block.bunny_video_title || block.title || lesson.title" class="h-full w-full object-cover">
                                         <span x-show="!block.bunny_thumbnail_url">{{ __('No video') }}</span>
                                     </div>
                                     <div class="min-w-0 flex-1">
-                                        <p class="truncate text-[0.78rem] text-boss-ivory" x-text="block.bunny_video_title || '{{ __('No Bunny video selected') }}'"></p>
+                                        <p class="truncate text-[0.78rem] text-boss-ivory" x-text="block.bunny_video_title || (block.bunny_video_id ? '{{ __('Saved Bunny video') }}' : '{{ __('No Bunny video selected') }}')"></p>
                                         <p class="mt-1 text-[0.62rem] text-boss-ivory/28">
                                             <span x-show="block.bunny_video_id" x-text="block.duration ? `${block.duration} - ${block.bunny_video_id}` : block.bunny_video_id"></span>
                                             <span x-show="!block.bunny_video_id">{{ __('Select an existing Bunny video or upload a new one.') }}</span>
@@ -180,11 +191,14 @@
 
                         <div x-show="['pdf_resource', 'presentation'].includes(block.block_type)" class="sm:col-span-2">
                             <label class="pd-label" x-bind:for="`lesson_${index}_block_${blockIndex}_file`">
-                                <span x-text="block.block_type === 'presentation' ? '{{ __('Presentation Upload') }}' : '{{ __('PDF Upload') }}'"></span>
+                                <span x-text="block.block_type === 'presentation' ? '{{ __('Presentation Upload (PDF)') }}' : '{{ __('PDF Upload') }}'"></span>
                             </label>
+                            <template x-if="block.block_type === 'presentation'">
+                                <p class="mt-1 text-[0.62rem] leading-relaxed text-boss-ivory/35">{{ __('Export your PowerPoint or Keynote as a PDF first, then upload that PDF here.') }}</p>
+                            </template>
                             <template x-if="block.file_url || block.presentation_url">
-                                <a x-bind:href="block.file_url || block.presentation_url" target="_blank" rel="noopener noreferrer" class="mb-2 inline-flex items-center gap-1 text-[0.68rem] text-boss-gold hover:text-boss-gold/80">
-                                    {{ __('Current saved file') }}
+                                <a x-bind:href="block.file_url || block.presentation_url" target="_blank" rel="noopener noreferrer" class="mt-1.5 mb-1 inline-flex items-center gap-1 text-[0.68rem] text-boss-gold hover:text-boss-gold/80">
+                                    <span x-text="block.block_type === 'presentation' ? '{{ __('Current saved presentation PDF') }}' : '{{ __('Current saved PDF') }}'"></span>
                                 </a>
                             </template>
                             <div
@@ -195,8 +209,17 @@
                                 class="mt-2"
                             >
                                 <div x-show="uploads[blockFileUploadKey(index, blockIndex)]" class="mb-2">
-                                    <div class="h-1 overflow-hidden rounded-full bg-white/[0.06]">
-                                        <div class="h-full rounded-full bg-boss-gold transition-all" x-bind:style="`width: ${uploads[blockFileUploadKey(index, blockIndex)]?.progress || 0}%`"></div>
+                                    <div class="flex items-center gap-2">
+                                        <div class="h-1 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+                                            <div class="h-full rounded-full bg-boss-gold transition-all" x-bind:style="`width: ${uploads[blockFileUploadKey(index, blockIndex)]?.progress || 0}%`"></div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            x-show="(uploads[blockFileUploadKey(index, blockIndex)]?.progress ?? 0) > 0 && (uploads[blockFileUploadKey(index, blockIndex)]?.progress ?? 0) < 100 && !uploads[blockFileUploadKey(index, blockIndex)]?.error"
+                                            @click="cancelBlockUpload(blockFileUploadKey(index, blockIndex))"
+                                            class="shrink-0 rounded border border-red-400/15 bg-red-400/[0.06] px-2 py-0.5 text-[0.58rem] text-red-300/75 transition-colors hover:border-red-400/30 hover:text-red-200">
+                                            {{ __('Cancel') }}
+                                        </button>
                                     </div>
                                     <p class="mt-1 text-[0.6rem]" x-bind:class="uploads[blockFileUploadKey(index, blockIndex)]?.error ? 'text-red-300' : 'text-boss-ivory/32'" x-text="uploads[blockFileUploadKey(index, blockIndex)]?.error || uploads[blockFileUploadKey(index, blockIndex)]?.status"></p>
                                 </div>
@@ -204,13 +227,13 @@
                                     class="flex min-h-[7rem] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-5 text-center transition-all duration-200"
                                     :class="drag ? 'border-boss-gold/70 bg-boss-gold/[0.07]' : 'border-white/[0.10] bg-white/[0.025] hover:border-boss-gold/30 hover:bg-white/[0.035]'"
                                 >
-                                    <span class="text-[0.58rem] font-semibold uppercase tracking-[0.15em] text-boss-gold/60" x-text="block.block_type === 'presentation' ? '{{ __('Drop presentation here') }}' : '{{ __('Drop PDF here') }}'"></span>
+                                    <span class="text-[0.58rem] font-semibold uppercase tracking-[0.15em] text-boss-gold/60" x-text="block.block_type === 'presentation' ? '{{ __('Drop PDF presentation here') }}' : '{{ __('Drop PDF here') }}'"></span>
                                     <span class="text-[0.73rem] text-boss-ivory/40">{{ __('Drag and drop, or click to browse') }}</span>
                                     <span class="text-[0.63rem] text-boss-ivory/28" x-text="fileLabel || '{{ __('No file selected') }}'"></span>
-                                    <span class="mt-0.5 text-[0.58rem] text-boss-ivory/18" x-text="block.block_type === 'presentation' ? '{{ __('Uploads immediately — PPT, PPTX, PDF, KEY') }}' : '{{ __('Uploads immediately — PDF') }}'"></span>
+                                    <span class="mt-0.5 text-[0.58rem] text-boss-ivory/18">{{ __('PDF only — up to 100 MB') }}</span>
                                     <input
                                         type="file"
-                                        x-bind:accept="block.block_type === 'presentation' ? '.ppt,.pptx,.pdf,.key,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation' : '.pdf,application/pdf'"
+                                        accept=".pdf,application/pdf"
                                         class="sr-only"
                                         x-bind:id="`lesson_${index}_block_${blockIndex}_file`"
                                         x-ref="fileInput"

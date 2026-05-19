@@ -322,6 +322,376 @@ class AdminCourseManagementTest extends TestCase
         $this->assertNull($block->content);
     }
 
+    public function test_admin_update_keeps_duplicate_media_blocks_independent_per_lesson(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $course = Course::create([
+            'title' => 'Reusable Media Course',
+            'slug' => 'reusable-media-course',
+            'platform_label' => 'General',
+            'description' => 'A course that reuses media across lessons.',
+            'is_published' => true,
+        ]);
+        $module = $course->modules()->create([
+            'title' => 'Core Training',
+            'is_published' => true,
+            'sort_order' => 1,
+        ]);
+        $lessonOne = $course->lessons()->create([
+            'course_module_id' => $module->id,
+            'title' => 'Lesson 1',
+            'is_published' => true,
+            'sort_order' => 1,
+        ]);
+        $lessonTwo = $course->lessons()->create([
+            'course_module_id' => $module->id,
+            'title' => 'Lesson 2',
+            'is_published' => true,
+            'sort_order' => 2,
+        ]);
+
+        $this->actingAs($admin)->put(route('admin.courses.update', $course), [
+            'title' => 'Reusable Media Course',
+            'slug' => 'reusable-media-course',
+            'platform_label' => 'General',
+            'description' => 'A course that reuses media across lessons.',
+            'has_course_outline' => '0',
+            'has_intro' => '0',
+            'is_published' => '1',
+            'modules' => [
+                [
+                    'id' => $module->id,
+                    'client_key' => 'module-'.$module->id,
+                    'title' => 'Core Training',
+                    'is_published' => '1',
+                    'sort_order' => 1,
+                ],
+            ],
+            'lessons' => [
+                [
+                    'id' => $lessonOne->id,
+                    'course_module_id' => $module->id,
+                    'module_key' => 'module-'.$module->id,
+                    'title' => 'Lesson 1',
+                    'content_blocks_enabled' => '1',
+                    '_content_block_count' => 4,
+                    'content_blocks' => [
+                        ['block_type' => 'text', 'title' => 'Intro', 'content' => 'Lesson one intro.', 'sort_order' => 1],
+                        ['block_type' => 'video', 'title' => 'Shared Video', 'bunny_video_id' => 'shared-video', 'bunny_library_id' => 'library-1', 'sort_order' => 2],
+                        ['block_type' => 'text', 'title' => 'Details', 'content' => 'Lesson one details.', 'sort_order' => 3],
+                        ['block_type' => 'image', 'title' => 'Shared Image', 'image_path' => 'academy/lesson-content/images/shared.png', 'sort_order' => 4],
+                    ],
+                    'is_published' => '1',
+                    'sort_order' => 1,
+                ],
+                [
+                    'id' => $lessonTwo->id,
+                    'course_module_id' => $module->id,
+                    'module_key' => 'module-'.$module->id,
+                    'title' => 'Lesson 2',
+                    'content_blocks_enabled' => '1',
+                    '_content_block_count' => 3,
+                    'content_blocks' => [
+                        ['block_type' => 'video', 'title' => 'Same Shared Video', 'bunny_video_id' => 'shared-video', 'bunny_library_id' => 'library-1', 'sort_order' => 1],
+                        ['block_type' => 'image', 'title' => 'Same Shared Image', 'image_path' => 'academy/lesson-content/images/shared.png', 'sort_order' => 2],
+                        ['block_type' => 'pdf_resource', 'title' => 'Lesson 2 PDF', 'file_path' => 'academy/lesson-content/pdfs/shared.pdf', 'sort_order' => 3],
+                    ],
+                    'is_published' => '1',
+                    'sort_order' => 2,
+                ],
+            ],
+        ])->assertRedirect(route('admin.courses.index'));
+
+        $lessonOne->refresh()->load('contentBlocks');
+        $lessonTwo->refresh()->load('contentBlocks');
+
+        $this->assertSame(['text', 'video', 'text', 'image'], $lessonOne->contentBlocks->pluck('block_type')->all());
+        $this->assertSame(['video', 'image', 'pdf_resource'], $lessonTwo->contentBlocks->pluck('block_type')->all());
+        $this->assertSame('shared-video', $lessonTwo->contentBlocks[0]->bunny_video_id);
+        $this->assertSame('academy/lesson-content/images/shared.png', $lessonTwo->contentBlocks[1]->image_path);
+        $this->assertSame('academy/lesson-content/pdfs/shared.pdf', $lessonTwo->contentBlocks[2]->file_path);
+    }
+
+    public function test_existing_media_blocks_keep_saved_media_when_update_sends_no_replacement(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $course = Course::create([
+            'title' => 'Media Preservation Course',
+            'slug' => 'media-preservation-course',
+            'platform_label' => 'General',
+            'description' => 'A course with saved media blocks.',
+            'is_published' => true,
+        ]);
+        $lesson = $course->lessons()->create([
+            'title' => 'Saved Media Lesson',
+            'is_published' => true,
+            'sort_order' => 1,
+        ]);
+        $image = $lesson->contentBlocks()->create([
+            'block_type' => 'image',
+            'title' => 'Saved Image',
+            'image_path' => 'academy/lesson-content/images/saved.png',
+            'sort_order' => 1,
+        ]);
+        $video = $lesson->contentBlocks()->create([
+            'block_type' => 'video',
+            'title' => 'Saved Video',
+            'bunny_video_id' => 'saved-video',
+            'bunny_library_id' => 'library-1',
+            'bunny_video_title' => 'Saved Bunny Title',
+            'duration' => '02:30',
+            'sort_order' => 2,
+        ]);
+        $presentation = $lesson->contentBlocks()->create([
+            'block_type' => 'presentation',
+            'title' => 'Saved Slides',
+            'file_path' => 'academy/lesson-content/presentations/saved.pptx',
+            'sort_order' => 3,
+        ]);
+
+        $this->actingAs($admin)->put(route('admin.courses.update', $course), [
+            'title' => 'Media Preservation Course',
+            'slug' => 'media-preservation-course',
+            'platform_label' => 'General',
+            'description' => 'A course with saved media blocks.',
+            'has_course_outline' => '0',
+            'has_intro' => '0',
+            'is_published' => '1',
+            'lessons' => [
+                [
+                    'id' => $lesson->id,
+                    'title' => 'Saved Media Lesson',
+                    'content_blocks_enabled' => '1',
+                    '_content_block_count' => 3,
+                    'content_blocks' => [
+                        ['id' => $image->id, 'sort_order' => 1],
+                        ['id' => $video->id, 'sort_order' => 2],
+                        ['id' => $presentation->id, 'sort_order' => 3],
+                    ],
+                    'is_published' => '1',
+                    'sort_order' => 1,
+                ],
+            ],
+        ])->assertRedirect(route('admin.courses.index'));
+
+        $lesson->refresh()->load('contentBlocks');
+
+        $this->assertSame(['image', 'video', 'presentation'], $lesson->contentBlocks->pluck('block_type')->all());
+        $this->assertSame('academy/lesson-content/images/saved.png', $lesson->contentBlocks[0]->image_path);
+        $this->assertSame('saved-video', $lesson->contentBlocks[1]->bunny_video_id);
+        $this->assertSame('library-1', $lesson->contentBlocks[1]->bunny_library_id);
+        $this->assertSame('academy/lesson-content/presentations/saved.pptx', $lesson->contentBlocks[2]->file_path);
+    }
+
+    public function test_no_change_course_update_twice_preserves_all_lesson_flow_media(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $course = Course::create([
+            'title' => 'No Change Media Course',
+            'slug' => 'no-change-media-course',
+            'platform_label' => 'General',
+            'description' => 'A course with every media block.',
+            'is_published' => true,
+        ]);
+        $lesson = $course->lessons()->create([
+            'title' => 'Full Flow Lesson',
+            'is_published' => true,
+            'sort_order' => 1,
+        ]);
+        $blocks = collect([
+            ['block_type' => 'text', 'title' => 'Text', 'content' => 'Text remains.', 'sort_order' => 1],
+            ['block_type' => 'video', 'title' => 'Video', 'bunny_video_id' => 'video-1', 'bunny_library_id' => 'library-1', 'sort_order' => 2],
+            ['block_type' => 'image', 'title' => 'Image', 'image_path' => 'academy/lesson-content/images/image.webp', 'sort_order' => 3],
+            ['block_type' => 'pdf_resource', 'title' => 'PDF', 'file_path' => 'academy/lesson-content/pdfs/guide.pdf', 'sort_order' => 4],
+            ['block_type' => 'presentation', 'title' => 'Presentation', 'file_path' => 'academy/lesson-content/presentations/slides.pdf', 'settings' => ['slide_images' => ['academy/lesson-content/presentations/slides/slide-1.webp']], 'sort_order' => 5],
+        ])->map(fn ($data) => $lesson->contentBlocks()->create($data));
+
+        $payload = fn () => [
+            'title' => 'No Change Media Course',
+            'slug' => 'no-change-media-course',
+            'platform_label' => 'General',
+            'description' => 'A course with every media block.',
+            'has_course_outline' => '0',
+            'has_intro' => '0',
+            'is_published' => '1',
+            'lessons' => [[
+                'id' => $lesson->id,
+                'title' => 'Full Flow Lesson',
+                'content_blocks_enabled' => '1',
+                '_content_block_count' => 5,
+                'content_blocks' => $lesson->fresh()->contentBlocks()->orderBy('sort_order')->get()->map(fn ($block) => [
+                    'id' => $block->id,
+                    'block_type' => $block->block_type,
+                    'title' => $block->title,
+                    'content' => $block->content,
+                    'image_path' => $block->image_path,
+                    'file_path' => $block->file_path,
+                    'bunny_video_id' => $block->bunny_video_id,
+                    'bunny_library_id' => $block->bunny_library_id,
+                    'slide_images' => $block->settings['slide_images'] ?? [],
+                    'sort_order' => $block->sort_order,
+                ])->all(),
+                'is_published' => '1',
+                'sort_order' => 1,
+            ]],
+        ];
+
+        $this->actingAs($admin)->put(route('admin.courses.update', $course), $payload())->assertRedirect(route('admin.courses.index'));
+        $this->actingAs($admin)->put(route('admin.courses.update', $course), $payload())->assertRedirect(route('admin.courses.index'));
+
+        $lesson->refresh()->load('contentBlocks');
+
+        $this->assertSame(['text', 'video', 'image', 'pdf_resource', 'presentation'], $lesson->contentBlocks->pluck('block_type')->all());
+        $this->assertSame('video-1', $lesson->contentBlocks[1]->bunny_video_id);
+        $this->assertSame('academy/lesson-content/images/image.webp', $lesson->contentBlocks[2]->image_path);
+        $this->assertSame('academy/lesson-content/pdfs/guide.pdf', $lesson->contentBlocks[3]->file_path);
+        $this->assertSame('academy/lesson-content/presentations/slides.pdf', $lesson->contentBlocks[4]->file_path);
+        $this->assertSame(['academy/lesson-content/presentations/slides/slide-1.webp'], $lesson->contentBlocks[4]->settings['slide_images']);
+    }
+
+    public function test_replacing_only_image_preserves_video_pdf_and_presentation(): void
+    {
+        Storage::fake('public');
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $course = Course::create([
+            'title' => 'Replace One Media Course',
+            'slug' => 'replace-one-media-course',
+            'platform_label' => 'General',
+            'description' => 'A course with several media blocks.',
+            'is_published' => true,
+        ]);
+        $lesson = $course->lessons()->create(['title' => 'Replace Image Only', 'is_published' => true, 'sort_order' => 1]);
+        $video = $lesson->contentBlocks()->create(['block_type' => 'video', 'title' => 'Video', 'bunny_video_id' => 'video-1', 'bunny_library_id' => 'library-1', 'sort_order' => 1]);
+        $image = $lesson->contentBlocks()->create(['block_type' => 'image', 'title' => 'Image', 'image_path' => 'academy/lesson-content/images/old.webp', 'sort_order' => 2]);
+        $pdf = $lesson->contentBlocks()->create(['block_type' => 'pdf_resource', 'title' => 'PDF', 'file_path' => 'academy/lesson-content/pdfs/guide.pdf', 'sort_order' => 3]);
+        $presentation = $lesson->contentBlocks()->create(['block_type' => 'presentation', 'title' => 'Presentation', 'file_path' => 'academy/lesson-content/presentations/slides.pdf', 'sort_order' => 4]);
+
+        $this->actingAs($admin)->put(route('admin.courses.update', $course), [
+            'title' => 'Replace One Media Course',
+            'slug' => 'replace-one-media-course',
+            'platform_label' => 'General',
+            'description' => 'A course with several media blocks.',
+            'has_course_outline' => '0',
+            'has_intro' => '0',
+            'is_published' => '1',
+            'lessons' => [[
+                'id' => $lesson->id,
+                'title' => 'Replace Image Only',
+                'content_blocks_enabled' => '1',
+                '_content_block_count' => 4,
+                'content_blocks' => [
+                    ['id' => $video->id, 'block_type' => 'video', 'bunny_video_id' => 'video-1', 'bunny_library_id' => 'library-1', 'sort_order' => 1],
+                    ['id' => $image->id, 'block_type' => 'image', 'image_upload' => $this->fakePngUpload('new.png'), 'sort_order' => 2],
+                    ['id' => $pdf->id, 'block_type' => 'pdf_resource', 'file_path' => 'academy/lesson-content/pdfs/guide.pdf', 'sort_order' => 3],
+                    ['id' => $presentation->id, 'block_type' => 'presentation', 'file_path' => 'academy/lesson-content/presentations/slides.pdf', 'sort_order' => 4],
+                ],
+                'is_published' => '1',
+                'sort_order' => 1,
+            ]],
+        ])->assertRedirect(route('admin.courses.index'));
+
+        $lesson->refresh()->load('contentBlocks');
+
+        $this->assertSame('video-1', $lesson->contentBlocks[0]->bunny_video_id);
+        $this->assertNotSame('academy/lesson-content/images/old.webp', $lesson->contentBlocks[1]->image_path);
+        $this->assertSame('academy/lesson-content/pdfs/guide.pdf', $lesson->contentBlocks[2]->file_path);
+        $this->assertSame('academy/lesson-content/presentations/slides.pdf', $lesson->contentBlocks[3]->file_path);
+    }
+
+    public function test_incomplete_lesson_block_payload_does_not_delete_existing_blocks(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $course = Course::create([
+            'title' => 'Truncation Guard Course',
+            'slug' => 'truncation-guard-course',
+            'platform_label' => 'General',
+            'description' => 'A course with protected blocks.',
+            'is_published' => true,
+        ]);
+        $lesson = $course->lessons()->create([
+            'title' => 'Protected Lesson',
+            'is_published' => true,
+            'sort_order' => 1,
+        ]);
+        $lesson->contentBlocks()->create([
+            'block_type' => 'video',
+            'title' => 'Saved Video',
+            'bunny_video_id' => 'saved-video',
+            'bunny_library_id' => 'library-1',
+            'sort_order' => 1,
+        ]);
+
+        $this->actingAs($admin)->put(route('admin.courses.update', $course), [
+            'title' => 'Truncation Guard Course',
+            'slug' => 'truncation-guard-course',
+            'platform_label' => 'General',
+            'description' => 'A course with protected blocks.',
+            'has_course_outline' => '0',
+            'has_intro' => '0',
+            'is_published' => '1',
+            'lessons' => [
+                [
+                    'id' => $lesson->id,
+                    'title' => 'Protected Lesson',
+                    'content_blocks_enabled' => '1',
+                    '_content_block_count' => 2,
+                    'content_blocks' => [
+                        ['block_type' => 'video', 'title' => 'Saved Video', 'bunny_video_id' => 'saved-video', 'bunny_library_id' => 'library-1', 'sort_order' => 1],
+                    ],
+                    'is_published' => '1',
+                    'sort_order' => 1,
+                ],
+            ],
+        ])->assertSessionHasErrors('lessons.0.content_blocks');
+
+        $this->assertDatabaseHas('lesson_content_blocks', [
+            'lesson_id' => $lesson->id,
+            'bunny_video_id' => 'saved-video',
+        ]);
+        $this->assertSame(1, $lesson->fresh()->contentBlocks()->count());
+    }
+
+    public function test_admin_can_upload_presentation_pdf_lesson_block_file(): void
+    {
+        Storage::fake('public');
+
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)
+            ->postJson(route('admin.courses.block-file'), [
+                'type' => 'presentation',
+                'file' => UploadedFile::fake()->create(
+                    'slides.pdf',
+                    32,
+                    'application/pdf'
+                ),
+            ])
+            ->assertOk();
+
+        $this->assertStringStartsWith('academy/lesson-content/presentations/', $response->json('path'));
+    }
+
+    public function test_admin_can_upload_large_presentation_pdf_lesson_block_file(): void
+    {
+        Storage::fake('public');
+
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)
+            ->postJson(route('admin.courses.block-file'), [
+                'type' => 'presentation',
+                'file' => UploadedFile::fake()->create(
+                    'large-slides.pdf',
+                    30720,
+                    'application/pdf'
+                ),
+            ])
+            ->assertOk();
+
+        $this->assertStringStartsWith('academy/lesson-content/presentations/', $response->json('path'));
+    }
+
     public function test_admin_can_preview_course_like_member_without_progress_side_effects(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

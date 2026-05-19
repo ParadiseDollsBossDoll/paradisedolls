@@ -19,6 +19,7 @@ class AdminLessonController extends Controller
 
     public function store(Request $request, Course $course): RedirectResponse
     {
+        $this->assertLessonContentBlockPayloadIsComplete($request);
         $httpUrlRule = $this->httpUrlRule();
 
         $rules = [
@@ -73,6 +74,7 @@ class AdminLessonController extends Controller
     {
         abort_unless($lesson->course_id === $course->id, 404);
 
+        $this->assertLessonContentBlockPayloadIsComplete($request);
         $httpUrlRule = $this->httpUrlRule();
 
         $rules = [
@@ -135,6 +137,8 @@ class AdminLessonController extends Controller
 
     public function autosave(Request $request, Course $course): JsonResponse
     {
+        $this->assertLessonContentBlockPayloadIsComplete($request);
+
         $rules = $this->lessonValidationRules($course);
         $rules += $this->lessonContentBlockRules('content_blocks');
         $validated = $request->validate($rules);
@@ -165,6 +169,8 @@ class AdminLessonController extends Controller
     public function autosaveUpdate(Request $request, Course $course, Lesson $lesson): JsonResponse
     {
         abort_unless($lesson->course_id === $course->id, 404);
+
+        $this->assertLessonContentBlockPayloadIsComplete($request);
 
         $rules = $this->lessonValidationRules($course);
         $rules += $this->lessonContentBlockRules('content_blocks');
@@ -307,8 +313,8 @@ class AdminLessonController extends Controller
      */
     private function shouldSyncContentBlocks(array $lesson): bool
     {
-        return array_key_exists('content_blocks_enabled', $lesson)
-            || array_key_exists('content_blocks', $lesson);
+        return array_key_exists('content_blocks', $lesson)
+            || array_key_exists('_content_block_count', $lesson);
     }
 
     private function moduleIdFor(Course $course, ?string $title, int|string|null $moduleId = null): int

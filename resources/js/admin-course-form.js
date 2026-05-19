@@ -244,6 +244,7 @@ window.adminCourseForm = function adminCourseForm(config) {
                 presentation_url: lesson.presentation_url || null,
                 sort_order: lesson.sort_order,
                 content_blocks_enabled: true,
+                _content_block_count: lesson.content_blocks?.length ?? 0,
                 content_blocks: (lesson.content_blocks ?? []).map((block) => ({
                     id: block.id || null,
                     block_type: block.block_type,
@@ -251,6 +252,7 @@ window.adminCourseForm = function adminCourseForm(config) {
                     content: block.content || null,
                     image_path: block.image_path || null,
                     file_path: block.file_path || null,
+                    slide_images: Array.isArray(block.slide_images) ? block.slide_images : [],
                     presentation_url: block.presentation_url || null,
                     bunny_video_id: block.bunny_video_id || null,
                     bunny_library_id: block.bunny_library_id || null,
@@ -530,6 +532,7 @@ window.adminCourseForm = function adminCourseForm(config) {
         blankContentBlock(sortOrder, type = 'text') {
             return {
                 id: null,
+                temp_id: this.newContentBlockKey(sortOrder),
                 block_type: type,
                 title: '',
                 content: '',
@@ -539,6 +542,7 @@ window.adminCourseForm = function adminCourseForm(config) {
                 gallery_captions: '',
                 file_path: '',
                 file_url: '',
+                slide_images: [],
                 button_label: '',
                 bunny_video_id: '',
                 bunny_library_id: '',
@@ -559,8 +563,10 @@ window.adminCourseForm = function adminCourseForm(config) {
             return {
                 ...this.blankContentBlock(sortOrder, blockType),
                 ...block,
+                temp_id: block.temp_id || this.newContentBlockKey(sortOrder),
                 block_type: blockType,
                 gallery_image_urls: block.gallery_image_urls ?? [],
+                slide_images: block.slide_images ?? [],
                 gallery_captions: block.gallery_captions ?? '',
                 button_label: block.button_label ?? '',
                 sort_order: sortOrder,
@@ -587,7 +593,7 @@ window.adminCourseForm = function adminCourseForm(config) {
         },
 
         contentBlockTypes() {
-            return ['text', 'image', 'video', 'pdf_resource', 'presentation'];
+            return ['text', 'image', 'video', 'pdf_resource'];
         },
 
         blockTypeLabel(type) {
@@ -638,6 +644,7 @@ window.adminCourseForm = function adminCourseForm(config) {
         reorderLessonBlocks(lesson) {
             lesson.content_blocks = lesson.content_blocks.map((block, index) => ({
                 ...block,
+                temp_id: block.temp_id || this.newContentBlockKey(index + 1),
                 sort_order: index + 1,
             }));
         },
@@ -986,6 +993,10 @@ window.adminCourseForm = function adminCourseForm(config) {
             return `lesson-new-${Date.now()}-${sortOrder}-${Math.random().toString(36).slice(2, 8)}`;
         },
 
+        newContentBlockKey(sortOrder) {
+            return `block-new-${Date.now()}-${sortOrder}-${Math.random().toString(36).slice(2, 8)}`;
+        },
+
         // ── Bunny video picker ──────────────────────────────────────────────
 
         openBunnyPicker(index) {
@@ -1210,18 +1221,39 @@ window.adminCourseForm = function adminCourseForm(config) {
 
         uploadKey(target) {
             if (target.type === 'lesson_block') {
-                return this.blockUploadKey(target.index, target.blockIndex);
+                const lesson = this.lessons[target.index];
+                const block = lesson?.content_blocks?.[target.blockIndex];
+
+                return this.blockUploadKey(lesson, block);
             }
 
             return target.type === 'intro' ? 'intro' : target.index;
         },
 
-        blockUploadKey(lessonIndex, blockIndex) {
-            return `lesson-${lessonIndex}-block-${blockIndex}`;
+        blockKey(block) {
+            return block?.id ? `block-${block.id}` : block?.temp_id;
         },
 
-        blockFileUploadKey(lessonIndex, blockIndex) {
-            return `block-file-${lessonIndex}-${blockIndex}`;
+        blockUploadKey(lesson, block) {
+            if (Number.isInteger(lesson)) {
+                const resolvedLesson = this.lessons[lesson];
+                const resolvedBlock = resolvedLesson?.content_blocks?.[block];
+
+                return this.blockUploadKey(resolvedLesson, resolvedBlock);
+            }
+
+            return `${this.lessonKey(lesson)}:${this.blockKey(block) || 'block'}`;
+        },
+
+        blockFileUploadKey(lesson, block) {
+            if (Number.isInteger(lesson)) {
+                const resolvedLesson = this.lessons[lesson];
+                const resolvedBlock = resolvedLesson?.content_blocks?.[block];
+
+                return this.blockFileUploadKey(resolvedLesson, resolvedBlock);
+            }
+
+            return `file:${this.blockUploadKey(lesson, block)}`;
         },
 
         async uploadBlockLocalFile(lessonIndex, blockIndex, event, type) {
@@ -1232,7 +1264,9 @@ window.adminCourseForm = function adminCourseForm(config) {
 
             event.target.value = '';
 
-            const uploadKey = this.blockFileUploadKey(lessonIndex, blockIndex);
+            const lesson = this.lessons[lessonIndex];
+            const blockKey = this.blockKey(lesson?.content_blocks?.[blockIndex]);
+            const uploadKey = this.blockFileUploadKey(lesson, lesson?.content_blocks?.[blockIndex]);
             this.setUpload(uploadKey, { progress: 0, status: 'Uploading...', error: null });
 
             const formData = new FormData();
@@ -1242,6 +1276,11 @@ window.adminCourseForm = function adminCourseForm(config) {
             try {
                 await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
+
+                    // Store so cancelBlockUpload() can call xhr.abort()
+                    if (!this.activeXhrs) this.activeXhrs = {};
+                    this.activeXhrs[uploadKey] = xhr;
+
                     xhr.open('POST', config.blockFileUploadUrl);
                     xhr.setRequestHeader('Accept', 'application/json');
                     xhr.setRequestHeader('X-CSRF-TOKEN', this.csrfToken());
@@ -1253,19 +1292,28 @@ window.adminCourseForm = function adminCourseForm(config) {
                         }
                     };
 
+                    xhr.onabort = () => {
+                        delete this.activeXhrs[uploadKey];
+                        reject(new Error('__cancelled__'));
+                    };
+
                     xhr.onload = () => {
+                        delete this.activeXhrs[uploadKey];
                         if (xhr.status >= 200 && xhr.status < 300) {
                             let data = {};
                             try { data = JSON.parse(xhr.responseText); } catch (_) {}
 
-                            const block = this.lessons[lessonIndex]?.content_blocks?.[blockIndex];
+                            const currentLesson = this.lessons[lessonIndex];
+                            const currentBlockIndex = currentLesson?.content_blocks?.findIndex((candidate) => this.blockKey(candidate) === blockKey) ?? -1;
+                            const block = currentBlockIndex >= 0 ? currentLesson.content_blocks[currentBlockIndex] : null;
                             if (block) {
                                 if (type === 'image') {
-                                    this.lessons[lessonIndex].content_blocks[blockIndex].image_path = data.path ?? '';
-                                    this.lessons[lessonIndex].content_blocks[blockIndex].image_url = data.url ?? '';
+                                    currentLesson.content_blocks[currentBlockIndex].image_path = data.path ?? '';
+                                    currentLesson.content_blocks[currentBlockIndex].image_url = data.url ?? '';
                                 } else {
-                                    this.lessons[lessonIndex].content_blocks[blockIndex].file_path = data.path ?? '';
-                                    this.lessons[lessonIndex].content_blocks[blockIndex].file_url = data.url ?? '';
+                                    currentLesson.content_blocks[currentBlockIndex].file_path = data.path ?? '';
+                                    currentLesson.content_blocks[currentBlockIndex].file_url = data.url ?? '';
+                                    currentLesson.content_blocks[currentBlockIndex].slide_images = data.slide_images ?? [];
                                 }
                             }
 
@@ -1278,16 +1326,28 @@ window.adminCourseForm = function adminCourseForm(config) {
                         }
                     };
 
-                    xhr.onerror = () => reject(new Error('Network error during upload.'));
+                    xhr.onerror = () => {
+                        delete this.activeXhrs[uploadKey];
+                        reject(new Error('Network error during upload.'));
+                    };
+
                     xhr.send(formData);
                 });
             } catch (error) {
-                this.setUpload(uploadKey, {
-                    progress: this.uploads[uploadKey]?.progress ?? 0,
-                    status: 'Upload failed.',
-                    error: error.message,
-                });
+                if (error.message === '__cancelled__') {
+                    this.setUpload(uploadKey, { progress: 0, status: 'Upload cancelled.', error: null });
+                } else {
+                    this.setUpload(uploadKey, {
+                        progress: this.uploads[uploadKey]?.progress ?? 0,
+                        status: 'Upload failed.',
+                        error: error.message,
+                    });
+                }
             }
+        },
+
+        cancelBlockUpload(uploadKey) {
+            this.activeXhrs?.[uploadKey]?.abort();
         },
 
         // ── Preview / misc ──────────────────────────────────────────────────
@@ -1408,6 +1468,128 @@ window.adminCourseForm = function adminCourseForm(config) {
         },
 
         // ── Utilities ───────────────────────────────────────────────────────
+
+        /**
+         * Serialize ALL lesson content block data from canonical JS state into
+         * hidden form inputs right before the form is submitted.
+         *
+         * This replaces the previous approach of relying on x-bind:value hidden
+         * inputs scattered through the template, which could be deferred or stale
+         * for non-active lesson panels.  By injecting from this.lessons at submit
+         * time we guarantee that every block's media fields (id, image_path,
+         * file_path, bunny_video_id, slide_images, etc.) always reflect the true
+         * JS state, regardless of which lesson tab is active or whether blocks are
+         * collapsed.
+         */
+        rebuildBlockHiddenInputs(form) {
+            // Remove any previously injected inputs from an earlier call (e.g. if
+            // the user hits submit twice without a page reload).
+            form.querySelectorAll('input[data-pd-block-serial]').forEach((el) => el.remove());
+
+            const inject = (name, value) => {
+                const el = document.createElement('input');
+                el.type = 'hidden';
+                el.name = name;
+                el.value = (value === null || value === undefined) ? '' : String(value);
+                el.dataset.pdBlockSerial = '1';
+                form.appendChild(el);
+            };
+
+            this.lessons.forEach((lesson, lessonIndex) => {
+                const blocks = lesson.content_blocks ?? [];
+
+                // Authoritative block count — supersedes the template's x-bind version.
+                inject(`lessons[${lessonIndex}][_content_block_count]`, blocks.length);
+
+                blocks.forEach((block, blockIndex) => {
+                    const p = `lessons[${lessonIndex}][content_blocks][${blockIndex}]`;
+
+                    // Identity & ordering
+                    inject(`${p}[id]`, block.id || '');
+                    inject(`${p}[sort_order]`, blockIndex + 1);
+
+                    // Block type (also present as a <select> — injecting here ensures
+                    // it is always correct even if the select binding is deferred).
+                    inject(`${p}[block_type]`, block.block_type || 'text');
+
+                    // Image block
+                    inject(`${p}[image_path]`, block.image_path || '');
+
+                    // PDF / Presentation block
+                    inject(`${p}[file_path]`, block.file_path || '');
+                    inject(`${p}[presentation_url]`, block.presentation_url || '');
+
+                    // Slide images (presentation)
+                    (block.slide_images ?? []).forEach((slideImage, si) => {
+                        if (slideImage) {
+                            inject(`${p}[slide_images][${si}]`, slideImage);
+                        }
+                    });
+
+                    // Video block (Bunny)
+                    inject(`${p}[bunny_video_id]`, block.bunny_video_id || '');
+                    inject(`${p}[bunny_library_id]`, block.bunny_library_id || '');
+                    inject(`${p}[bunny_video_title]`, block.bunny_video_title || '');
+                    inject(`${p}[bunny_thumbnail_url]`, block.bunny_thumbnail_url || '');
+                    inject(`${p}[bunny_upload_fingerprint]`, block.bunny_upload_fingerprint || '');
+                    inject(`${p}[bunny_status]`, block.bunny_status || '');
+                    inject(`${p}[duration]`, block.duration || '');
+                });
+            });
+        },
+
+        debugCourseSubmit(form) {
+            try {
+                console.group('[ParadiseDollz] Course lesson flow submit');
+                console.table(this.modules.map((module, moduleIndex) => ({
+                    moduleIndex,
+                    id: module.id ?? null,
+                    tempId: module.client_key ?? null,
+                    title: module.title ?? '',
+                })));
+                this.lessons.forEach((lesson, lessonIndex) => {
+                    console.group(`lesson ${lessonIndex + 1}: ${lesson.title || '(untitled)'}`);
+                    console.log({
+                        lessonIndex,
+                        id: lesson.id ?? null,
+                        tempId: lesson.client_key ?? null,
+                        moduleId: lesson.course_module_id ?? null,
+                        moduleTempId: lesson.module_key ?? null,
+                    });
+                    console.table((lesson.content_blocks ?? []).map((block, blockIndex) => ({
+                        blockIndex,
+                        id: block.id ?? null,
+                        tempId: block.temp_id ?? null,
+                        type: block.block_type ?? null,
+                        position: blockIndex + 1,
+                        content: block.content ?? '',
+                        file_url: block.file_url ?? '',
+                        file_path: block.file_path ?? '',
+                        image_url: block.image_url ?? '',
+                        image_path: block.image_path ?? '',
+                        video_url: block.video_url ?? '',
+                        bunny_video_id: block.bunny_video_id ?? '',
+                        presentation_url: block.presentation_url ?? '',
+                        slide_images: Array.isArray(block.slide_images) ? block.slide_images.join(', ') : '',
+                        new_file_selected: false,
+                        remove_media: !!block.remove_media,
+                    })));
+                    console.groupEnd();
+                });
+
+                const formData = new FormData(form);
+                for (const [key, value] of formData.entries()) {
+                    console.log('[ParadiseDollz] FormData', key, value instanceof File ? {
+                        fileName: value.name,
+                        size: value.size,
+                        type: value.type,
+                    } : value);
+                }
+                console.groupEnd();
+            } catch (error) {
+                console.warn('[ParadiseDollz] Course submit debug failed', error);
+            }
+        },
 
         csrfToken() {
             return document.querySelector('meta[name="csrf-token"]')?.content ?? '';

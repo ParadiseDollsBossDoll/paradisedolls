@@ -92,7 +92,7 @@
             <span class="rounded-full px-2.5 py-0.5" x-bind:style="`background-color: ${platformColor}20; color: ${platformColor};`">③ Modules + Lessons</span>
         </div>
 
-        <form method="POST" action="{{ route('admin.courses.store') }}" enctype="multipart/form-data" class="space-y-5">
+        <form method="POST" action="{{ route('admin.courses.store') }}" enctype="multipart/form-data" class="space-y-5" @submit="debugCourseSubmit($event.target)">
             @csrf
 
             {{-- ① COURSE DETAILS — 2-column layout --}}

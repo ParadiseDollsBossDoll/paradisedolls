@@ -1,6 +1,7 @@
 @php
     $heroImg   = 'https://images.unsplash.com/photo-1679931992295-a8d77544a807?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920';
-    $storyImg  = 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=85&w=900';
+    $storyImg  = asset('images/16.jpeg');
+    $luxeImg   = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=85&w=900';
     $myStoryImages = [
         asset('images/our-story/my-story-laptop-beach-1.jpeg'),
         asset('images/our-story/my-story-laptop-beach-2.jpeg'),

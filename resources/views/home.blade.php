@@ -1,10 +1,10 @@
 <x-layouts.marketing :transparentNav="true" :title="__('Home')">
     @php
         $heroImg = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=85&w=1920';
-        $workspaceImg = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=85&w=1200';
-        $villaImg = 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&q=85&w=1200';
-        $academyImg = 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=85&w=1200';
-        $communityImg = 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=85&w=1200';
+        $workspaceImg = asset('images/17.jpeg');
+        $villaImg = asset('images/18.jpeg');
+        $academyImg = asset('images/16.jpeg');
+        $communityImg = asset('images/19.jpeg');
         $countryCallingCodes = config('country_calling_codes', []);
         $selectedPhoneCountry = old('phone_country', 'PH');
         $phoneCountries = collect($countryCallingCodes)
