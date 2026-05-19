@@ -53,7 +53,7 @@
                 @unless ($isAuthenticated)
                     <a
                         href="{{ route('login') }}"
-                        class="hidden border border-current px-6 py-2.5 text-[0.65rem] uppercase tracking-[0.14em] transition-all duration-300 hover:border-boss-gold hover:bg-boss-gold hover:text-white md:inline-flex"
+                        class="hidden rounded-md border border-current px-6 py-2.5 text-[0.65rem] uppercase tracking-[0.14em] transition-all duration-300 hover:border-[#EEB4C3] hover:bg-[#EEB4C3] hover:text-white md:inline-flex"
                         x-bind:class="transparent && !scrolled && !navOpen ? 'text-white' : 'text-boss-dark'"
                     >
                         {{ __('Log in') }}
