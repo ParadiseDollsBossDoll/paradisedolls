@@ -7,7 +7,7 @@
     $vipPartyImg    = asset('images/12.jpeg');
     $photoshootImg  = asset('images/13.jpeg');
 @endphp
-<x-layouts.marketing :title="__('VIP Perks')">
+<x-layouts.marketing :transparentNav="true" :title="__('VIP Perks')">
 
     {{-- Hero --}}
     <section class="relative flex min-h-[62vh] items-center justify-center overflow-hidden pt-24">

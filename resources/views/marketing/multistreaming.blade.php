@@ -2,7 +2,7 @@
     $heroImg    = asset('images/14.jpeg');
     $streamImg  = 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=85&w=900';
 @endphp
-<x-layouts.marketing :title="__('Multistreaming')">
+<x-layouts.marketing :transparentNav="true" :title="__('Multistreaming')">
 
     {{-- Hero --}}
     <section class="relative flex min-h-[60vh] items-center justify-center overflow-hidden pt-24">

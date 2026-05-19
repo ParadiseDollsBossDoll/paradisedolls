@@ -1,5 +1,5 @@
 @php($hero = asset('images/15.jpeg'))
-<x-layouts.marketing :title="__('Success Stories')">
+<x-layouts.marketing :transparentNav="true" :title="__('Success Stories')">
     <section class="relative flex min-h-[58vh] items-center justify-center overflow-hidden pt-24">
         <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ $hero }}');"></div>
         <div class="absolute inset-0 bg-black/55"></div>

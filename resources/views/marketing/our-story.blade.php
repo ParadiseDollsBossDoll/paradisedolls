@@ -3,7 +3,7 @@
     $storyImg  = asset('images/16.jpeg');
     $luxeImg   = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=85&w=900';
 @endphp
-<x-layouts.marketing :title="__('Our Story')">
+<x-layouts.marketing :transparentNav="true" :title="__('Our Story')">
 
     {{-- Hero --}}
     <section class="relative flex min-h-[72vh] items-end overflow-hidden pt-24">

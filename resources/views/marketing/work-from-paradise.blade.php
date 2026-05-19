@@ -4,7 +4,7 @@
     $communityImg = asset('images/5.jpeg');
     $beachImg     = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=85&w=900';
 @endphp
-<x-layouts.marketing :title="__('Work From Paradise')">
+<x-layouts.marketing :transparentNav="true" :title="__('Work From Paradise')">
 
     {{-- Hero --}}
     <section class="relative flex min-h-[72vh] items-center justify-center overflow-hidden pt-24">
@@ -150,7 +150,7 @@
         <div class="mx-auto max-w-2xl px-4">
             <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Ready to explore?') }}</p>
             <h2 class="font-display text-[clamp(2rem,4vw,3rem)] text-boss-dark">{{ __('Your paradise is waiting') }}</h2>
-            <p class="mx-auto mt-5 max-w-xl text-[0.95rem] leading-relaxed text-boss-dark/65">{{ __('Apply today. The team handles onboarding, verification, and setup — then you decide where in the world you want to work.') }}</p>
+            <p class="mx-auto mt-5 max-w-xl text-[0.95rem] leading-relaxed text-boss-dark/65">{{ __('Become a doll today. The team handles onboarding, verification, and setup — then you decide where in the world you want to work.') }}</p>
             <a href="{{ route('home') }}#apply" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Become A Doll') }}</a>
         </div>
     </section>

@@ -3,7 +3,7 @@
     $setupImg   = asset('images/1.jpeg');
     $flexImg    = asset('images/3.jpeg');
 @endphp
-<x-layouts.marketing :title="__('Work From Home')">
+<x-layouts.marketing :transparentNav="true" :title="__('Work From Home')">
 
     {{-- Hero --}}
     <section class="relative flex min-h-[62vh] items-center justify-center overflow-hidden pt-24">
