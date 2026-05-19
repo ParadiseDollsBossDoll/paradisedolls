@@ -126,11 +126,12 @@ class CommunityMessageController extends Controller
         }
 
         $isInitialLoad = $beforeId === 0 && $afterId === 0 && $aroundId === 0 && $search === '';
+        $shouldLoadPinnedMessages = $isInitialLoad || ($aroundId > 0 && $search === '');
 
         return response()->json([
             'channel' => $channel->toFrontendArray($user),
             'messages' => $messages->map(fn (CommunityMessage $message) => $message->toFrontendArray($user))->all(),
-            'pinned_messages' => $isInitialLoad ? $this->pinnedMessagesFor($channel, $user) : [],
+            'pinned_messages' => $shouldLoadPinnedMessages ? $this->pinnedMessagesFor($channel, $user) : [],
             'has_more' => $hasMore,
             'first_unread_message_id' => $search === '' ? $firstUnreadMessageId : null,
             'search' => [
@@ -166,9 +167,11 @@ class CommunityMessageController extends Controller
         }
 
         if ($channel->slowmode_seconds > 0 && ! $user->canModerateCommunity()) {
-            $latestMessage = $channel->messages()
+            $latestMessage = CommunityMessage::query()
+                ->where('channel_id', $channel->id)
                 ->where('user_id', $user->id)
-                ->latest()
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
                 ->first();
 
             if ($latestMessage && $latestMessage->created_at->diffInSeconds(now()) < $channel->slowmode_seconds) {
@@ -409,12 +412,10 @@ class CommunityMessageController extends Controller
         abort_unless($channel && $channel->isAccessibleTo($user), 403);
         abort_unless(is_array($message->attachment) && isset($message->attachment['path']), 404);
 
-        $path = $message->attachment['path'];
+        $path = trim(str_replace('\\', '/', (string) $message->attachment['path']), '/');
+        abort_unless($path !== '' && ! str_contains($path, '..') && ! str_contains($path, "\0"), 404);
 
-        $allowedDisks = ['local', 'public'];
-        $disk = in_array($message->attachment['disk'] ?? '', $allowedDisks, true)
-            ? $message->attachment['disk']
-            : 'local';
+        $disk = 'local';
 
         $safeMimes = [
             'image/jpeg', 'image/png', 'image/gif', 'image/webp',
@@ -430,6 +431,7 @@ class CommunityMessageController extends Controller
 
         $name = basename(preg_replace('/[^\w.\- ]/', '_', $message->attachment['original_name'] ?? basename($path)));
 
+        abort_unless(($message->attachment['disk'] ?? 'local') === 'local', 404);
         abort_unless(Storage::disk($disk)->exists($path), 404);
 
         return Storage::disk($disk)->response($path, $name, [

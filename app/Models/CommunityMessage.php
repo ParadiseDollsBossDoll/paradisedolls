@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CommunityMessage extends Model
@@ -75,14 +74,9 @@ class CommunityMessage extends Model
             return null;
         }
 
-        $disk = $this->attachment['disk'] ?? 'local';
         $mime = $this->attachment['mime_type'] ?? 'application/octet-stream';
 
-        // Local disk files are served through an auth-protected route.
-        // Public disk files (legacy, pre-migration) keep their direct URL.
-        $url = $disk === 'local'
-            ? route('community.messages.attachment', ['message' => $this->id])
-            : Storage::disk($disk)->url($this->attachment['path']);
+        $url = route('community.messages.attachment', ['message' => $this->id]);
 
         return [
             'url' => $url,

@@ -109,6 +109,21 @@ class User extends Authenticatable
         return $this->isAdmin();
     }
 
+    public function hasCommunityChatAccess(): bool
+    {
+        if (! $this->isModel()) {
+            return false;
+        }
+
+        $profile = $this->relationLoaded('modelProfile')
+            ? $this->modelProfile
+            : $this->modelProfile()
+                ->select(['id', 'user_id', 'verification_status', 'community_role_assigned_at'])
+                ->first();
+
+        return (bool) $profile?->hasCommunityChatAccess();
+    }
+
     public function lessonProgress(): HasMany
     {
         return $this->hasMany(LessonProgress::class);
@@ -127,6 +142,11 @@ class User extends Authenticatable
     public function courseEnrollments(): HasMany
     {
         return $this->hasMany(CourseEnrollment::class);
+    }
+
+    public function courseAccessRequests(): HasMany
+    {
+        return $this->hasMany(CourseAccessRequest::class);
     }
 
     public function enrolledCourses(): BelongsToMany

@@ -8,13 +8,14 @@ use App\Models\Course;
 use App\Models\CourseModule;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
+use App\Models\User;
+use App\Notifications\SystemNotification;
 use App\Services\CourseCommunityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -108,6 +109,10 @@ class AdminCourseController extends Controller
 
         if ($course) {
             $community->ensureForCourse($course, $request->user());
+
+            if ($course->is_published) {
+                $this->notifyModelsOfPublishedCourse($course);
+            }
         }
 
         return redirect()->route('admin.courses.index')->with('status', __('Course created.'));
@@ -150,6 +155,8 @@ class AdminCourseController extends Controller
 
     public function update(Request $request, Course $course): RedirectResponse
     {
+        $wasPublished = (bool) $course->is_published;
+
         // Detect PHP max_input_vars truncation before any validation.
         // The frontend sends _lesson_count with the actual total. If fewer lessons
         // arrived than expected, the payload was silently cut off by PHP — abort
@@ -196,6 +203,11 @@ class AdminCourseController extends Controller
             $this->syncLessons($course, $validated['lessons'] ?? [], $moduleMap);
         });
 
+        $course->refresh();
+        if (! $wasPublished && $course->is_published) {
+            $this->notifyModelsOfPublishedCourse($course);
+        }
+
         return redirect()->route('admin.courses.index')->with('status', __('Course updated.'));
     }
 
@@ -219,9 +231,15 @@ class AdminCourseController extends Controller
 
     public function visibility(Request $request, Course $course): RedirectResponse
     {
+        $wasPublished = (bool) $course->is_published;
+
         $course->update([
             'is_published' => $request->boolean('is_published'),
         ]);
+
+        if (! $wasPublished && $course->is_published) {
+            $this->notifyModelsOfPublishedCourse($course);
+        }
 
         return redirect()->route('admin.courses.index')->with('status', __('Course visibility updated.'));
     }
@@ -346,6 +364,9 @@ class AdminCourseController extends Controller
 
     private function validateCourse(Request $request, ?int $courseId = null, bool $validateLessons = false): array
     {
+        $httpUrlRule = $this->httpUrlRule();
+        $trustedFileReferenceRule = $this->trustedFileReferenceRule();
+
         $rules = [
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', Rule::unique('courses', 'slug')->ignore($courseId)],
@@ -353,14 +374,19 @@ class AdminCourseController extends Controller
             'platform_color' => ['nullable', 'string', 'max:32', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'description' => ['required', 'string', 'max:10000'],
             'short_description' => ['nullable', 'string', 'max:1200'],
-            'thumbnail_url' => ['nullable', 'string', 'max:2000'],
+            'thumbnail_url' => ['nullable', 'string', 'max:2000', $httpUrlRule],
             'course_cover_image_upload' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
             'difficulty_level' => ['nullable', 'string', 'max:64'],
             'estimated_duration' => ['nullable', 'string', 'max:64'],
             'what_you_will_learn' => ['nullable', 'string', 'max:50000'],
             'requirements' => ['nullable', 'string', 'max:50000'],
+            'course_access_requirements' => ['nullable', 'string', 'max:50000'],
+            'access_registration_instructions' => ['nullable', 'string', 'max:50000'],
+            'access_callback_instructions' => ['nullable', 'string', 'max:50000'],
+            'access_onboarding_instructions' => ['nullable', 'string', 'max:50000'],
+            'access_verification_instructions' => ['nullable', 'string', 'max:50000'],
             'has_course_outline' => ['nullable', 'boolean'],
-            'course_outline_url' => ['nullable', 'string', 'max:2000'],
+            'course_outline_url' => ['nullable', 'string', 'max:2000', $trustedFileReferenceRule],
             'course_outline_upload' => [
                 Rule::requiredIf(fn () => $request->boolean('has_course_outline') && blank($request->input('course_outline_url'))),
                 'file',
@@ -369,11 +395,11 @@ class AdminCourseController extends Controller
             ],
             'has_intro' => ['nullable', 'boolean'],
             'intro_title' => ['nullable', 'string', 'max:255'],
-            'intro_video_url' => ['nullable', 'string', 'max:2000'],
+            'intro_video_url' => ['nullable', 'string', 'max:2000', $httpUrlRule],
             'intro_bunny_video_id' => ['nullable', 'string', 'max:64'],
             'intro_bunny_library_id' => ['nullable', 'string', 'max:64'],
             'intro_bunny_video_title' => ['nullable', 'string', 'max:255'],
-            'intro_bunny_thumbnail_url' => ['nullable', 'string', 'max:2000'],
+            'intro_bunny_thumbnail_url' => ['nullable', 'string', 'max:2000', $httpUrlRule],
             'intro_bunny_upload_fingerprint' => ['nullable', 'string', 'max:255'],
             'intro_bunny_status' => ['nullable', 'integer', 'min:0', 'max:255'],
             'intro_duration' => ['nullable', 'string', 'max:64'],
@@ -427,17 +453,17 @@ class AdminCourseController extends Controller
                 'lessons.*.lesson_images_upload' => ['nullable', 'array', 'max:12'],
                 'lessons.*.lesson_images_upload.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
                 'lessons.*.is_published' => ['nullable', 'boolean'],
-                'lessons.*.video_url' => ['nullable', 'string', 'max:2000'],
+                'lessons.*.video_url' => ['nullable', 'string', 'max:2000', $httpUrlRule],
                 'lessons.*.bunny_video_id' => ['nullable', 'string', 'max:64'],
                 'lessons.*.bunny_library_id' => ['nullable', 'string', 'max:64'],
                 'lessons.*.bunny_video_title' => ['nullable', 'string', 'max:255'],
-                'lessons.*.bunny_thumbnail_url' => ['nullable', 'string', 'max:2000'],
+                'lessons.*.bunny_thumbnail_url' => ['nullable', 'string', 'max:2000', $httpUrlRule],
                 'lessons.*.bunny_upload_fingerprint' => ['nullable', 'string', 'max:255'],
                 'lessons.*.bunny_status' => ['nullable', 'integer', 'min:0', 'max:255'],
                 'lessons.*.duration' => ['nullable', 'string', 'max:64'],
                 'lessons.*.has_pdf' => ['nullable', 'boolean'],
-                'lessons.*.pdf_url' => ['nullable', 'string', 'max:2000'],
-                'lessons.*.presentation_url' => ['nullable', 'string', 'max:50000'],
+                'lessons.*.pdf_url' => ['nullable', 'string', 'max:2000', $httpUrlRule],
+                'lessons.*.presentation_url' => ['nullable', 'string', 'max:50000', $httpUrlRule],
                 'lessons.*.sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
             ];
             $rules += $this->lessonContentBlockRules('lessons.*.content_blocks');
@@ -458,6 +484,11 @@ class AdminCourseController extends Controller
                 'estimated_duration',
                 'what_you_will_learn',
                 'requirements',
+                'course_access_requirements',
+                'access_registration_instructions',
+                'access_callback_instructions',
+                'access_onboarding_instructions',
+                'access_verification_instructions',
                 'has_course_outline',
                 'course_outline_url',
                 'has_intro',
@@ -489,6 +520,11 @@ class AdminCourseController extends Controller
             'estimated_duration' => null,
             'what_you_will_learn' => null,
             'requirements' => null,
+            'course_access_requirements' => null,
+            'access_registration_instructions' => null,
+            'access_callback_instructions' => null,
+            'access_onboarding_instructions' => null,
+            'access_verification_instructions' => null,
             'intro_title' => null,
             'intro_video_url' => null,
             'intro_bunny_video_id' => null,
@@ -515,7 +551,7 @@ class AdminCourseController extends Controller
         } else {
             $outlineUpload = $request->file('course_outline_upload');
             if ($outlineUpload instanceof UploadedFile) {
-                $course['course_outline_url'] = $this->storePublicDocument($outlineUpload, 'academy/course-outlines');
+                $course['course_outline_url'] = $this->storePrivateDocument($outlineUpload, 'academy/course-outlines');
             }
         }
 
@@ -641,12 +677,12 @@ class AdminCourseController extends Controller
 
         $bannerUpload = $lesson['lesson_banner_image_upload'] ?? null;
         if ($bannerUpload instanceof UploadedFile) {
-            $bannerImage = $this->storePublicImage($bannerUpload, 'academy/lesson-banners');
+            $bannerImage = $this->storePrivateImage($bannerUpload, 'academy/lesson-banners');
         }
 
         foreach ($lesson['lesson_images_upload'] ?? [] as $galleryUpload) {
             if ($galleryUpload instanceof UploadedFile) {
-                $galleryImages[] = $this->storePublicImage($galleryUpload, 'academy/lesson-images');
+                $galleryImages[] = $this->storePrivateImage($galleryUpload, 'academy/lesson-images');
             }
         }
 
@@ -661,13 +697,51 @@ class AdminCourseController extends Controller
         return $file->store($directory, 'public');
     }
 
-    private function storePublicDocument(UploadedFile $file, string $directory): string
+    private function storePrivateImage(UploadedFile $file, string $directory): string
+    {
+        return $file->store($directory, 'local');
+    }
+
+    private function storePrivateDocument(UploadedFile $file, string $directory): string
     {
         $name = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'file');
         $filename = Str::slug($name) ?: 'course-outline';
 
-        return $file->storeAs($directory, $filename.'-'.Str::random(8).'.'.$extension, 'public');
+        return $file->storeAs($directory, $filename.'-'.Str::random(8).'.'.$extension, 'local');
+    }
+
+    private function httpUrlRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if (blank($value)) {
+                return;
+            }
+
+            if (Lesson::normalizePresentationUrl((string) $value) === null) {
+                $fail(__('The :attribute must be a valid HTTP or HTTPS URL.', ['attribute' => str_replace('_', ' ', $attribute)]));
+            }
+        };
+    }
+
+    private function trustedFileReferenceRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if (blank($value)) {
+                return;
+            }
+
+            $value = trim(str_replace('\\', '/', (string) $value), '/');
+
+            if (
+                preg_match('/^https?:\/\//i', $value)
+                || (str_starts_with($value, 'academy/') && ! str_contains($value, '..') && ! str_contains($value, "\0"))
+            ) {
+                return;
+            }
+
+            $fail(__('The :attribute must be a valid uploaded academy file or HTTP(S) URL.', ['attribute' => str_replace('_', ' ', $attribute)]));
+        };
     }
 
     /**
@@ -838,5 +912,19 @@ class AdminCourseController extends Controller
                 '#6366F1',
             ],
         ];
+    }
+
+    private function notifyModelsOfPublishedCourse(Course $course): void
+    {
+        User::query()
+            ->where('role', 'model')
+            ->each(fn (User $model) => $model->notify(new SystemNotification(
+                title: __('New course available'),
+                body: __(':course has been added to the academy. Open it to review Kayla access requirements and request access.', [
+                    'course' => $course->title,
+                ]),
+                actionUrl: route('member.courses.show', $course->slug, false),
+                category: 'new_course',
+            )));
     }
 }

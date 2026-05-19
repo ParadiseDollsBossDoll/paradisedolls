@@ -47,6 +47,13 @@
                     <p class="mt-1 whitespace-pre-line text-red-100/70">{{ $profile->verification_notes }}</p>
                 </div>
             @endif
+
+            @if (filled($profile->verification_request_instructions))
+                <div class="mt-5 rounded-xl border border-boss-gold/25 bg-boss-gold/10 p-4 text-sm text-boss-ivory">
+                    <p class="font-medium text-boss-gold">{{ __('Instructions from Kayla') }}</p>
+                    <p class="mt-1 whitespace-pre-line text-boss-ivory/70">{{ $profile->verification_request_instructions }}</p>
+                </div>
+            @endif
         </section>
 
         @if ($profile->hasInformationForm())
@@ -56,23 +63,24 @@
                 <div class="space-y-5">
                     <div>
                         <label for="id_document" class="pd-label">{{ __('Valid ID') }}</label>
-                        <input id="id_document" type="file" name="id_document" accept=".jpg,.jpeg,.png,.pdf" class="pd-input mt-2" required>
+                        <input id="id_document" type="file" name="id_document" accept=".jpg,.jpeg,.png,.pdf" class="pd-input mt-2" @if (! $profile->id_document_path) required @endif>
                         @if ($profile->id_document_path)
-                            <p class="mt-2 text-[0.72rem] text-boss-ivory/28">{{ __('Existing file on record') }}</p>
+                            <p class="mt-2 text-[0.72rem] text-boss-ivory/28">{{ __('Existing file on record. Leave blank to keep it.') }}</p>
                         @endif
                     </div>
 
                     <div>
                         <label for="selfie_with_id" class="pd-label">{{ __('Selfie holding ID') }}</label>
-                        <input id="selfie_with_id" type="file" name="selfie_with_id" accept=".jpg,.jpeg,.png,.webp" class="pd-input mt-2" required>
+                        <input id="selfie_with_id" type="file" name="selfie_with_id" accept=".jpg,.jpeg,.png,.webp" class="pd-input mt-2" @if (! $profile->selfie_with_id_path) required @endif>
                         @if ($profile->selfie_with_id_path)
-                            <p class="mt-2 text-[0.72rem] text-boss-ivory/28">{{ __('Existing file on record') }}</p>
+                            <p class="mt-2 text-[0.72rem] text-boss-ivory/28">{{ __('Existing file on record. Leave blank to keep it.') }}</p>
                         @endif
                     </div>
 
                     <div>
                         <label for="platform_codes" class="pd-label">{{ __('Platform codes') }}</label>
                         <input id="platform_codes" type="file" name="platform_codes" accept=".jpg,.jpeg,.png,.pdf" class="pd-input mt-2">
+                        <p class="mt-2 text-[0.72rem] leading-relaxed text-boss-ivory/35">{{ __('Use this for QR/code screenshots or platform verification proof Kayla requests for course access.') }}</p>
                         @if ($profile->platform_codes_path)
                             <p class="mt-2 text-[0.72rem] text-boss-ivory/28">{{ __('Existing file on record') }}</p>
                         @endif

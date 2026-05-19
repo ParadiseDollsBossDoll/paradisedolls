@@ -3,23 +3,26 @@
     $initials = $user->initials();
     $profilePhotoUrl = $user->profilePhotoUrl();
 
-    $pendingLayoutApplications = \App\Models\ModelApplication::query()
-        ->where('status', \App\Models\ModelApplication::STATUS_PENDING)
-        ->count();
-    $pendingLayoutVerification = \App\Models\ModelProfile::query()
-        ->where('verification_status', \App\Models\ModelProfile::VERIFICATION_SUBMITTED)
-        ->count();
-    $referralActionCount = \App\Models\ModelReferral::query()
-        ->where(function ($query) {
-            $query
-                ->where(function ($leadQuery) {
-                    $leadQuery
-                        ->where('status', \App\Models\ModelReferral::STATUS_REFERRED)
-                        ->whereNull('model_application_id');
+    [$pendingLayoutApplications, $pendingLayoutVerification, $referralActionCount] =
+        \Illuminate\Support\Facades\Cache::remember('admin_sidebar_counts', 60, fn () => [
+            \App\Models\ModelApplication::query()
+                ->where('status', \App\Models\ModelApplication::STATUS_PENDING)
+                ->count(),
+            \App\Models\ModelProfile::query()
+                ->where('verification_status', \App\Models\ModelProfile::VERIFICATION_SUBMITTED)
+                ->count(),
+            \App\Models\ModelReferral::query()
+                ->where(function ($query) {
+                    $query
+                        ->where(function ($leadQuery) {
+                            $leadQuery
+                                ->where('status', \App\Models\ModelReferral::STATUS_REFERRED)
+                                ->whereNull('model_application_id');
+                        })
+                        ->orWhere('reward_status', \App\Models\ModelReferral::REWARD_ELIGIBLE);
                 })
-                ->orWhere('reward_status', \App\Models\ModelReferral::REWARD_ELIGIBLE);
-        })
-        ->count();
+                ->count(),
+        ]);
 
     $links = [
         [
@@ -66,7 +69,7 @@
         ],
         [
             'route'  => 'admin.testimonials.index',
-            'label'  => __('Stories'),
+            'label'  => __('Testimonials'),
             'active' => request()->routeIs('admin.testimonials.*'),
             'icon'   => 'stories',
             'count'  => 0,
@@ -80,9 +83,11 @@
         ],
     ];
 
-    $currentLabel = request()->routeIs('profile.*')
+    $currentLabel = request()->routeIs('notifications.*')
+        ? __('Notifications')
+        : (request()->routeIs('profile.*')
         ? __('Profile')
-        : (collect($links)->firstWhere('active', true)['label'] ?? __('Overview'));
+        : (collect($links)->firstWhere('active', true)['label'] ?? __('Overview')));
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -198,6 +203,7 @@
                     </button>
                     <span class="elysian-breadcrumb">{{ __('Admin') }} / {{ $currentLabel }}</span>
                     <div class="elysian-topbar-right">
+                        @include('layouts.partials.notification-bell')
                         <div class="elysian-topbar-greeting">
                             <p>{{ __('Admin Panel') }}</p>
                             <p>{{ $user->name }}</p>

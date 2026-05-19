@@ -7,10 +7,16 @@ use App\Mail\AccountApprovalMail;
 use App\Mail\CommunityAccessMail;
 use App\Mail\VerificationRequestMail;
 use App\Mail\VerificationResubmissionMail;
+use App\Models\Course;
+use App\Models\CourseAccessRequest;
 use App\Models\ModelProfile;
 use App\Models\User;
+use App\Notifications\SystemNotification;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -23,9 +29,14 @@ class AdminOnboardingController extends Controller
     {
         $models = User::query()
             ->where('role', 'model')
-            ->with(['modelProfile.application', 'modelProfile.verificationReviewer'])
+            ->with(['courseAccessRequests.course', 'courseEnrollments', 'modelProfile.application', 'modelProfile.verificationReviewer'])
             ->orderBy('name')
             ->paginate(20);
+
+        $stageOptions = collect(ModelProfile::onboardingStageOptions())
+            ->map(fn (string $label, string $value) => ['value' => $value, 'label' => $label])
+            ->values()
+            ->all();
 
         $stats = [
             'members' => User::where('role', 'model')->count(),
@@ -36,7 +47,176 @@ class AdminOnboardingController extends Controller
             'role_assigned' => ModelProfile::whereNotNull('community_role_assigned_at')->count(),
         ];
 
-        return view('admin.onboarding.index', compact('models', 'stats'));
+        return view('admin.onboarding.index', compact('models', 'stageOptions', 'stats'));
+    }
+
+    public function details(ModelProfile $profile): JsonResponse
+    {
+        $profile->loadMissing('user.courseAccessRequests.course', 'user.courseEnrollments');
+
+        $unlockedCourseIds = $profile->user->courseEnrollments
+            ->pluck('course_id')
+            ->map(fn ($courseId) => (int) $courseId)
+            ->all();
+        $accessRequestsByCourse = $profile->user->courseAccessRequests->keyBy('course_id');
+
+        $publishedCourses = Course::query()
+            ->where('is_published', true)
+            ->orderBy('sort_order')
+            ->orderBy('title')
+            ->get([
+                'id',
+                'title',
+                'slug',
+                'platform_label',
+                'course_access_requirements',
+                'access_registration_instructions',
+                'access_callback_instructions',
+                'access_onboarding_instructions',
+                'access_verification_instructions',
+                'is_published',
+            ]);
+
+        return response()->json([
+            'course_access' => $publishedCourses->map(function (Course $course) use ($accessRequestsByCourse, $profile, $unlockedCourseIds) {
+                $accessRequest = $accessRequestsByCourse->get($course->id);
+
+                return [
+                    'id' => $course->id,
+                    'title' => $course->title,
+                    'platform' => $course->displayPlatform(),
+                    'access_requirements' => $course->course_access_requirements,
+                    'access_phases' => $course->accessPhaseInstructions(),
+                    'access_request_status' => $accessRequest?->status,
+                    'access_request_label' => $accessRequest?->statusLabel(),
+                    'access_request_notes' => $accessRequest?->member_notes,
+                    'access_admin_notes' => $accessRequest?->admin_notes,
+                    'access_requested_at' => $accessRequest?->created_at?->toFormattedDateString(),
+                    'is_unlocked' => in_array((int) $course->id, $unlockedCourseIds, true),
+                    'unlock_url' => route('admin.onboarding.courses.unlock', [$profile, $course]),
+                    'lock_url' => route('admin.onboarding.courses.lock', [$profile, $course]),
+                    'resubmission_url' => route('admin.onboarding.courses.resubmission', [$profile, $course]),
+                ];
+            })->values(),
+        ]);
+    }
+
+    public function updateStage(Request $request, ModelProfile $profile): RedirectResponse
+    {
+        $validated = $request->validate([
+            'onboarding_stage' => ['required', 'string', Rule::in(ModelProfile::onboardingStages())],
+        ]);
+
+        $profile->forceFill([
+            'onboarding_stage' => $validated['onboarding_stage'],
+        ])->save();
+
+        return redirect()->back()->with('status', __('Onboarding stage updated.'));
+    }
+
+    public function updateVerificationInstructions(Request $request, ModelProfile $profile): RedirectResponse
+    {
+        $validated = $request->validate([
+            'verification_request_instructions' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $profile->forceFill([
+            'verification_request_instructions' => $validated['verification_request_instructions'] ?? null,
+        ])->save();
+
+        return redirect()->back()->with('status', __('Verification instructions saved.'));
+    }
+
+    public function unlockCourse(ModelProfile $profile, Course $course): RedirectResponse
+    {
+        if (! $profile->isVerified()) {
+            return redirect()->back()->withErrors(['profile' => __('The member must be verified before a website walkthrough can be unlocked.')]);
+        }
+
+        if (! $course->is_published) {
+            return redirect()->back()->withErrors(['course' => __('Only published courses can be unlocked for members.')]);
+        }
+
+        $course->enrollments()->firstOrCreate(
+            ['user_id' => $profile->user_id],
+            ['enrolled_at' => now()]
+        );
+
+        CourseAccessRequest::query()->updateOrCreate([
+            'course_id' => $course->id,
+            'user_id' => $profile->user_id,
+        ], [
+            'status' => CourseAccessRequest::STATUS_APPROVED,
+            'reviewed_by' => auth()->id(),
+            'reviewed_at' => now(),
+            'admin_notes' => null,
+        ]);
+
+        $profile->user?->notify(new SystemNotification(
+            title: __('Course access approved'),
+            body: __('Kayla approved your access to :course.', ['course' => $course->title]),
+            actionUrl: route('member.courses.show', $course->slug, false),
+            category: 'course_access_approved',
+        ));
+
+        return redirect()->back()->with('status', __('Website walkthrough unlocked for this member.'));
+    }
+
+    public function lockCourse(ModelProfile $profile, Course $course): RedirectResponse
+    {
+        $course->enrollments()
+            ->where('user_id', $profile->user_id)
+            ->get()
+            ->each(fn ($enrollment) => $enrollment->delete());
+
+        CourseAccessRequest::query()
+            ->where('course_id', $course->id)
+            ->where('user_id', $profile->user_id)
+            ->where('status', CourseAccessRequest::STATUS_APPROVED)
+            ->update([
+                'status' => CourseAccessRequest::STATUS_REJECTED,
+                'reviewed_by' => auth()->id(),
+                'reviewed_at' => now(),
+                'admin_notes' => __('Access locked by admin.'),
+            ]);
+
+        return redirect()->back()->with('status', __('Website walkthrough locked for this member.'));
+    }
+
+    public function requestCourseResubmission(Request $request, ModelProfile $profile, Course $course): RedirectResponse
+    {
+        $validated = $request->validate([
+            'admin_notes' => ['required', 'string', 'max:5000'],
+        ]);
+
+        if ($course->enrollments()->where('user_id', $profile->user_id)->exists()) {
+            return redirect()->back()->withErrors(['course' => __('Lock this course before requesting resubmission.')]);
+        }
+
+        $accessRequest = CourseAccessRequest::query()
+            ->where('course_id', $course->id)
+            ->where('user_id', $profile->user_id)
+            ->first();
+
+        if (! $accessRequest) {
+            return redirect()->back()->withErrors(['course' => __('This member has not requested access to this course yet.')]);
+        }
+
+        $accessRequest->forceFill([
+            'status' => CourseAccessRequest::STATUS_REJECTED,
+            'reviewed_by' => auth()->id(),
+            'reviewed_at' => now(),
+            'admin_notes' => $validated['admin_notes'],
+        ])->save();
+
+        $profile->user?->notify(new SystemNotification(
+            title: __('Course access needs resubmission'),
+            body: __('Kayla requested more details for :course.', ['course' => $course->title]),
+            actionUrl: route('member.courses.show', $course->slug, false),
+            category: 'course_access_resubmission',
+        ));
+
+        return redirect()->back()->with('status', __('Course access resubmission requested.'));
     }
 
     public function requestVerification(ModelProfile $profile): RedirectResponse
@@ -79,8 +259,15 @@ class AdminOnboardingController extends Controller
             'verification_reviewed_at' => now(),
             'verification_notes' => $validated['verification_notes'] ?? null,
         ])->save();
+        Cache::forget('broadcast_community_access_'.$profile->user_id);
 
         $profile->load('user');
+        $profile->user->notify(new SystemNotification(
+            title: __('Verification approved'),
+            body: __('Your verification was approved. Kayla can now unlock courses and community access for you.'),
+            actionUrl: route('member.dashboard', absolute: false),
+            category: 'verification_approved',
+        ));
         $this->sendMail($profile, new AccountApprovalMail(
             profile: $profile,
             dashboardUrl: route('member.dashboard'),
@@ -101,6 +288,7 @@ class AdminOnboardingController extends Controller
             'verification_reviewed_at' => now(),
             'verification_notes' => $validated['verification_notes'],
         ])->save();
+        Cache::forget('broadcast_community_access_'.$profile->user_id);
 
         $profile->load('user');
         $this->sendMail($profile, new VerificationResubmissionMail(
@@ -133,6 +321,10 @@ class AdminOnboardingController extends Controller
 
     public function markCommunityRoleAssigned(ModelProfile $profile): RedirectResponse
     {
+        if (! $profile->isVerified()) {
+            return redirect()->back()->withErrors(['profile' => __('The member must be verified before community chat access can be assigned.')]);
+        }
+
         if (! $profile->isCommunityInvited()) {
             return redirect()->back()->withErrors(['profile' => __('Send Discord Community access before marking the role assigned.')]);
         }
@@ -140,6 +332,7 @@ class AdminOnboardingController extends Controller
         $profile->forceFill([
             'community_role_assigned_at' => now(),
         ])->save();
+        Cache::forget('broadcast_community_access_'.$profile->user_id);
 
         return redirect()->back()->with('status', __('Discord Community role assignment recorded.'));
     }

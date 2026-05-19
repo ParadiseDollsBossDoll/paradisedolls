@@ -2,21 +2,7 @@
     $user = auth()->user();
     $initials = $user->initials();
     $profilePhotoUrl = $user->profilePhotoUrl();
-
-    $coursesForLayout = \App\Models\Course::query()
-        ->where('is_published', true)
-        ->withCount(['publishedLessons as lessons_count'])
-        ->get();
-
-    $layoutTotalLessons = $coursesForLayout->sum('lessons_count');
-    $layoutCompletedLessons = \App\Models\LessonProgress::query()
-        ->where('user_id', $user->id)
-        ->whereNotNull('completed_at')
-        ->whereHas('lesson', fn ($query) => $query
-            ->where('is_published', true)
-            ->whereHas('course', fn ($courseQuery) => $courseQuery->where('is_published', true)))
-        ->count();
-    $layoutProgress = $layoutTotalLessons > 0 ? (int) round(($layoutCompletedLessons / $layoutTotalLessons) * 100) : 0;
+    $canAccessCommunity = $user->canModerateCommunity() || (bool) $user->modelProfile?->hasCommunityChatAccess();
 
     $links = [
         [
@@ -54,6 +40,7 @@
             'label'  => __('Community Chat'),
             'active' => request()->routeIs('community.*'),
             'icon'   => 'community',
+            'visible' => $canAccessCommunity,
         ],
         [
             'route'  => 'profile.edit',
@@ -63,7 +50,11 @@
         ],
     ];
 
-    $currentLabel = collect($links)->firstWhere('active', true)['label'] ?? __('Dashboard');
+    $links = array_values(array_filter($links, fn ($link) => $link['visible'] ?? true));
+
+    $currentLabel = request()->routeIs('notifications.*')
+        ? __('Notifications')
+        : (collect($links)->firstWhere('active', true)['label'] ?? __('Dashboard'));
     $hideSidebar = (bool) ($hideSidebar ?? false);
 @endphp
 <!DOCTYPE html>
@@ -93,7 +84,7 @@
                                     <div class="elysian-avatar">
                                         <span>{{ $initials }}</span>
                                         @if ($profilePhotoUrl)
-                                            <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
+                                            <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" loading="lazy" decoding="async" onerror="this.remove()">
                                         @endif
                                     </div>
                                     <div class="elysian-online-dot"></div>
@@ -103,13 +94,13 @@
                                     <div class="elysian-side-sub">{{ __('Paradise Dolls Member') }}</div>
                                 </div>
                             </div>
-                            <div class="mt-2.5 border-t border-white/[0.06] pt-2.5">
+                            <div class="elysian-side-progress">
                                 <div class="mb-1.5 flex items-center justify-between">
-                                    <span class="text-[0.52rem] uppercase tracking-[0.12em] text-white/25">{{ __('Overall Progress') }}</span>
-                                    <span class="text-[0.6rem] font-semibold text-[#c9a96e]">{{ $layoutProgress }}%</span>
+                                    <span>{{ __('Academy') }}</span>
+                                    <strong>{{ $layoutProgress }}%</strong>
                                 </div>
-                                <div class="h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
-                                    <div class="h-full rounded-full bg-gradient-to-r from-[#c9a96e] to-[#e8c88a] transition-all duration-500" style="width: {{ $layoutProgress }}%"></div>
+                                <div class="elysian-side-progress-track" aria-label="{{ __('Academy progress :percent%', ['percent' => $layoutProgress]) }}">
+                                    <div style="width: {{ $layoutProgress }}%"></div>
                                 </div>
                             </div>
                         </div>
@@ -173,37 +164,21 @@
                         <div class="elysian-topbar-main">
                             <span class="elysian-breadcrumb">{{ __('Members') }} / {{ $currentLabel }}</span>
                             <div class="elysian-topbar-right">
-                                <a href="{{ route('member.referrals.index') }}" class="elysian-topbar-refer rounded-full border border-boss-gold/20 bg-boss-gold/10 px-4 py-2 text-[0.66rem] uppercase tracking-[0.14em] text-boss-gold transition-colors hover:bg-boss-gold hover:text-boss-ink">
+                                @include('layouts.partials.notification-bell')
+                                <a href="{{ route('member.referrals.index') }}" class="elysian-topbar-refer">
                                     {{ __('Refer') }}
                                 </a>
-                                <div class="elysian-topbar-greeting">
-                                    <p>{{ __('Welcome back,') }}</p>
-                                    <p>{{ $user->name }}</p>
-                                </div>
-                                <div class="elysian-topbar-avatar">
-                                    <span>{{ $initials }}</span>
-                                    @if ($profilePhotoUrl)
-                                        <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
-                                    @endif
-                                </div>
+                                @include('layouts.partials.member-account-menu')
                             </div>
                         </div>
                     @else
                         <span class="elysian-breadcrumb">{{ __('Members') }} / {{ $currentLabel }}</span>
                         <div class="elysian-topbar-right">
-                            <a href="{{ route('member.referrals.index') }}" class="hidden rounded-full border border-boss-gold/20 bg-boss-gold/10 px-4 py-2 text-[0.66rem] uppercase tracking-[0.14em] text-boss-gold transition-colors hover:bg-boss-gold hover:text-boss-ink sm:inline-flex">
+                            @include('layouts.partials.notification-bell')
+                            <a href="{{ route('member.referrals.index') }}" class="elysian-topbar-refer hidden sm:inline-flex">
                                 {{ __('Refer') }}
                             </a>
-                            <div class="elysian-topbar-greeting">
-                                <p>{{ __('Welcome back,') }}</p>
-                                <p>{{ $user->name }}</p>
-                            </div>
-                            <div class="elysian-topbar-avatar">
-                                <span>{{ $initials }}</span>
-                                @if ($profilePhotoUrl)
-                                    <img src="{{ $profilePhotoUrl }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
-                                @endif
-                            </div>
+                            @include('layouts.partials.member-account-menu')
                         </div>
                     @endif
                 </header>

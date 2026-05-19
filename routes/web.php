@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminApplicationController;
+use App\Http\Controllers\Admin\AdminAcademyFileController;
 use App\Http\Controllers\Admin\AdminCourseController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminLessonController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Community\CommunityPresenceController;
 use App\Http\Controllers\Community\MessageReactionController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Member\CourseChatController;
+use App\Http\Controllers\Member\CourseAssetController;
 use App\Http\Controllers\Member\LessonProgressController;
 use App\Http\Controllers\Member\MemberCourseController;
 use App\Http\Controllers\Member\MemberDashboardController;
@@ -26,6 +28,7 @@ use App\Http\Controllers\Member\MemberOnboardingController;
 use App\Http\Controllers\Member\MemberReferralController;
 use App\Http\Controllers\Member\MemberTestimonialController;
 use App\Http\Controllers\Member\MemberVerificationController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TestimonialController;
 use Illuminate\Support\Facades\Route;
@@ -75,10 +78,20 @@ Route::middleware(['auth', 'verified', 'model'])->prefix('member')->name('member
     Route::post('/courses/{slug}/learn', [MemberCourseController::class, 'learn'])
         ->middleware('throttle:member-progress')
         ->name('courses.learn');
+    Route::post('/courses/{slug}/request-access', [MemberCourseController::class, 'requestAccess'])
+        ->middleware('throttle:course-access-requests')
+        ->name('courses.request-access');
 
     Route::middleware('course.enrolled')->group(function () {
         Route::get('/courses/{slug}/learn', [MemberCourseController::class, 'learnShow'])->name('courses.learn.show');
         Route::get('/courses/{slug}/lessons/{lesson}', [MemberCourseController::class, 'lesson'])->name('courses.lessons.show');
+        Route::get('/courses/{slug}/outline', [CourseAssetController::class, 'outline'])->name('courses.outline');
+        Route::get('/courses/{slug}/lessons/{lesson}/media/{kind}/{index?}', [CourseAssetController::class, 'lessonMedia'])
+            ->whereNumber('index')
+            ->name('courses.lessons.media');
+        Route::get('/courses/{slug}/content-blocks/{block}/{field}/{index?}', [CourseAssetController::class, 'contentBlock'])
+            ->whereNumber('index')
+            ->name('courses.content-blocks.media');
         Route::get('/courses/{slug}/community', [MemberCourseController::class, 'community'])->name('courses.community');
         Route::patch('/lessons/{lesson}/progress', [LessonProgressController::class, 'update'])
             ->middleware('throttle:member-progress')
@@ -89,7 +102,7 @@ Route::middleware(['auth', 'verified', 'model'])->prefix('member')->name('member
     });
 });
 
-Route::middleware(['auth', 'verified', 'community.perf'])->prefix('community')->name('community.')->group(function () {
+Route::middleware(['auth', 'verified', 'community.access', 'community.perf'])->prefix('community')->name('community.')->group(function () {
     Route::get('/', [CommunityController::class, 'show'])->name('show');
     Route::get('/channels', [CommunityChannelController::class, 'index'])->name('channels.index');
     Route::get('/channels/{channel:slug}', [CommunityController::class, 'show'])->name('channels.show');
@@ -119,6 +132,12 @@ Route::middleware(['auth', 'verified', 'community.perf'])->prefix('community')->
     Route::post('/members/{user}/timeout', [CommunityModerationController::class, 'timeout'])->name('members.timeout');
     Route::post('/timeouts/{timeout}/revoke', [CommunityModerationController::class, 'revoke'])->name('timeouts.revoke');
     Route::get('/moderation/history', [CommunityModerationController::class, 'history'])->name('moderation.history');
+});
+
+Route::middleware(['auth', 'verified'])->prefix('notifications')->name('notifications.')->group(function () {
+    Route::get('/', [NotificationController::class, 'index'])->name('index');
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllRead'])->name('mark-all-read');
+    Route::post('/{notification}', [NotificationController::class, 'open'])->name('open');
 });
 
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -174,12 +193,24 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     Route::get('/models/progress', [AdminModelProgressController::class, 'index'])->name('models.progress');
     Route::get('/onboarding', [AdminOnboardingController::class, 'index'])->name('onboarding.index');
+    Route::get('/onboarding/{profile}/details', [AdminOnboardingController::class, 'details'])->name('onboarding.details');
+    Route::get('/academy-files', [AdminAcademyFileController::class, 'show'])->name('academy-files.show');
     Route::get('/onboarding/{profile}/documents/{document}', [AdminOnboardingController::class, 'downloadDocument'])
         ->name('onboarding.documents.show');
     Route::get('/onboarding/{profile}/documents/{document}/view', [AdminOnboardingController::class, 'viewDocument'])
         ->name('onboarding.documents.view');
 
     Route::middleware('throttle:admin-actions')->group(function () {
+        Route::post('/onboarding/{profile}/stage', [AdminOnboardingController::class, 'updateStage'])
+            ->name('onboarding.stage');
+        Route::post('/onboarding/{profile}/verification-instructions', [AdminOnboardingController::class, 'updateVerificationInstructions'])
+            ->name('onboarding.verification-instructions');
+        Route::post('/onboarding/{profile}/courses/{course}/unlock', [AdminOnboardingController::class, 'unlockCourse'])
+            ->name('onboarding.courses.unlock');
+        Route::post('/onboarding/{profile}/courses/{course}/lock', [AdminOnboardingController::class, 'lockCourse'])
+            ->name('onboarding.courses.lock');
+        Route::post('/onboarding/{profile}/courses/{course}/resubmission', [AdminOnboardingController::class, 'requestCourseResubmission'])
+            ->name('onboarding.courses.resubmission');
         Route::post('/onboarding/{profile}/request-verification', [AdminOnboardingController::class, 'requestVerification'])
             ->name('onboarding.request-verification');
         Route::post('/onboarding/{profile}/verify', [AdminOnboardingController::class, 'verify'])

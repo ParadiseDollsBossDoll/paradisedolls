@@ -282,6 +282,41 @@
                                 </div>
                             </div>
 
+                            <div>
+                                <x-input-label for="course_access_requirements" :value="__('Kayla Access Requirements')" />
+                                <textarea id="course_access_requirements" name="course_access_requirements" rows="4" class="pd-input mt-2" placeholder="{{ __('Tell models what they must submit or complete before Kayla unlocks this course. One requirement per line works well.') }}">{{ old('course_access_requirements') }}</textarea>
+                                <p class="mt-1 text-[0.6rem] leading-relaxed text-boss-ivory/25">{{ __('Shown on the locked course page before a model requests access. This is separate from the normal course requirements.') }}</p>
+                                <x-input-error class="mt-2" :messages="$errors->get('course_access_requirements')" />
+                            </div>
+
+                            <div class="rounded-xl border border-boss-gold/12 bg-boss-gold/[0.04] p-4">
+                                <p class="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-boss-gold/70">{{ __('Kayla Course Verification Process') }}</p>
+                                <p class="mt-1 text-[0.68rem] leading-relaxed text-boss-ivory/32">{{ __('Set the website-specific process models must go through before this course can be unlocked.') }}</p>
+
+                                <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <x-input-label for="access_registration_instructions" :value="__('Registration phase')" />
+                                        <textarea id="access_registration_instructions" name="access_registration_instructions" rows="3" class="pd-input mt-2" placeholder="{{ __('Example: Register on the website and send the account email/username Kayla asks for.') }}">{{ old('access_registration_instructions') }}</textarea>
+                                        <x-input-error class="mt-2" :messages="$errors->get('access_registration_instructions')" />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="access_callback_instructions" :value="__('Callback phase')" />
+                                        <textarea id="access_callback_instructions" name="access_callback_instructions" rows="3" class="pd-input mt-2" placeholder="{{ __('Example: Wait for Kayla to call/video call and explain the QR verification flow.') }}">{{ old('access_callback_instructions') }}</textarea>
+                                        <x-input-error class="mt-2" :messages="$errors->get('access_callback_instructions')" />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="access_onboarding_instructions" :value="__('Onboarding phase')" />
+                                        <textarea id="access_onboarding_instructions" name="access_onboarding_instructions" rows="3" class="pd-input mt-2" placeholder="{{ __('Example: Follow Kayla\'s setup checklist before submitting final verification.') }}">{{ old('access_onboarding_instructions') }}</textarea>
+                                        <x-input-error class="mt-2" :messages="$errors->get('access_onboarding_instructions')" />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="access_verification_instructions" :value="__('Verification phase')" />
+                                        <textarea id="access_verification_instructions" name="access_verification_instructions" rows="3" class="pd-input mt-2" placeholder="{{ __('Example: Submit QR codes/screenshots quickly because codes can expire after a few minutes.') }}">{{ old('access_verification_instructions') }}</textarea>
+                                        <x-input-error class="mt-2" :messages="$errors->get('access_verification_instructions')" />
+                                    </div>
+                                </div>
+                            </div>
+
                             {{-- Published + Sort Order --}}
                             <div class="grid gap-4 sm:grid-cols-[1fr_160px] sm:items-end">
                                 <label for="is_published" class="flex items-start gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.03] p-3">

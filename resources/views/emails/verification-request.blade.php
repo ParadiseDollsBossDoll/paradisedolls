@@ -7,6 +7,12 @@
 <body style="font-family: ui-sans-serif, system-ui, sans-serif; line-height: 1.6; color: #1a1a1a; max-width: 32rem; margin: 0 auto; padding: 1.5rem;">
     <p style="margin: 0 0 1rem;">{{ __('Hi :name,', ['name' => $profile->user->name]) }}</p>
     <p style="margin: 0 0 1rem;">{{ __('Your Model Information Form has been reviewed. Please complete verification by uploading your valid ID and a selfie holding your ID from inside your member account.') }}</p>
+    @if (filled($profile->verification_request_instructions))
+        <div style="margin: 0 0 1rem; padding: 1rem; background-color: #f8f2e6; border-left: 4px solid #c9a96e;">
+            <p style="margin: 0 0 0.5rem; font-weight: 700;">{{ __('Instructions from Kayla') }}</p>
+            <p style="margin: 0; white-space: pre-line;">{{ $profile->verification_request_instructions }}</p>
+        </div>
+    @endif
     <p style="margin: 0 0 2rem;">
         <a href="{{ $verificationUrl }}" style="display: inline-block; background-color: #c9a96e; color: #ffffff; text-decoration: none; padding: 0.65rem 1.25rem; font-weight: 600;">{{ __('Complete verification') }}</a>
     </p>

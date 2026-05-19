@@ -202,7 +202,7 @@ class ReferralFeatureTest extends TestCase
 
         $this->assertSame(ModelReferral::STATUS_JOINED, $referral->status);
         $this->assertSame(ModelReferral::REWARD_ELIGIBLE, $referral->reward_status);
-        Mail::assertSent(MemberApplicationApprovedMail::class);
+        Mail::assertQueued(MemberApplicationApprovedMail::class);
 
         $this->actingAs($admin)
             ->post(route('admin.applications.referrals.reward-paid', $referral))

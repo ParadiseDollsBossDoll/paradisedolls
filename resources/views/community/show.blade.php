@@ -4,23 +4,28 @@
     $profilePhotoUrl = $user->profilePhotoUrl();
 
     if ($user->isAdmin()) {
-        $pendingApps = \App\Models\ModelApplication::where('status', \App\Models\ModelApplication::STATUS_PENDING)->count();
-        $pendingVerif = \App\Models\ModelProfile::where('verification_status', \App\Models\ModelProfile::VERIFICATION_SUBMITTED)->count();
-        $pendingReferrals = \App\Models\ModelReferral::query()
-            ->where(function ($q) {
-                $q->where(function ($lead) {
-                    $lead->where('status', \App\Models\ModelReferral::STATUS_REFERRED)->whereNull('model_application_id');
-                })->orWhere('reward_status', \App\Models\ModelReferral::REWARD_ELIGIBLE);
-            })->count();
+        [$pendingApps, $pendingVerif, $pendingReferrals] = \Illuminate\Support\Facades\Cache::remember(
+            'admin_sidebar_counts', 60,
+            fn () => [
+                \App\Models\ModelApplication::where('status', \App\Models\ModelApplication::STATUS_PENDING)->count(),
+                \App\Models\ModelProfile::where('verification_status', \App\Models\ModelProfile::VERIFICATION_SUBMITTED)->count(),
+                \App\Models\ModelReferral::query()
+                    ->where(function ($q) {
+                        $q->where(function ($lead) {
+                            $lead->where('status', \App\Models\ModelReferral::STATUS_REFERRED)->whereNull('model_application_id');
+                        })->orWhere('reward_status', \App\Models\ModelReferral::REWARD_ELIGIBLE);
+                    })->count(),
+            ]
+        );
 
         $sidebarLinks = [
             ['href' => route('admin.dashboard'),          'label' => __('Overview'),       'icon' => 'overview',      'active' => false, 'count' => 0],
             ['href' => route('admin.applications.index'), 'label' => __('Applications'),   'icon' => 'applications',  'active' => false, 'count' => $pendingApps],
+            ['href' => route('admin.referrals.index'),    'label' => __('Referrals'),      'icon' => 'referrals',     'active' => false, 'count' => $pendingReferrals],
             ['href' => route('admin.onboarding.index'),   'label' => __('Onboarding'),     'icon' => 'onboarding',    'active' => false, 'count' => $pendingVerif],
             ['href' => route('admin.models.progress'),    'label' => __('Members'),        'icon' => 'members',       'active' => false, 'count' => 0],
             ['href' => route('admin.courses.index'),      'label' => __('Courses'),        'icon' => 'courses',       'active' => false, 'count' => 0],
-            ['href' => route('admin.testimonials.index'), 'label' => __('Stories'),        'icon' => 'stories',       'active' => false, 'count' => 0],
-            ['href' => route('admin.referrals.index'),    'label' => __('Referrals'),      'icon' => 'referrals',     'active' => false, 'count' => $pendingReferrals],
+            ['href' => route('admin.testimonials.index'), 'label' => __('Testimonials'),   'icon' => 'stories',       'active' => false, 'count' => 0],
             ['href' => route('community.show'),           'label' => __('Community Chat'), 'icon' => 'community',     'active' => true,  'count' => 0],
         ];
         $sidebarSubtitle  = __('Admin Panel');
@@ -134,7 +139,17 @@
                 </nav>
 
                 <div class="elysian-side-footer">
-                    <a href="{{ route('home') }}" class="elysian-side-footer-btn">
+                    @if ($user->isAdmin())
+                        <a href="{{ route('admin.courses.create') }}" class="elysian-side-footer-btn" style="color: rgba(201,169,110,0.7);" @click="shellDrawerOpen = false">
+                            <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v6M5 8h6"/></svg>
+                            <span>{{ __('New Course') }}</span>
+                        </a>
+                        <a href="{{ route('profile.edit') }}" class="elysian-side-footer-btn" @click="shellDrawerOpen = false">
+                            <svg viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="3"/><path d="M2.5 14c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5"/></svg>
+                            <span>{{ __('My Profile') }}</span>
+                        </a>
+                    @endif
+                    <a href="{{ route('home') }}" class="elysian-side-footer-btn" @click="shellDrawerOpen = false">
                         <svg viewBox="0 0 16 16"><path d="M8 1L1 8h2.5v6h3.5v-4h2v4h3.5V8H15L8 1z"/></svg>
                         <span>{{ __('Main Site') }}</span>
                     </a>

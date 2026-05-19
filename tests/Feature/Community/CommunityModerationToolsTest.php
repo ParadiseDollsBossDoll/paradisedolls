@@ -16,6 +16,7 @@ class CommunityModerationToolsTest extends TestCase
     {
         $moderator = User::factory()->create(['role' => 'moderator']);
         $member = User::factory()->create();
+        $this->grantCommunityAccess($member);
         $channel = CommunityChannel::query()->create([
             'name' => 'general',
             'description' => 'General discussion',

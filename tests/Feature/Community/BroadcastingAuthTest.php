@@ -5,15 +5,34 @@ namespace Tests\Feature\Community;
 use App\Models\CommunityChannel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Broadcast;
 use Tests\TestCase;
 
 class BroadcastingAuthTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'broadcasting.default' => 'pusher',
+            'broadcasting.connections.pusher.key' => 'test-key',
+            'broadcasting.connections.pusher.secret' => 'test-secret',
+            'broadcasting.connections.pusher.app_id' => 'test-app',
+            'broadcasting.connections.pusher.options.cluster' => 'mt1',
+        ]);
+
+        Broadcast::forgetDrivers();
+
+        require base_path('routes/channels.php');
+    }
+
     public function test_accessible_members_can_authorize_the_private_community_channel(): void
     {
         $user = User::factory()->create();
+        $this->grantCommunityAccess($user);
         $channel = CommunityChannel::query()->create([
             'name' => 'general',
             'description' => 'General chat',
@@ -39,6 +58,7 @@ class BroadcastingAuthTest extends TestCase
     {
         $owner = User::factory()->create(['role' => 'admin']);
         $member = User::factory()->create();
+        $this->grantCommunityAccess($member);
         $channel = CommunityChannel::query()->create([
             'name' => 'leaders',
             'description' => 'Admin only',
@@ -87,6 +107,7 @@ class BroadcastingAuthTest extends TestCase
         $user = User::factory()->create([
             'name' => 'Roel Descartin',
         ]);
+        $this->grantCommunityAccess($user);
 
         $response = $this->actingAs($user)->post('/broadcasting/auth', [
             'socket_id' => '1234.5678',
@@ -102,7 +123,7 @@ class BroadcastingAuthTest extends TestCase
 
         $channelData = json_decode($payload['channel_data'], true, 512, JSON_THROW_ON_ERROR);
 
-        $this->assertSame($user->id, $channelData['user_id']);
+        $this->assertSame((string) $user->id, $channelData['user_id']);
         $this->assertSame($user->id, $channelData['user_info']['id']);
         $this->assertSame('Roel Descartin', $channelData['user_info']['name']);
         $this->assertSame('RD', $channelData['user_info']['initials']);
@@ -114,6 +135,8 @@ class BroadcastingAuthTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $invited = User::factory()->create();
         $uninvited = User::factory()->create();
+        $this->grantCommunityAccess($invited);
+        $this->grantCommunityAccess($uninvited);
         $channel = CommunityChannel::query()->create([
             'name' => 'quiet-room',
             'description' => 'Invite only',

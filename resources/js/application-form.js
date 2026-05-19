@@ -19,11 +19,17 @@ const isAcceptedPhoto = (file) => {
     return photoTypes.has(file.type) || ['jpg', 'jpeg', 'png', 'webp'].includes(extension);
 };
 
-document.querySelectorAll('[data-application-form]').forEach((form) => {
-    const country = form.querySelector('[data-phone-country]');
+document.querySelectorAll('[data-application-form], [data-phone-form]').forEach((form) => {
     const email = form.querySelector('[data-email-address]');
     const emailFeedback = form.querySelector('[data-email-feedback]');
-    const number = form.querySelector('[data-phone-number]');
+    const phoneGroups = Array.from(form.querySelectorAll('[data-phone-number]'))
+        .map((number) => {
+            const field = number.closest('[data-phone-field]');
+            const country = field?.querySelector('[data-phone-country]') || form.querySelector('[data-phone-country]');
+
+            return { country, number };
+        })
+        .filter(({ country, number }) => country && number);
     const photoDropzone = form.querySelector('[data-photo-dropzone]');
     const photoError = form.querySelector('[data-photo-error]');
     const photoInput = form.querySelector('[data-photo-input]');
@@ -32,7 +38,7 @@ document.querySelectorAll('[data-application-form]').forEach((form) => {
     let selectedPhotos = [];
     let previewUrls = [];
 
-    if (!country || !email || !number) {
+    if (phoneGroups.length === 0) {
         return;
     }
 
@@ -46,6 +52,10 @@ document.querySelectorAll('[data-application-form]').forEach((form) => {
     };
 
     const validateEmail = () => {
+        if (!email) {
+            return true;
+        }
+
         const rawEmail = email.value.trim();
         const message = 'Please enter a valid email address, like name@example.com.';
 
@@ -66,7 +76,7 @@ document.querySelectorAll('[data-application-form]').forEach((form) => {
         return true;
     };
 
-    const validatePhone = () => {
+    const validatePhone = ({ country, number }) => {
         const rawNumber = number.value.trim();
 
         country.setCustomValidity('');
@@ -214,10 +224,16 @@ document.querySelectorAll('[data-application-form]').forEach((form) => {
         renderPhotoPreviews();
     };
 
-    country.addEventListener('change', validatePhone);
-    email.addEventListener('input', validateEmail);
-    email.addEventListener('invalid', validateEmail);
-    number.addEventListener('input', validatePhone);
+    phoneGroups.forEach((phoneGroup) => {
+        phoneGroup.country.addEventListener('change', () => validatePhone(phoneGroup));
+        phoneGroup.number.addEventListener('input', () => validatePhone(phoneGroup));
+        phoneGroup.number.addEventListener('invalid', () => validatePhone(phoneGroup));
+    });
+
+    if (email) {
+        email.addEventListener('input', validateEmail);
+        email.addEventListener('invalid', validateEmail);
+    }
 
     if (photoInput && photoDropzone) {
         photoInput.addEventListener('change', () => {
@@ -245,9 +261,11 @@ document.querySelectorAll('[data-application-form]').forEach((form) => {
 
     form.addEventListener('submit', (event) => {
         const emailIsValid = validateEmail();
-        const phoneIsValid = validatePhone();
+        const phonesAreValid = phoneGroups
+            .map((phoneGroup) => validatePhone(phoneGroup))
+            .every(Boolean);
 
-        if (!emailIsValid || !phoneIsValid) {
+        if (!emailIsValid || !phonesAreValid) {
             event.preventDefault();
             form.reportValidity();
         }

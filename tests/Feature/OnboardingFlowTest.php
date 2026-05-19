@@ -7,8 +7,11 @@ use App\Mail\ApplicationSubmittedMail;
 use App\Mail\CommunityAccessMail;
 use App\Mail\MemberApplicationApprovedMail;
 use App\Mail\ModelInformationSubmittedMail;
+use App\Mail\VerificationRequestMail;
 use App\Mail\VerificationResubmissionMail;
 use App\Mail\VerificationSubmissionReceivedMail;
+use App\Models\Course;
+use App\Models\CourseAccessRequest;
 use App\Models\ModelApplication;
 use App\Models\ModelProfile;
 use App\Models\User;
@@ -116,7 +119,11 @@ class OnboardingFlowTest extends TestCase
             'user_id' => $member->id,
             'model_application_id' => $application->id,
         ]);
-        Mail::assertSent(MemberApplicationApprovedMail::class);
+        $notification = $member->notifications()->first();
+        $this->assertNotNull($notification);
+        $this->assertSame('application_approved', $notification->data['category']);
+        $this->assertSame('Application approved', $notification->data['title']);
+        Mail::assertQueued(MemberApplicationApprovedMail::class);
     }
 
     public function test_admin_approval_shows_temporary_password_when_mailer_cannot_deliver(): void
@@ -188,7 +195,8 @@ class OnboardingFlowTest extends TestCase
                 'legal_name' => 'Legal Name',
                 'stage_name' => 'Stage Name',
                 'date_of_birth' => now()->subYears(21)->format('Y-m-d'),
-                'phone' => '+447700900555',
+                'phone_country' => 'GB',
+                'phone_number' => '7700 900555',
                 'country' => 'United Kingdom',
                 'city' => 'London',
                 'timezone' => 'Europe/London',
@@ -197,6 +205,9 @@ class OnboardingFlowTest extends TestCase
                 'availability' => 'Evenings and weekends.',
                 'goals' => 'Build a consistent online income.',
                 'experience_notes' => 'Beginner.',
+                'emergency_contact_name' => 'Emergency Contact',
+                'emergency_contact_phone_country' => 'PH',
+                'emergency_contact_phone_number' => '985 474 7065',
                 'discord_username' => 'stage-name',
                 'discord_user_id' => '1234567890',
             ])
@@ -204,6 +215,8 @@ class OnboardingFlowTest extends TestCase
 
         $profile = $member->modelProfile()->first();
         $this->assertNotNull($profile->information_submitted_at);
+        $this->assertSame('+447700900555', $profile->phone);
+        $this->assertSame('+639854747065', $profile->emergency_contact_phone);
         $this->assertSame(['Stripchat', 'OnlyFans'], $profile->platforms);
         $this->assertSame('stage-name', $profile->discord_username);
         Mail::assertQueued(ModelInformationSubmittedMail::class);
@@ -226,6 +239,59 @@ class OnboardingFlowTest extends TestCase
             ->get(route('member.dashboard'))
             ->assertOk()
             ->assertSeeText('Submitted for review. The admin team is reviewing your onboarding details and verification IDs.');
+    }
+
+    public function test_member_onboarding_rejects_invalid_phone_numbers(): void
+    {
+        Mail::fake();
+
+        $member = User::factory()->create(['role' => 'model']);
+
+        $this->actingAs($member)
+            ->put(route('member.onboarding.update'), [
+                'legal_name' => 'Legal Name',
+                'stage_name' => 'Stage Name',
+                'date_of_birth' => now()->subYears(21)->format('Y-m-d'),
+                'phone_country' => 'GB',
+                'phone_number' => 'call me maybe',
+                'country' => 'United Kingdom',
+                'city' => 'London',
+                'timezone' => 'Europe/London',
+                'availability' => 'Evenings and weekends.',
+                'goals' => 'Build a consistent online income.',
+            ])
+            ->assertSessionHasErrors('phone_number');
+
+        $this->assertNull($member->modelProfile()->first()?->information_submitted_at);
+        Mail::assertNothingQueued();
+    }
+
+    public function test_member_onboarding_rejects_invalid_emergency_contact_phone_numbers(): void
+    {
+        Mail::fake();
+
+        $member = User::factory()->create(['role' => 'model']);
+
+        $this->actingAs($member)
+            ->put(route('member.onboarding.update'), [
+                'legal_name' => 'Legal Name',
+                'stage_name' => 'Stage Name',
+                'date_of_birth' => now()->subYears(21)->format('Y-m-d'),
+                'phone_country' => 'GB',
+                'phone_number' => '7700 900555',
+                'country' => 'United Kingdom',
+                'city' => 'London',
+                'timezone' => 'Europe/London',
+                'availability' => 'Evenings and weekends.',
+                'goals' => 'Build a consistent online income.',
+                'emergency_contact_name' => 'Emergency Contact',
+                'emergency_contact_phone_country' => 'PH',
+                'emergency_contact_phone_number' => 'call me maybe',
+            ])
+            ->assertSessionHasErrors('emergency_contact_phone_number');
+
+        $this->assertNull($member->modelProfile()->first()?->information_submitted_at);
+        Mail::assertNothingQueued();
     }
 
     public function test_member_cannot_submit_verification_before_information_form(): void
@@ -253,6 +319,45 @@ class OnboardingFlowTest extends TestCase
             ->assertOk()
             ->assertSeeText('Submit the Model Information Form before uploading verification documents.')
             ->assertDontSeeText('Submit Verification');
+    }
+
+    public function test_verified_member_can_upload_platform_code_proof_without_reuploading_id_documents(): void
+    {
+        Mail::fake();
+        Storage::fake('local');
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+            'verification_submitted_at' => now(),
+            'verification_reviewed_by' => $admin->id,
+            'verification_reviewed_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
+
+        $this->actingAs($member)
+            ->get(route('member.verification.edit'))
+            ->assertOk()
+            ->assertSeeText('Existing file on record. Leave blank to keep it.')
+            ->assertSeeText('Use this for QR/code screenshots or platform verification proof Kayla requests for course access.');
+
+        $this->actingAs($member)
+            ->post(route('member.verification.store'), [
+                'platform_codes' => $this->fakePng('stripchat-qr.png'),
+            ])
+            ->assertRedirect(route('member.dashboard'));
+
+        $profile->refresh();
+
+        $this->assertSame(ModelProfile::VERIFICATION_VERIFIED, $profile->verification_status);
+        $this->assertSame('verifications/1/id.jpg', $profile->id_document_path);
+        $this->assertSame('verifications/1/selfie.jpg', $profile->selfie_with_id_path);
+        Storage::disk('local')->assertExists($profile->platform_codes_path);
+        Mail::assertQueued(VerificationSubmissionReceivedMail::class);
     }
 
     public function test_admin_resubmission_requires_note_and_emails_member(): void
@@ -326,6 +431,10 @@ class OnboardingFlowTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame(ModelProfile::VERIFICATION_VERIFIED, $profile->fresh()->verification_status);
+        $notification = $member->notifications()->first();
+        $this->assertNotNull($notification);
+        $this->assertSame('verification_approved', $notification->data['category']);
+        $this->assertSame('Verification approved', $notification->data['title']);
         Mail::assertQueued(AccountApprovalMail::class);
 
         $this->actingAs($admin)
@@ -340,6 +449,269 @@ class OnboardingFlowTest extends TestCase
             ->assertRedirect();
 
         $this->assertNotNull($profile->fresh()->community_role_assigned_at);
+    }
+
+    public function test_admin_cannot_assign_community_chat_before_verification(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_SUBMITTED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+            'community_invited_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.community-role-assigned', $profile))
+            ->assertSessionHasErrors('profile');
+
+        $this->assertNull($profile->fresh()->community_role_assigned_at);
+    }
+
+    public function test_admin_can_save_custom_verification_instructions_for_member(): void
+    {
+        Mail::fake();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+        ]);
+
+        $instructions = 'Upload your ID, selfie with ID, and the platform QR screenshot from the callback.';
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.verification-instructions', $profile), [
+                'verification_request_instructions' => $instructions,
+            ])
+            ->assertRedirect();
+
+        $this->assertSame($instructions, $profile->fresh()->verification_request_instructions);
+
+        $this->actingAs($member)
+            ->get(route('member.verification.edit'))
+            ->assertOk()
+            ->assertSeeText('Instructions from Kayla')
+            ->assertSeeText($instructions);
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.request-verification', $profile))
+            ->assertRedirect();
+
+        Mail::assertQueued(VerificationRequestMail::class, function (VerificationRequestMail $mail) use ($instructions) {
+            return str_contains($mail->render(), $instructions);
+        });
+    }
+
+    public function test_admin_can_update_stage_and_unlock_or_lock_course_access(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        $course = Course::create([
+            'title' => 'Stripchat Verification Walkthrough',
+            'slug' => 'stripchat-verification-walkthrough',
+            'platform_label' => 'Stripchat',
+            'description' => 'Platform-specific walkthrough.',
+            'is_published' => true,
+        ]);
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.stage', $profile), [
+                'onboarding_stage' => ModelProfile::STAGE_CALLBACK,
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(ModelProfile::STAGE_CALLBACK, $profile->fresh()->onboarding_stage);
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.courses.unlock', [$profile, $course]))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('course_enrollments', [
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+        ]);
+        $this->assertDatabaseHas('community_channels', [
+            'course_id' => $course->id,
+        ]);
+        $channelId = $course->communityChannels()->firstOrFail()->id;
+        $this->assertDatabaseHas('community_channel_accesses', [
+            'community_channel_id' => $channelId,
+            'user_id' => $member->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.courses.lock', [$profile, $course]))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('course_enrollments', [
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+        ]);
+        $this->assertDatabaseMissing('community_channel_accesses', [
+            'community_channel_id' => $channelId,
+            'user_id' => $member->id,
+        ]);
+    }
+
+    public function test_admin_can_request_course_access_resubmission_and_member_can_resubmit(): void
+    {
+        Mail::fake();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        $course = Course::create([
+            'title' => 'Stripchat QR Review',
+            'slug' => 'stripchat-qr-review',
+            'platform_label' => 'Stripchat',
+            'description' => 'Platform-specific QR review.',
+            'is_published' => true,
+        ]);
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
+        $accessRequest = CourseAccessRequest::create([
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+            'status' => CourseAccessRequest::STATUS_PENDING,
+            'member_notes' => 'I followed the QR code.',
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.courses.resubmission', [$profile, $course]))
+            ->assertSessionHasErrors('admin_notes');
+
+        $this->assertSame(CourseAccessRequest::STATUS_PENDING, $accessRequest->fresh()->status);
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.courses.resubmission', [$profile, $course]), [
+                'admin_notes' => 'Please upload the QR screenshot in Platform codes and explain what happened.',
+            ])
+            ->assertRedirect();
+
+        $accessRequest->refresh();
+
+        $this->assertSame(CourseAccessRequest::STATUS_REJECTED, $accessRequest->status);
+        $this->assertSame('Please upload the QR screenshot in Platform codes and explain what happened.', $accessRequest->admin_notes);
+        $this->assertSame($admin->id, $accessRequest->reviewed_by);
+
+        $notification = $member->notifications()->first();
+        $this->assertNotNull($notification);
+        $this->assertSame('course_access_resubmission', $notification->data['category']);
+        $this->assertSame('Course access needs resubmission', $notification->data['title']);
+        $this->assertTrue($course->fresh()->accessRequestFor($member)->isRejected());
+        $this->assertSame('Please upload the QR screenshot in Platform codes and explain what happened.', $course->fresh()->accessRequestFor($member)->admin_notes);
+        $this->assertDatabaseMissing('course_enrollments', [
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+        ]);
+
+        $this->actingAs($member)
+            ->get(route('member.courses.show', $course->slug))
+            ->assertOk()
+            ->assertSee('Please upload the QR screenshot in Platform codes and explain what happened.')
+            ->assertSee('Admin note')
+            ->assertSee('Upload Platform Codes')
+            ->assertSee('Resubmit Access Request');
+
+        $this->actingAs($member)
+            ->post(route('member.courses.request-access', $course->slug), [
+                'member_notes' => 'Uploaded the QR screenshot in Platform codes.',
+            ])
+            ->assertRedirect(route('member.courses.show', $course->slug));
+
+        $accessRequest->refresh();
+
+        $this->assertSame(CourseAccessRequest::STATUS_PENDING, $accessRequest->status);
+        $this->assertSame('Uploaded the QR screenshot in Platform codes.', $accessRequest->member_notes);
+        $this->assertNull($accessRequest->admin_notes);
+        $this->assertNull($accessRequest->reviewed_by);
+    }
+
+    public function test_admin_cannot_unlock_course_until_member_is_verified(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        $course = Course::create([
+            'title' => 'OnlyFans Verification Walkthrough',
+            'slug' => 'onlyfans-verification-walkthrough',
+            'platform_label' => 'OnlyFans',
+            'description' => 'Platform-specific walkthrough.',
+            'is_published' => true,
+        ]);
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_SUBMITTED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.courses.unlock', [$profile, $course]))
+            ->assertSessionHasErrors('profile');
+
+        $this->assertDatabaseMissing('course_enrollments', [
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+        ]);
+    }
+
+    public function test_community_access_requires_assigned_role_for_models(): void
+    {
+        $member = User::factory()->create(['role' => 'model']);
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_SUBMITTED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
+
+        $this->actingAs($member)
+            ->get(route('community.show'))
+            ->assertRedirect(route('member.dashboard'));
+
+        $this->actingAs($member)
+            ->getJson(route('community.channels.index'))
+            ->assertForbidden();
+
+        $profile->forceFill([
+            'community_invited_at' => now(),
+            'community_role_assigned_at' => now(),
+        ])->save();
+
+        $this->actingAs($member)
+            ->getJson(route('community.channels.index'))
+            ->assertForbidden();
+
+        $profile->forceFill([
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+        ])->save();
+
+        $this->actingAs($member)
+            ->get(route('community.show'))
+            ->assertOk();
     }
 
     private function fakePng(string $name): UploadedFile

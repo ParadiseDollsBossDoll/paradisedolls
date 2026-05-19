@@ -16,6 +16,7 @@ class CommunityPermissionMatrixTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $member = User::factory()->create();
+        $this->grantCommunityAccess($member);
         $channel = CommunityChannel::query()->create([
             'name' => 'lead-circle',
             'description' => 'Invite only leaders channel',
@@ -49,6 +50,7 @@ class CommunityPermissionMatrixTest extends TestCase
     {
         $moderator = User::factory()->create(['role' => 'moderator']);
         $member = User::factory()->create();
+        $this->grantCommunityAccess($member);
         $channel = CommunityChannel::query()->create([
             'name' => 'mods-huddle',
             'description' => 'Moderator planning room',
@@ -61,7 +63,7 @@ class CommunityPermissionMatrixTest extends TestCase
         $response = $this->actingAs($member)->get('/community');
 
         $response->assertOk();
-        $response->assertSeeText('mods-huddle');
+        $response->assertSee('mods-huddle');
 
         $this->actingAs($member)
             ->get("/community/channels/{$channel->slug}/messages")
@@ -72,6 +74,7 @@ class CommunityPermissionMatrixTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $member = User::factory()->create();
+        $this->grantCommunityAccess($member);
         $channel = CommunityChannel::query()->create([
             'name' => 'leaders',
             'description' => 'Admins only',

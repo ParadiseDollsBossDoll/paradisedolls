@@ -1,153 +1,103 @@
-<x-member-layout>
+<x-member-layout :shell-stats="$dashboardStats">
     @php
+        $user = auth()->user();
         $hour = now()->hour;
         $greeting = $hour < 12 ? __('Good morning') : ($hour < 18 ? __('Good afternoon') : __('Good evening'));
-        $initials = collect(explode(' ', trim(auth()->user()->name)))
-            ->filter()
-            ->take(2)
-            ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
-            ->implode('') ?: 'M';
-        $continueCourses = $courses->filter(fn ($course) => ($courseProgress[$course->id]['completed'] ?? 0) > 0 && ($courseProgress[$course->id]['completed'] ?? 0) < ($courseProgress[$course->id]['total'] ?? 0));
-        $freshCourses = $courses->filter(fn ($course) => ($courseProgress[$course->id]['completed'] ?? 0) === 0)->take(3);
-        $discordInviteUrl = config('paradise.community_url');
-
-        $onboardingAction = null;
-
-        if (! $profile->hasInformationForm()) {
-            $onboardingAction = [
-                'url' => route('member.onboarding.edit'),
-                'label' => __('Complete information'),
-                'style' => 'primary',
-                'external' => false,
-            ];
-        } elseif ($profile->verification_status === \App\Models\ModelProfile::VERIFICATION_REJECTED) {
-            $onboardingAction = [
-                'url' => route('member.verification.edit'),
-                'label' => __('Resubmit verification'),
-                'style' => 'primary',
-                'external' => false,
-            ];
-        } elseif (! $profile->hasVerificationSubmission()) {
-            $onboardingAction = [
-                'url' => route('member.verification.edit'),
-                'label' => __('Complete verification'),
-                'style' => 'primary',
-                'external' => false,
-            ];
-        } elseif ($profile->verification_status === \App\Models\ModelProfile::VERIFICATION_SUBMITTED) {
-            $onboardingAction = [
-                'url' => route('member.verification.edit'),
-                'label' => __('View verification'),
-                'style' => 'secondary',
-                'external' => false,
-            ];
-        } elseif ($profile->isCommunityInvited() && ! $profile->isCommunityRoleAssigned() && $discordInviteUrl) {
-            $onboardingAction = [
-                'url' => $discordInviteUrl,
-                'label' => __('Open Discord invite'),
-                'style' => 'primary',
-                'external' => true,
-            ];
-        } elseif ($profile->isCommunityRoleAssigned()) {
-            $onboardingAction = [
-                'url' => route('community.show'),
-                'label' => __('Open Community Chat'),
-                'style' => 'secondary',
-                'external' => false,
-            ];
-        } elseif ($profile->isVerified()) {
-            $onboardingAction = [
-                'url' => route('member.verification.edit'),
-                'label' => __('View verification'),
-                'style' => 'secondary',
-                'external' => false,
-            ];
-        }
+        $overallPercent = $dashboardStats['overall_percent'];
+        $completedLessons = $dashboardStats['completed_lessons'];
+        $totalLessons = $dashboardStats['total_lessons'];
+        $remainingLessons = max($totalLessons - $completedLessons, 0);
+        $nextCourseProgress = $nextActionCourse ? ($courseProgress[$nextActionCourse->id] ?? ['completed' => 0, 'total' => $nextActionCourse->lessons_count, 'percent' => 0]) : null;
+        $nextActionUrl = $nextActionCourse
+            ? (($nextCourseProgress['completed'] ?? 0) > 0
+                ? route('member.courses.learn.show', $nextActionCourse->slug)
+                : route('member.courses.show', $nextActionCourse->slug))
+            : route('member.courses.index');
+        $nextActionLabel = $nextActionCourse
+            ? (($nextCourseProgress['completed'] ?? 0) > 0 ? __('Continue lesson') : __('Start a course'))
+            : __('Browse academy');
     @endphp
 
-    <div class="mx-auto max-w-5xl space-y-6">
+    <div class="mx-auto max-w-6xl space-y-6">
         @if (session('status'))
             <div class="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm text-green-200">{{ session('status') }}</div>
         @endif
 
-        <section class="pd-panel-strong p-5 md:p-6">
-            <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                    <p class="pd-kicker text-boss-ivory/35">{{ __('Boss Doll Blueprint') }}</p>
-                    <h2 class="pd-heading mt-2 text-[clamp(1.45rem,3vw,2rem)] text-boss-ivory">{{ __('Onboarding Path') }}</h2>
-                    <p class="mt-2 max-w-xl text-[0.82rem] text-boss-ivory/35">{{ $profile->onboardingStatusLabel() }}</p>
-                </div>
-                <div class="w-full lg:w-72">
-                    <div class="mb-2 flex items-center justify-between text-[0.66rem] uppercase tracking-[0.12em] text-boss-ivory/30">
-                        <span>{{ __('Readiness') }}</span>
-                        <span class="text-boss-gold">{{ $profile->onboardingPercent() }}%</span>
-                    </div>
-                    <div class="pd-progress-track">
-                        <div class="pd-progress-bar" style="width: {{ $profile->onboardingPercent() }}%"></div>
-                    </div>
-                    <div class="mt-4 flex flex-wrap gap-2">
-                        @if ($onboardingAction)
-                            <a
-                                href="{{ $onboardingAction['url'] }}"
-                                class="{{ $onboardingAction['style'] === 'primary' ? 'pd-btn-primary' : 'pd-btn-secondary' }}"
-                                @if ($onboardingAction['external']) target="_blank" rel="noopener" @endif
-                            >
-                                {{ $onboardingAction['label'] }}
-                            </a>
-                        @endif
-                    </div>
+        <section class="pd-dashboard-hero">
+            <div class="pd-dashboard-hero-copy">
+                <p class="pd-kicker text-boss-ivory/38">{{ $greeting }}</p>
+                <h1 class="pd-heading pd-text-gradient mt-3">{{ $user->name }}</h1>
+                <p class="mt-3 max-w-xl text-sm leading-relaxed text-boss-ivory/45">
+                    {{ __('Your academy overview is ready. Pick up where you left off or start the next course when you are.') }}
+                </p>
+                <div class="mt-6 flex flex-wrap gap-3">
+                    <a href="{{ $nextActionUrl }}" class="pd-btn-primary">{{ $nextActionLabel }}</a>
+                    <a href="{{ route('member.courses.index') }}" class="pd-btn-secondary">{{ __('View Academy') }}</a>
                 </div>
             </div>
 
-            @if ($profile->verification_notes && $profile->verification_status === \App\Models\ModelProfile::VERIFICATION_REJECTED)
-                <div class="mt-5 rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-100">
-                    <p class="font-semibold">{{ __('Resubmission instructions') }}</p>
-                    <p class="mt-1 whitespace-pre-line text-red-100/75">{{ $profile->verification_notes }}</p>
-                </div>
-            @endif
-        </section>
-
-        <section class="pd-panel relative overflow-hidden p-6 md:p-8">
-            <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(201,169,110,0.12),transparent_34%)]"></div>
-            <div class="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                <div class="flex items-center gap-5">
-                    <div class="flex h-16 w-16 items-center justify-center rounded-full border-2 border-boss-gold/35 bg-boss-gold/10 font-display text-[1.2rem] text-boss-gold-light shadow-glow">
-                        {{ $initials }}
-                    </div>
+            <div class="pd-dashboard-hero-meter">
+                <div class="pd-dashboard-ring" style="--progress: {{ $overallPercent }}%;">
                     <div>
-                        <p class="pd-kicker text-boss-ivory/35">{{ $greeting }}</p>
-                        <h1 class="pd-heading pd-text-gradient mt-2 text-[clamp(1.8rem,4vw,2.5rem)]">{{ auth()->user()->name }}</h1>
-                        <p class="mt-2 text-[0.82rem] text-boss-ivory/35">{{ __('Your academy progress is ready when you are.') }}</p>
+                        <strong>{{ $overallPercent }}%</strong>
+                        <span>{{ __('Overall') }}</span>
                     </div>
                 </div>
-
-                <div class="flex items-center gap-4">
-                    <div class="relative flex h-24 w-24 items-center justify-center rounded-full border border-boss-gold/20 bg-boss-gold/[0.04]">
-                        <div class="absolute inset-2 rounded-full border border-white/[0.06]"></div>
-                        <div class="text-center">
-                            <p class="font-display text-[1.5rem] leading-none text-boss-gold">{{ $overallPercent }}%</p>
-                            <p class="mt-1 text-[0.55rem] uppercase tracking-[0.12em] text-boss-ivory/28">{{ __('Overall') }}</p>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="text-[0.86rem] text-boss-ivory">{{ $completedLessons }} <span class="text-boss-ivory/35">/ {{ $totalLessons }}</span></p>
-                        <p class="mt-1 text-[0.62rem] uppercase tracking-[0.12em] text-boss-ivory/28">{{ __('Lessons done') }}</p>
-                        <a href="{{ route('member.courses.index') }}" class="mt-3 inline-flex items-center text-[0.75rem] font-medium text-boss-gold transition-colors hover:text-boss-gold-light">
-                            {{ __('View Academy') }} ->
-                        </a>
-                    </div>
+                <div class="min-w-0">
+                    <p class="text-[0.72rem] uppercase tracking-[0.18em] text-boss-ivory/30">{{ __('Lessons completed') }}</p>
+                    <p class="mt-1 font-display text-[1.9rem] leading-none text-boss-ivory">
+                        {{ $completedLessons }}<span class="text-boss-ivory/28">/{{ $totalLessons }}</span>
+                    </p>
+                    <p class="mt-2 text-[0.68rem] text-boss-ivory/28">
+                        {{ trans_choice(':count lesson remaining|:count lessons remaining', $remainingLessons, ['count' => $remainingLessons]) }}
+                    </p>
+                    @if ($nextActionCourse)
+                        <p class="mt-3 truncate text-[0.78rem] text-boss-ivory/40">{{ __('Next: :course', ['course' => $nextActionCourse->title]) }}</p>
+                    @endif
                 </div>
             </div>
         </section>
+
+        <section class="pd-dashboard-readiness">
+            <div class="min-w-0">
+                <p class="pd-kicker text-boss-ivory/32">{{ __('Onboarding Path') }}</p>
+                <p class="mt-2 text-[0.92rem] text-boss-ivory">{{ $onboardingStatus }}</p>
+            </div>
+            <div class="pd-dashboard-readiness-meter">
+                <div class="flex items-center justify-between text-[0.66rem] uppercase tracking-[0.12em] text-boss-ivory/30">
+                    <span>{{ __('Readiness') }}</span>
+                    <span class="text-boss-gold">{{ $onboardingPercent }}%</span>
+                </div>
+                <div class="pd-progress-track mt-2">
+                    <div class="pd-progress-bar" style="width: {{ $onboardingPercent }}%"></div>
+                </div>
+                @if ($onboardingAction)
+                    <a
+                        href="{{ $onboardingAction['url'] }}"
+                        class="mt-3 {{ $onboardingAction['style'] === 'primary' ? 'pd-btn-primary' : 'pd-btn-secondary' }}"
+                        @if ($onboardingAction['external']) target="_blank" rel="noopener" @endif
+                    >
+                        {{ $onboardingAction['label'] }}
+                    </a>
+                @endif
+            </div>
+        </section>
+
+        @if ($profile->verification_notes && $profile->verification_status === \App\Models\ModelProfile::VERIFICATION_REJECTED)
+            <div class="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-100">
+                <p class="font-semibold">{{ __('Resubmission instructions') }}</p>
+                <p class="mt-1 whitespace-pre-line text-red-100/75">{{ $profile->verification_notes }}</p>
+            </div>
+        @endif
 
         <section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
             @foreach ([
-                [__('Progress'), $overallPercent.'%', __('overall completion')],
-                [__('In Progress'), $inProgressCount, __('courses active')],
-                [__('Completed'), $completedCoursesCount, __('courses finished')],
-                [__('Remaining'), $notStartedCount, __('to start')],
+                [__('In Progress'), $dashboardStats['in_progress_courses'], __('courses active')],
+                [__('Completed'), $dashboardStats['completed_courses'], __('courses finished')],
+                [__('Not Started'), $dashboardStats['not_started_courses'], __('ready when you are')],
+                [__('Courses'), $dashboardStats['total_courses'], __('available now')],
             ] as $stat)
-                <div class="pd-stat">
+                <div class="pd-stat pd-dashboard-stat">
                     <p class="font-display text-[2rem] leading-none text-boss-gold">{{ $stat[1] }}</p>
                     <p class="mt-3 text-[0.7rem] uppercase tracking-[0.08em] text-boss-ivory/55">{{ $stat[0] }}</p>
                     <p class="mt-1 text-[0.64rem] text-boss-ivory/25">{{ $stat[2] }}</p>
@@ -173,7 +123,7 @@
                             </div>
                             @if ($image)
                                 <div class="relative h-28 overflow-hidden">
-                                    <img src="{{ $image }}" alt="{{ $course->title }}" class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                                    <img src="{{ $image }}" alt="{{ $course->title }}" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105">
                                     <div class="absolute inset-0 bg-gradient-to-t from-boss-panel-strong to-transparent"></div>
                                 </div>
                             @endif
@@ -247,7 +197,7 @@
                         <a href="{{ route('member.courses.show', $course->slug) }}" class="group rounded-2xl border border-white/[0.05] bg-boss-ink p-4 transition-colors hover:border-boss-gold/25">
                             @if ($image)
                                 <div class="-mx-4 -mt-4 mb-4 h-24 overflow-hidden rounded-t-2xl">
-                                    <img src="{{ $image }}" alt="{{ $course->title }}" class="h-full w-full object-cover opacity-85 transition duration-500 group-hover:scale-105">
+                                    <img src="{{ $image }}" alt="{{ $course->title }}" loading="lazy" decoding="async" class="h-full w-full object-cover opacity-85 transition duration-500 group-hover:scale-105">
                                 </div>
                             @endif
                             <span class="pd-badge">{{ $course->platform_label ?: __('General') }}</span>

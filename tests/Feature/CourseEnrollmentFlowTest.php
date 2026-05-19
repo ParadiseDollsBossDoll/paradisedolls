@@ -2,9 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Mail\CourseAccessRequestedMail;
 use App\Models\Course;
+use App\Models\CourseAccessRequest;
+use App\Models\ModelProfile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -12,9 +16,17 @@ class CourseEnrollmentFlowTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_member_must_click_learn_course_before_viewing_course(): void
+    public function test_member_must_be_unlocked_before_viewing_course(): void
     {
         $member = User::factory()->create(['role' => 'model']);
+        ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
         $course = Course::create([
             'title' => 'Stripchat Pro Guide',
             'slug' => 'stripchat-pro-guide',
@@ -30,11 +42,25 @@ class CourseEnrollmentFlowTest extends TestCase
         $this->actingAs($member)
             ->get(route('member.courses.show', $course->slug))
             ->assertOk()
-            ->assertSee('Start Learning');
+            ->assertSee('Locked pending Kayla approval');
 
         $this->actingAs($member)
             ->get(route('member.courses.learn.show', $course->slug))
             ->assertRedirect(route('member.courses.show', $course->slug));
+
+        $this->actingAs($member)
+            ->post(route('member.courses.learn', $course->slug))
+            ->assertRedirect(route('member.courses.show', $course->slug));
+
+        $this->assertDatabaseMissing('course_enrollments', [
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+        ]);
+
+        $course->enrollments()->create([
+            'user_id' => $member->id,
+            'enrolled_at' => now(),
+        ]);
 
         $this->actingAs($member)
             ->post(route('member.courses.learn', $course->slug))
@@ -52,9 +78,140 @@ class CourseEnrollmentFlowTest extends TestCase
         $this->assertSame(1, $course->enrollments()->where('user_id', $member->id)->count());
     }
 
+    public function test_verified_member_can_request_course_access_and_admin_can_unlock_it(): void
+    {
+        Mail::fake();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
+        $course = Course::create([
+            'title' => 'Platform Callback Guide',
+            'slug' => 'platform-callback-guide',
+            'platform_label' => 'Stripchat',
+            'description' => 'A platform walkthrough with approval requirements.',
+            'course_access_requirements' => "Submit your platform QR code.\nFinish Kayla's callback.",
+            'access_registration_instructions' => 'Register your platform account before the call.',
+            'access_callback_instructions' => 'Kayla will call you and explain the QR code flow.',
+            'access_onboarding_instructions' => 'Follow the setup checklist Kayla gives you.',
+            'access_verification_instructions' => 'Send QR screenshots quickly because they can expire.',
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($member)
+            ->get(route('member.courses.show', $course->slug))
+            ->assertOk()
+            ->assertSee('Website Verification Process')
+            ->assertSee('Registration phase')
+            ->assertSee('Register your platform account before the call.')
+            ->assertSee('Callback phase')
+            ->assertSee('Kayla will call you and explain the QR code flow.')
+            ->assertSee('Course Access Review')
+            ->assertSee('Review Requirements')
+            ->assertSee('role="dialog"', false)
+            ->assertSee('x-show="accessModalOpen"', false)
+            ->assertSee('Access Requirements From Kayla')
+            ->assertSee('Submit your platform QR code.')
+            ->assertSee('Upload Platform Codes')
+            ->assertSee('member/verification', false)
+            ->assertSee('Tell Kayla what QR/code verification steps you completed for this course.')
+            ->assertSeeInOrder([
+                'Website Verification Process',
+                'Registration phase',
+                'Callback phase',
+                'Verification phase',
+                'Access Requirements From Kayla',
+                'Request Course Access',
+            ])
+            ->assertSee('Request Access');
+
+        $this->actingAs($member)
+            ->post(route('member.courses.request-access', $course->slug), [
+                'member_notes' => 'I submitted the QR code after my callback.',
+            ])
+            ->assertRedirect(route('member.courses.show', $course->slug));
+
+        $this->actingAs($member)
+            ->post(route('member.courses.request-access', $course->slug), [
+                'member_notes' => 'Adding one more detail while Kayla reviews.',
+            ])
+            ->assertRedirect(route('member.courses.show', $course->slug));
+
+        $this->assertDatabaseHas('course_access_requests', [
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+            'status' => CourseAccessRequest::STATUS_PENDING,
+            'member_notes' => 'Adding one more detail while Kayla reviews.',
+        ]);
+        $this->assertSame(1, $admin->notifications()->where('type', \App\Notifications\SystemNotification::class)->count());
+        $adminNotification = $admin->notifications()->first();
+        $this->assertNotNull($adminNotification);
+        $this->assertSame('course_access_requested', $adminNotification->data['category']);
+        $this->assertSame('Course access requested', $adminNotification->data['title']);
+
+        $this->actingAs($admin)
+            ->get(route('notifications.index'))
+            ->assertOk()
+            ->assertSee('Course access requested');
+        $this->assertDatabaseMissing('course_enrollments', [
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+        ]);
+        Mail::assertQueued(CourseAccessRequestedMail::class, fn (CourseAccessRequestedMail $mail) => $mail->accessRequest->course_id === $course->id
+            && $mail->accessRequest->user_id === $member->id);
+        Mail::assertQueued(CourseAccessRequestedMail::class, 1);
+
+        $this->actingAs($member)
+            ->get(route('member.courses.show', $course->slug))
+            ->assertOk()
+            ->assertSee('Access request sent');
+
+        $this->actingAs($admin)
+            ->post(route('notifications.open', $adminNotification))
+            ->assertRedirect(route('admin.onboarding.index', ['model' => $member->id], false));
+
+        $this->assertNotNull($adminNotification->fresh()->read_at);
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.courses.unlock', [$profile, $course]))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('course_enrollments', [
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+        ]);
+        $this->assertDatabaseHas('course_access_requests', [
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+            'status' => CourseAccessRequest::STATUS_APPROVED,
+            'reviewed_by' => $admin->id,
+        ]);
+
+        $memberNotification = $member->notifications()
+            ->get()
+            ->first(fn ($notification) => ($notification->data['category'] ?? null) === 'course_access_approved');
+        $this->assertNotNull($memberNotification);
+        $this->assertSame('Course access approved', $memberNotification->data['title']);
+    }
+
     public function test_only_enrolled_members_can_use_course_chat_and_progress(): void
     {
         $member = User::factory()->create(['role' => 'model']);
+        ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
         $course = Course::create([
             'title' => 'OnlyFans Blueprint',
             'slug' => 'onlyfans-blueprint',
@@ -79,7 +236,10 @@ class CourseEnrollmentFlowTest extends TestCase
             ])
             ->assertForbidden();
 
-        $this->actingAs($member)->post(route('member.courses.learn', $course->slug));
+        $course->enrollments()->create([
+            'user_id' => $member->id,
+            'enrolled_at' => now(),
+        ]);
 
         $this->actingAs($member)
             ->post(route('member.courses.chat.store', $course->slug), [
@@ -104,6 +264,50 @@ class CourseEnrollmentFlowTest extends TestCase
         ]);
     }
 
+    public function test_unverified_enrolled_member_cannot_access_course_learning_routes(): void
+    {
+        $member = User::factory()->create(['role' => 'model']);
+        ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_SUBMITTED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
+        $course = Course::create([
+            'title' => 'Locked Verification Guide',
+            'slug' => 'locked-verification-guide',
+            'platform_label' => 'General',
+            'description' => 'A course that still needs global verification.',
+            'is_published' => true,
+        ]);
+        $lesson = $course->lessons()->create([
+            'title' => 'Private Lesson',
+            'sort_order' => 1,
+        ]);
+        $course->enrollments()->create([
+            'user_id' => $member->id,
+            'enrolled_at' => now(),
+        ]);
+
+        $this->actingAs($member)
+            ->get(route('member.courses.lessons.show', [$course->slug, $lesson]))
+            ->assertRedirect(route('member.courses.show', $course->slug));
+
+        $this->actingAs($member)
+            ->patch(route('member.lessons.progress', $lesson), [
+                'completed' => '1',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($member)
+            ->post(route('member.courses.chat.store', $course->slug), [
+                'body' => 'Should not post.',
+            ])
+            ->assertForbidden();
+    }
+
     public function test_lesson_resources_render_without_pdf_or_video_placeholder(): void
     {
         $member = User::factory()->create(['role' => 'model']);
@@ -122,6 +326,8 @@ class CourseEnrollmentFlowTest extends TestCase
             'sort_order' => 1,
         ]);
 
+        $this->unlockCourseFor($member, $course);
+
         $this->actingAs($member)->post(route('member.courses.learn', $course->slug));
 
         $this->actingAs($member)
@@ -138,8 +344,8 @@ class CourseEnrollmentFlowTest extends TestCase
 
     public function test_course_outline_and_intro_render_before_lessons_in_learning_flow(): void
     {
-        Storage::fake('public');
-        Storage::disk('public')->put('academy/course-outlines/outline.pdf', "%PDF-1.4\n");
+        Storage::fake('local');
+        Storage::disk('local')->put('academy/course-outlines/outline.pdf', "%PDF-1.4\n");
 
         $member = User::factory()->create(['role' => 'model']);
         $course = Course::create([
@@ -169,6 +375,8 @@ class CourseEnrollmentFlowTest extends TestCase
             'sort_order' => 1,
         ]);
 
+        $this->unlockCourseFor($member, $course);
+
         $this->actingAs($member)
             ->post(route('member.courses.learn', $course->slug))
             ->assertRedirect(route('member.courses.learn.show', $course->slug));
@@ -183,6 +391,11 @@ class CourseEnrollmentFlowTest extends TestCase
             ->assertDontSee('Mark Complete');
 
         $this->actingAs($member)
+            ->get(route('member.courses.outline', $course->slug))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+
+        $this->actingAs($member)
             ->get(route('member.courses.learn.show', [$course->slug, 'item' => 'intro']))
             ->assertOk()
             ->assertSee('Course Orientation')
@@ -195,7 +408,7 @@ class CourseEnrollmentFlowTest extends TestCase
             ->assertOk()
             ->assertSeeInOrder([
                 'Start Here',
-                'Course Outline / PDF Guide',
+                'Course Outline',
                 'Course Orientation',
                 'Module 1',
                 'First Lesson',
@@ -218,6 +431,8 @@ class CourseEnrollmentFlowTest extends TestCase
             'sort_order' => 1,
         ]);
 
+        $this->unlockCourseFor($member, $course);
+
         $this->actingAs($member)
             ->get(route('member.courses.show', $course->slug))
             ->assertOk()
@@ -230,8 +445,8 @@ class CourseEnrollmentFlowTest extends TestCase
             ->assertOk()
             ->assertDontSee('data-member-sidebar="main"', false)
             ->assertSee('Course Outline')
-            ->assertSee('Course Overview')
-            ->assertSee('lg:sticky', false);
+            ->assertSee('Focused Lesson')
+            ->assertSee('elysian-topbar--course', false);
     }
 
     public function test_lesson_content_blocks_render_in_admin_order(): void
@@ -303,6 +518,8 @@ class CourseEnrollmentFlowTest extends TestCase
             ],
         ]);
 
+        $this->unlockCourseFor($member, $course);
+
         $this->actingAs($member)->post(route('member.courses.learn', $course->slug));
 
         $this->actingAs($member)
@@ -347,6 +564,8 @@ class CourseEnrollmentFlowTest extends TestCase
             'sort_order' => 1,
         ]);
 
+        $this->unlockCourseFor($member, $course);
+
         $this->actingAs($member)->post(route('member.courses.learn', $course->slug));
 
         $this->actingAs($member)
@@ -373,13 +592,15 @@ class CourseEnrollmentFlowTest extends TestCase
             'sort_order' => 1,
         ]);
 
+        $this->unlockCourseFor($member, $course);
+
         $this->actingAs($member)->post(route('member.courses.learn', $course->slug));
 
         $this->actingAs($member)
             ->get(route('member.courses.lessons.show', [$course->slug, $lesson]))
             ->assertOk()
             ->assertSee('Lesson Slides')
-            ->assertSee('Open Presentation')
+            ->assertSee('>Open</a>', false)
             ->assertSee('https://www.canva.com/design/sharelink/view', false)
             ->assertDontSee('presentation-wrapper', false);
     }
@@ -401,12 +622,14 @@ class CourseEnrollmentFlowTest extends TestCase
             'sort_order' => 1,
         ]);
 
+        $this->unlockCourseFor($member, $course);
+
         $this->actingAs($member)->post(route('member.courses.learn', $course->slug));
 
         $this->actingAs($member)
             ->get(route('member.courses.lessons.show', [$course->slug, $lesson]))
             ->assertOk()
-            ->assertSee('Open Presentation')
+            ->assertSee('>Open</a>', false)
             ->assertSee('https://canva.link/example-presentation', false)
             ->assertDontSee('presentation-wrapper', false)
             ->assertDontSee('x-on:error="presentationBlocked = true"', false);
@@ -429,13 +652,33 @@ class CourseEnrollmentFlowTest extends TestCase
             'sort_order' => 1,
         ]);
 
+        $this->unlockCourseFor($member, $course);
+
         $this->actingAs($member)->post(route('member.courses.learn', $course->slug));
 
         $this->actingAs($member)
             ->get(route('member.courses.lessons.show', [$course->slug, $lesson]))
             ->assertOk()
-            ->assertSee('Open Presentation')
+            ->assertSee('>Open</a>', false)
             ->assertSee('https://example.com/deck', false)
             ->assertDontSee('presentation-wrapper', false);
+    }
+
+    private function unlockCourseFor(User $member, Course $course): void
+    {
+        ModelProfile::query()->updateOrCreate([
+            'user_id' => $member->id,
+        ], [
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/'.$member->id.'/id.jpg',
+            'selfie_with_id_path' => 'verifications/'.$member->id.'/selfie.jpg',
+        ]);
+
+        $course->enrollments()->firstOrCreate(
+            ['user_id' => $member->id],
+            ['enrolled_at' => now()]
+        );
     }
 }
