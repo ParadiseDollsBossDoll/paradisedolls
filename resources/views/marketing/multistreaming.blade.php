@@ -68,9 +68,9 @@
                     <p class="mt-4 text-[0.9rem] leading-relaxed text-boss-dark/62">{{ __('Public chat-based platforms where viewers enter your room for free. Your goal is to entertain, attract attention, build excitement, encourage tipping, and upsell private or exclusive shows.') }}</p>
                     <div class="mt-6 grid gap-3 sm:grid-cols-2">
                         <div>
-                            <p class="mb-3 text-[0.65rem] uppercase tracking-[0.18em] text-boss-rose">{{ __('Platforms') }}</p>
+                            <p class="mb-3 text-[0.65rem] uppercase tracking-[0.18em] text-boss-rose">{{ __('Platform types') }}</p>
                             <ul class="space-y-1.5 text-[0.86rem] text-boss-dark/65">
-                                @foreach (['Chaturbate', 'Stripchat', 'BongaCams', 'Cam4', 'CamSoda'] as $p)
+                                @foreach ([__('Public live rooms'), __('Token tipping rooms'), __('Traffic discovery channels'), __('Fan-building platforms'), __('Interactive chat spaces')] as $p)
                                     <li class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-boss-rose shrink-0"></span>{{ $p }}</li>
                                 @endforeach
                             </ul>
@@ -95,9 +95,9 @@
                     <p class="mt-4 text-[0.9rem] leading-relaxed text-boss-ivory/55">{{ __('Premium websites charge customers per minute for private access to you. Fewer viewers — but the customers are often far more serious spenders looking for direct attention and one-on-one experiences.') }}</p>
                     <div class="mt-6 grid gap-3 sm:grid-cols-2">
                         <div>
-                            <p class="mb-3 text-[0.65rem] uppercase tracking-[0.18em] text-boss-gold">{{ __('Platforms') }}</p>
+                            <p class="mb-3 text-[0.65rem] uppercase tracking-[0.18em] text-boss-gold">{{ __('Platform types') }}</p>
                             <ul class="space-y-1.5 text-[0.86rem] text-boss-ivory/60">
-                                @foreach (['Streamate', 'AdultWork', 'Babestation', 'Xpanded / XXXpanded'] as $p)
+                                @foreach ([__('Private session platforms'), __('Pay-per-minute spaces'), __('High-intent client rooms'), __('Direct earning platforms')] as $p)
                                     <li class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-boss-gold shrink-0"></span>{{ $p }}</li>
                                 @endforeach
                             </ul>
@@ -125,7 +125,7 @@
                     <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('The lines are blurring. Smart models are ahead.') }}</h2>
                     <div class="mt-8 space-y-5 text-[0.95rem] leading-relaxed text-boss-dark/65">
                         <p>{{ __('Premium websites are beginning to adopt freemium-style features because they realise modern customers enjoy tipping, interacting publicly, games, menus, and live engagement.') }}</p>
-                        <p>{{ __('Sites like Streamate and AdultWork now allow models to use tip menus, receive tips publicly, and create interactive rooms — blending token culture with premium earning.') }}</p>
+                        <p>{{ __('Some premium platforms now allow models to use tip menus, receive public tips, and create interactive rooms — blending token culture with premium earning.') }}</p>
                         <p>{{ __("This means modern creators can now combine BOTH sectors together. Freemium helps you build fans. Premium helps you maximise earnings. One side feeds the other.") }}</p>
                     </div>
                 </div>
@@ -133,9 +133,9 @@
                     <p class="mb-6 text-[0.7rem] uppercase tracking-[0.2em] text-boss-rose">{{ __('The Smart Strategy') }}</p>
                     <div class="space-y-5">
                         @foreach ([
-                            [__('Stream publicly on'), __('Freemium platforms (Chaturbate, Stripchat, CamSoda) to build traffic, visibility, and fans.')],
-                            [__('Convert and earn on'), __('Premium platforms (Streamate, AdultWork) for higher-paying private clients and serious spenders.')],
-                            [__('Compound your income'), __('Both sides working simultaneously — the system earns across every platform at once.')],
+                            [__('Stream publicly on'), __('Public freemium-style platforms to build traffic, visibility, and fans without revealing the exact websites before enrollment.')],
+                            [__('Convert and earn on'), __('Premium private-session platforms for higher-paying clients and serious spenders.')],
+                            [__('More Platforms. More Income.'), __('Both sides working simultaneously — the system earns across every platform at once.')],
                         ] as $step)
                             <div class="flex gap-5">
                                 <span class="font-display text-[2rem] leading-none text-boss-pink shrink-0">{{ sprintf('%02d', $loop->iteration) }}</span>
