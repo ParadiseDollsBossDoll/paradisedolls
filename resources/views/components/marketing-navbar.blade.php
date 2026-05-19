@@ -114,7 +114,7 @@
 
                 <a
                     href="{{ route('home') }}#apply"
-                    class="block w-full rounded-md bg-[#EEB4C3]py-3 text-center text-[0.7rem] uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#e0a0b5]"
+                    class="block w-full rounded-md bg-[#EEB4C3] py-3 text-center text-[0.7rem] uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#e0a0b5]"
                     @click="navOpen = false"
                 >
                     {{ __('Become A Doll') }}
