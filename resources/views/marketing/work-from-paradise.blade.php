@@ -26,7 +26,7 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="grid gap-14 lg:grid-cols-[1fr_1fr] lg:items-center">
                 <div>
-                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('The Lifestyle') }}</p>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('The Lifestyle') }}</p>
                     <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Luxury for less. Freedom for more.') }}</h2>
                     <div class="mt-8 space-y-6 text-[0.95rem] leading-relaxed text-boss-dark/65">
                         <p>{{ __('Some of the world\'s most exciting locations offer luxury living at a fraction of the cost of major cities — and Paradise Dolls models know how to find them.') }}</p>
@@ -42,7 +42,7 @@
                             __('Remote-friendly infrastructure'),
                         ] as $item)
                             <div class="flex items-center gap-3 border border-boss-pink/60 bg-boss-muted px-4 py-3">
-                                <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-boss-gold"></span>
+                                <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-boss-rose"></span>
                                 <span class="text-[0.84rem] text-boss-dark/70">{{ $item }}</span>
                             </div>
                         @endforeach
@@ -69,7 +69,7 @@
                     <img src="{{ $studioImg }}" alt="" class="h-full w-full object-cover">
                 </div>
                 <div>
-                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Studio Living') }}</p>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Studio Living') }}</p>
                     <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Exclusive studio spaces worldwide') }}</h2>
                     <p class="mt-6 text-[0.95rem] leading-relaxed text-boss-dark/65">{{ __('Paradise Dolls coordinates access to exclusive studio spaces designed specifically for professional streaming. These are not generic co-working spaces — they are purpose-built, fully equipped, and aesthetically stunning.') }}</p>
                     <div class="mt-8 space-y-4">
@@ -79,7 +79,7 @@
                             [__('Professional glam setup'), __('The environment reflects the brand: polished, aspirational, and built for the highest-quality content.')],
                         ] as $item)
                             <div class="flex gap-5 border border-boss-pink/50 bg-white p-5">
-                                <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-boss-gold"></span>
+                                <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-boss-rose"></span>
                                 <div>
                                     <p class="font-medium text-boss-dark text-[0.9rem]">{{ $item[0] }}</p>
                                     <p class="mt-1 text-[0.84rem] leading-relaxed text-boss-dark/58">{{ $item[1] }}</p>

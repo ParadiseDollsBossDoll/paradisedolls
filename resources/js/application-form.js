@@ -243,13 +243,13 @@ document.querySelectorAll('[data-application-form], [data-phone-form]').forEach(
         ['dragenter', 'dragover'].forEach((eventName) => {
             photoDropzone.addEventListener(eventName, (event) => {
                 event.preventDefault();
-                photoDropzone.classList.add('border-boss-gold', 'bg-boss-cream');
+                photoDropzone.classList.add('border-boss-rose', 'bg-boss-pink');
             });
         });
 
         ['dragleave', 'drop'].forEach((eventName) => {
             photoDropzone.addEventListener(eventName, () => {
-                photoDropzone.classList.remove('border-boss-gold', 'bg-boss-cream');
+                photoDropzone.classList.remove('border-boss-rose', 'bg-boss-pink');
             });
         });
 

@@ -13,7 +13,7 @@
     <section class="bg-[#f3f3f5] py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-12 max-w-3xl">
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Community Testimonials') }}</p>
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Community Testimonials') }}</p>
                 <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Real words from approved Paradise Dolls members') }}</h2>
             </div>
 
@@ -31,7 +31,7 @@
                         <p class="mt-6 text-[0.96rem] leading-[1.45] text-[#151821]">{{ $testimonial->quote }}</p>
 
                         @if ($testimonial->displayHashtag())
-                            <p class="mt-3 truncate text-[0.9rem] leading-tight text-[#1d9bf0]">{{ $testimonial->displayHashtag() }}</p>
+                            <p class="mt-3 truncate text-[0.9rem] leading-tight text-boss-rose">{{ $testimonial->displayHashtag() }}</p>
                         @endif
                     </article>
                 @empty

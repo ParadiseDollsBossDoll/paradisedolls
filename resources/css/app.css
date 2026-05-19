@@ -338,8 +338,8 @@ body {
     }
 
     .pd-input-light:focus {
-        border-color: var(--pd-gold);
-        box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.12);
+        border-color: var(--pd-rose);
+        box-shadow: 0 0 0 3px rgba(196, 104, 122, 0.12);
     }
 
     .pd-label {

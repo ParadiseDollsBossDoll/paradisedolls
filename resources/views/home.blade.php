@@ -42,7 +42,7 @@
     <section class="bg-white py-24">
         <div class="mx-auto grid max-w-7xl grid-cols-1 gap-14 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
             <div>
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Beginner Friendly') }}</p>
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Beginner Friendly') }}</p>
                 <h2 class="font-display text-[clamp(2.1rem,4vw,3.35rem)] leading-tight text-boss-dark">{{ __('Luxury support without the intimidating agency feeling') }}</h2>
                 <p class="mt-6 max-w-2xl text-[0.96rem] leading-relaxed text-boss-dark/62">
                     {{ __('Paradise Dolls is built for women from real backgrounds, not only influencers with huge followings. You bring ambition and consistency. The team brings systems, guidance, onboarding, account preparation, safety standards, and a clear learning path.') }}
@@ -53,7 +53,7 @@
                         <h3 class="font-display text-[1.25rem] text-boss-dark">{{ __('The agency handles') }}</h3>
                         <ul class="mt-5 space-y-3 text-[0.86rem] text-boss-dark/62">
                             @foreach ([__('onboarding and account setup'), __('verification preparation'), __('profile guidance'), __('support systems and structure')] as $item)
-                                <li class="flex gap-3"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-boss-gold"></span>{{ $item }}</li>
+                                <li class="flex gap-3"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-boss-rose"></span>{{ $item }}</li>
                             @endforeach
                         </ul>
                     </div>
@@ -61,7 +61,7 @@
                         <h3 class="font-display text-[1.25rem] text-boss-dark">{{ __('You learn') }}</h3>
                         <ul class="mt-5 space-y-3 text-[0.86rem] text-boss-dark/62">
                             @foreach ([__('how to stream professionally'), __('how platforms and tools work'), __('how to engage customers'), __('how to maximise earnings confidently')] as $item)
-                                <li class="flex gap-3"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-boss-gold"></span>{{ $item }}</li>
+                                <li class="flex gap-3"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-boss-rose"></span>{{ $item }}</li>
                             @endforeach
                         </ul>
                     </div>
@@ -83,7 +83,7 @@
     <section class="bg-boss-cream py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-12 max-w-3xl">
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Freedom & Lifestyle') }}</p>
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Freedom & Lifestyle') }}</p>
                 <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Work remotely, build income, and create a life that feels bigger') }}</h2>
             </div>
 
@@ -138,7 +138,7 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-12 grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
                 <div>
-                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('The Core System') }}</p>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('The Core System') }}</p>
                     <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('One stream. Multiple platforms. More visibility.') }}</h2>
                 </div>
                 <p class="text-[0.95rem] leading-relaxed text-boss-dark/60">
@@ -153,7 +153,7 @@
                     [__('Confidence'), __('Use walkthroughs to navigate controls, messages, platform tools, and live-stream flow.')],
                 ] as $item)
                     <div class="border border-boss-pink/60 bg-boss-muted p-7">
-                        <span class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-gold">{{ __('Multistreaming') }}</span>
+                        <span class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-rose">{{ __('Multistreaming') }}</span>
                         <h3 class="mt-4 font-display text-[1.35rem] text-boss-dark">{{ $item[0] }}</h3>
                         <p class="mt-3 text-[0.86rem] leading-relaxed text-boss-dark/58">{{ $item[1] }}</p>
                     </div>
@@ -165,7 +165,7 @@
     <section class="bg-boss-muted py-24">
         <div class="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-8">
             <div>
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Private LMS') }}</p>
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Private LMS') }}</p>
                 <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Boss Doll Blueprint') }}</h2>
                 <p class="mt-6 text-[0.95rem] leading-relaxed text-boss-dark/62">
                     {{ __('The members area is designed as a luxury feminine streaming operating system, not a generic course library. The core is the walkthrough system: platform navigation, monetisation tools, stream controls, customer interaction, rankings, earnings systems, and customer retention.') }}
@@ -222,10 +222,10 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-12 flex flex-col justify-between gap-5 md:flex-row md:items-end">
                 <div class="max-w-3xl">
-                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Testimonials & Success Stories') }}</p>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Testimonials & Success Stories') }}</p>
                     <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Community wins make the opportunity feel real') }}</h2>
                 </div>
-                <a href="{{ route('success-stories') }}" class="text-[0.72rem] uppercase tracking-[0.16em] text-boss-gold hover:text-boss-dark">{{ __('View stories') }} -></a>
+                <a href="{{ route('success-stories') }}" class="text-[0.72rem] uppercase tracking-[0.16em] text-boss-rose hover:text-boss-dark">{{ __('View stories') }} -></a>
             </div>
 
             @php
@@ -291,7 +291,7 @@
                             <p class="mt-6 line-clamp-5 text-[0.96rem] leading-[1.45] text-[#151821]">{{ $story['quote'] }}</p>
 
                             @if ($story['tag'])
-                                <p class="mt-2 truncate text-[0.9rem] leading-tight text-[#1d9bf0]">{{ $story['tag'] }}</p>
+                                <p class="mt-2 truncate text-[0.9rem] leading-tight text-boss-rose">{{ $story['tag'] }}</p>
                             @endif
                         </article>
                     @endforeach
@@ -303,7 +303,7 @@
     <section id="apply" class="scroll-mt-24 bg-white py-24">
         <div class="mx-auto max-w-2xl px-4">
             <div class="mb-12 text-center">
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Application') }}</p>
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Application') }}</p>
                 <h2 class="font-display text-[clamp(1.9rem,4vw,2.75rem)] text-boss-dark">{{ __('Apply to Paradise Dolls') }}</h2>
                 <p class="mx-auto mt-4 max-w-xl text-[0.9rem] leading-relaxed text-boss-dark/56">{{ __('No experience is required. The onboarding team reviews every application privately and will guide approved members through the next steps.') }}</p>
             </div>
@@ -311,7 +311,7 @@
             @if (session('application_sent'))
                 <div class="py-14 text-center">
                     <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-boss-pink">
-                        <span class="font-display text-[2rem] text-boss-gold">OK</span>
+                        <span class="font-display text-[2rem] text-boss-rose">OK</span>
                     </div>
                     <h3 class="mb-4 font-display text-[2rem] text-boss-dark">{{ __('Application Received') }}</h3>
                     <p class="text-[0.95rem] leading-relaxed text-boss-dark/60">{{ __('Thank you for applying. The onboarding team will review your details and contact you with the next step.') }}</p>
@@ -321,7 +321,7 @@
                     @csrf
 
                     @if ($referralReferrer)
-                        <div class="border border-boss-gold/25 bg-boss-cream px-4 py-3 text-[0.82rem] leading-relaxed text-boss-dark/65">
+                        <div class="border border-boss-rose/25 bg-boss-pink/30 px-4 py-3 text-[0.82rem] leading-relaxed text-boss-dark/65">
                             {{ __('You were referred by :name. Submit your application below and the onboarding team will review it privately.', ['name' => $referralReferrer->name]) }}
                         </div>
                     @endif
@@ -388,7 +388,7 @@
                                             <button
                                                 type="button"
                                                 class="flex w-full items-center gap-2 px-3 py-2 text-left text-[0.84rem] text-boss-dark transition-colors hover:bg-boss-cream"
-                                                :class="selected === country.value ? 'bg-boss-cream text-boss-gold' : ''"
+                                                :class="selected === country.value ? 'bg-boss-pink/45 text-boss-rose' : ''"
                                                 role="option"
                                                 :aria-selected="(selected === country.value).toString()"
                                                 :title="country.name"
@@ -462,10 +462,10 @@
                             <input id="application-photos" type="file" name="photos[]" multiple accept=".jpg,.jpeg,.png,.webp" class="sr-only" data-photo-input>
                             <label
                                 for="application-photos"
-                                class="flex min-h-36 cursor-pointer flex-col items-center justify-center border border-dashed border-boss-pink bg-boss-muted px-4 py-8 text-center transition-colors hover:border-boss-gold hover:bg-boss-cream"
+                                class="flex min-h-36 cursor-pointer flex-col items-center justify-center border border-dashed border-boss-pink bg-boss-muted px-4 py-8 text-center transition-colors hover:border-boss-rose hover:bg-boss-pink/30"
                                 data-photo-dropzone
                             >
-                                <span class="text-[0.68rem] uppercase tracking-[0.16em] text-boss-gold">{{ __('Drop photos here') }}</span>
+                                <span class="text-[0.68rem] uppercase tracking-[0.16em] text-boss-rose">{{ __('Drop photos here') }}</span>
                                 <span class="mt-2 text-[0.9rem] font-medium text-boss-dark">{{ __('Drag and drop, or click to browse') }}</span>
                                 <span class="mt-1 text-[0.72rem] text-boss-dark/42" data-photo-summary>{{ __('No photos selected') }}</span>
                             </label>
@@ -485,7 +485,7 @@
                     </div>
 
                     <div class="flex items-start gap-3 bg-boss-cream p-4">
-                        <input type="checkbox" name="age_confirmed" id="age-check" value="1" class="mt-1 h-4 w-4 shrink-0 accent-boss-gold" @checked(old('age_confirmed'))>
+                        <input type="checkbox" name="age_confirmed" id="age-check" value="1" class="mt-1 h-4 w-4 shrink-0 accent-boss-rose" @checked(old('age_confirmed'))>
                         <label for="age-check" class="text-[0.8rem] leading-relaxed text-boss-dark/70">{{ __('I confirm that I am 18 years of age or older and agree to be contacted about my application and onboarding.') }}</label>
                     </div>
                     <x-input-error class="-mt-2" :messages="$errors->get('age_confirmed')" />

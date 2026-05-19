@@ -20,7 +20,7 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="grid gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
                 <div>
-                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('What Makes Us Different') }}</p>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('What Makes Us Different') }}</p>
                     <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('True simultaneous multistreaming') }}</h2>
                     <div class="mt-8 space-y-5 text-[0.95rem] leading-relaxed text-boss-dark/65">
                         <p>{{ __('Paradise Dolls is built around true simultaneous multistreaming. Not switching platforms. Not taking turns. Streaming everywhere at once.') }}</p>
@@ -53,7 +53,7 @@
     <section class="bg-boss-cream py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-14 max-w-3xl">
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Understanding the Industry') }}</p>
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Understanding the Industry') }}</p>
                 <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Premium and freemium — both sides working together') }}</h2>
                 <p class="mt-6 text-[0.95rem] leading-relaxed text-boss-dark/65">{{ __('Many new models only understand one side of the industry. The highest earners know how to use both systems strategically. This is what Paradise Dolls teaches.') }}</p>
             </div>
@@ -68,18 +68,18 @@
                     <p class="mt-4 text-[0.9rem] leading-relaxed text-boss-dark/62">{{ __('Public chat-based platforms where viewers enter your room for free. Your goal is to entertain, attract attention, build excitement, encourage tipping, and upsell private or exclusive shows.') }}</p>
                     <div class="mt-6 grid gap-3 sm:grid-cols-2">
                         <div>
-                            <p class="mb-3 text-[0.65rem] uppercase tracking-[0.18em] text-boss-gold">{{ __('Platforms') }}</p>
+                            <p class="mb-3 text-[0.65rem] uppercase tracking-[0.18em] text-boss-rose">{{ __('Platforms') }}</p>
                             <ul class="space-y-1.5 text-[0.86rem] text-boss-dark/65">
                                 @foreach (['Chaturbate', 'Stripchat', 'BongaCams', 'Cam4', 'CamSoda'] as $p)
-                                    <li class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-boss-gold shrink-0"></span>{{ $p }}</li>
+                                    <li class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-boss-rose shrink-0"></span>{{ $p }}</li>
                                 @endforeach
                             </ul>
                         </div>
                         <div>
-                            <p class="mb-3 text-[0.65rem] uppercase tracking-[0.18em] text-boss-gold">{{ __('Best for') }}</p>
+                            <p class="mb-3 text-[0.65rem] uppercase tracking-[0.18em] text-boss-rose">{{ __('Best for') }}</p>
                             <ul class="space-y-1.5 text-[0.86rem] text-boss-dark/65">
                                 @foreach ([__('Massive traffic'), __('Fan building'), __('Audience growth'), __('Upselling privates'), __('Going viral')] as $b)
-                                    <li class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-boss-gold shrink-0"></span>{{ $b }}</li>
+                                    <li class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-boss-rose shrink-0"></span>{{ $b }}</li>
                                 @endforeach
                             </ul>
                         </div>
@@ -121,7 +121,7 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
                 <div>
-                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('How the Industry is Changing') }}</p>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('How the Industry is Changing') }}</p>
                     <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('The lines are blurring. Smart models are ahead.') }}</h2>
                     <div class="mt-8 space-y-5 text-[0.95rem] leading-relaxed text-boss-dark/65">
                         <p>{{ __('Premium websites are beginning to adopt freemium-style features because they realise modern customers enjoy tipping, interacting publicly, games, menus, and live engagement.') }}</p>
@@ -130,7 +130,7 @@
                     </div>
                 </div>
                 <div class="border border-boss-pink/40 bg-boss-muted p-8">
-                    <p class="mb-6 text-[0.7rem] uppercase tracking-[0.2em] text-boss-gold">{{ __('The Smart Strategy') }}</p>
+                    <p class="mb-6 text-[0.7rem] uppercase tracking-[0.2em] text-boss-rose">{{ __('The Smart Strategy') }}</p>
                     <div class="space-y-5">
                         @foreach ([
                             [__('Stream publicly on'), __('Freemium platforms (Chaturbate, Stripchat, CamSoda) to build traffic, visibility, and fans.')],

@@ -24,7 +24,7 @@
     <section class="bg-white py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-14 max-w-3xl">
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Exclusive Rewards') }}</p>
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Exclusive Rewards') }}</p>
                 <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Perks that grow with your earnings') }}</h2>
                 <p class="mt-5 text-[0.95rem] leading-relaxed text-boss-dark/62">{{ __('Paradise Dolls rewards its top earners with real-world luxury experiences that make the work feel like the lifestyle.') }}</p>
             </div>
@@ -67,7 +67,7 @@
                             <img src="{{ $perk[2] }}" alt="" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105">
                         </div>
                         <div class="p-6">
-                            <p class="mb-2 text-[0.65rem] uppercase tracking-[0.18em] text-boss-gold">{{ __('Paradise Dolls') }}</p>
+                            <p class="mb-2 text-[0.65rem] uppercase tracking-[0.18em] text-boss-rose">{{ __('Paradise Dolls') }}</p>
                             <h3 class="font-display text-[1.25rem] text-boss-dark">{{ $perk[0] }}</h3>
                             <p class="mt-3 text-[0.86rem] leading-relaxed text-boss-dark/58">{{ $perk[1] }}</p>
                         </div>
@@ -81,7 +81,7 @@
     <section class="bg-boss-cream py-20">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-12 text-center">
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Community & Support') }}</p>
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Community & Support') }}</p>
                 <h2 class="font-display text-[clamp(1.8rem,3vw,2.5rem)] text-boss-dark">{{ __('Ongoing support, every step of the way') }}</h2>
             </div>
             <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

@@ -21,7 +21,7 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="grid gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
                 <div>
-                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Your Space, Your Schedule') }}</p>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Your Space, Your Schedule') }}</p>
                     <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Your home becomes headquarters.') }}</h2>
                     <p class="mt-6 text-[0.95rem] leading-relaxed text-boss-dark/65">{{ __('Paradise Dolls is built for women who want professional income without having to leave home. Everything you need — training, systems, guidance, and community — is available remotely from day one.') }}</p>
 
@@ -34,7 +34,7 @@
                             [__('Privacy & discretion'), __('Your privacy is protected at every step. The team manages verification and account setup before you ever go public.')],
                         ] as $benefit)
                             <div class="flex gap-5 border border-boss-pink/50 bg-boss-muted p-5">
-                                <span class="mt-2 h-2 w-2 shrink-0 rounded-full bg-boss-gold"></span>
+                                <span class="mt-2 h-2 w-2 shrink-0 rounded-full bg-boss-rose"></span>
                                 <div>
                                     <p class="font-medium text-boss-dark text-[0.9rem]">{{ $benefit[0] }}</p>
                                     <p class="mt-1 text-[0.84rem] leading-relaxed text-boss-dark/58">{{ $benefit[1] }}</p>
@@ -49,7 +49,7 @@
                         <img src="{{ $setupImg }}" alt="" class="h-full w-full object-cover">
                     </div>
                     <div class="border border-boss-pink/40 bg-boss-muted p-6">
-                        <p class="mb-3 text-[0.65rem] uppercase tracking-[0.18em] text-boss-gold">{{ __('What the team handles') }}</p>
+                        <p class="mb-3 text-[0.65rem] uppercase tracking-[0.18em] text-boss-rose">{{ __('What the team handles') }}</p>
                         <ul class="space-y-3 text-[0.86rem] text-boss-dark/65">
                             @foreach ([
                                 __('Account setup on every platform'),
@@ -59,7 +59,7 @@
                                 __('Support systems throughout'),
                             ] as $item)
                                 <li class="flex items-center gap-3">
-                                    <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-boss-gold"></span>
+                                    <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-boss-rose"></span>
                                     {{ $item }}
                                 </li>
                             @endforeach
@@ -75,7 +75,7 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
                 <div>
-                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Technical Setup') }}</p>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Technical Setup') }}</p>
                     <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Professional quality, from wherever you are') }}</h2>
                     <p class="mt-6 text-[0.95rem] leading-relaxed text-boss-dark/65">{{ __('The Boss Doll Blueprint includes step-by-step guidance on lighting, audio, framing, and connectivity — so your home stream looks premium on every platform from day one.') }}</p>
                     <div class="mt-8 grid gap-4 sm:grid-cols-2">
