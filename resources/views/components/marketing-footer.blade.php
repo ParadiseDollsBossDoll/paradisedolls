@@ -58,7 +58,7 @@
                         <li><a href="{{ route('login') }}" class="text-[0.8rem] text-white/50 transition-colors hover:text-boss-gold">{{ __('Log in') }}</a></li>
                     @endif
                     <li>
-                        <a href="{{ route('home') }}#apply" class="text-[0.8rem] text-boss-gold transition-colors hover:text-white">{{ __('Apply Now') }} -></a>
+                        <a href="{{ route('home') }}#apply" class="inline-block rounded-md bg-[#EEB4C3] px-5 py-2 text-[0.8rem] uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Become A Doll') }}</a>
                     </li>
                 </ul>
             </div>

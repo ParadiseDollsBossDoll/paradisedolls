@@ -80,7 +80,7 @@
                         {{ __("You won't be left alone trying to figure it out. You'll have support, structure, mentorship, and a team behind you that genuinely wants to see you win.") }}
                     </p>
                     <p class="mt-7 text-[1rem] font-medium text-boss-ivory">{{ __("This is your chance to build the life you deserve.") }}</p>
-                    <a href="{{ route('home') }}#apply" class="mt-10 inline-block bg-boss-gold px-10 py-3.5 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-boss-gold-hover">{{ __('Apply to Paradise Dolls') }}</a>
+                    <a href="{{ route('home') }}#apply" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-10 py-3.5 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Become A Doll') }}</a>
                 </div>
                 <div class="grid gap-4">
                     @foreach ([
@@ -129,7 +129,7 @@
             <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Ready?') }}</p>
             <h2 class="font-display text-[clamp(2rem,4vw,3rem)] text-boss-dark">{{ __('Step into your highest level') }}</h2>
             <p class="mx-auto mt-5 max-w-xl text-[0.95rem] leading-relaxed text-boss-dark/65">{{ __('No experience necessary. The team handles onboarding, verification, and setup. You bring consistency and ambition.') }}</p>
-            <a href="{{ route('home') }}#apply" class="mt-10 inline-block bg-boss-dark px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-boss-gold">{{ __('Apply Now') }}</a>
+            <a href="{{ route('home') }}#apply" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Become A Doll') }}</a>
         </div>
     </section>
 

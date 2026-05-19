@@ -105,7 +105,7 @@
             <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Start from home') }}</p>
             <h2 class="font-display text-[clamp(2rem,4vw,3rem)]">{{ __('Apply and the team will guide you from there') }}</h2>
             <p class="mx-auto mt-5 max-w-xl text-[0.95rem] leading-relaxed text-boss-ivory/55">{{ __('No experience needed. The onboarding team reviews every application privately and handles setup before training begins.') }}</p>
-            <a href="{{ route('home') }}#apply" class="mt-10 inline-block bg-boss-gold px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-boss-gold-hover">{{ __('Apply Now') }}</a>
+            <a href="{{ route('home') }}#apply" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Become A Doll') }}</a>
         </div>
     </section>
 
