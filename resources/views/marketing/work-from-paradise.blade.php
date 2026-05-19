@@ -1,7 +1,7 @@
 @php
-    $heroImg      = 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&q=85&w=1920';
-    $studioImg    = 'https://images.unsplash.com/photo-1600210492493-0946911123ea?auto=format&fit=crop&q=85&w=900';
-    $communityImg = 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=85&w=900';
+    $heroImg      = asset('images/6.jpeg');
+    $studioImg    = asset('images/4.jpeg');
+    $communityImg = asset('images/5.jpeg');
     $beachImg     = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=85&w=900';
 @endphp
 <x-layouts.marketing :title="__('Work From Paradise')">

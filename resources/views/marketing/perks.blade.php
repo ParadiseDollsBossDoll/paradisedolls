@@ -1,8 +1,11 @@
 @php
-    $heroImg  = 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=85&w=1920';
-    $yachtImg = 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&q=85&w=900';
-    $spaImg   = 'https://images.unsplash.com/photo-1600334129128-685c5582fd35?auto=format&fit=crop&q=85&w=900';
-    $diningImg= 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=85&w=900';
+    $heroImg        = asset('images/7.jpeg');
+    $allInclusiveImg= asset('images/8.jpeg');
+    $yachtImg       = asset('images/9.jpeg');
+    $spaImg         = asset('images/10.jpeg');
+    $diningImg      = asset('images/11.jpeg');
+    $vipPartyImg    = asset('images/12.jpeg');
+    $photoshootImg  = asset('images/13.jpeg');
 @endphp
 <x-layouts.marketing :title="__('VIP Perks')">
 
@@ -31,12 +34,12 @@
                     [
                         __('All-Inclusive Luxury Getaways'),
                         __('Fully paid trips, villas, hotels, and beachfront escapes. The agency rewards top earners with unforgettable travel experiences.'),
-                        $yachtImg,
+                        $allInclusiveImg,
                     ],
                     [
                         __('Luxury Yacht Trips'),
                         __('Private yacht experiences with champagne, food, and island escapes. Access to events most people only see on social media.'),
-                        'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&q=85&w=900',
+                        $yachtImg,
                     ],
                     [
                         __('Spa & Beauty Treatments'),
@@ -51,12 +54,12 @@
                     [
                         __('VIP Parties & DJs'),
                         __('Guest list access to private events, celebrity-style parties, and premium nightlife experiences worldwide.'),
-                        'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=85&w=900',
+                        $vipPartyImg,
                     ],
                     [
                         __('Photoshoots & Brand Building'),
                         __('Professional shoots, full styling, and brand-building opportunities to grow your image, audience, and personal brand.'),
-                        'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&q=85&w=900',
+                        $photoshootImg,
                     ],
                 ] as $perk)
                     <article class="group overflow-hidden bg-boss-muted shadow-luxe">

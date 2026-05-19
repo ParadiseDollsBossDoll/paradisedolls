@@ -1,5 +1,5 @@
 @php
-    $heroImg    = 'https://images.unsplash.com/photo-1764664035133-0d2ca12016dd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920';
+    $heroImg    = asset('images/14.jpeg');
     $streamImg  = 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=85&w=900';
 @endphp
 <x-layouts.marketing :title="__('Multistreaming')">

@@ -1,7 +1,7 @@
 @php
-    $heroImg    = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920';
-    $setupImg   = 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=85&w=900';
-    $flexImg    = 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=85&w=900';
+    $heroImg    = asset('images/2.jpeg');
+    $setupImg   = asset('images/1.jpeg');
+    $flexImg    = asset('images/3.jpeg');
 @endphp
 <x-layouts.marketing :title="__('Work From Home')">
 
