@@ -2,7 +2,7 @@
     $heroImg    = asset('images/14.jpeg');
     $streamImg  = 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=85&w=900';
 @endphp
-<x-layouts.marketing :title="__('Multistreaming')">
+<x-layouts.marketing :transparentNav="true" :title="__('Multistreaming')">
 
     {{-- Hero --}}
     <section class="relative flex min-h-[60vh] items-center justify-center overflow-hidden pt-24">
@@ -27,7 +27,7 @@
                         <p>{{ __('The highest-earning models today are no longer choosing one side only — they are learning how to combine both systems together intelligently.') }}</p>
                         <p>{{ __("You go live once… the system works everywhere.") }}</p>
                     </div>
-                    <a href="{{ route('home') }}#apply" class="mt-10 inline-block bg-boss-gold px-10 py-3.5 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-boss-gold-hover">{{ __('Get Set Up') }}</a>
+                    <a href="{{ route('home') }}#apply" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-10 py-3.5 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Become A Doll') }}</a>
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
@@ -179,7 +179,7 @@
         <div class="mx-auto max-w-2xl px-4">
             <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Start the System') }}</p>
             <h2 class="font-display text-[clamp(2rem,4vw,3rem)] text-boss-dark">{{ __('You go live once. The system works everywhere.') }}</h2>
-            <a href="{{ route('home') }}#apply" class="mt-10 inline-block bg-boss-dark px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-boss-gold">{{ __('Apply to Paradise Dolls') }}</a>
+            <a href="{{ route('home') }}#apply" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Become A Doll') }}</a>
         </div>
     </section>
 

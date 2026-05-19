@@ -1,6 +1,6 @@
 <x-layouts.marketing :transparentNav="true" :title="__('Home')">
     @php
-        $heroImg = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=85&w=1920';
+        $heroImg = asset('images/7.jpeg');
         $workspaceImg = asset('images/17.jpeg');
         $villaImg = asset('images/18.jpeg');
         $academyImg = asset('images/16.jpeg');
@@ -23,31 +23,18 @@
 
         <div class="relative z-10 mx-auto w-full max-w-7xl px-4 pt-24 sm:px-6 lg:px-8">
             <div class="max-w-4xl text-white">
-                <p class="mb-6 text-[0.72rem] uppercase tracking-[0.38em] text-boss-gold">{{ config('app.name') }}</p>
                 <h1 class="font-display text-[clamp(3.1rem,8vw,7rem)] leading-[0.96] text-white">
-                    {{ __('Your Rich Girl Era') }}<br><em>{{ __('starts online') }}</em>
+                    {{ __('Welcome to Paradise Dolls') }}
                 </h1>
                 <p class="mt-7 max-w-2xl text-[1.05rem] leading-relaxed text-white/78">
-                    {{ __('A luxury feminine opportunity platform and Boss Doll Blueprint academy for beginners, creators, and ambitious women who want remote income, structure, mentorship, and a supportive community behind them.') }}
+                    {{ __('A luxury feminine community and Academy for beginners, creators, and ambitious women who want remote income, confidence, freedom, friendships and a life they truly love.') }}
+                    <br><br>
+                    {{ __('Through the Boss Doll Blueprint, mentorship, multi-streaming, and a supportive girls-girl community, we help women grow in confidence, step into their rich girl era, and become the best version of themselves, together.') }}
                 </p>
                 <div class="mt-10 flex flex-wrap gap-3">
-                    <a href="#apply" class="bg-boss-gold px-9 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:bg-boss-gold-hover">{{ __('Apply Now') }}</a>
-                    <a href="{{ route('multistreaming') }}" class="border border-white/40 px-9 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white hover:text-boss-dark">{{ __('See the System') }}</a>
+                    <a href="#apply" class="rounded-md bg-[#EEB4C3] px-9 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Become A Doll') }}</a>
+                    <a href="{{ route('multistreaming') }}" class="rounded-md border border-white/40 px-9 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white hover:text-boss-dark">{{ __('Boss Doll MultiStream') }}</a>
                 </div>
-            </div>
-
-            <div class="mt-16 grid max-w-4xl grid-cols-2 gap-3 pb-10 md:grid-cols-4">
-                @foreach ([
-                    [__('15+'), __('years industry experience')],
-                    [__('3'), __('learning formats')],
-                    [__('1:1'), __('mentorship structure')],
-                    [__('18+'), __('professional onboarding')],
-                ] as $stat)
-                    <div class="border border-white/20 bg-black/35 px-4 py-4 shadow-lg backdrop-blur-md">
-                        <p class="font-display text-[1.65rem] leading-none text-boss-gold-light">{{ $stat[0] }}</p>
-                        <p class="mt-2 text-[0.62rem] font-medium uppercase tracking-[0.12em] text-white/75">{{ $stat[1] }}</p>
-                    </div>
-                @endforeach
             </div>
         </div>
     </section>
@@ -503,7 +490,7 @@
                     </div>
                     <x-input-error class="-mt-2" :messages="$errors->get('age_confirmed')" />
 
-                    <button type="submit" class="w-full bg-boss-gold py-4 text-[0.75rem] uppercase tracking-[0.2em] text-white transition-colors hover:bg-boss-gold-hover">{{ __('Submit Application') }}</button>
+                    <button type="submit" class="w-full rounded-md bg-[#EEB4C3] py-4 text-[0.75rem] uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Submit Application') }}</button>
                     <p class="text-center text-[0.75rem] text-boss-dark/40">{{ __('Approved applicants receive account instructions and the Model Information Form next.') }}</p>
                 </form>
                 <script>

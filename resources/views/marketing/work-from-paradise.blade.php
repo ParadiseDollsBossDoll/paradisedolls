@@ -4,7 +4,7 @@
     $communityImg = asset('images/5.jpeg');
     $beachImg     = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=85&w=900';
 @endphp
-<x-layouts.marketing :title="__('Work From Paradise')">
+<x-layouts.marketing :transparentNav="true" :title="__('Work From Paradise')">
 
     {{-- Hero --}}
     <section class="relative flex min-h-[72vh] items-center justify-center overflow-hidden pt-24">
@@ -15,8 +15,8 @@
             <h1 class="font-display text-[clamp(2.8rem,7vw,5.5rem)] leading-tight">{{ __('Work From Paradise') }}</h1>
             <p class="mx-auto mt-6 max-w-2xl text-[1.05rem] leading-relaxed text-white/80">{{ __('Portable rigs, flexible schedules, and an all-girl expat community so your office can be anywhere on the planet.') }}</p>
             <div class="mt-10 flex flex-wrap justify-center gap-3">
-                <a href="{{ route('home') }}#apply" class="bg-boss-gold px-10 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:bg-boss-gold-hover">{{ __('Apply Now') }}</a>
-                <a href="{{ route('our-story') }}" class="border border-white/40 px-10 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white/10">{{ __('Our Story') }}</a>
+                <a href="{{ route('home') }}#apply" class="rounded-md bg-[#EEB4C3] px-10 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Become A Doll') }}</a>
+                <a href="{{ route('our-story') }}" class="rounded-md border border-white/40 px-10 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white/10">{{ __('Our Story') }}</a>
             </div>
         </div>
     </section>
@@ -150,8 +150,8 @@
         <div class="mx-auto max-w-2xl px-4">
             <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Ready to explore?') }}</p>
             <h2 class="font-display text-[clamp(2rem,4vw,3rem)] text-boss-dark">{{ __('Your paradise is waiting') }}</h2>
-            <p class="mx-auto mt-5 max-w-xl text-[0.95rem] leading-relaxed text-boss-dark/65">{{ __('Apply today. The team handles onboarding, verification, and setup — then you decide where in the world you want to work.') }}</p>
-            <a href="{{ route('home') }}#apply" class="mt-10 inline-block bg-boss-dark px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-boss-gold">{{ __('Join Us') }}</a>
+            <p class="mx-auto mt-5 max-w-xl text-[0.95rem] leading-relaxed text-boss-dark/65">{{ __('Become a doll today. The team handles onboarding, verification, and setup — then you decide where in the world you want to work.') }}</p>
+            <a href="{{ route('home') }}#apply" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Become A Doll') }}</a>
         </div>
     </section>
 
