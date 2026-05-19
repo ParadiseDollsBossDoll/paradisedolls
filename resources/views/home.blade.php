@@ -36,20 +36,6 @@
                     <a href="{{ route('multistreaming') }}" class="rounded-md border border-white/40 px-9 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white hover:text-boss-dark">{{ __('Boss Doll MultiStream') }}</a>
                 </div>
             </div>
-
-            <div class="mt-16 grid max-w-4xl grid-cols-2 gap-3 pb-10 md:grid-cols-4">
-                @foreach ([
-                    [__('15+'), __('years industry experience')],
-                    [__('3'), __('learning formats')],
-                    [__('1:1'), __('mentorship structure')],
-                    [__('18+'), __('professional onboarding')],
-                ] as $stat)
-                    <div class="border border-white/20 bg-black/35 px-4 py-4 shadow-lg backdrop-blur-md">
-                        <p class="font-display text-[1.65rem] leading-none text-boss-gold-light">{{ $stat[0] }}</p>
-                        <p class="mt-2 text-[0.62rem] font-medium uppercase tracking-[0.12em] text-white/75">{{ $stat[1] }}</p>
-                    </div>
-                @endforeach
-            </div>
         </div>
     </section>
 
