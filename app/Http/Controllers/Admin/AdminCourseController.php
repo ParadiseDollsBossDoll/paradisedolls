@@ -282,6 +282,11 @@ class AdminCourseController extends Controller
     public function destroy(Course $course, CourseCommunityService $community): RedirectResponse
     {
         $community->archiveForCourse($course);
+
+        // Delete lessons and modules explicitly to avoid MariaDB nested-cascade conflict
+        // (lessons has two FKs: course_id CASCADE + course_module_id SET NULL)
+        $course->lessons()->each(fn ($lesson) => $lesson->delete());
+        $course->modules()->delete();
         $course->delete();
 
         return redirect()->route('admin.courses.index')->with('status', __('Course deleted.'));
