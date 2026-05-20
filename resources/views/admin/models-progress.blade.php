@@ -1,4 +1,4 @@
-@php
+﻿@php
     $selectedMemberId = $selectedProgress['id'] ?? null;
     $selectedMemberQuery = $selectedMemberId ? ['member' => $selectedMemberId] : [];
     $directoryQuery = array_filter([
@@ -19,7 +19,7 @@
                 </p>
             </div>
 
-            <div class="inline-flex w-fit items-center gap-2 rounded-full border border-boss-gold/15 bg-boss-gold/[0.07] px-4 py-2 text-[0.68rem] uppercase tracking-[0.14em] text-boss-gold">
+            <div class="inline-flex w-fit items-center gap-2 rounded-full border border-[#EEB4C3]/15 bg-[#EEB4C3]/[0.07] px-4 py-2 text-[0.68rem] uppercase tracking-[0.14em] text-[#EEB4C3]">
                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-300"></span>
                 {{ __('Academy Overview') }}
             </div>
@@ -28,19 +28,19 @@
         <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div class="rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-5 shadow-[0_18px_45px_rgba(0,0,0,0.2)]">
                 <p class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Members') }}</p>
-                <p class="mt-3 font-display text-3xl text-boss-gold-light">{{ number_format($summary['members']) }}</p>
+                <p class="mt-3 font-display text-3xl text-[#F3C3CF]">{{ number_format($summary['members']) }}</p>
                 <p class="mt-1 text-xs text-boss-ivory/[0.32]">{{ __('Model accounts being tracked') }}</p>
             </div>
 
             <div class="rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-5 shadow-[0_18px_45px_rgba(0,0,0,0.2)]">
                 <p class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Courses') }}</p>
-                <p class="mt-3 font-display text-3xl text-boss-gold-light">{{ number_format($summary['courses']) }}</p>
+                <p class="mt-3 font-display text-3xl text-[#F3C3CF]">{{ number_format($summary['courses']) }}</p>
                 <p class="mt-1 text-xs text-boss-ivory/[0.32]">{{ number_format($summary['lessons']) }} {{ __('lessons total') }}</p>
             </div>
 
             <div class="rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-5 shadow-[0_18px_45px_rgba(0,0,0,0.2)]">
                 <p class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Average') }}</p>
-                <p class="mt-3 font-display text-3xl text-boss-gold-light">{{ $summary['average_progress'] }}%</p>
+                <p class="mt-3 font-display text-3xl text-[#F3C3CF]">{{ $summary['average_progress'] }}%</p>
                 <div class="pd-progress-track mt-3">
                     <div class="pd-progress-bar" style="width: {{ $summary['average_progress'] }}%"></div>
                 </div>
@@ -48,7 +48,7 @@
 
             <div class="rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-5 shadow-[0_18px_45px_rgba(0,0,0,0.2)]">
                 <p class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Active') }}</p>
-                <p class="mt-3 font-display text-3xl text-boss-gold-light">{{ number_format($summary['active_members']) }}</p>
+                <p class="mt-3 font-display text-3xl text-[#F3C3CF]">{{ number_format($summary['active_members']) }}</p>
                 <p class="mt-1 text-xs text-boss-ivory/[0.32]">{{ __('Members with completed lessons') }}</p>
             </div>
         </section>
@@ -116,10 +116,10 @@
 
                                 <a
                                     href="{{ $memberUrl }}"
-                                    class="block rounded-xl border p-4 text-left transition {{ $isSelected ? 'border-boss-gold/35 bg-boss-gold/[0.09] shadow-[0_18px_38px_rgba(201,169,110,0.1)]' : 'border-white/[0.055] bg-white/[0.025] hover:border-white/[0.12] hover:bg-white/[0.04]' }}"
+                                    class="block rounded-xl border p-4 text-left transition {{ $isSelected ? 'border-[#EEB4C3]/35 bg-[#EEB4C3]/[0.09] shadow-[0_18px_38px_rgba(238, 180, 195, 0.1)]' : 'border-white/[0.055] bg-white/[0.025] hover:border-white/[0.12] hover:bg-white/[0.04]' }}"
                                 >
                                     <div class="flex items-start gap-3">
-                                        <div class="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-boss-gold/[0.22] bg-[radial-gradient(circle_at_top,rgba(201,169,110,0.32),rgba(19,15,18,0.94)_70%)] font-display text-sm text-boss-gold-light">
+                                        <div class="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#EEB4C3]/[0.22] bg-[radial-gradient(circle_at_top,rgba(238, 180, 195, 0.32),rgba(19,15,18,0.94)_70%)] font-display text-sm text-[#F3C3CF]">
                                             <span>{{ $member['initials'] }}</span>
                                             @if ($member['profile_photo_url'])
                                                 <img class="absolute inset-0 h-full w-full object-cover" src="{{ $member['profile_photo_url'] }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
@@ -132,7 +132,7 @@
                                                     <p class="truncate text-sm font-semibold text-boss-ivory">{{ $member['name'] }}</p>
                                                     <p class="mt-0.5 truncate text-xs text-boss-ivory/[0.38]">{{ $member['email'] }}</p>
                                                 </div>
-                                                <span class="font-display text-lg text-boss-gold-light">{{ $member['overall_percent'] }}%</span>
+                                                <span class="font-display text-lg text-[#F3C3CF]">{{ $member['overall_percent'] }}%</span>
                                             </div>
 
                                             <div class="pd-progress-track mt-3">
@@ -217,10 +217,10 @@
                         x-transition:enter-end="translate-y-0 scale-100 opacity-100"
                         class="mx-auto w-full max-w-6xl overflow-hidden rounded-2xl border border-white/[0.08] bg-[linear-gradient(135deg,rgba(23,17,22,0.99),rgba(10,8,10,0.98))] text-boss-ivory shadow-[0_30px_90px_rgba(0,0,0,0.55)]"
                     >
-                        <div class="relative overflow-hidden border-b border-white/[0.06] bg-[radial-gradient(circle_at_top_left,rgba(201,169,110,0.13),transparent_35%),linear-gradient(135deg,rgba(29,22,28,0.98),rgba(15,11,14,0.98))] p-4">
+                        <div class="relative overflow-hidden border-b border-white/[0.06] bg-[radial-gradient(circle_at_top_left,rgba(238, 180, 195, 0.13),transparent_35%),linear-gradient(135deg,rgba(29,22,28,0.98),rgba(15,11,14,0.98))] p-4">
                             <div class="flex items-start justify-between gap-4">
                                 <div class="flex min-w-0 items-start gap-4">
-                                    <div class="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-boss-gold/[0.28] bg-[radial-gradient(circle_at_top,rgba(201,169,110,0.34),rgba(19,15,18,0.94)_70%)] font-display text-sm text-boss-gold-light shadow-[0_16px_34px_rgba(201,169,110,0.1)] sm:h-16 sm:w-16">
+                                    <div class="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#EEB4C3]/[0.28] bg-[radial-gradient(circle_at_top,rgba(238, 180, 195, 0.34),rgba(19,15,18,0.94)_70%)] font-display text-sm text-[#F3C3CF] shadow-[0_16px_34px_rgba(238, 180, 195, 0.1)] sm:h-16 sm:w-16">
                                         <span>{{ $selectedProgress['initials'] }}</span>
                                         @if ($selectedProgress['profile_photo_url'])
                                             <img class="absolute inset-0 h-full w-full object-cover" src="{{ $selectedProgress['profile_photo_url'] }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
@@ -228,7 +228,7 @@
                                     </div>
 
                                     <div class="min-w-0 flex-1">
-                                        <p class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-gold/70">{{ __('Selected Member') }}</p>
+                                        <p class="text-[0.65rem] uppercase tracking-[0.18em] text-[#EEB4C3]/70">{{ __('Selected Member') }}</p>
                                         <h2 id="member-progress-modal-title" class="mt-1 truncate font-display text-[clamp(1.35rem,3vw,1.85rem)] text-boss-ivory">{{ $selectedProgress['name'] }}</h2>
                                         <p class="mt-1 truncate text-sm text-boss-ivory/[0.42]">{{ $selectedProgress['email'] }}</p>
 
@@ -236,7 +236,7 @@
                                             @if ($selectedProgress['last_activity'])
                                                 <span class="rounded-full border border-emerald-300/[0.18] bg-emerald-300/10 px-2.5 py-1 text-[0.64rem] text-emerald-200">{{ __('Active') }}</span>
                                             @endif
-                                            <span class="rounded-full border border-boss-gold/15 bg-boss-gold/[0.07] px-2.5 py-1 text-[0.64rem] text-boss-gold-light">
+                                            <span class="rounded-full border border-[#EEB4C3]/15 bg-[#EEB4C3]/[0.07] px-2.5 py-1 text-[0.64rem] text-[#F3C3CF]">
                                                 {{ $selectedProgress['completed_courses'] }} / {{ $courses->count() }} {{ __('courses complete') }}
                                             </span>
                                             <span class="rounded-full border border-white/[0.08] bg-white/[0.035] px-2.5 py-1 text-[0.64rem] text-boss-ivory/[0.42]">
@@ -248,7 +248,7 @@
 
                                 <a
                                     href="{{ $modalCloseUrl }}"
-                                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-boss-ivory/50 transition hover:border-boss-gold/25 hover:text-boss-gold-light"
+                                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-boss-ivory/50 transition hover:border-[#EEB4C3]/25 hover:text-[#F3C3CF]"
                                     aria-label="{{ __('Close progress modal') }}"
                                     @click.prevent="close()"
                                 >
@@ -261,11 +261,11 @@
 
                         <div class="border-b border-white/[0.06] p-3 sm:p-4">
                             <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                                <div class="rounded-xl border border-boss-gold/[0.12] bg-white/[0.025] p-3">
+                                <div class="rounded-xl border border-[#EEB4C3]/[0.12] bg-white/[0.025] p-3">
                                     <div class="flex items-end justify-between gap-3">
                                         <div>
                                             <p class="text-[0.62rem] uppercase tracking-[0.16em] text-boss-ivory/[0.34]">{{ __('Overall Progress') }}</p>
-                                            <p class="mt-1 font-display text-3xl leading-none text-boss-gold-light">{{ $selectedProgress['overall_percent'] }}%</p>
+                                            <p class="mt-1 font-display text-3xl leading-none text-[#F3C3CF]">{{ $selectedProgress['overall_percent'] }}%</p>
                                         </div>
                                         <p class="pb-0.5 text-right text-[0.68rem] leading-4 text-boss-ivory/[0.38]">
                                             {{ $selectedProgress['completed_lessons'] }} / {{ $selectedProgress['total_lessons'] }}<br>{{ __('lessons') }}
@@ -278,12 +278,12 @@
 
                                 <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
                                     <p class="text-[0.62rem] uppercase tracking-[0.16em] text-boss-ivory/[0.32]">{{ __('In Progress') }}</p>
-                                    <p class="mt-1 font-display text-2xl text-boss-gold">{{ $selectedProgress['in_progress_courses'] }}</p>
+                                    <p class="mt-1 font-display text-2xl text-[#EEB4C3]">{{ $selectedProgress['in_progress_courses'] }}</p>
                                 </div>
 
                                 <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
                                     <p class="text-[0.62rem] uppercase tracking-[0.16em] text-boss-ivory/[0.32]">{{ __('Completed Lessons') }}</p>
-                                    <p class="mt-1 font-display text-2xl text-boss-gold">{{ $selectedProgress['completed_lessons'] }}</p>
+                                    <p class="mt-1 font-display text-2xl text-[#EEB4C3]">{{ $selectedProgress['completed_lessons'] }}</p>
                                 </div>
 
                                 <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
@@ -336,7 +336,7 @@
 
                                                 $statusClass = match ($progress['status']) {
                                                     'complete' => 'border-emerald-300/[0.18] bg-emerald-300/10 text-emerald-200',
-                                                    'progress' => 'border-boss-gold/20 bg-boss-gold/10 text-boss-gold-light',
+                                                    'progress' => 'border-[#EEB4C3]/20 bg-[#EEB4C3]/10 text-[#F3C3CF]',
                                                     'empty' => 'border-white/[0.06] bg-white/[0.03] text-boss-ivory/[0.32]',
                                                     default => 'border-white/[0.06] bg-white/[0.03] text-boss-ivory/[0.42]',
                                                 };
@@ -344,20 +344,20 @@
                                             <div
                                                 x-show="course === 'all' || course === '{{ $progress['id'] }}'"
                                                 x-transition.opacity.duration.150ms
-                                                class="group rounded-xl border border-white/[0.055] bg-[#151015]/78 p-4 transition hover:border-boss-gold/[0.18] hover:bg-white/[0.035]"
+                                                class="group rounded-xl border border-white/[0.055] bg-[#151015]/78 p-4 transition hover:border-[#EEB4C3]/[0.18] hover:bg-white/[0.035]"
                                             >
                                                 <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                                     <div class="min-w-0">
                                                         <div class="flex items-center gap-2">
                                                             <span class="h-2 w-2 shrink-0 rounded-full" style="background: {{ $progress['color'] }}"></span>
-                                                            <p class="truncate text-sm font-semibold text-boss-ivory transition group-hover:text-boss-gold-light">{{ $progress['title'] }}</p>
+                                                            <p class="truncate text-sm font-semibold text-boss-ivory transition group-hover:text-[#F3C3CF]">{{ $progress['title'] }}</p>
                                                         </div>
                                                         <p class="mt-1 truncate text-[0.68rem] uppercase tracking-[0.12em] text-boss-ivory/30">{{ $progress['platform'] }}</p>
                                                     </div>
 
                                                     <div class="flex shrink-0 items-center gap-2 sm:justify-end">
                                                         <span class="rounded-full border px-2.5 py-1 text-[0.62rem] {{ $statusClass }}">{{ $statusLabel }}</span>
-                                                        <span class="font-display text-xl leading-none text-boss-gold-light">{{ $progress['percent'] }}%</span>
+                                                        <span class="font-display text-xl leading-none text-[#F3C3CF]">{{ $progress['percent'] }}%</span>
                                                     </div>
                                                 </div>
 
@@ -385,3 +385,4 @@
         @endif
     </div>
 </x-admin-layout>
+

@@ -1,4 +1,4 @@
-<x-admin-layout>
+﻿<x-admin-layout>
     @php
         $pageCollection  = $courses->getCollection();
         $publishedCount  = $pageCollection->where('is_published', true)->count();
@@ -18,7 +18,7 @@
                 </p>
             </div>
             <a href="{{ route('admin.courses.create') }}"
-               class="inline-flex shrink-0 items-center gap-2 rounded-full border border-boss-gold/35 bg-boss-gold/[0.12] px-5 py-2.5 text-[0.76rem] font-semibold text-boss-gold transition-colors hover:bg-boss-gold/[0.22]">
+               class="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#EEB4C3]/35 bg-[#EEB4C3]/[0.12] px-5 py-2.5 text-[0.76rem] font-semibold text-[#EEB4C3] transition-colors hover:bg-[#EEB4C3]/[0.22]">
                 <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[2.2]"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg>
                 {{ __('New Course') }}
             </a>
@@ -39,7 +39,7 @@
                 ] as $stat)
                     <div class="rounded-2xl border border-white/[0.05] bg-boss-panel px-5 py-4">
                         <p class="text-[0.56rem] uppercase tracking-[0.16em] text-boss-ivory/25">{{ $stat['label'] }}</p>
-                        <p class="mt-1.5 font-display text-[1.7rem] font-semibold leading-none {{ $stat['gold'] ? 'text-boss-gold' : 'text-boss-ivory/80' }}">{{ $stat['value'] }}</p>
+                        <p class="mt-1.5 font-display text-[1.7rem] font-semibold leading-none {{ $stat['gold'] ? 'text-[#EEB4C3]' : 'text-boss-ivory/80' }}">{{ $stat['value'] }}</p>
                     </div>
                 @endforeach
             </div>
@@ -50,7 +50,7 @@
             <div class="rounded-2xl border border-white/[0.05] bg-boss-ink px-6 py-20 text-center">
                 <p class="font-display text-[1.1rem] text-boss-ivory/30">{{ __('No courses yet.') }}</p>
                 <a href="{{ route('admin.courses.create') }}"
-                   class="mt-4 inline-flex items-center gap-1.5 text-[0.8rem] text-boss-gold hover:text-boss-gold-light">
+                   class="mt-4 inline-flex items-center gap-1.5 text-[0.8rem] text-[#EEB4C3] hover:text-[#F3C3CF]">
                     {{ __('Create your first course') }} →
                 </a>
             </div>
@@ -77,7 +77,7 @@
                                 <div class="absolute inset-0 bg-gradient-to-t from-boss-ink via-boss-ink/15 to-transparent"></div>
                             @else
                                 <div class="absolute inset-0" style="background: linear-gradient(135deg, {{ $course->displayColorBackground(0.45) }}, rgba(8,8,15,0.95) 70%);"></div>
-                                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,rgba(232,200,138,0.10),transparent_55%)]"></div>
+                                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,rgba(238,180,195,0.10),transparent_55%)]"></div>
                                 <div class="absolute inset-0 flex items-center justify-center overflow-hidden px-6">
                                     <p class="select-none text-center font-display text-[2rem] font-bold leading-tight text-white opacity-[0.04]">{{ $course->title }}</p>
                                 </div>
@@ -119,7 +119,7 @@
 
                             {{-- Title + description --}}
                             <div class="flex-1">
-                                <h2 class="pd-heading line-clamp-2 text-[1.05rem] leading-snug text-boss-ivory transition-colors duration-300 group-hover:text-boss-gold-light">
+                                <h2 class="pd-heading line-clamp-2 text-[1.05rem] leading-snug text-boss-ivory transition-colors duration-300 group-hover:text-[#F3C3CF]">
                                     {{ $course->title }}
                                 </h2>
                                 <p class="mt-2 line-clamp-2 text-[0.74rem] leading-relaxed text-boss-ivory/30">
@@ -135,7 +135,7 @@
                                 </div>
                                 <div class="h-6 w-px bg-white/[0.05]"></div>
                                 <div class="flex flex-1 flex-col items-center">
-                                    <span class="font-display text-[1.05rem] font-semibold {{ $stats['finished'] > 0 ? 'text-boss-gold' : 'text-boss-ivory' }}">{{ $stats['finished'] }}</span>
+                                    <span class="font-display text-[1.05rem] font-semibold {{ $stats['finished'] > 0 ? 'text-[#EEB4C3]' : 'text-boss-ivory' }}">{{ $stats['finished'] }}</span>
                                     <span class="mt-0.5 text-[0.56rem] uppercase tracking-[0.12em] text-boss-ivory/25">{{ __('finished') }}</span>
                                 </div>
                                 <div class="h-6 w-px bg-white/[0.05]"></div>
@@ -160,7 +160,7 @@
                                         class="flex w-full items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-[0.68rem] font-medium transition-colors
                                             {{ $course->is_published
                                                 ? 'border-emerald-400/20 bg-emerald-400/[0.07] text-emerald-400 hover:bg-emerald-400/[0.13]'
-                                                : 'border-white/[0.07] bg-white/[0.03] text-boss-ivory/40 hover:border-boss-gold/28 hover:text-boss-gold' }}"
+                                                : 'border-white/[0.07] bg-white/[0.03] text-boss-ivory/40 hover:border-[#EEB4C3]/28 hover:text-[#EEB4C3]' }}"
                                     >
                                         @if ($course->is_published)
                                             <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
@@ -192,7 +192,7 @@
                                 <a
                                     href="{{ route('admin.courses.edit', $course) }}"
                                     title="{{ __('Edit course') }}"
-                                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-boss-gold/22 bg-boss-gold/[0.08] text-boss-gold transition-colors hover:bg-boss-gold/[0.18]"
+                                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#EEB4C3]/22 bg-[#EEB4C3]/[0.08] text-[#EEB4C3] transition-colors hover:bg-[#EEB4C3]/[0.18]"
                                 >
                                     <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[1.7]">
                                         <path d="M11 2l3 3-8 8H3v-3L11 2z"/>
@@ -228,3 +228,5 @@
 
     </div>
 </x-admin-layout>
+
+

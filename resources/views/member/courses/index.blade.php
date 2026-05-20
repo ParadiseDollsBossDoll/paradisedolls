@@ -1,4 +1,4 @@
-<x-member-layout>
+﻿<x-member-layout>
     @php
         // ── Progress calculations ─────────────────────────────────────────────
         $totalCompleted  = count($completedLessonIds);
@@ -48,7 +48,7 @@
                     </h2>
                     @if ($inProgressCourses->count() > 3)
                         <a href="{{ route('member.courses.index', ['filter' => 'in-progress']) }}"
-                           class="text-[0.62rem] text-boss-ivory/28 transition-colors hover:text-boss-gold">
+                           class="text-[0.62rem] text-boss-ivory/28 transition-colors hover:text-[#EEB4C3]">
                             {{ __('View all') }} →
                         </a>
                     @endif
@@ -96,7 +96,7 @@
                                     </div>
                                     <div class="h-[3px] overflow-hidden rounded-full" style="background: rgba(255,255,255,0.06);">
                                         <div class="h-full rounded-full transition-all duration-700"
-                                             style="width: {{ max($ccProgress['percent'], $ccProgress['percent'] > 0 ? 2 : 0) }}%; background: linear-gradient(90deg, {{ $ccColor }}, #E8C88A);"></div>
+                                             style="width: {{ max($ccProgress['percent'], $ccProgress['percent'] > 0 ? 2 : 0) }}%; background: linear-gradient(90deg, {{ $ccColor }}, #F3C3CF);"></div>
                                     </div>
                                 </div>
                             </div>
@@ -105,7 +105,7 @@
                             <div class="flex shrink-0 flex-col items-end gap-1.5">
                                 <a href="{{ $ccUrl }}"
                                    class="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[0.7rem] font-semibold text-boss-ink transition-all hover:opacity-90"
-                                   style="background: linear-gradient(135deg, {{ $ccColor }}, #E8C88A);">
+                                   style="background: linear-gradient(135deg, {{ $ccColor }}, #F3C3CF);">
                                     {{ $ccCTAText }}
                                     <svg viewBox="0 0 16 16" class="h-3 w-3 fill-none stroke-current stroke-[2.5]"><path d="M3 8h10M9 5l4 3-4 3"/></svg>
                                 </a>
@@ -157,7 +157,7 @@
                 @foreach ($stats as $stat)
                     <div class="rounded-2xl border border-white/[0.05] bg-boss-panel px-5 py-4">
                         <p class="text-[0.56rem] uppercase tracking-[0.16em] text-boss-ivory/25">{{ $stat['label'] }}</p>
-                        <p class="mt-1.5 font-display text-[1.7rem] font-semibold leading-none {{ $stat['gold'] ? 'text-boss-gold' : 'text-boss-ivory/80' }}">
+                        <p class="mt-1.5 font-display text-[1.7rem] font-semibold leading-none {{ $stat['gold'] ? 'text-[#EEB4C3]' : 'text-boss-ivory/80' }}">
                             {{ $stat['value'] }}
                         </p>
                         <p class="mt-1 text-[0.6rem] text-boss-ivory/22">{{ $stat['sub'] }}</p>
@@ -188,7 +188,7 @@
                     ] as $key => $label)
                         <a
                             href="{{ route('member.courses.index', ['filter' => $key]) }}"
-                            class="rounded-full px-3.5 py-1.5 text-[0.7rem] transition-colors {{ $filter === $key ? 'bg-boss-gold font-semibold text-boss-ink' : 'border border-white/[0.07] bg-white/[0.03] text-boss-ivory/40 hover:border-boss-gold/25 hover:text-boss-gold' }}"
+                            class="rounded-full px-3.5 py-1.5 text-[0.7rem] transition-colors {{ $filter === $key ? 'bg-[#EEB4C3] font-semibold text-boss-ink' : 'border border-white/[0.07] bg-white/[0.03] text-boss-ivory/40 hover:border-[#EEB4C3]/25 hover:text-[#EEB4C3]' }}"
                         >
                             {{ $label }}
                         </a>
@@ -240,7 +240,7 @@
                                 <div class="absolute inset-0 bg-gradient-to-t from-boss-ink via-boss-ink/15 to-transparent"></div>
                             @else
                                 <div class="absolute inset-0" style="background: linear-gradient(135deg, {{ $course->displayColorBackground(0.45) }}, rgba(8,8,15,0.95) 70%);"></div>
-                                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,rgba(232,200,138,0.10),transparent_55%)]"></div>
+                                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,rgba(238,180,195,0.10),transparent_55%)]"></div>
                                 <div class="absolute inset-0 flex items-center justify-center overflow-hidden px-6">
                                     <p class="select-none text-center font-display text-[2rem] font-bold leading-tight text-white opacity-[0.04]">{{ $course->title }}</p>
                                 </div>
@@ -256,9 +256,9 @@
                                 @elseif ($isInProgress)
                                     <span class="rounded-full border border-white/[0.10] bg-black/35 px-2.5 py-0.5 text-[0.6rem] text-boss-ivory/55 backdrop-blur-sm">{{ __('In Progress') }}</span>
                                 @elseif ($isEnrolled)
-                                    <span class="rounded-full border border-boss-gold/22 bg-black/35 px-2.5 py-0.5 text-[0.6rem] text-boss-gold/80 backdrop-blur-sm">{{ __('Enrolled') }}</span>
+                                    <span class="rounded-full border border-[#EEB4C3]/22 bg-black/35 px-2.5 py-0.5 text-[0.6rem] text-[#EEB4C3]/80 backdrop-blur-sm">{{ __('Enrolled') }}</span>
                                 @else
-                                    <span class="rounded-full border border-boss-gold/22 bg-black/35 px-2.5 py-0.5 text-[0.6rem] text-boss-gold/80 backdrop-blur-sm">{{ __('Locked') }}</span>
+                                    <span class="rounded-full border border-[#EEB4C3]/22 bg-black/35 px-2.5 py-0.5 text-[0.6rem] text-[#EEB4C3]/80 backdrop-blur-sm">{{ __('Locked') }}</span>
                                 @endif
                             </div>
 
@@ -283,7 +283,7 @@
                                     </p>
                                 @endif
 
-                                <h2 class="pd-heading line-clamp-2 text-[1.05rem] leading-snug text-boss-ivory transition-colors duration-300 group-hover:text-boss-gold-light">
+                                <h2 class="pd-heading line-clamp-2 text-[1.05rem] leading-snug text-boss-ivory transition-colors duration-300 group-hover:text-[#F3C3CF]">
                                     {{ $course->title }}
                                 </h2>
 
@@ -306,7 +306,7 @@
                                         </div>
                                         <div class="h-1 overflow-hidden rounded-full" style="background: rgba(255,255,255,0.06);">
                                             <div class="h-full rounded-full transition-all duration-700"
-                                                 style="width: {{ $progress['percent'] }}%; background: linear-gradient(90deg, {{ $color }}, #E8C88A);"></div>
+                                                 style="width: {{ $progress['percent'] }}%; background: linear-gradient(90deg, {{ $color }}, #F3C3CF);"></div>
                                         </div>
                                     </div>
 
@@ -338,18 +338,18 @@
                         </div>
 
                         {{-- Footer CTA --}}
-                        <div class="shrink-0 border-t border-white/[0.04] px-5 py-3.5 transition-colors duration-300 group-hover:bg-boss-gold/[0.04]">
+                        <div class="shrink-0 border-t border-white/[0.04] px-5 py-3.5 transition-colors duration-300 group-hover:bg-[#EEB4C3]/[0.04]">
                             @if ($isEnrolled)
                                 <a href="{{ $primaryUrl }}" class="flex items-center justify-between gap-2 text-[0.73rem]">
-                                    <span class="font-medium transition-colors group-hover:text-boss-gold"
+                                    <span class="font-medium transition-colors group-hover:text-[#EEB4C3]"
                                           style="color: {{ $color }}; opacity: .78;">{{ $ctaLabel }}</span>
                                     <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[2] transition-transform duration-300 group-hover:translate-x-1"
                                          style="color: {{ $color }}; opacity: .5;"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
                                 </a>
                             @else
                                 <a href="{{ route('member.courses.show', $course->slug) }}" class="flex items-center justify-between gap-2 text-[0.73rem]">
-                                    <span class="font-semibold text-boss-gold transition-colors group-hover:text-boss-gold-light">{{ $ctaLabel }}</span>
-                                    <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[2] text-boss-gold/50 transition-transform duration-300 group-hover:translate-x-1"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+                                    <span class="font-semibold text-[#EEB4C3] transition-colors group-hover:text-[#F3C3CF]">{{ $ctaLabel }}</span>
+                                    <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[2] text-[#EEB4C3]/50 transition-transform duration-300 group-hover:translate-x-1"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
                                 </a>
                             @endif
                         </div>
@@ -360,7 +360,7 @@
                             {{ $courses->isEmpty() ? __('Courses are coming soon.') : __('No courses match this filter yet.') }}
                         </p>
                         @if (! $courses->isEmpty())
-                            <a href="{{ route('member.courses.index') }}" class="mt-3 inline-flex text-[0.78rem] text-boss-gold hover:text-boss-gold-light">
+                            <a href="{{ route('member.courses.index') }}" class="mt-3 inline-flex text-[0.78rem] text-[#EEB4C3] hover:text-[#F3C3CF]">
                                 {{ __('View all courses') }} →
                             </a>
                         @endif
@@ -377,3 +377,6 @@
 
     </div>
 </x-member-layout>
+
+
+

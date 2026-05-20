@@ -1,4 +1,4 @@
-<x-member-layout>
+﻿<x-member-layout>
     <div class="mx-auto max-w-3xl space-y-6">
         <header>
             <p class="pd-kicker">{{ __('Onboarding') }}</p>
@@ -26,7 +26,7 @@
                 <div class="w-full md:w-52">
                     <div class="flex items-center justify-between text-[0.66rem] uppercase tracking-[0.12em] text-boss-ivory/30">
                         <span>{{ __('Onboarding') }}</span>
-                        <span class="text-boss-gold">{{ $profile->onboardingPercent() }}%</span>
+                        <span class="text-[#EEB4C3]">{{ $profile->onboardingPercent() }}%</span>
                     </div>
                     <div class="pd-progress-track mt-2">
                         <div class="pd-progress-bar" style="width: {{ $profile->onboardingPercent() }}%"></div>
@@ -37,7 +37,7 @@
             @if (! $profile->hasInformationForm())
                 <div class="mt-5 rounded-xl border border-amber-300/20 bg-amber-300/10 p-4 text-sm text-amber-100">
                     {{ __('Submit the Model Information Form before uploading verification documents.') }}
-                    <a href="{{ route('member.onboarding.edit') }}" class="ml-2 text-boss-gold hover:text-boss-gold-light">{{ __('Open form') }}</a>
+                    <a href="{{ route('member.onboarding.edit') }}" class="ml-2 text-[#EEB4C3] hover:text-[#F3C3CF]">{{ __('Open form') }}</a>
                 </div>
             @endif
 
@@ -49,8 +49,8 @@
             @endif
 
             @if (filled($profile->verification_request_instructions))
-                <div class="mt-5 rounded-xl border border-boss-gold/25 bg-boss-gold/10 p-4 text-sm text-boss-ivory">
-                    <p class="font-medium text-boss-gold">{{ __('Instructions from Kayla') }}</p>
+                <div class="mt-5 rounded-xl border border-[#EEB4C3]/25 bg-[#EEB4C3]/10 p-4 text-sm text-boss-ivory">
+                    <p class="font-medium text-[#EEB4C3]">{{ __('Instructions from Kayla') }}</p>
                     <p class="mt-1 whitespace-pre-line text-boss-ivory/70">{{ $profile->verification_request_instructions }}</p>
                 </div>
             @endif
@@ -95,3 +95,4 @@
         @endif
     </div>
 </x-member-layout>
+

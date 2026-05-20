@@ -1,4 +1,4 @@
-<x-admin-layout>
+﻿<x-admin-layout>
     <div class="mx-auto max-w-3xl space-y-6 text-boss-ivory">
         <header class="flex items-center justify-between gap-4">
             <div>
@@ -15,3 +15,4 @@
         </form>
     </div>
 </x-admin-layout>
+

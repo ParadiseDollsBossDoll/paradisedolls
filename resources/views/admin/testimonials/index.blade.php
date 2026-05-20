@@ -1,4 +1,4 @@
-<x-admin-layout>
+﻿<x-admin-layout>
     <div class="mx-auto max-w-6xl space-y-6 text-boss-ivory">
         <header class="flex items-start justify-between gap-4">
             <div>
@@ -21,7 +21,7 @@
                         : ($testimonial->submitted_by ? 'bg-amber-400/10 text-amber-200' : 'bg-white/[0.04] text-boss-ivory/35');
                 @endphp
                 <article class="overflow-hidden rounded-sm border border-white/[0.06] bg-[#141419]">
-                    <div class="h-1 bg-gradient-to-r from-boss-gold to-boss-gold-light"></div>
+                    <div class="h-1 bg-gradient-to-r from-[#EEB4C3] to-[#F3C3CF]"></div>
                     <div class="grid gap-4 p-4 sm:grid-cols-[120px_1fr]">
                         <div class="aspect-square overflow-hidden rounded-sm bg-boss-panel">
                             <img src="{{ $testimonial->displayImage() }}" alt="" class="h-full w-full object-cover">
@@ -32,7 +32,7 @@
                                     {{ $testimonial->statusLabel() }}
                                 </span>
                                 @if ($testimonial->result_label)
-                                    <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.62rem] text-boss-gold">{{ $testimonial->result_label }}</span>
+                                    <span class="rounded-full bg-[#EEB4C3]/10 px-2 py-0.5 text-[0.62rem] text-[#EEB4C3]">{{ $testimonial->result_label }}</span>
                                 @endif
                                 <span class="text-[0.62rem] text-boss-ivory/25">{{ __('Order') }} {{ $testimonial->sort_order }}</span>
                             </div>
@@ -72,7 +72,7 @@
             @empty
                 <div class="rounded-sm border border-white/[0.06] bg-[#141419] py-20 text-center lg:col-span-2">
                     <p class="text-[0.9rem] text-boss-ivory/35">{{ __('No success stories yet.') }}</p>
-                    <a href="{{ route('admin.testimonials.create') }}" class="mt-4 inline-flex text-[0.82rem] text-boss-gold hover:text-boss-gold-light">{{ __('Create the first story') }} -></a>
+                    <a href="{{ route('admin.testimonials.create') }}" class="mt-4 inline-flex text-[0.82rem] text-[#EEB4C3] hover:text-[#F3C3CF]">{{ __('Create the first story') }} -></a>
                 </div>
             @endforelse
         </div>
@@ -80,3 +80,5 @@
         <div class="px-2">{{ $testimonials->links() }}</div>
     </div>
 </x-admin-layout>
+
+

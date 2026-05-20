@@ -1,4 +1,4 @@
-<x-member-layout>
+﻿<x-member-layout>
     @php
         $selectedPlatforms = old('platforms', $profile->platforms ?? []);
         $selectedEquipment = old('equipment', $profile->equipment ?? []);
@@ -99,7 +99,7 @@
                                         <button
                                             type="button"
                                             class="flex w-full items-center gap-2 px-3 py-2 text-left text-[0.82rem] text-boss-ivory/68 transition-colors hover:bg-white/[0.05] hover:text-boss-ivory"
-                                            :class="selected === country.value ? 'bg-boss-gold/12 text-boss-gold' : ''"
+                                            :class="selected === country.value ? 'bg-[#EEB4C3]/12 text-[#EEB4C3]' : ''"
                                             role="option"
                                             :aria-selected="(selected === country.value).toString()"
                                             :title="country.name"
@@ -179,7 +179,7 @@
                         <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                             @foreach ($platformOptions as $option)
                                 <label class="flex items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2 text-[0.78rem] text-boss-ivory/58">
-                                    <input type="checkbox" name="platforms[]" value="{{ $option }}" class="rounded border-white/20 bg-boss-ink text-boss-gold focus:ring-boss-gold" @checked(in_array($option, $selectedPlatforms, true))>
+                                    <input type="checkbox" name="platforms[]" value="{{ $option }}" class="rounded border-white/20 bg-boss-ink text-[#EEB4C3] focus:ring-[#EEB4C3]" @checked(in_array($option, $selectedPlatforms, true))>
                                     <span>{{ $option }}</span>
                                 </label>
                             @endforeach
@@ -191,7 +191,7 @@
                         <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                             @foreach ($equipmentOptions as $option)
                                 <label class="flex items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2 text-[0.78rem] text-boss-ivory/58">
-                                    <input type="checkbox" name="equipment[]" value="{{ $option }}" class="rounded border-white/20 bg-boss-ink text-boss-gold focus:ring-boss-gold" @checked(in_array($option, $selectedEquipment, true))>
+                                    <input type="checkbox" name="equipment[]" value="{{ $option }}" class="rounded border-white/20 bg-boss-ink text-[#EEB4C3] focus:ring-[#EEB4C3]" @checked(in_array($option, $selectedEquipment, true))>
                                     <span>{{ $option }}</span>
                                 </label>
                             @endforeach
@@ -273,7 +273,7 @@
                                         <button
                                             type="button"
                                             class="flex w-full items-center gap-2 px-3 py-2 text-left text-[0.82rem] text-boss-ivory/68 transition-colors hover:bg-white/[0.05] hover:text-boss-ivory"
-                                            :class="selected === country.value ? 'bg-boss-gold/12 text-boss-gold' : ''"
+                                            :class="selected === country.value ? 'bg-[#EEB4C3]/12 text-[#EEB4C3]' : ''"
                                             role="option"
                                             :aria-selected="(selected === country.value).toString()"
                                             :title="country.name"
@@ -323,3 +323,4 @@
         </form>
     </div>
 </x-member-layout>
+

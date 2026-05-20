@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
@@ -7,6 +7,7 @@
 
         <title>{{ config('app.name', 'Paradise Dolls') }}</title>
 
+        <script>(function(){function applyVars(s){var h=document.documentElement;h.classList.toggle('light-mode',s.mode==='light');if(s.primary){h.style.setProperty('--pd-primary',s.primary);h.style.setProperty('--pd-gold',s.primary);}if(s.primaryLight){h.style.setProperty('--pd-primary-hover',s.primaryLight);h.style.setProperty('--pd-gold-light',s.primaryLight);}}try{var s=JSON.parse(localStorage.getItem('pd-theme-v2')||'null');if(!s){var old=localStorage.getItem('pd-theme');s={mode:old==='light'?'light':'dark',primary:'#EEB4C3',primaryLight:'#F3C3CF'};}applyVars(s);}catch(e){applyVars({mode:'light',primary:'#EEB4C3',primaryLight:'#F3C3CF'});}window.pdApplyTheme=function(s){applyVars(s);localStorage.setItem('pd-theme-v2',JSON.stringify(s));};}());</script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased pd-dark-surface">
@@ -15,7 +16,7 @@
 
             <div class="relative z-10 w-full max-w-md">
                 <div class="mb-8 text-center">
-                    <a href="{{ route('home') }}" class="text-[0.65rem] uppercase tracking-[0.28em] text-boss-gold/70 transition-colors hover:text-boss-gold">
+                    <a href="{{ route('home') }}" class="text-[0.65rem] uppercase tracking-[0.28em] text-[#EEB4C3]/70 transition-colors hover:text-[#EEB4C3]">
                         {{ __('Back to site') }}
                     </a>
                     <h1 class="pd-heading pd-text-gradient mt-6 text-[2.1rem]">{{ config('app.name') }}</h1>
@@ -29,3 +30,4 @@
         </div>
     </body>
 </html>
+

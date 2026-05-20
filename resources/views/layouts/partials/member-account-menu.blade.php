@@ -1,4 +1,4 @@
-<div class="elysian-profile-menu" x-data="{ open: false }" @keydown.escape.window="open = false" @click.outside="open = false">
+﻿<div class="elysian-profile-menu" x-data="{ open: false }" @keydown.escape.window="open = false" @click.outside="open = false">
     <button type="button" class="elysian-topbar-avatar" @click="open = ! open" :aria-expanded="open.toString()" aria-haspopup="menu" aria-label="{{ __('Open account menu') }}">
         <span>{{ $initials }}</span>
         @if ($profilePhotoUrl)
@@ -17,3 +17,4 @@
         </form>
     </div>
 </div>
+

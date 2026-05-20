@@ -65,6 +65,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ isset($title) ? $title.' - '.config('app.name') : config('app.name') }}</title>
         <link rel="icon" type="image/png" href="/favicon.png">
+        <script>(function(){function applyVars(s){var h=document.documentElement;h.classList.toggle('light-mode',s.mode==='light');if(s.primary){h.style.setProperty('--pd-primary',s.primary);h.style.setProperty('--pd-gold',s.primary);}if(s.primaryLight){h.style.setProperty('--pd-primary-hover',s.primaryLight);h.style.setProperty('--pd-gold-light',s.primaryLight);}}try{var s=JSON.parse(localStorage.getItem('pd-theme-v2')||'null');if(!s){var old=localStorage.getItem('pd-theme');s={mode:old==='light'?'light':'dark',primary:'#EEB4C3',primaryLight:'#F3C3CF'};}applyVars(s);}catch(e){applyVars({mode:'light',primary:'#EEB4C3',primaryLight:'#F3C3CF'});}window.pdApplyTheme=function(s){applyVars(s);localStorage.setItem('pd-theme-v2',JSON.stringify(s));};window.pdToggleTheme=function(){try{var s=JSON.parse(localStorage.getItem('pd-theme-v2')||'{}');s.mode=document.documentElement.classList.toggle('light-mode')?'light':'dark';localStorage.setItem('pd-theme-v2',JSON.stringify(s));}catch(e){};};}());</script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased pd-dark-surface {{ $player ? 'h-screen overflow-hidden' : 'min-h-screen' }}" x-data="{ sidebarOpen: false }">

@@ -1,4 +1,4 @@
-@php
+﻿@php
     $notificationUser = auth()->user();
     [$unreadNotificationCount, $recentNotifications] = $notificationUser
         ? \Illuminate\Support\Facades\Cache::remember(
@@ -24,7 +24,7 @@
 <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false" @click.outside="open = false">
     <button
         type="button"
-        class="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-boss-ivory/55 transition hover:border-boss-gold/25 hover:text-boss-gold"
+        class="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-boss-ivory/55 transition hover:border-[#EEB4C3]/25 hover:text-[#EEB4C3]"
         title="{{ __('Notifications') }}"
         aria-label="{{ __('Notifications') }}"
         aria-haspopup="menu"
@@ -36,7 +36,7 @@
             <path d="M6.2 13c.3.7.9 1.2 1.8 1.2s1.5-.5 1.8-1.2"/>
         </svg>
         @if ($unreadNotificationCount > 0)
-            <span class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-boss-gold px-1 text-[0.6rem] font-bold text-boss-ink">
+            <span class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#EEB4C3] px-1 text-[0.6rem] font-bold text-boss-ink">
                 {{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}
             </span>
         @endif
@@ -51,7 +51,7 @@
     >
         <div class="flex items-center justify-between gap-3 border-b border-white/[0.06] px-4 py-3">
             <div>
-                <p class="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-boss-gold/70">{{ __('Notifications') }}</p>
+                <p class="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#EEB4C3]/70">{{ __('Notifications') }}</p>
                 <p class="mt-0.5 text-[0.72rem] text-boss-ivory/35">
                     {{ trans_choice(':count unread update|:count unread updates', $unreadNotificationCount, ['count' => $unreadNotificationCount]) }}
                 </p>
@@ -59,7 +59,7 @@
             @if ($unreadNotificationCount > 0)
                 <form method="POST" action="{{ route('notifications.mark-all-read') }}">
                     @csrf
-                    <button type="submit" class="rounded-lg border border-white/[0.07] bg-white/[0.035] px-2.5 py-1.5 text-[0.68rem] font-semibold text-boss-ivory/45 transition hover:border-boss-gold/20 hover:text-boss-gold">
+                    <button type="submit" class="rounded-lg border border-white/[0.07] bg-white/[0.035] px-2.5 py-1.5 text-[0.68rem] font-semibold text-boss-ivory/45 transition hover:border-[#EEB4C3]/20 hover:text-[#EEB4C3]">
                         {{ __('Mark read') }}
                     </button>
                 </form>
@@ -77,11 +77,11 @@
                     <button
                         type="submit"
                         role="menuitem"
-                        class="block w-full px-4 py-3 text-left transition hover:bg-white/[0.035] {{ $isUnread ? 'bg-boss-gold/[0.045]' : '' }}"
+                        class="block w-full px-4 py-3 text-left transition hover:bg-white/[0.035] {{ $isUnread ? 'bg-[#EEB4C3]/[0.045]' : '' }}"
                         @click="open = false"
                     >
                     <div class="flex gap-3">
-                        <span class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full {{ $isUnread ? 'bg-boss-gold shadow-[0_0_16px_rgba(201,169,110,0.55)]' : 'bg-white/12' }}"></span>
+                        <span class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full {{ $isUnread ? 'bg-[#EEB4C3] shadow-[0_0_16px_rgba(238, 180, 195, 0.55)]' : 'bg-white/12' }}"></span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-start justify-between gap-3">
                                 <p class="line-clamp-1 text-sm font-semibold text-boss-ivory/82">{{ $data['title'] ?? __('Notification') }}</p>
@@ -102,9 +102,10 @@
             @endforelse
         </div>
 
-        <a href="{{ route('notifications.index') }}" class="flex items-center justify-between border-t border-white/[0.06] px-4 py-3 text-[0.75rem] font-semibold text-boss-gold/75 transition hover:bg-boss-gold/[0.05] hover:text-boss-gold">
+        <a href="{{ route('notifications.index') }}" class="flex items-center justify-between border-t border-white/[0.06] px-4 py-3 text-[0.75rem] font-semibold text-[#EEB4C3]/75 transition hover:bg-[#EEB4C3]/[0.05] hover:text-[#EEB4C3]">
             <span>{{ __('View all notifications') }}</span>
             <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[2]"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
         </a>
     </div>
 </div>
+

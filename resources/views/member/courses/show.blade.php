@@ -1,4 +1,4 @@
-<x-member-layout>
+﻿<x-member-layout>
     @php
         $color = $course->displayColor();
         $bg = $course->displayColorBackground();
@@ -18,7 +18,7 @@
             <div class="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm text-green-200">{{ session('status') }}</div>
         @endif
 
-        <a href="{{ route('member.courses.index') }}" class="inline-flex rounded-xl border border-white/[0.07] bg-white/[0.04] px-3 py-2 text-[0.78rem] text-boss-ivory/45 transition-colors hover:text-boss-gold">
+        <a href="{{ route('member.courses.index') }}" class="inline-flex rounded-xl border border-white/[0.07] bg-white/[0.04] px-3 py-2 text-[0.78rem] text-boss-ivory/45 transition-colors hover:text-[#EEB4C3]">
             <- {{ __('Academy Catalog') }}
         </a>
 
@@ -30,7 +30,7 @@
                             <span class="rounded-full border px-3 py-1 text-[0.68rem]" style="background-color: {{ $bg }}; color: {{ $color }}; border-color: {{ $color }}25;">{{ $course->displayPlatform() }}</span>
                             <span class="rounded-full border border-white/[0.07] bg-white/[0.04] px-3 py-1 text-[0.68rem] text-boss-ivory/38">{{ $course->difficulty_level ?: __('Guided') }}</span>
                             @if ($isEnrolled)
-                                <span class="rounded-full border border-boss-gold/25 bg-boss-gold/10 px-3 py-1 text-[0.68rem] text-boss-gold">{{ __('Enrolled') }}</span>
+                                <span class="rounded-full border border-[#EEB4C3]/25 bg-[#EEB4C3]/10 px-3 py-1 text-[0.68rem] text-[#EEB4C3]">{{ __('Enrolled') }}</span>
                             @endif
                         </div>
 
@@ -47,14 +47,14 @@
                                 </button>
                             </form>
                         @else
-                            <div class="w-full max-w-xl rounded-xl border border-boss-gold/20 bg-boss-gold/10 p-4 text-sm text-boss-gold">
+                            <div class="w-full max-w-xl rounded-xl border border-[#EEB4C3]/20 bg-[#EEB4C3]/10 p-4 text-sm text-[#EEB4C3]">
                                 @if (! $isVerified)
                                     {{ __('Verification must be approved before Kayla can review course access.') }}
                                 @elseif ($courseAccessRequest?->isPending())
                                     {{ __('Access request sent. Kayla will review your course requirements and unlock this course when approved.') }}
                                 @else
                                     <p class="font-medium">{{ $courseAccessRequest?->isRejected() ? __('Kayla requested updates before access.') : __('Locked pending Kayla approval.') }}</p>
-                                    <p class="mt-1 text-boss-gold/70">{{ __("Open the review popup to see Kayla's requirements, upload any QR/code proof, and submit your request.") }}</p>
+                                    <p class="mt-1 text-[#EEB4C3]/70">{{ __("Open the review popup to see Kayla's requirements, upload any QR/code proof, and submit your request.") }}</p>
                                 @endif
                             </div>
                         @endif
@@ -86,7 +86,7 @@
                                 [__('Members'), $course->enrolled_users_count],
                             ] as $stat)
                                 <div class="rounded-xl border border-white/[0.08] bg-boss-ink/80 p-3 backdrop-blur">
-                                    <p class="font-display text-[1.35rem] leading-none text-boss-gold">{{ $stat[1] }}</p>
+                                    <p class="font-display text-[1.35rem] leading-none text-[#EEB4C3]">{{ $stat[1] }}</p>
                                     <p class="mt-1 text-[0.62rem] uppercase tracking-[0.12em] text-boss-ivory/35">{{ $stat[0] }}</p>
                                 </div>
                             @endforeach
@@ -97,7 +97,7 @@
         </section>
 
         @if (! $isEnrolled)
-            <section class="rounded-2xl border border-boss-gold/25 bg-boss-gold/[0.08] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)] md:flex md:items-center md:justify-between md:gap-5">
+            <section class="rounded-2xl border border-[#EEB4C3]/25 bg-[#EEB4C3]/[0.08] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)] md:flex md:items-center md:justify-between md:gap-5">
                 <div>
                     <p class="pd-kicker">{{ __('Course Access Review') }}</p>
                     <h2 class="pd-heading mt-2 text-[1.45rem] text-boss-ivory">{{ $courseAccessRequest?->isRejected() ? __('Kayla needs a resubmission') : __("Review Kayla's requirements before requesting access") }}</h2>
@@ -133,7 +133,7 @@
                     x-transition:leave="transition ease-in duration-150"
                     x-transition:leave-start="translate-y-0 scale-100 opacity-100"
                     x-transition:leave-end="translate-y-4 scale-[0.98] opacity-0"
-                    class="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-boss-gold/20 bg-[#101014] shadow-2xl"
+                    class="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-[#EEB4C3]/20 bg-[#101014] shadow-2xl"
                 >
                     <div class="flex shrink-0 items-start justify-between gap-4 border-b border-white/[0.06] px-5 py-4 md:px-6">
                         <div>
@@ -154,14 +154,14 @@
                             </div>
                         @endif
 
-                        <div class="rounded-xl border border-boss-gold/12 bg-boss-gold/[0.045] p-4">
+                        <div class="rounded-xl border border-[#EEB4C3]/12 bg-[#EEB4C3]/[0.045] p-4">
                             <p class="pd-kicker">{{ __('Website Verification Process') }}</p>
                             <div class="mt-4 space-y-3">
                                 @forelse ($accessPhases as $index => $phase)
-                                    <div class="rounded-xl border border-boss-gold/10 bg-black/12 p-3">
+                                    <div class="rounded-xl border border-[#EEB4C3]/10 bg-black/12 p-3">
                                         <div class="flex items-center gap-2">
-                                            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-boss-gold text-[0.68rem] font-bold text-boss-ink">{{ $index + 1 }}</span>
-                                            <p class="text-[0.78rem] font-semibold text-boss-gold">{{ $phase['label'] }}</p>
+                                            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EEB4C3] text-[0.68rem] font-bold text-boss-ink">{{ $index + 1 }}</span>
+                                            <p class="text-[0.78rem] font-semibold text-[#EEB4C3]">{{ $phase['label'] }}</p>
                                         </div>
                                         <p class="mt-2 whitespace-pre-line text-[0.8rem] leading-relaxed text-boss-ivory/62">{{ $phase['instructions'] }}</p>
                                     </div>
@@ -171,11 +171,11 @@
                             </div>
                         </div>
 
-                        <div class="rounded-xl border border-boss-gold/12 bg-boss-gold/[0.045] p-4">
+                        <div class="rounded-xl border border-[#EEB4C3]/12 bg-[#EEB4C3]/[0.045] p-4">
                             <p class="pd-kicker">{{ __('Access Requirements From Kayla') }}</p>
                             <div class="mt-4 space-y-2">
                                 @forelse ($accessRequirements as $requirement)
-                                    <p class="rounded-lg border border-boss-gold/10 bg-black/12 px-3 py-2 text-[0.8rem] leading-relaxed text-boss-ivory/62">{{ $requirement }}</p>
+                                    <p class="rounded-lg border border-[#EEB4C3]/10 bg-black/12 px-3 py-2 text-[0.8rem] leading-relaxed text-boss-ivory/62">{{ $requirement }}</p>
                                 @empty
                                     <p class="text-[0.82rem] leading-relaxed text-boss-ivory/45">{{ __('Request access when you are ready. Kayla will review your onboarding and verification before unlocking this course.') }}</p>
                                 @endforelse
@@ -190,14 +190,14 @@
                             @elseif ($courseAccessRequest?->isPending())
                                 <p class="mt-4 text-[0.84rem] leading-relaxed text-boss-ivory/55">{{ __('Access request sent. Kayla will review your course requirements and unlock this course when approved.') }}</p>
                                 @if (filled($courseAccessRequest->member_notes))
-                                    <div class="mt-3 rounded-lg border border-boss-gold/10 bg-boss-gold/[0.04] px-3 py-2">
-                                        <p class="text-[0.62rem] uppercase tracking-[0.12em] text-boss-gold/55">{{ __('Your access note') }}</p>
+                                    <div class="mt-3 rounded-lg border border-[#EEB4C3]/10 bg-[#EEB4C3]/[0.04] px-3 py-2">
+                                        <p class="text-[0.62rem] uppercase tracking-[0.12em] text-[#EEB4C3]/55">{{ __('Your access note') }}</p>
                                         <p class="mt-1 whitespace-pre-line text-[0.78rem] leading-relaxed text-boss-ivory/60">{{ $courseAccessRequest->member_notes }}</p>
                                     </div>
                                 @endif
                             @else
                                 <p class="mt-4 text-[0.84rem] leading-relaxed text-boss-ivory/56">{{ __('If Kayla requested QR/code proof, upload screenshots from your Verification page under Platform codes before requesting access.') }}</p>
-                                <a href="{{ route('member.verification.edit') }}" class="mt-3 inline-flex rounded-xl border border-boss-gold/20 bg-boss-gold/10 px-3 py-2 text-[0.72rem] font-semibold text-boss-gold transition-colors hover:border-boss-gold/40 hover:bg-boss-gold/15">
+                                <a href="{{ route('member.verification.edit') }}" class="mt-3 inline-flex rounded-xl border border-[#EEB4C3]/20 bg-[#EEB4C3]/10 px-3 py-2 text-[0.72rem] font-semibold text-[#EEB4C3] transition-colors hover:border-[#EEB4C3]/40 hover:bg-[#EEB4C3]/15">
                                     {{ __('Upload Platform Codes') }}
                                 </a>
 
@@ -277,7 +277,7 @@
                 <div class="rounded-2xl border border-white/[0.05] bg-boss-panel p-5">
                     <p class="pd-kicker">{{ __('Your Progress') }}</p>
                     <div class="mt-4 flex items-end justify-between">
-                        <p class="font-display text-[2.5rem] leading-none text-boss-gold">{{ $progress['percent'] }}%</p>
+                        <p class="font-display text-[2.5rem] leading-none text-[#EEB4C3]">{{ $progress['percent'] }}%</p>
                         <p class="pb-1 text-[0.78rem] text-boss-ivory/35">{{ $progress['completed'] }}/{{ $progress['total'] }} {{ __('lessons') }}</p>
                     </div>
                     <div class="pd-progress-track mt-4">
@@ -308,3 +308,4 @@
         </section>
     </div>
 </x-member-layout>
+
