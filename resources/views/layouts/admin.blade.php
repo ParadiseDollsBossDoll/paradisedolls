@@ -89,6 +89,7 @@
         ? __('Profile')
         : (collect($links)->firstWhere('active', true)['label'] ?? __('Overview')));
 @endphp
+@php $siteTheme = \App\Models\SiteSetting::get('theme', ['mode'=>'dark','primary'=>'#EEB4C3','primaryLight'=>'#F3C3CF']); @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
@@ -97,7 +98,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ isset($title) ? $title.' - '.config('app.name') : config('app.name') }}</title>
         <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
-        <script>(function(){function applyVars(s){var h=document.documentElement;h.classList.toggle('light-mode',s.mode==='light');if(s.primary){h.style.setProperty('--pd-primary',s.primary);h.style.setProperty('--pd-gold',s.primary);}if(s.primaryLight){h.style.setProperty('--pd-primary-hover',s.primaryLight);h.style.setProperty('--pd-gold-light',s.primaryLight);}}try{var s=JSON.parse(localStorage.getItem('pd-theme-v2')||'null');if(!s){var old=localStorage.getItem('pd-theme');s={mode:old==='light'?'light':'dark',primary:'#EEB4C3',primaryLight:'#F3C3CF'};}applyVars(s);}catch(e){applyVars({mode:'light',primary:'#EEB4C3',primaryLight:'#F3C3CF'});}window.pdApplyTheme=function(s){applyVars(s);localStorage.setItem('pd-theme-v2',JSON.stringify(s));};window.pdToggleTheme=function(){try{var s=JSON.parse(localStorage.getItem('pd-theme-v2')||'{}');s.mode=document.documentElement.classList.toggle('light-mode')?'light':'dark';localStorage.setItem('pd-theme-v2',JSON.stringify(s));}catch(e){};};}());</script>
+        <script>(function(){function hRgb(h){return parseInt(h.slice(1,3),16)+' '+parseInt(h.slice(3,5),16)+' '+parseInt(h.slice(5,7),16);}function lum(h){var r=parseInt(h.slice(1,3),16)/255,g=parseInt(h.slice(3,5),16)/255,b=parseInt(h.slice(5,7),16)/255;return 0.2126*r+0.7152*g+0.0722*b;}function applyVars(s){var h=document.documentElement;h.classList.toggle('light-mode',s.mode==='light');if(s.primary){var p=s.primary,pl=s.primaryLight||p;h.style.setProperty('--pd-primary',p);h.style.setProperty('--pd-gold',p);h.style.setProperty('--pd-gold-rgb',hRgb(p));h.style.setProperty('--pd-gold-light-rgb',hRgb(pl));h.style.setProperty('--pd-gold-hover-rgb',hRgb(pl));h.style.setProperty('--pd-primary-hover',pl);h.style.setProperty('--pd-gold-light',pl);h.style.setProperty('--pd-primary-on',lum(p)>0.35?'#09070A':'#FFF8F6');}}try{applyVars(@json($siteTheme));}catch(e){applyVars({mode:'dark',primary:'#EEB4C3',primaryLight:'#F3C3CF'});}window.pdApplyTheme=function(s){applyVars(s);};}());</script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased pd-dark-surface min-h-screen" x-data="{ sidebarOpen: false }">
@@ -162,7 +163,7 @@
                             @endif
                             <span class="flex-1">{{ $link['label'] }}</span>
                             @if ($link['count'] > 0)
-                                <span class="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-[#EEB4C3] px-1 text-[0.52rem] font-bold text-[#09070A]">{{ $link['count'] }}</span>
+                                <span class="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-boss-gold px-1 text-[0.52rem] font-bold text-[#09070A]">{{ $link['count'] }}</span>
                             @endif
                         </a>
                     @endforeach

@@ -17,14 +17,15 @@ export default {
             },
             colors: {
                 boss: {
-                    // Legacy aliases — updated to blush-pink brand palette
-                    gold: '#EEB4C3',
-                    'gold-light': '#F3C3CF',
-                    'gold-hover': '#DFA1B4',
+                    // Dynamic theme colors — resolved via CSS variables at runtime
+                    gold:         'rgb(var(--pd-gold-rgb) / <alpha-value>)',
+                    'gold-light': 'rgb(var(--pd-gold-light-rgb) / <alpha-value>)',
+                    'gold-hover': 'rgb(var(--pd-gold-hover-rgb) / <alpha-value>)',
+                    // Static brand colors — not affected by theme picker
                     pink: '#F7D6E0',
                     rose: '#C4687A',
                     dark: '#09070A',
-                    ink: '#09070A',
+                    ink:  '#09070A',
                     panel: '#171016',
                     'panel-strong': '#21161D',
                     ivory: '#FFF8F6',
@@ -34,7 +35,7 @@ export default {
             },
             boxShadow: {
                 luxe: '0 22px 60px rgba(9, 7, 10, 0.22)',
-                glow: '0 0 38px rgba(238, 180, 195, 0.18)',
+                glow: '0 0 38px rgb(var(--pd-gold-rgb) / 0.18)',
             },
         },
     },

@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\AdminModelProgressController;
 use App\Http\Controllers\Admin\AdminModuleController;
 use App\Http\Controllers\Admin\AdminOnboardingController;
 use App\Http\Controllers\Admin\AdminReferralController;
+use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminTestimonialController;
 use App\Http\Controllers\Admin\BunnyVideoController;
 use App\Http\Controllers\ApplyController;
@@ -142,6 +143,7 @@ Route::middleware(['auth', 'verified'])->prefix('notifications')->name('notifica
 
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
+    Route::post('/settings/theme', [AdminSettingsController::class, 'updateTheme'])->name('settings.theme');
 
     // ── Autosave endpoints (higher rate limit, JSON responses) ───────────────
     // These fire on every change; keep them outside the strict throttle:admin-actions group.

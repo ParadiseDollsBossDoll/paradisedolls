@@ -33,7 +33,7 @@
                     <div class="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
                         <x-input-label :value="__('Profile photo')" />
                         <div class="mt-3 flex items-center gap-3">
-                            <div class="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#EEB4C3]/25 bg-[#EEB4C3]/10 text-[0.72rem] font-semibold text-[#EEB4C3]">
+                            <div class="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-boss-gold/25 bg-boss-gold/10 text-[0.72rem] font-semibold text-boss-gold">
                                 <span>{{ auth()->user()->initials() }}</span>
                                 @if ($profilePhotoUrl)
                                     <img src="{{ $profilePhotoUrl }}" alt="" class="absolute inset-0 h-full w-full object-cover">
@@ -41,7 +41,7 @@
                             </div>
                             <div class="min-w-0">
                                 <p class="text-[0.82rem] text-boss-ivory/70">{{ __('This will be used as your testimonial avatar.') }}</p>
-                                <a href="{{ route('profile.edit') }}" class="mt-1 inline-flex text-[0.7rem] text-[#EEB4C3] hover:text-[#F3C3CF]">{{ __('Change profile photo') }} -></a>
+                                <a href="{{ route('profile.edit') }}" class="mt-1 inline-flex text-[0.7rem] text-boss-gold hover:text-boss-gold-light">{{ __('Change profile photo') }} -></a>
                             </div>
                         </div>
                     </div>
@@ -101,7 +101,7 @@
                             <p class="mt-1 truncate text-[0.7rem] text-boss-ivory/30">{{ $testimonial->displayHandle() }}</p>
                             <p class="mt-2 line-clamp-3 text-[0.75rem] leading-relaxed text-boss-ivory/35">{{ $testimonial->quote }}</p>
                             @if ($testimonial->result_label)
-                                <p class="mt-2 truncate text-[0.7rem] text-[#EEB4C3]">{{ '#'.ltrim($testimonial->result_label, '#') }}</p>
+                                <p class="mt-2 truncate text-[0.7rem] text-boss-gold">{{ '#'.ltrim($testimonial->result_label, '#') }}</p>
                             @endif
                         </div>
                     @empty

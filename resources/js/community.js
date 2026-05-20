@@ -133,7 +133,7 @@ document.addEventListener('alpine:init', () => {
         shellDrawerOpen: false,
         channelDrawerOpen: false,
         membersDrawerOpen: false,
-        membersOpen: true,
+        membersOpen: false,
         channelModalOpen: false,
         channelSyncTimer: null,
         loadingMessages: false,

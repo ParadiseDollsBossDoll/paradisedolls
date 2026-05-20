@@ -152,9 +152,9 @@
 
         {{-- ── Preview banner ─────────────────────────────────────────────── --}}
         @if ($previewMode)
-            <div class="flex shrink-0 flex-col gap-3 border-b border-[#EEB4C3]/20 bg-[#EEB4C3]/[0.06] px-5 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex shrink-0 flex-col gap-3 border-b border-boss-gold/20 bg-boss-gold/[0.06] px-5 py-2.5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <p class="text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-[#EEB4C3]/70">{{ __('Preview Mode') }}</p>
+                    <p class="text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-boss-gold/70">{{ __('Preview Mode') }}</p>
                     <p class="text-[0.72rem] text-boss-ivory/40">{{ __('Progress, enrollment and analytics are disabled in this admin preview.') }}</p>
                 </div>
                 <a href="{{ $previewExitUrl ?: route('admin.courses.edit', $course) }}" class="pd-btn-secondary self-start shrink-0 sm:self-auto">{{ __('Exit Preview') }}</a>
@@ -195,9 +195,9 @@
 
             {{-- Breadcrumb --}}
             <div class="hidden min-w-0 items-center gap-1.5 text-[0.63rem] text-boss-ivory/28 sm:flex">
-                <a href="{{ $academyUrl }}" class="shrink-0 transition-colors hover:text-[#EEB4C3]">{{ $previewMode ? __('Edit') : __('Academy') }}</a>
+                <a href="{{ $academyUrl }}" class="shrink-0 transition-colors hover:text-boss-gold">{{ $previewMode ? __('Edit') : __('Academy') }}</a>
                 <span class="opacity-40">/</span>
-                <a href="{{ $courseOverviewUrl }}" class="max-w-[140px] truncate transition-colors hover:text-[#EEB4C3]">{{ $course->title }}</a>
+                <a href="{{ $courseOverviewUrl }}" class="max-w-[140px] truncate transition-colors hover:text-boss-gold">{{ $course->title }}</a>
                 <span class="opacity-40">/</span>
             </div>
 
@@ -209,7 +209,7 @@
                 <div class="min-w-[120px]">
                     <div class="mb-1 flex items-center justify-between text-[0.58rem] text-boss-ivory/28">
                         <span>{{ $progress['completed'] }}/{{ $progress['total'] }}</span>
-                        <span class="text-[#EEB4C3]">{{ $progress['percent'] }}%</span>
+                        <span class="text-boss-gold">{{ $progress['percent'] }}%</span>
                     </div>
                     <div class="pd-progress-track">
                         <div class="pd-progress-bar" style="width:{{ $progress['percent'] }}%"></div>
@@ -219,7 +219,7 @@
 
             @if ($communityUrl)
                 <a href="{{ $communityUrl }}"
-                   class="hidden shrink-0 items-center gap-1.5 rounded-md border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 text-[0.68rem] text-boss-ivory/45 transition-colors hover:border-[#EEB4C3]/25 hover:text-[#EEB4C3] sm:inline-flex">
+                   class="hidden shrink-0 items-center gap-1.5 rounded-md border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 text-[0.68rem] text-boss-ivory/45 transition-colors hover:border-boss-gold/25 hover:text-boss-gold sm:inline-flex">
                     <svg viewBox="0 0 16 16" class="h-3 w-3 fill-none stroke-current stroke-[1.6]"><path d="M14 10c0 1.1-.9 2-2 2H4l-3 3V4c0-1.1.9-2 2-2h9c1.1 0 2 .9 2 2v6z"/></svg>
                     {{ __('Community') }}
                 </a>
@@ -240,7 +240,7 @@
                     <span class="text-[0.57rem] uppercase tracking-[0.18em] text-boss-ivory/25">
                         {{ __('Course Outline') }}
                     </span>
-                    <span class="text-[0.6rem] text-[#EEB4C3]/60">{{ $progress['completed'] }}/{{ $progress['total'] }}</span>
+                    <span class="text-[0.6rem] text-boss-gold/60">{{ $progress['completed'] }}/{{ $progress['total'] }}</span>
                 </div>
 
                 {{-- Scrollable outline list --}}
@@ -249,12 +249,12 @@
                     {{-- Start Here --}}
                     @if ($hasCourseOutlineItem || $hasIntroItem)
                         <div class="mb-1 px-2.5">
-                            <p class="mb-1 px-1 pt-1 text-[0.55rem] uppercase tracking-[0.18em] text-[#EEB4C3]/50">{{ __('Start Here') }}</p>
+                            <p class="mb-1 px-1 pt-1 text-[0.55rem] uppercase tracking-[0.18em] text-boss-gold/50">{{ __('Start Here') }}</p>
                             @if ($hasCourseOutlineItem)
                                 @php $isCurrent = $selectedCourseItem === 'outline'; @endphp
                                 <a href="{{ $courseMaterialUrl('outline') }}"
-                                   class="flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-[0.71rem] transition-colors {{ $isCurrent ? 'border-[#EEB4C3]/20 bg-[#EEB4C3]/[0.07] text-boss-ivory' : 'border-transparent text-boss-ivory/42 hover:bg-white/[0.03] hover:text-boss-ivory/70' }}">
-                                    <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[0.48rem] {{ $isCurrent ? 'border-[#EEB4C3]/30 bg-[#EEB4C3]/10 text-[#EEB4C3]' : 'border-white/10 text-boss-ivory/22' }}">
+                                   class="flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-[0.71rem] transition-colors {{ $isCurrent ? 'border-boss-gold/20 bg-boss-gold/[0.07] text-boss-ivory' : 'border-transparent text-boss-ivory/42 hover:bg-white/[0.03] hover:text-boss-ivory/70' }}">
+                                    <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[0.48rem] {{ $isCurrent ? 'border-boss-gold/30 bg-boss-gold/10 text-boss-gold' : 'border-white/10 text-boss-ivory/22' }}">
                                         <svg viewBox="0 0 16 16" class="h-2.5 w-2.5 fill-none stroke-current stroke-[2]"><path d="M4 2h5.5L12 4.5V14H4V2z"/><path d="M9.5 2v2.5H12"/></svg>
                                     </span>
                                     <span class="min-w-0 flex-1 truncate">{{ __('Course Outline') }}</span>
@@ -263,8 +263,8 @@
                             @if ($hasIntroItem)
                                 @php $isCurrent = $selectedCourseItem === 'intro'; @endphp
                                 <a href="{{ $courseMaterialUrl('intro') }}"
-                                   class="mt-0.5 flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-[0.71rem] transition-colors {{ $isCurrent ? 'border-[#EEB4C3]/20 bg-[#EEB4C3]/[0.07] text-boss-ivory' : 'border-transparent text-boss-ivory/42 hover:bg-white/[0.03] hover:text-boss-ivory/70' }}">
-                                    <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[0.48rem] {{ $isCurrent ? 'border-[#EEB4C3]/30 bg-[#EEB4C3]/10 text-[#EEB4C3]' : 'border-white/10 text-boss-ivory/22' }}">
+                                   class="mt-0.5 flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-[0.71rem] transition-colors {{ $isCurrent ? 'border-boss-gold/20 bg-boss-gold/[0.07] text-boss-ivory' : 'border-transparent text-boss-ivory/42 hover:bg-white/[0.03] hover:text-boss-ivory/70' }}">
+                                    <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[0.48rem] {{ $isCurrent ? 'border-boss-gold/30 bg-boss-gold/10 text-boss-gold' : 'border-white/10 text-boss-ivory/22' }}">
                                         <svg viewBox="0 0 16 16" class="h-2.5 w-2.5 fill-none stroke-current stroke-[2]"><circle cx="8" cy="8" r="6"/><path d="M8 5v3.5L10 10"/></svg>
                                     </span>
                                     <span class="min-w-0 flex-1 truncate">{{ $course->intro_title ?: __('Introduction') }}</span>
@@ -325,8 +325,8 @@
                                                 $isCurrent = $selectedLesson && $selectedLesson->id === $lesson->id;
                                             @endphp
                                             <a href="{{ $lessonUrl($lesson) }}"
-                                               class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-[0.69rem] transition-colors {{ $isCurrent ? 'border-[#EEB4C3]/18 bg-[#EEB4C3]/[0.06] text-boss-ivory' : 'border-transparent text-boss-ivory/38 hover:bg-white/[0.025] hover:text-boss-ivory/65' }}">
-                                                <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border {{ $done ? 'border-emerald-400/40 bg-emerald-400 text-[#080808]' : ($isCurrent ? 'border-[#EEB4C3]/35 text-[#EEB4C3]' : 'border-white/[0.10] text-boss-ivory/15') }}">
+                                               class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-[0.69rem] transition-colors {{ $isCurrent ? 'border-boss-gold/18 bg-boss-gold/[0.06] text-boss-ivory' : 'border-transparent text-boss-ivory/38 hover:bg-white/[0.025] hover:text-boss-ivory/65' }}">
+                                                <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border {{ $done ? 'border-emerald-400/40 bg-emerald-400 text-[#080808]' : ($isCurrent ? 'border-boss-gold/35 text-boss-gold' : 'border-white/[0.10] text-boss-ivory/15') }}">
                                                     @if ($done)
                                                         <svg viewBox="0 0 16 16" class="h-2 w-2 fill-none stroke-current stroke-[3]"><path d="M3 8l3.5 3.5L13 5"/></svg>
                                                     @elseif ($isCurrent)
@@ -351,7 +351,7 @@
                             @foreach ($unassignedLessons as $lesson)
                                 @php $isCurrent = $selectedLesson && $selectedLesson->id === $lesson->id; @endphp
                                 <a href="{{ $lessonUrl($lesson) }}"
-                                   class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-[0.69rem] {{ $isCurrent ? 'border-[#EEB4C3]/18 bg-[#EEB4C3]/[0.06] text-boss-ivory' : 'border-transparent text-boss-ivory/38 hover:bg-white/[0.025] hover:text-boss-ivory/65' }}">
+                                   class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-[0.69rem] {{ $isCurrent ? 'border-boss-gold/18 bg-boss-gold/[0.06] text-boss-ivory' : 'border-transparent text-boss-ivory/38 hover:bg-white/[0.025] hover:text-boss-ivory/65' }}">
                                     <span class="min-w-0 flex-1 truncate">{{ $lesson->title }}</span>
                                 </a>
                             @endforeach
@@ -377,7 +377,7 @@
                                     class="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#08080f]"
                                 >
                                     <div x-show="loading && !error" class="flex items-center justify-center gap-3 bg-[#060610] py-16">
-                                        <svg class="h-5 w-5 animate-spin text-[#EEB4C3]/50" viewBox="0 0 24 24" fill="none">
+                                        <svg class="h-5 w-5 animate-spin text-boss-gold/50" viewBox="0 0 24 24" fill="none">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                                         </svg>
@@ -400,7 +400,7 @@
                                 <p class="pd-kicker">{{ __('Course Material') }}</p>
                                 <h2 class="mt-2 font-display text-[clamp(1.5rem,4vw,2rem)] font-semibold text-boss-ivory">{{ __('Course Outline / PDF Guide') }}</h2>
                                 <p class="mt-2 text-[0.85rem] text-boss-ivory/45">{{ $courseOutlineFileName }}</p>
-                                <a href="{{ $courseOutlineUrl }}" target="_blank" rel="noopener noreferrer" class="mt-5 inline-flex items-center gap-2 rounded-lg border border-[#EEB4C3]/28 bg-[#EEB4C3]/[0.10] px-5 py-2.5 text-[0.78rem] font-medium text-[#EEB4C3] transition-colors hover:bg-[#EEB4C3]/[0.18]">{{ __('Open Guide') }}</a>
+                                <a href="{{ $courseOutlineUrl }}" target="_blank" rel="noopener noreferrer" class="mt-5 inline-flex items-center gap-2 rounded-lg border border-boss-gold/28 bg-boss-gold/[0.10] px-5 py-2.5 text-[0.78rem] font-medium text-boss-gold transition-colors hover:bg-boss-gold/[0.18]">{{ __('Open Guide') }}</a>
                             </section>
 
                         {{-- ── INTRO ITEM ───────────────────────────────────── --}}
@@ -500,7 +500,7 @@
                                             <div class="grid gap-3 {{ count($lessonImageUrls) === 1 ? '' : 'sm:grid-cols-2' }}">
                                                 @foreach ($lessonImageUrls as $imageUrl)
                                                     <a href="{{ $imageUrl }}" target="_blank" rel="noopener"
-                                                       class="group overflow-hidden rounded-xl border border-white/[0.06] bg-[#08080f] transition-colors hover:border-[#EEB4C3]/20">
+                                                       class="group overflow-hidden rounded-xl border border-white/[0.06] bg-[#08080f] transition-colors hover:border-boss-gold/20">
                                                         <img src="{{ $imageUrl }}" alt="{{ $selectedLesson->title }} {{ $loop->iteration }}" class="aspect-[16/10] w-full object-cover transition duration-500 group-hover:scale-[1.03]">
                                                     </a>
                                                 @endforeach
@@ -513,7 +513,7 @@
                                                 <div class="space-y-2.5">
                                                     @foreach ($selectedLesson->stepItems() as $step)
                                                         <div class="flex gap-4 rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3.5">
-                                                            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EEB4C3] text-[0.62rem] font-bold text-boss-ink">{{ $loop->iteration }}</span>
+                                                            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-boss-gold text-[0.62rem] font-bold text-boss-ink">{{ $loop->iteration }}</span>
                                                             <p class="text-[0.9rem] leading-relaxed text-boss-ivory/62">{{ $step }}</p>
                                                         </div>
                                                     @endforeach
@@ -522,12 +522,12 @@
                                         @endif
 
                                         @if ($selectedLesson->tipItems() !== [])
-                                            <div class="rounded-xl border border-[#EEB4C3]/15 bg-[#EEB4C3]/[0.05] p-5">
-                                                <p class="mb-3 text-[0.62rem] uppercase tracking-[0.18em] text-[#EEB4C3]/65">{{ __('Important Tips') }}</p>
+                                            <div class="rounded-xl border border-boss-gold/15 bg-boss-gold/[0.05] p-5">
+                                                <p class="mb-3 text-[0.62rem] uppercase tracking-[0.18em] text-boss-gold/65">{{ __('Important Tips') }}</p>
                                                 <div class="space-y-2.5">
                                                     @foreach ($selectedLesson->tipItems() as $tip)
                                                         <div class="flex items-start gap-3">
-                                                            <span class="mt-[3px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[#EEB4C3]/30 bg-[#EEB4C3]/10 text-[0.55rem] text-[#EEB4C3]">✓</span>
+                                                            <span class="mt-[3px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-boss-gold/30 bg-boss-gold/10 text-[0.55rem] text-boss-gold">✓</span>
                                                             <p class="text-[0.88rem] leading-relaxed text-boss-ivory/65">{{ $tip }}</p>
                                                         </div>
                                                     @endforeach
@@ -571,7 +571,7 @@
                                             class="mb-4 overflow-hidden rounded-xl border border-white/[0.06] bg-[#08080f]"
                                         >
                                             <div x-show="loading && !error" class="flex items-center justify-center gap-3 bg-[#060610] py-16">
-                                                <svg class="h-5 w-5 animate-spin text-[#EEB4C3]/50" viewBox="0 0 24 24" fill="none">
+                                                <svg class="h-5 w-5 animate-spin text-boss-gold/50" viewBox="0 0 24 24" fill="none">
                                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
                                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                                                 </svg>
@@ -593,7 +593,7 @@
                                         <div class="grid gap-2 sm:grid-cols-2">
                                             @foreach ($lessonResourceItems as $resource)
                                                 <a href="{{ $resource['url'] }}" target="_blank" rel="noopener noreferrer"
-                                                   class="rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3 text-[0.82rem] text-boss-ivory/50 transition-colors hover:border-[#EEB4C3]/22 hover:text-[#EEB4C3]">
+                                                   class="rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3 text-[0.82rem] text-boss-ivory/50 transition-colors hover:border-boss-gold/22 hover:text-boss-gold">
                                                     {{ $resource['label'] }}
                                                 </a>
                                             @endforeach
@@ -640,7 +640,7 @@
                                             </button>
                                         @else
                                             <button type="submit" name="completed" value="1"
-                                                class="inline-flex items-center gap-2 rounded-lg border border-[#EEB4C3]/30 bg-[#EEB4C3]/[0.12] px-4 py-2 text-[0.73rem] font-medium text-[#EEB4C3] transition-colors hover:bg-[#EEB4C3]/[0.20]">
+                                                class="inline-flex items-center gap-2 rounded-lg border border-boss-gold/30 bg-boss-gold/[0.12] px-4 py-2 text-[0.73rem] font-medium text-boss-gold transition-colors hover:bg-boss-gold/[0.20]">
                                                 <svg viewBox="0 0 16 16" class="h-3 w-3 fill-none stroke-current stroke-[2.5]"><path d="M3 8l3.5 3.5L13 5"/></svg>
                                                 {{ __('Mark Complete') }}
                                             </button>
@@ -653,14 +653,14 @@
                             <div class="flex flex-wrap items-center gap-2">
                                 @if ($communityUrl)
                                     <a href="{{ $communityUrl }}"
-                                       class="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-[0.7rem] text-boss-ivory/40 transition-colors hover:border-[#EEB4C3]/20 hover:text-[#EEB4C3]">
+                                       class="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-[0.7rem] text-boss-ivory/40 transition-colors hover:border-boss-gold/20 hover:text-boss-gold">
                                         <svg viewBox="0 0 16 16" class="h-3 w-3 fill-none stroke-current stroke-[1.6]"><path d="M14 10c0 1.1-.9 2-2 2H4l-3 3V4c0-1.1.9-2 2-2h9c1.1 0 2 .9 2 2v6z"/></svg>
                                         <span class="hidden sm:inline">{{ __('Ask in Community') }}</span>
                                     </a>
                                 @endif
                                 @if ($nextEntry)
                                     <a href="{{ $nextEntry['url'] }}"
-                                       class="inline-flex items-center gap-1.5 rounded-lg border border-[#EEB4C3]/28 bg-[#EEB4C3]/[0.10] px-4 py-2 text-[0.73rem] font-medium text-[#EEB4C3] transition-colors hover:bg-[#EEB4C3]/[0.18]">
+                                       class="inline-flex items-center gap-1.5 rounded-lg border border-boss-gold/28 bg-boss-gold/[0.10] px-4 py-2 text-[0.73rem] font-medium text-boss-gold transition-colors hover:bg-boss-gold/[0.18]">
                                         <span>{{ $nextEntry['type'] === 'lesson' ? __('Next Lesson') : __('Next') }}</span>
                                         <svg viewBox="0 0 16 16" class="h-3 w-3 fill-none stroke-current stroke-[2]"><path d="M6 3l4 5-4 5"/></svg>
                                     </a>
@@ -700,7 +700,7 @@
                 <div class="flex shrink-0 items-center justify-between border-b border-white/[0.05] px-4 py-3.5">
                     <div>
                         <p class="text-[0.58rem] uppercase tracking-[0.18em] text-boss-ivory/25">{{ __('Course Outline') }}</p>
-                        <p class="text-[0.65rem] text-[#EEB4C3]/60">{{ $progress['completed'] }}/{{ $progress['total'] }} {{ __('done') }} · {{ $progress['percent'] }}%</p>
+                        <p class="text-[0.65rem] text-boss-gold/60">{{ $progress['completed'] }}/{{ $progress['total'] }} {{ __('done') }} · {{ $progress['percent'] }}%</p>
                     </div>
                     <button type="button" @click="mobileNav = false" class="flex h-7 w-7 items-center justify-center rounded-lg text-boss-ivory/40 transition-colors hover:text-boss-ivory">
                         <svg viewBox="0 0 16 16" class="h-4 w-4 fill-none stroke-current stroke-[2]"><path d="M3 3l10 10M13 3L3 13"/></svg>
@@ -711,18 +711,18 @@
                     {{-- Start Here (mobile) --}}
                     @if ($hasCourseOutlineItem || $hasIntroItem)
                         <div class="mb-1 px-2.5">
-                            <p class="mb-1 px-1 pt-1 text-[0.55rem] uppercase tracking-[0.18em] text-[#EEB4C3]/50">{{ __('Start Here') }}</p>
+                            <p class="mb-1 px-1 pt-1 text-[0.55rem] uppercase tracking-[0.18em] text-boss-gold/50">{{ __('Start Here') }}</p>
                             @if ($hasCourseOutlineItem)
                                 @php $isCurrent = $selectedCourseItem === 'outline'; @endphp
                                 <a href="{{ $courseMaterialUrl('outline') }}" @click="mobileNav = false"
-                                   class="flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-[0.71rem] {{ $isCurrent ? 'border-[#EEB4C3]/20 bg-[#EEB4C3]/[0.07] text-boss-ivory' : 'border-transparent text-boss-ivory/42' }}">
+                                   class="flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-[0.71rem] {{ $isCurrent ? 'border-boss-gold/20 bg-boss-gold/[0.07] text-boss-ivory' : 'border-transparent text-boss-ivory/42' }}">
                                     <span class="min-w-0 flex-1 truncate">{{ __('Course Outline') }}</span>
                                 </a>
                             @endif
                             @if ($hasIntroItem)
                                 @php $isCurrent = $selectedCourseItem === 'intro'; @endphp
                                 <a href="{{ $courseMaterialUrl('intro') }}" @click="mobileNav = false"
-                                   class="mt-0.5 flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-[0.71rem] {{ $isCurrent ? 'border-[#EEB4C3]/20 bg-[#EEB4C3]/[0.07] text-boss-ivory' : 'border-transparent text-boss-ivory/42' }}">
+                                   class="mt-0.5 flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-[0.71rem] {{ $isCurrent ? 'border-boss-gold/20 bg-boss-gold/[0.07] text-boss-ivory' : 'border-transparent text-boss-ivory/42' }}">
                                     <span class="min-w-0 flex-1 truncate">{{ $course->intro_title ?: __('Introduction') }}</span>
                                 </a>
                             @endif
@@ -772,8 +772,8 @@
                                                 $isCurrent = $selectedLesson && $selectedLesson->id === $lesson->id;
                                             @endphp
                                             <a href="{{ $lessonUrl($lesson) }}" @click="mobileNav = false"
-                                               class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-[0.69rem] {{ $isCurrent ? 'border-[#EEB4C3]/18 bg-[#EEB4C3]/[0.06] text-boss-ivory' : 'border-transparent text-boss-ivory/38' }}">
-                                                <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border {{ $done ? 'border-emerald-400/40 bg-emerald-400 text-[#080808]' : ($isCurrent ? 'border-[#EEB4C3]/35 text-[#EEB4C3]' : 'border-white/[0.10] text-boss-ivory/15') }}">
+                                               class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-[0.69rem] {{ $isCurrent ? 'border-boss-gold/18 bg-boss-gold/[0.06] text-boss-ivory' : 'border-transparent text-boss-ivory/38' }}">
+                                                <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border {{ $done ? 'border-emerald-400/40 bg-emerald-400 text-[#080808]' : ($isCurrent ? 'border-boss-gold/35 text-boss-gold' : 'border-white/[0.10] text-boss-ivory/15') }}">
                                                     @if ($done)
                                                         <svg viewBox="0 0 16 16" class="h-2 w-2 fill-none stroke-current stroke-[3]"><path d="M3 8l3.5 3.5L13 5"/></svg>
                                                     @elseif ($isCurrent)

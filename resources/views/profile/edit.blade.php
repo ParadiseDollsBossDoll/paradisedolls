@@ -3,6 +3,7 @@
     $profilePhotoUrl = $user->profilePhotoUrl();
     $isAdmin         = $user->isAdmin();
     $roleLabel       = $isAdmin ? __('Administrator') : __('Paradise Dolls Member');
+    $siteTheme       = \App\Models\SiteSetting::get('theme', ['mode'=>'dark','primary'=>'#EEB4C3','primaryLight'=>'#F3C3CF','preset'=>'pink-light']);
 @endphp
 
 <div class="space-y-5 text-boss-ivory">
@@ -64,12 +65,12 @@
 
             {{-- Avatar --}}
             <button type="button" @click="$refs.photoInput.click()"
-                class="group relative mx-auto h-[84px] w-[84px] shrink-0 cursor-pointer rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EEB4C3] sm:mx-0"
+                class="group relative mx-auto h-[84px] w-[84px] shrink-0 cursor-pointer rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-boss-gold sm:mx-0"
                 :title="previewUrl ? '{{ __('Change photo') }}' : '{{ __('Upload photo') }}'">
                 <div class="absolute inset-0 rounded-2xl p-[2px]"
-                     :class="selected ? 'bg-gradient-to-br from-[#EEB4C3] to-[#C4687A]' : 'bg-gradient-to-br from-[rgba(238,180,195,0.4)] to-[rgba(196,104,122,0.2)]'">
+                     :class="selected ? 'bg-gradient-to-br from-boss-gold to-[#C4687A]' : 'bg-gradient-to-br from-[rgba(238,180,195,0.4)] to-[rgba(196,104,122,0.2)]'">
                     <div class="pd-avatar-inner flex h-full w-full items-center justify-center rounded-[14px]">
-                        <span class="font-display text-2xl font-semibold text-[#EEB4C3]">{{ $user->initials() }}</span>
+                        <span class="font-display text-2xl font-semibold text-boss-gold">{{ $user->initials() }}</span>
                     </div>
                 </div>
                 <img x-show="previewUrl" :src="previewUrl" alt=""
@@ -96,14 +97,14 @@
             {{-- Photo actions --}}
             <div class="flex flex-wrap items-center justify-center gap-2 sm:flex-col sm:flex-nowrap sm:items-end sm:justify-start">
                 <button type="button" @click="$refs.photoInput.click()"
-                    class="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.09] bg-white/[0.04] px-3.5 py-2 text-[0.72rem] text-boss-ivory/55 transition-all hover:border-[rgba(238,180,195,0.28)] hover:bg-[rgba(238,180,195,0.08)] hover:text-[#EEB4C3]">
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.09] bg-white/[0.04] px-3.5 py-2 text-[0.72rem] text-boss-ivory/55 transition-all hover:border-[rgba(238,180,195,0.28)] hover:bg-[rgba(238,180,195,0.08)] hover:text-boss-gold">
                     <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[1.5]">
                         <path d="M8 2v8M5 5l3-3 3 3"/><path d="M3 11v1a2 2 0 002 2h6a2 2 0 002-2v-1"/>
                     </svg>
                     <span x-text="previewUrl ? '{{ __('Change Photo') }}' : '{{ __('Upload Photo') }}'"></span>
                 </button>
                 <button type="submit" x-show="selected" x-cloak :disabled="saving"
-                    class="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(238,180,195,0.33)] bg-[rgba(238,180,195,0.11)] px-3.5 py-2 text-[0.72rem] text-[#EEB4C3] transition-all hover:bg-[rgba(238,180,195,0.18)] disabled:opacity-50">
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(238,180,195,0.33)] bg-[rgba(238,180,195,0.11)] px-3.5 py-2 text-[0.72rem] text-boss-gold transition-all hover:bg-[rgba(238,180,195,0.18)] disabled:opacity-50">
                     <svg x-show="saving" class="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
                         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="32" stroke-dashoffset="12"/>
                     </svg>
@@ -157,7 +158,8 @@
 
     </div>
 
-    {{-- ── Paradise Theme Customizer ───────────────────────────────── --}}
+    {{-- ── Paradise Theme Customizer (admin only) ─────────────────── --}}
+    @if($isAdmin)
     <div class="overflow-hidden rounded-2xl border border-white/[0.07] pd-inner-card-bg"
          x-data="pdThemeCustomizer()"
          x-init="init()">
@@ -190,7 +192,7 @@
                             @click="selectPreset(preset)"
                             class="flex items-center gap-2.5 rounded-xl border p-3 text-left transition-all duration-150"
                             :class="active === preset.id
-                                ? 'border-[var(--pd-primary)] bg-[rgba(238,180,195,0.12)]'
+                                ? 'border-boss-gold bg-[rgba(238,180,195,0.12)]'
                                 : 'border-white/[0.08] bg-white/[0.025] hover:border-white/[0.16] hover:bg-white/[0.05]'"
                         >
                             <div class="flex shrink-0 gap-1">
@@ -243,17 +245,19 @@
 
             {{-- Actions --}}
             <div class="flex flex-wrap items-center gap-3">
-                <button type="button" @click="save()" class="pd-btn-primary rounded-lg px-5 py-2.5 text-[0.74rem]">
+                <button type="button" @click="save()" :disabled="savingTheme" class="pd-btn-primary rounded-lg px-5 py-2.5 text-[0.74rem] disabled:cursor-not-allowed disabled:opacity-60">
                     <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[2]"><path d="M3 8.5l3.5 3.5L13 5"/></svg>
-                    <span x-text="saved ? '{{ __('Saved!') }}' : '{{ __('Save Theme') }}'"></span>
+                    <span x-text="savingTheme ? '{{ __('Saving...') }}' : (saved ? '{{ __('Saved!') }}' : '{{ __('Save Theme') }}')"></span>
                 </button>
                 <button type="button" @click="resetDefault()" class="pd-btn-secondary rounded-lg px-5 py-2.5 text-[0.74rem]">
                     {{ __('Reset to Default') }}
                 </button>
             </div>
+            <p x-show="themeError" x-cloak class="text-[0.76rem] text-red-300" x-text="themeError"></p>
 
         </div>
     </div>
+    @endif
 
     <script>
     function pdThemeCustomizer() {
@@ -271,17 +275,18 @@
             primary:      '#EEB4C3',
             primaryLight: '#F3C3CF',
             saved:        false,
+            savingTheme:  false,
+            themeError:   '',
 
             init() {
-                try {
-                    var s = JSON.parse(localStorage.getItem('pd-theme-v2') || 'null');
-                    if (s) {
-                        if (s.preset)       this.active       = s.preset;
-                        if (s.mode)         this.mode         = s.mode;
-                        if (s.primary)      this.primary      = s.primary;
-                        if (s.primaryLight) this.primaryLight = s.primaryLight;
-                    }
-                } catch(e) {}
+                // Load the current global theme from the server (DB-backed)
+                var s = @json($siteTheme);
+                if (s) {
+                    if (s.preset)       this.active       = s.preset;
+                    if (s.mode)         this.mode         = s.mode;
+                    if (s.primary)      this.primary      = s.primary;
+                    if (s.primaryLight) this.primaryLight = s.primaryLight;
+                }
             },
 
             get isCustom() {
@@ -320,10 +325,39 @@
                 });
             },
 
-            save() {
+            async save() {
                 this.applyLive();
-                this.saved = true;
-                setTimeout(() => this.saved = false, 2200);
+                this.saved = false;
+                this.themeError = '';
+                this.savingTheme = true;
+
+                try {
+                    const response = await fetch('{{ route('admin.settings.theme') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                        },
+                        body: JSON.stringify({
+                            preset:       this.active,
+                            mode:         this.mode,
+                            primary:      this.primary,
+                            primaryLight: this.primaryLight,
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('{{ __('The theme could not be saved. Please refresh and try again.') }}');
+                    }
+
+                    this.saved = true;
+                    setTimeout(() => this.saved = false, 2200);
+                } catch (error) {
+                    this.themeError = error.message || '{{ __('The theme could not be saved. Please refresh and try again.') }}';
+                } finally {
+                    this.savingTheme = false;
+                }
             },
 
             resetDefault() {
@@ -337,12 +371,14 @@
     }
     </script>
 
-    {{-- ── Danger zone ──────────────────────────────────────────────── --}}
-    <div class="overflow-hidden rounded-2xl border {{ $isAdmin ? 'border-white/[0.05]' : 'border-red-500/13' }} pd-inner-card-bg">
-        <div class="p-5 sm:p-6">
-            @include('profile.partials.delete-user-form')
+    @unless($isAdmin)
+        {{-- ── Danger zone ──────────────────────────────────────────────── --}}
+        <div class="overflow-hidden rounded-2xl border border-red-500/13 pd-inner-card-bg">
+            <div class="p-5 sm:p-6">
+                @include('profile.partials.delete-user-form')
+            </div>
         </div>
-    </div>
+    @endunless
 
 </div>
 </x-dynamic-component>

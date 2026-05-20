@@ -74,7 +74,7 @@
         })"
     >
         <header class="flex items-center gap-4">
-            <a href="{{ route('admin.courses.index') }}" class="rounded-xl border border-white/[0.07] bg-white/[0.04] px-3 py-2 text-[0.78rem] text-boss-ivory/45 transition-colors hover:text-[#EEB4C3]">
+            <a href="{{ route('admin.courses.index') }}" class="rounded-xl border border-white/[0.07] bg-white/[0.04] px-3 py-2 text-[0.78rem] text-boss-ivory/45 transition-colors hover:text-boss-gold">
                 &larr; {{ __('Courses') }}
             </a>
             <div>
@@ -100,7 +100,7 @@
                 <div class="border-b border-white/[0.05] bg-white/[0.01] px-5 py-3">
                     <div class="flex items-center gap-2.5">
                         <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[0.6rem] font-bold" x-bind:style="`background-color: ${platformColor}25; color: ${platformColor};`">1</span>
-                        <p class="pd-heading text-[0.9rem] text-[#EEB4C3]">{{ __('Course Details') }}</p>
+                        <p class="pd-heading text-[0.9rem] text-boss-gold">{{ __('Course Details') }}</p>
                     </div>
                 </div>
 
@@ -119,7 +119,7 @@
                                 </div>
                                 <x-input-error class="mt-2" :messages="$errors->get('platform_label')" />
 
-                                <button type="button" @click="showSuggestions = !showSuggestions" class="mt-3 text-[0.68rem] text-boss-ivory/30 transition-colors hover:text-[#EEB4C3]">
+                                <button type="button" @click="showSuggestions = !showSuggestions" class="mt-3 text-[0.68rem] text-boss-ivory/30 transition-colors hover:text-boss-gold">
                                     <span x-text="showSuggestions ? '{{ __('Hide popular platform suggestions') }}' : '{{ __('Show popular platform suggestions') }}'"></span>
                                 </button>
 
@@ -155,7 +155,7 @@
                                             @click="platformColor = color"
                                         ></button>
                                     </template>
-                                    <input type="text" x-model="platformColor" class="w-24 rounded-lg border border-white/10 bg-white/[0.06] px-2.5 py-1.5 font-mono text-[0.72rem] text-boss-ivory focus:border-[#EEB4C3]/50 focus:outline-none" placeholder="#EEB4C3">
+                                    <input type="text" x-model="platformColor" class="w-24 rounded-lg border border-white/10 bg-white/[0.06] px-2.5 py-1.5 font-mono text-[0.72rem] text-boss-ivory focus:border-boss-gold/50 focus:outline-none" placeholder="#EEB4C3">
                                 </div>
                                 <x-input-error class="mt-2" :messages="$errors->get('platform_color')" />
                             </div>
@@ -172,26 +172,26 @@
                                 >
                                     {{-- Instant preview of newly selected image --}}
                                     <template x-if="previewSrc">
-                                        <div class="mb-2 overflow-hidden rounded-xl border border-[#EEB4C3]/25 bg-[#08080f]">
+                                        <div class="mb-2 overflow-hidden rounded-xl border border-boss-gold/25 bg-[#08080f]">
                                             <img :src="previewSrc" alt="" class="h-36 w-full object-cover">
                                             <div class="flex items-center justify-between gap-3 px-3 py-1.5">
-                                                <p class="text-[0.6rem] text-[#EEB4C3]/60">{{ __('New image selected — will replace current image on save') }}</p>
-                                                <button type="button" class="text-[0.6rem] text-boss-ivory/35 transition-colors hover:text-[#EEB4C3]" @click="previewSrc = null; fileLabel = ''; $refs.fileInput.value = ''">{{ __('Clear') }}</button>
+                                                <p class="text-[0.6rem] text-boss-gold/60">{{ __('New image selected — will replace current image on save') }}</p>
+                                                <button type="button" class="text-[0.6rem] text-boss-ivory/35 transition-colors hover:text-boss-gold" @click="previewSrc = null; fileLabel = ''; $refs.fileInput.value = ''">{{ __('Clear') }}</button>
                                             </div>
                                         </div>
                                     </template>
                                     <label
                                         for="course_cover_image_upload"
                                         class="flex min-h-[8rem] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-6 text-center transition-all duration-200"
-                                        :class="drag ? 'border-[#EEB4C3]/70 bg-[#EEB4C3]/[0.07]' : (previewSrc ? 'border-[#EEB4C3]/30 bg-[#EEB4C3]/[0.03]' : 'border-white/[0.10] bg-white/[0.025] hover:border-[#EEB4C3]/30 hover:bg-white/[0.035]')"
+                                        :class="drag ? 'border-boss-gold/70 bg-boss-gold/[0.07]' : (previewSrc ? 'border-boss-gold/30 bg-boss-gold/[0.03]' : 'border-white/[0.10] bg-white/[0.025] hover:border-boss-gold/30 hover:bg-white/[0.035]')"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
                                             class="h-7 w-7 transition-colors duration-200"
-                                            :class="drag ? 'text-[#EEB4C3]/80' : (previewSrc ? 'text-[#EEB4C3]/50' : 'text-boss-ivory/20')">
+                                            :class="drag ? 'text-boss-gold/80' : (previewSrc ? 'text-boss-gold/50' : 'text-boss-ivory/20')">
                                             <path d="M12 15V3m0 0l-4 4m4-4 4 4"/>
                                             <path d="M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2"/>
                                         </svg>
-                                        <span class="text-[0.58rem] font-semibold uppercase tracking-[0.15em] transition-colors duration-200" :class="drag ? 'text-[#EEB4C3]' : (previewSrc ? 'text-[#EEB4C3]/70' : 'text-[#EEB4C3]/55')">
+                                        <span class="text-[0.58rem] font-semibold uppercase tracking-[0.15em] transition-colors duration-200" :class="drag ? 'text-boss-gold' : (previewSrc ? 'text-boss-gold/70' : 'text-boss-gold/55')">
                                             <span x-text="previewSrc ? '{{ __('CHANGE IMAGE') }}' : '{{ __('DROP IMAGE HERE') }}'"></span>
                                         </span>
                                         <span class="text-[0.75rem] text-boss-ivory/42">{{ __('Drag and drop, or click to browse') }}</span>
@@ -289,8 +289,8 @@
                                 <x-input-error class="mt-2" :messages="$errors->get('course_access_requirements')" />
                             </div>
 
-                            <div class="rounded-xl border border-[#EEB4C3]/12 bg-[#EEB4C3]/[0.04] p-4">
-                                <p class="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#EEB4C3]/70">{{ __('Kayla Course Verification Process') }}</p>
+                            <div class="rounded-xl border border-boss-gold/12 bg-boss-gold/[0.04] p-4">
+                                <p class="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-boss-gold/70">{{ __('Kayla Course Verification Process') }}</p>
                                 <p class="mt-1 text-[0.68rem] leading-relaxed text-boss-ivory/32">{{ __('Set the website-specific process models must go through before this course can be unlocked.') }}</p>
 
                                 <div class="mt-4 grid gap-3 sm:grid-cols-2">
@@ -320,7 +320,7 @@
                             {{-- Published + Sort Order --}}
                             <div class="grid gap-4 sm:grid-cols-[1fr_160px] sm:items-end">
                                 <label for="is_published" class="flex items-start gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.03] p-3">
-                                    <input id="is_published" name="is_published" type="checkbox" value="1" class="mt-0.5 rounded border-white/15 bg-white/5 text-[#EEB4C3] focus:ring-[#EEB4C3]" {{ old('is_published') ? 'checked' : '' }}>
+                                    <input id="is_published" name="is_published" type="checkbox" value="1" class="mt-0.5 rounded border-white/15 bg-white/5 text-boss-gold focus:ring-boss-gold" {{ old('is_published') ? 'checked' : '' }}>
                                     <span>
                                         <span class="block text-[0.78rem] text-boss-ivory">{{ __('Published') }}</span>
                                         <span class="mt-0.5 block text-[0.68rem] text-boss-ivory/32">{{ __('Visible to approved members after saving.') }}</span>
@@ -344,7 +344,7 @@
                     <div class="flex items-center gap-2.5">
                         <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[0.6rem] font-bold" x-bind:style="`background-color: ${platformColor}25; color: ${platformColor};`">2</span>
                         <div>
-                            <p class="pd-heading text-[0.9rem] text-[#EEB4C3]">{{ __('Course Materials') }}</p>
+                            <p class="pd-heading text-[0.9rem] text-boss-gold">{{ __('Course Materials') }}</p>
                             <p class="mt-0.5 text-[0.65rem] text-boss-ivory/30">{{ __('Optional — members will see these before the lessons begin.') }}</p>
                         </div>
                     </div>
@@ -367,8 +367,8 @@
                             <label class="relative inline-flex cursor-pointer items-center">
                                 <input type="hidden" name="has_course_outline" value="0">
                                 <input type="checkbox" name="has_course_outline" value="1" x-model="hasCourseOutline" class="peer sr-only" {{ old('has_course_outline') ? 'checked' : '' }}>
-                                <div class="peer h-5 w-9 rounded-full border border-white/10 bg-white/[0.08] transition-colors peer-checked:border-[#EEB4C3]/40 peer-checked:bg-[#EEB4C3]/20"></div>
-                                <div class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white/30 transition-transform peer-checked:translate-x-4 peer-checked:bg-[#EEB4C3]"></div>
+                                <div class="peer h-5 w-9 rounded-full border border-white/10 bg-white/[0.08] transition-colors peer-checked:border-boss-gold/40 peer-checked:bg-boss-gold/20"></div>
+                                <div class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white/30 transition-transform peer-checked:translate-x-4 peer-checked:bg-boss-gold"></div>
                             </label>
                         </div>
 
@@ -395,8 +395,8 @@
                             <label class="relative inline-flex cursor-pointer items-center">
                                 <input type="hidden" name="has_intro" value="0">
                                 <input type="checkbox" name="has_intro" value="1" x-model="hasIntro" class="peer sr-only" {{ old('has_intro') ? 'checked' : '' }}>
-                                <div class="peer h-5 w-9 rounded-full border border-white/10 bg-white/[0.08] transition-colors peer-checked:border-[#EEB4C3]/40 peer-checked:bg-[#EEB4C3]/20"></div>
-                                <div class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white/30 transition-transform peer-checked:translate-x-4 peer-checked:bg-[#EEB4C3]"></div>
+                                <div class="peer h-5 w-9 rounded-full border border-white/10 bg-white/[0.08] transition-colors peer-checked:border-boss-gold/40 peer-checked:bg-boss-gold/20"></div>
+                                <div class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white/30 transition-transform peer-checked:translate-x-4 peer-checked:bg-boss-gold"></div>
                             </label>
                         </div>
 
@@ -432,17 +432,17 @@
                                                 </p>
                                                 <div x-show="uploads.intro" class="mt-2">
                                                     <div class="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                                                        <div class="h-full rounded-full bg-[#EEB4C3] transition-all" x-bind:style="`width: ${uploads.intro?.progress || 0}%`"></div>
+                                                        <div class="h-full rounded-full bg-boss-gold transition-all" x-bind:style="`width: ${uploads.intro?.progress || 0}%`"></div>
                                                     </div>
                                                     <p class="mt-1 text-[0.62rem]" x-bind:class="uploads.intro?.error ? 'text-red-300' : 'text-boss-ivory/32'" x-text="uploads.intro?.error || uploads.intro?.status"></p>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="mt-3 flex flex-wrap gap-2">
-                                            <button type="button" @click="openIntroBunnyPicker()" class="rounded-lg border border-[#EEB4C3]/20 bg-[#EEB4C3]/10 px-3 py-1.5 text-[0.68rem] text-[#EEB4C3] transition-colors hover:bg-[#EEB4C3]/15">
+                                            <button type="button" @click="openIntroBunnyPicker()" class="rounded-lg border border-boss-gold/20 bg-boss-gold/10 px-3 py-1.5 text-[0.68rem] text-boss-gold transition-colors hover:bg-boss-gold/15">
                                                 {{ __('Select Existing Bunny Video') }}
                                             </button>
-                                            <label class="cursor-pointer rounded-lg border border-white/[0.07] bg-white/[0.04] px-3 py-1.5 text-[0.68rem] text-boss-ivory/45 transition-colors hover:text-[#EEB4C3]">
+                                            <label class="cursor-pointer rounded-lg border border-white/[0.07] bg-white/[0.04] px-3 py-1.5 text-[0.68rem] text-boss-ivory/45 transition-colors hover:text-boss-gold">
                                                 {{ __('Upload New Bunny Video') }}
                                                 <input id="intro_bunny_video" type="file" accept="video/*" class="hidden" @change="uploadIntroBunnyVideo($event)">
                                             </label>
@@ -481,12 +481,12 @@
                     <div class="flex gap-1">
                         <button type="button" @click="activeSection = 'modules'"
                             class="rounded-lg border px-4 py-1.5 text-[0.75rem] font-medium transition-colors"
-                            :class="activeSection === 'modules' ? 'border-[#EEB4C3]/30 bg-[#EEB4C3]/[0.12] text-[#EEB4C3]' : 'border-white/[0.07] bg-white/[0.04] text-boss-ivory/45 hover:text-boss-ivory/75'">
+                            :class="activeSection === 'modules' ? 'border-boss-gold/30 bg-boss-gold/[0.12] text-boss-gold' : 'border-white/[0.07] bg-white/[0.04] text-boss-ivory/45 hover:text-boss-ivory/75'">
                             {{ __('Modules') }} <span class="opacity-60" x-text="`(${modules.length})`"></span>
                         </button>
                         <button type="button" @click="activeSection = 'lessons'; lessonModuleFilter = activeModuleKey(activeModuleTab); lessonMoveNotice = null; activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
                             class="rounded-lg border px-4 py-1.5 text-[0.75rem] font-medium transition-colors"
-                            :class="activeSection === 'lessons' ? 'border-[#EEB4C3]/30 bg-[#EEB4C3]/[0.12] text-[#EEB4C3]' : 'border-white/[0.07] bg-white/[0.04] text-boss-ivory/45 hover:text-boss-ivory/75'">
+                            :class="activeSection === 'lessons' ? 'border-boss-gold/30 bg-boss-gold/[0.12] text-boss-gold' : 'border-white/[0.07] bg-white/[0.04] text-boss-ivory/45 hover:text-boss-ivory/75'">
                             {{ __('Lessons') }} <span class="opacity-60" x-text="`(${lessonsForFilter(lessonModuleFilter).length}/${lessons.length})`"></span>
                         </button>
                     </div>
@@ -506,7 +506,7 @@
                             </button>
                         </template>
                         <button type="button" @click="addModule(); activeModuleTab = modules.length - 1; lessonModuleFilter = activeModuleKey(activeModuleTab); lessonMoveNotice = null; activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
-                            class="shrink-0 rounded-t-md px-3 py-2 text-[0.72rem] text-[#EEB4C3]/50 transition-colors hover:text-[#EEB4C3]">
+                            class="shrink-0 rounded-t-md px-3 py-2 text-[0.72rem] text-boss-gold/50 transition-colors hover:text-boss-gold">
                             + {{ __('Add Module') }}
                         </button>
                     </div>
@@ -530,13 +530,13 @@
                                         <button type="button"
                                             @click="moveModule(moduleIndex, -1); activeModuleTab = Math.max(0, activeModuleTab - 1); lessonModuleFilter = activeModuleKey(activeModuleTab); lessonMoveNotice = null; activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
                                             x-bind:disabled="moduleIndex === 0"
-                                            class="rounded border border-white/[0.06] bg-white/[0.03] px-2 py-1 text-[0.63rem] text-boss-ivory/35 transition-colors hover:text-[#EEB4C3] disabled:opacity-25">
+                                            class="rounded border border-white/[0.06] bg-white/[0.03] px-2 py-1 text-[0.63rem] text-boss-ivory/35 transition-colors hover:text-boss-gold disabled:opacity-25">
                                             &larr; {{ __('Left') }}
                                         </button>
                                         <button type="button"
                                             @click="moveModule(moduleIndex, 1); activeModuleTab = Math.min(modules.length - 1, activeModuleTab + 1); lessonModuleFilter = activeModuleKey(activeModuleTab); lessonMoveNotice = null; activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
                                             x-bind:disabled="moduleIndex === modules.length - 1"
-                                            class="rounded border border-white/[0.06] bg-white/[0.03] px-2 py-1 text-[0.63rem] text-boss-ivory/35 transition-colors hover:text-[#EEB4C3] disabled:opacity-25">
+                                            class="rounded border border-white/[0.06] bg-white/[0.03] px-2 py-1 text-[0.63rem] text-boss-ivory/35 transition-colors hover:text-boss-gold disabled:opacity-25">
                                             {{ __('Right') }} &rarr;
                                         </button>
                                         <button type="button"
@@ -560,7 +560,7 @@
                                     <input type="hidden" x-bind:name="`modules[${moduleIndex}][is_published]`" value="0">
                                     <input type="checkbox" value="1" x-model="module.is_published"
                                         x-bind:name="`modules[${moduleIndex}][is_published]`"
-                                        class="mt-0.5 rounded border-white/15 bg-white/5 text-[#EEB4C3] focus:ring-[#EEB4C3]">
+                                        class="mt-0.5 rounded border-white/15 bg-white/5 text-boss-gold focus:ring-boss-gold">
                                     <span>
                                         <span class="block text-[0.78rem] text-boss-ivory">{{ __('Published') }}</span>
                                         <span class="mt-0.5 block text-[0.68rem] text-boss-ivory/32">{{ __('Visible to enrolled members.') }}</span>
@@ -593,7 +593,7 @@
                     <div class="space-y-3 border-b border-white/[0.05] px-5 py-4">
                         <p class="text-[0.78rem] text-boss-ivory/55">
                             {{ __('Editing lessons for:') }}
-                            <span class="font-medium text-[#EEB4C3]" x-text="lessonFilterContext(lessonModuleFilter)"></span>
+                            <span class="font-medium text-boss-gold" x-text="lessonFilterContext(lessonModuleFilter)"></span>
                         </p>
                         <div class="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                             <template x-for="(module, moduleIndex) in modules" :key="module.client_key">
@@ -601,18 +601,18 @@
                                     @click="activeModuleTab = moduleIndex; lessonModuleFilter = module.client_key; lessonMoveNotice = null; activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
                                     x-bind:title="moduleContextLabel(module.client_key)"
                                     class="shrink-0 rounded-lg border px-3 py-1.5 text-[0.7rem] transition-colors"
-                                    :class="lessonModuleFilter === module.client_key ? 'border-[#EEB4C3]/30 bg-[#EEB4C3]/[0.12] text-[#EEB4C3]' : 'border-white/[0.07] bg-white/[0.035] text-boss-ivory/42 hover:text-boss-ivory/70'"
+                                    :class="lessonModuleFilter === module.client_key ? 'border-boss-gold/30 bg-boss-gold/[0.12] text-boss-gold' : 'border-white/[0.07] bg-white/[0.035] text-boss-ivory/42 hover:text-boss-ivory/70'"
                                     x-text="moduleLabel(moduleIndex)">
                                 </button>
                             </template>
                             <button type="button"
                                 @click="lessonModuleFilter = 'all'; lessonMoveNotice = null; activeLessonKey = firstLessonKeyForFilter(lessonModuleFilter)"
                                 class="shrink-0 rounded-lg border px-3 py-1.5 text-[0.7rem] transition-colors"
-                                :class="lessonModuleFilter === 'all' ? 'border-[#EEB4C3]/30 bg-[#EEB4C3]/[0.12] text-[#EEB4C3]' : 'border-white/[0.07] bg-white/[0.035] text-boss-ivory/42 hover:text-boss-ivory/70'">
+                                :class="lessonModuleFilter === 'all' ? 'border-boss-gold/30 bg-boss-gold/[0.12] text-boss-gold' : 'border-white/[0.07] bg-white/[0.035] text-boss-ivory/42 hover:text-boss-ivory/70'">
                                 {{ __('All Lessons') }}
                             </button>
                         </div>
-                        <p x-show="lessonMoveNotice" x-cloak class="rounded-lg border border-[#EEB4C3]/15 bg-[#EEB4C3]/[0.06] px-3 py-2 text-[0.72rem] text-[#EEB4C3]/80" x-text="lessonMoveNotice"></p>
+                        <p x-show="lessonMoveNotice" x-cloak class="rounded-lg border border-boss-gold/15 bg-boss-gold/[0.06] px-3 py-2 text-[0.72rem] text-boss-gold/80" x-text="lessonMoveNotice"></p>
                     </div>
 
                     {{-- Chrome-style lesson tabs --}}
@@ -627,7 +627,7 @@
                             </button>
                         </template>
                         <button type="button" @click="lessonMoveNotice = null; activeLessonKey = addLessonForFilter(lessonModuleFilter, activeModuleKey(activeModuleTab))"
-                            class="shrink-0 rounded-t-md px-3 py-2 text-[0.72rem] text-[#EEB4C3]/50 transition-colors hover:text-[#EEB4C3]">
+                            class="shrink-0 rounded-t-md px-3 py-2 text-[0.72rem] text-boss-gold/50 transition-colors hover:text-boss-gold">
                             + {{ __('Add Lesson') }}
                         </button>
                     </div>
@@ -635,7 +635,7 @@
                     {{-- Lesson forms — all in DOM (x-show preserves data), only active visible --}}
                     <div x-show="lessonsForFilter(lessonModuleFilter).length === 0" class="p-5 text-center">
                         <p class="text-[0.86rem] text-boss-ivory/45" x-text="isAllLessonsFilter(lessonModuleFilter) ? '{{ __('No lessons yet.') }}' : '{{ __('No lessons yet for this module.') }}'"></p>
-                        <button type="button" @click="lessonMoveNotice = null; activeLessonKey = addLessonForFilter(lessonModuleFilter, activeModuleKey(activeModuleTab))" class="mt-3 rounded-lg border border-[#EEB4C3]/20 bg-[#EEB4C3]/10 px-3 py-1.5 text-[0.72rem] text-[#EEB4C3] transition-colors hover:bg-[#EEB4C3]/15">
+                        <button type="button" @click="lessonMoveNotice = null; activeLessonKey = addLessonForFilter(lessonModuleFilter, activeModuleKey(activeModuleTab))" class="mt-3 rounded-lg border border-boss-gold/20 bg-boss-gold/10 px-3 py-1.5 text-[0.72rem] text-boss-gold transition-colors hover:bg-boss-gold/15">
                             + {{ __('Add Lesson') }}
                         </button>
                     </div>
@@ -688,7 +688,7 @@
                                     <input type="hidden" x-bind:name="`lessons[${index}][is_published]`" value="0">
                                     <input type="checkbox" value="1" x-model="lesson.is_published"
                                         x-bind:name="`lessons[${index}][is_published]`"
-                                        class="mt-0.5 rounded border-white/15 bg-white/5 text-[#EEB4C3] focus:ring-[#EEB4C3]">
+                                        class="mt-0.5 rounded border-white/15 bg-white/5 text-boss-gold focus:ring-boss-gold">
                                     <span>
                                         <span class="block text-[0.78rem] text-boss-ivory">{{ __('Published') }}</span>
                                         <span class="mt-0.5 block text-[0.68rem] text-boss-ivory/32">{{ __('Visible inside the course.') }}</span>

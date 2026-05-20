@@ -1,5 +1,6 @@
 @php
     $user = auth()->user();
+    $siteTheme = \App\Models\SiteSetting::get('theme', ['mode'=>'dark','primary'=>'#EEB4C3','primaryLight'=>'#F3C3CF']);
     $serverInitials = collect(explode(' ', $communityState['server']['name']))->map(fn ($part) => strtoupper(substr($part, 0, 1)))->take(2)->implode('');
     $profilePhotoUrl = $user->profilePhotoUrl();
 
@@ -64,6 +65,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ __('Community Chat').' - '.config('app.name') }}</title>
         <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+        <script>(function(){function hRgb(h){return parseInt(h.slice(1,3),16)+' '+parseInt(h.slice(3,5),16)+' '+parseInt(h.slice(5,7),16);}function lum(h){var r=parseInt(h.slice(1,3),16)/255,g=parseInt(h.slice(3,5),16)/255,b=parseInt(h.slice(5,7),16)/255;return 0.2126*r+0.7152*g+0.0722*b;}function applyVars(s){var h=document.documentElement;h.classList.toggle('light-mode',s.mode==='light');if(s.primary){var p=s.primary,pl=s.primaryLight||p;h.style.setProperty('--pd-primary',p);h.style.setProperty('--pd-gold',p);h.style.setProperty('--pd-gold-rgb',hRgb(p));h.style.setProperty('--pd-gold-light-rgb',hRgb(pl));h.style.setProperty('--pd-gold-hover-rgb',hRgb(pl));h.style.setProperty('--pd-primary-hover',pl);h.style.setProperty('--pd-gold-light',pl);h.style.setProperty('--pd-primary-on',lum(p)>0.35?'#09070A':'#FFF8F6');}}try{applyVars(@json($siteTheme));}catch(e){applyVars({mode:'dark',primary:'#EEB4C3',primaryLight:'#F3C3CF'});}window.pdApplyTheme=function(s){applyVars(s);};}());</script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="min-h-screen overflow-hidden bg-[#080808] text-[#f0ede8] font-sans antialiased">
@@ -96,13 +98,13 @@
                             </div>
                         </div>
                         @if ($sidebarProgress !== null)
-                            <div class="mt-2.5 border-t border-white/[0.06] pt-2.5">
+                            <div class="elysian-side-progress">
                                 <div class="mb-1.5 flex items-center justify-between">
-                                    <span class="text-[0.52rem] uppercase tracking-[0.12em] text-white/25">{{ __('Overall Progress') }}</span>
-                                    <span class="text-[0.6rem] font-semibold text-[#c9a96e]">{{ $sidebarProgress }}%</span>
+                                    <span>{{ __('Academy') }}</span>
+                                    <strong>{{ $sidebarProgress }}%</strong>
                                 </div>
-                                <div class="h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
-                                    <div class="h-full rounded-full bg-gradient-to-r from-[#c9a96e] to-[#e8c88a]" style="width: {{ $sidebarProgress }}%"></div>
+                                <div class="elysian-side-progress-track" aria-label="{{ __('Academy progress :percent%', ['percent' => $sidebarProgress]) }}">
+                                    <div style="width: {{ $sidebarProgress }}%"></div>
                                 </div>
                             </div>
                         @endif
@@ -435,10 +437,8 @@
                                         :class="pinnedPanelOpen ? 'bg-white/[0.08] text-[#c9a96e]' : 'text-white/30 hover:bg-white/[0.05] hover:text-white'"
                                         @click="pinnedPanelOpen = !pinnedPanelOpen"
                                         title="{{ __('Pinned messages') }}">
-                                        <svg viewBox="0 0 16 16" class="h-[15px] w-[15px] fill-none stroke-current stroke-[1.5]" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M8 2l2 2-3.5 3.5 1.5 1.5-4.5 4.5H2v-1.5l4.5-4.5L5 6.5z"/>
-                                            <path d="M13 1l2 2"/>
-                                            <path d="M1 15l3-3"/>
+                                        <svg viewBox="0 0 16 16" class="h-[15px] w-[15px] fill-current">
+                                            <path d="M9.828.722a.5.5 0 0 1 .354.146l4.95 4.95a.5.5 0 0 1 0 .707c-.48.48-1.072.588-1.503.588-.177 0-.335-.018-.46-.039l-3.134 3.134a5.927 5.927 0 0 1 .16 1.013c.046.702-.032 1.687-.72 2.375a.5.5 0 0 1-.707 0l-2.829-2.828-3.182 3.182c-.195.195-1.219.902-1.414.707-.195-.195.512-1.22.707-1.414l3.182-3.182-2.828-2.829a.5.5 0 0 1 0-.707c.688-.688 1.673-.767 2.375-.72a5.922 5.922 0 0 1 1.013.16l3.134-3.133a2.772 2.772 0 0 1-.04-.461c0-.43.108-1.022.589-1.503a.5.5 0 0 1 .353-.146z"/>
                                         </svg>
                                     </button>
 
@@ -456,9 +456,8 @@
                                         {{-- Panel header --}}
                                         <div class="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
                                             <div class="flex items-center gap-2">
-                                                <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[1.5] text-[#c9a96e]" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="M8 2l2 2-3.5 3.5 1.5 1.5-4.5 4.5H2v-1.5l4.5-4.5L5 6.5z"/>
-                                                    <path d="M1 15l3-3"/>
+                                                <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-current text-[#c9a96e]">
+                                                    <path d="M9.828.722a.5.5 0 0 1 .354.146l4.95 4.95a.5.5 0 0 1 0 .707c-.48.48-1.072.588-1.503.588-.177 0-.335-.018-.46-.039l-3.134 3.134a5.927 5.927 0 0 1 .16 1.013c.046.702-.032 1.687-.72 2.375a.5.5 0 0 1-.707 0l-2.829-2.828-3.182 3.182c-.195.195-1.219.902-1.414.707-.195-.195.512-1.22.707-1.414l3.182-3.182-2.828-2.829a.5.5 0 0 1 0-.707c.688-.688 1.673-.767 2.375-.72a5.922 5.922 0 0 1 1.013.16l3.134-3.133a2.772 2.772 0 0 1-.04-.461c0-.43.108-1.022.589-1.503a.5.5 0 0 1 .353-.146z"/>
                                                 </svg>
                                                 <span class="text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-white/50">{{ __('Pinned Messages') }}</span>
                                                 <span class="rounded-full bg-[#c9a96e]/15 px-2 py-0.5 text-[0.56rem] font-semibold text-[#c9a96e]" x-text="pinnedMessages().length"></span>
@@ -471,9 +470,8 @@
                                         {{-- Empty state --}}
                                         <template x-if="!pinnedMessages().length">
                                             <div class="px-4 py-8 text-center">
-                                                <svg viewBox="0 0 16 16" class="mx-auto mb-2 h-6 w-6 fill-none stroke-current stroke-[1.2] text-white/15" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="M8 2l2 2-3.5 3.5 1.5 1.5-4.5 4.5H2v-1.5l4.5-4.5L5 6.5z"/>
-                                                    <path d="M1 15l3-3"/>
+                                                <svg viewBox="0 0 16 16" class="mx-auto mb-2 h-6 w-6 fill-current text-white/15">
+                                                    <path d="M9.828.722a.5.5 0 0 1 .354.146l4.95 4.95a.5.5 0 0 1 0 .707c-.48.48-1.072.588-1.503.588-.177 0-.335-.018-.46-.039l-3.134 3.134a5.927 5.927 0 0 1 .16 1.013c.046.702-.032 1.687-.72 2.375a.5.5 0 0 1-.707 0l-2.829-2.828-3.182 3.182c-.195.195-1.219.902-1.414.707-.195-.195.512-1.22.707-1.414l3.182-3.182-2.828-2.829a.5.5 0 0 1 0-.707c.688-.688 1.673-.767 2.375-.72a5.922 5.922 0 0 1 1.013.16l3.134-3.133a2.772 2.772 0 0 1-.04-.461c0-.43.108-1.022.589-1.503a.5.5 0 0 1 .353-.146z"/>
                                                 </svg>
                                                 <p class="text-[0.75rem] text-white/28">{{ __('No pinned messages yet.') }}</p>
                                             </div>

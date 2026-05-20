@@ -66,7 +66,7 @@
             <div class="pd-dashboard-readiness-meter">
                 <div class="flex items-center justify-between text-[0.66rem] uppercase tracking-[0.12em] text-boss-ivory/30">
                     <span>{{ __('Readiness') }}</span>
-                    <span class="text-[#EEB4C3]">{{ $onboardingPercent }}%</span>
+                    <span class="text-boss-gold">{{ $onboardingPercent }}%</span>
                 </div>
                 <div class="pd-progress-track mt-2">
                     <div class="pd-progress-bar" style="width: {{ $onboardingPercent }}%"></div>
@@ -98,7 +98,7 @@
                 [__('Courses'), $dashboardStats['total_courses'], __('available now')],
             ] as $stat)
                 <div class="pd-stat pd-dashboard-stat">
-                    <p class="font-display text-[2rem] leading-none text-[#EEB4C3]">{{ $stat[1] }}</p>
+                    <p class="font-display text-[2rem] leading-none text-boss-gold">{{ $stat[1] }}</p>
                     <p class="mt-3 text-[0.7rem] uppercase tracking-[0.08em] text-boss-ivory/55">{{ $stat[0] }}</p>
                     <p class="mt-1 text-[0.64rem] text-boss-ivory/25">{{ $stat[2] }}</p>
                 </div>
@@ -108,7 +108,7 @@
         @if ($continueCourses->isNotEmpty())
             <section>
                 <div class="mb-4 flex items-center gap-3">
-                    <span class="h-4 w-1.5 rounded-full bg-gradient-to-b from-[#EEB4C3] to-[#F3C3CF]"></span>
+                    <span class="h-4 w-1.5 rounded-full bg-gradient-to-b from-boss-gold to-boss-gold-light"></span>
                     <h2 class="text-[0.7rem] uppercase tracking-[0.2em] text-boss-ivory/42">{{ __('Continue Learning') }}</h2>
                 </div>
                 <div class="grid gap-4 md:grid-cols-2">
@@ -117,9 +117,9 @@
                             $progress = $courseProgress[$course->id];
                             $image = $course->overviewImageUrl();
                         @endphp
-                        <a href="{{ route('member.courses.learn.show', $course->slug) }}" class="group pd-panel-strong overflow-hidden transition-all duration-300 hover:border-[#EEB4C3]/30 hover:shadow-glow">
-                            <div class="h-1 bg-[#EEB4C3]/30">
-                                <div class="h-full bg-gradient-to-r from-[#EEB4C3] to-[#F3C3CF]" style="width: {{ $progress['percent'] }}%"></div>
+                        <a href="{{ route('member.courses.learn.show', $course->slug) }}" class="group pd-panel-strong overflow-hidden transition-all duration-300 hover:border-boss-gold/30 hover:shadow-glow">
+                            <div class="h-1 bg-boss-gold/30">
+                                <div class="h-full bg-gradient-to-r from-boss-gold to-boss-gold-light" style="width: {{ $progress['percent'] }}%"></div>
                             </div>
                             @if ($image)
                                 <div class="relative h-28 overflow-hidden">
@@ -132,11 +132,11 @@
                                     <span class="pd-badge">{{ $course->platform_label ?: __('General') }}</span>
                                     <span class="text-[0.65rem] text-boss-ivory/30">{{ $progress['completed'] }}/{{ $progress['total'] }} {{ __('lessons') }}</span>
                                 </div>
-                                <h3 class="pd-heading text-[1.25rem] text-boss-ivory transition-colors group-hover:text-[#F3C3CF]">{{ $course->title }}</h3>
+                                <h3 class="pd-heading text-[1.25rem] text-boss-ivory transition-colors group-hover:text-boss-gold-light">{{ $course->title }}</h3>
                                 <p class="mt-3 line-clamp-2 text-[0.78rem] leading-relaxed text-boss-ivory/40">{{ $course->short_description ?: $course->description }}</p>
                                 <div class="mt-5 flex items-center justify-between">
-                                    <span class="text-[0.75rem] font-medium text-[#EEB4C3]">{{ __('Continue') }}</span>
-                                    <span class="font-display text-[#EEB4C3]">{{ $progress['percent'] }}%</span>
+                                    <span class="text-[0.75rem] font-medium text-boss-gold">{{ __('Continue') }}</span>
+                                    <span class="font-display text-boss-gold">{{ $progress['percent'] }}%</span>
                                 </div>
                             </div>
                         </a>
@@ -148,10 +148,10 @@
         <section>
             <div class="mb-4 flex items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
-                    <span class="h-4 w-1.5 rounded-full bg-gradient-to-b from-[#EEB4C3] to-[#F3C3CF]"></span>
+                    <span class="h-4 w-1.5 rounded-full bg-gradient-to-b from-boss-gold to-boss-gold-light"></span>
                     <h2 class="text-[0.7rem] uppercase tracking-[0.2em] text-boss-ivory/42">{{ __('All Courses') }}</h2>
                 </div>
-                <a href="{{ route('member.courses.index') }}" class="text-[0.72rem] text-[#EEB4C3] hover:text-[#F3C3CF]">{{ __('Browse all') }} -></a>
+                <a href="{{ route('member.courses.index') }}" class="text-[0.72rem] text-boss-gold hover:text-boss-gold-light">{{ __('Browse all') }} -></a>
             </div>
 
             <div class="overflow-hidden rounded-2xl border border-white/[0.05] bg-boss-panel">
@@ -160,10 +160,10 @@
                         $progress = $courseProgress[$course->id] ?? ['completed' => 0, 'total' => $course->lessons_count, 'percent' => 0];
                     @endphp
                     <a href="{{ route('member.courses.show', $course->slug) }}" class="group flex items-center gap-4 border-t border-white/[0.04] px-5 py-4 transition-colors first:border-t-0 hover:bg-white/[0.025]">
-                        <span class="h-2 w-2 shrink-0 rounded-full bg-[#EEB4C3] shadow-glow"></span>
+                        <span class="h-2 w-2 shrink-0 rounded-full bg-boss-gold shadow-glow"></span>
                         <div class="min-w-0 flex-1">
                             <div class="mb-2 flex items-center gap-2">
-                                <p class="truncate text-[0.88rem] text-boss-ivory transition-colors group-hover:text-[#F3C3CF]">{{ $course->title }}</p>
+                                <p class="truncate text-[0.88rem] text-boss-ivory transition-colors group-hover:text-boss-gold-light">{{ $course->title }}</p>
                                 @if ($progress['total'] > 0 && $progress['completed'] === $progress['total'])
                                     <span class="pd-badge">{{ __('Done') }}</span>
                                 @endif
@@ -174,7 +174,7 @@
                         </div>
                         <div class="flex shrink-0 items-center gap-3">
                             <span class="text-[0.72rem] text-boss-ivory/30">{{ $progress['completed'] }}/{{ $progress['total'] }}</span>
-                            <span class="min-w-10 text-right font-display text-[1rem] text-[#EEB4C3]">{{ $progress['percent'] }}%</span>
+                            <span class="min-w-10 text-right font-display text-[1rem] text-boss-gold">{{ $progress['percent'] }}%</span>
                         </div>
                     </a>
                 @empty
@@ -194,7 +194,7 @@
                         @php
                             $image = $course->overviewImageUrl();
                         @endphp
-                        <a href="{{ route('member.courses.show', $course->slug) }}" class="group rounded-2xl border border-white/[0.05] bg-boss-ink p-4 transition-colors hover:border-[#EEB4C3]/25">
+                        <a href="{{ route('member.courses.show', $course->slug) }}" class="group rounded-2xl border border-white/[0.05] bg-boss-ink p-4 transition-colors hover:border-boss-gold/25">
                             @if ($image)
                                 <div class="-mx-4 -mt-4 mb-4 h-24 overflow-hidden rounded-t-2xl">
                                     <img src="{{ $image }}" alt="{{ $course->title }}" loading="lazy" decoding="async" class="h-full w-full object-cover opacity-85 transition duration-500 group-hover:scale-105">
@@ -203,7 +203,7 @@
                             <span class="pd-badge">{{ $course->platform_label ?: __('General') }}</span>
                             <h3 class="pd-heading mt-3 text-[1rem] text-boss-ivory/65 transition-colors group-hover:text-boss-ivory">{{ $course->title }}</h3>
                             <p class="mt-2 text-[0.68rem] text-boss-ivory/25">{{ trans_choice(':count lesson|:count lessons', $course->lessons_count, ['count' => $course->lessons_count]) }}</p>
-                            <p class="mt-4 text-[0.72rem] text-boss-ivory/28 transition-colors group-hover:text-[#EEB4C3]">{{ __('Start course') }} -></p>
+                            <p class="mt-4 text-[0.72rem] text-boss-ivory/28 transition-colors group-hover:text-boss-gold">{{ __('Start course') }} -></p>
                         </a>
                     @endforeach
                 </div>

@@ -38,7 +38,7 @@
                     <div class="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-6 py-5">
                         <div class="flex items-center gap-4">
                             <div
-                                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#EEB4C3]/25 bg-[#EEB4C3]/10 font-display text-base text-[#EEB4C3]"
+                                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-boss-gold/25 bg-boss-gold/10 font-display text-base text-boss-gold"
                                 x-text="selected.name.charAt(0).toUpperCase()"
                             ></div>
                             <div>
@@ -65,7 +65,7 @@
                             <span
                                 class="rounded-full px-3 py-1 text-xs font-medium capitalize"
                                 :class="selected.status === 'pending'
-                                    ? 'bg-[#EEB4C3]/10 text-[#EEB4C3]'
+                                    ? 'bg-boss-gold/10 text-boss-gold'
                                     : (selected.status === 'approved'
                                         ? 'bg-green-400/10 text-green-300'
                                         : 'bg-red-400/10 text-red-300')"
@@ -80,7 +80,7 @@
                                 </span>
                             </template>
                             <template x-if="selected.referrer_name">
-                                <span class="rounded-full border border-[#EEB4C3]/15 bg-[#EEB4C3]/10 px-2.5 py-1 text-[0.65rem] text-[#EEB4C3]">
+                                <span class="rounded-full border border-boss-gold/15 bg-boss-gold/10 px-2.5 py-1 text-[0.65rem] text-boss-gold">
                                     Referred by <span x-text="selected.referrer_name"></span>
                                 </span>
                             </template>
@@ -118,10 +118,10 @@
                             </div>
                             <template x-if="selected.age_confirmed">
                                 <div class="mt-4 flex items-center gap-2 border-t border-white/[0.04] pt-4">
-                                    <svg class="h-3.5 w-3.5 text-[#EEB4C3]" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg class="h-3.5 w-3.5 text-boss-gold" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span class="text-xs text-[#EEB4C3]/80">18+ age confirmed</span>
+                                    <span class="text-xs text-boss-gold/80">18+ age confirmed</span>
                                 </div>
                             </template>
                         </div>
@@ -155,7 +155,7 @@
                                                 <span class="text-[0.65rem] text-boss-ivory/35" x-text="'Photo ' + (i + 1)"></span>
                                                 <a
                                                     :href="selected.photo_download_urls[i]"
-                                                    class="text-[0.65rem] text-[#EEB4C3] transition hover:text-[#F3C3CF]"
+                                                    class="text-[0.65rem] text-boss-gold transition hover:text-boss-gold-light"
                                                     download
                                                 >Download</a>
                                             </div>
@@ -203,7 +203,7 @@
                                 <template x-if="selected.mark_reward_paid_url">
                                     <form :action="selected.mark_reward_paid_url" method="POST">
                                         @csrf
-                                        <button type="submit" class="w-full rounded-xl border border-[#EEB4C3]/25 bg-[#EEB4C3]/10 px-4 py-2.5 text-sm font-semibold text-[#EEB4C3] transition hover:bg-[#EEB4C3] hover:text-boss-ink">
+                                        <button type="submit" class="w-full rounded-xl border border-boss-gold/25 bg-boss-gold/10 px-4 py-2.5 text-sm font-semibold text-boss-gold transition hover:bg-boss-gold hover:text-boss-ink">
                                             Mark Referral Reward Paid
                                         </button>
                                     </form>
@@ -259,7 +259,7 @@
                         <h2 class="mt-2 font-display text-2xl text-boss-ivory">{{ __('Referral Leads') }}</h2>
                         <p class="mt-2 text-sm text-boss-ivory/42">{{ __('Member-submitted referrals waiting to become applications.') }}</p>
                     </div>
-                    <span class="rounded-full border border-[#EEB4C3]/15 bg-[#EEB4C3]/[0.07] px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.14em] text-[#EEB4C3]">
+                    <span class="rounded-full border border-boss-gold/15 bg-boss-gold/[0.07] px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.14em] text-boss-gold">
                         {{ $referralLeads->count() }} {{ __('leads') }}
                     </span>
                 </div>
@@ -274,10 +274,10 @@
                                         {{ $lead->candidate_email ?? $lead->candidate_phone ?? $lead->candidate_social_handle }}
                                     </p>
                                     <p class="mt-2 text-[0.68rem] text-boss-ivory/32">
-                                        {{ __('Referred by') }} <span class="text-[#F3C3CF]">{{ $lead->referrer?->name }}</span>
+                                        {{ __('Referred by') }} <span class="text-boss-gold-light">{{ $lead->referrer?->name }}</span>
                                     </p>
                                     <div class="mt-3 flex flex-wrap gap-1.5">
-                                        <span class="rounded-full bg-[#EEB4C3]/10 px-2 py-0.5 text-[0.62rem] text-[#EEB4C3]">{{ $lead->statusLabel() }}</span>
+                                        <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.62rem] text-boss-gold">{{ $lead->statusLabel() }}</span>
                                         <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/38">{{ count($lead->photo_paths ?? []) }} {{ __('photos') }}</span>
                                         @if ($lead->candidate_social_handle)
                                             <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/38">{{ $lead->candidate_social_handle }}</span>
@@ -378,7 +378,7 @@
                             >
                                 <td class="align-middle">
                                     <div class="flex items-center gap-3">
-                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#EEB4C3]/20 bg-[#EEB4C3]/10 font-display text-[0.72rem] text-[#EEB4C3]">
+                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-boss-gold/20 bg-boss-gold/10 font-display text-[0.72rem] text-boss-gold">
                                             {{ strtoupper(substr($application->name, 0, 1)) }}
                                         </div>
                                         <div class="min-w-0">
@@ -392,7 +392,7 @@
                                                     <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/35">{{ $application->social_handle }}</span>
                                                 @endif
                                                 @if ($application->age_confirmed)
-                                                    <span class="rounded-full bg-[#EEB4C3]/10 px-2 py-0.5 text-[0.62rem] text-[#EEB4C3]">18+</span>
+                                                    <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.62rem] text-boss-gold">18+</span>
                                                 @endif
                                                 @if ($application->photo_paths)
                                                     <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/35">
@@ -400,7 +400,7 @@
                                                     </span>
                                                 @endif
                                                 @if ($application->referral)
-                                                    <span class="rounded-full bg-[#EEB4C3]/10 px-2 py-0.5 text-[0.62rem] text-[#EEB4C3]">
+                                                    <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.62rem] text-boss-gold">
                                                         {{ __('Referred by') }} {{ $application->referral->referrer?->name }}
                                                     </span>
                                                     <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/35">
@@ -415,7 +415,7 @@
                                     </div>
                                 </td>
                                 <td class="align-middle">
-                                    <span class="rounded-full px-2.5 py-1 text-[0.65rem] capitalize {{ $application->status === \App\Models\ModelApplication::STATUS_PENDING ? 'bg-[#EEB4C3]/10 text-[#EEB4C3]' : ($application->status === \App\Models\ModelApplication::STATUS_APPROVED ? 'bg-green-400/10 text-green-300' : 'bg-red-400/10 text-red-300') }}">
+                                    <span class="rounded-full px-2.5 py-1 text-[0.65rem] capitalize {{ $application->status === \App\Models\ModelApplication::STATUS_PENDING ? 'bg-boss-gold/10 text-boss-gold' : ($application->status === \App\Models\ModelApplication::STATUS_APPROVED ? 'bg-green-400/10 text-green-300' : 'bg-red-400/10 text-red-300') }}">
                                         {{ __($application->status) }}
                                     </span>
                                 </td>

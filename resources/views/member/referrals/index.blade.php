@@ -9,7 +9,7 @@
                 </p>
             </div>
 
-            <div class="rounded-full border border-[#EEB4C3]/15 bg-[#EEB4C3]/[0.07] px-4 py-2 text-[0.68rem] uppercase tracking-[0.14em] text-[#EEB4C3]">
+            <div class="rounded-full border border-boss-gold/15 bg-boss-gold/[0.07] px-4 py-2 text-[0.68rem] uppercase tracking-[0.14em] text-boss-gold">
                 {{ __('Rewards activate after approval') }}
             </div>
         </header>
@@ -33,7 +33,7 @@
                     }"
                     class="rounded-2xl border border-white/[0.07] bg-boss-panel-strong p-5 shadow-[0_24px_70px_rgba(0,0,0,0.22)]"
                 >
-                    <p class="text-[0.65rem] uppercase tracking-[0.18em] text-[#EEB4C3]/70">{{ __('Your Referral Link') }}</p>
+                    <p class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-gold/70">{{ __('Your Referral Link') }}</p>
                     <h2 class="mt-2 font-display text-2xl text-boss-ivory">{{ __('Share your private link') }}</h2>
                     <p class="mt-2 text-sm leading-6 text-boss-ivory/[0.42]">
                         {{ __('Anyone who applies from this link will be connected to you automatically.') }}
@@ -50,12 +50,12 @@
 
                     <div class="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.025] p-4">
                         <p class="text-[0.66rem] uppercase tracking-[0.16em] text-boss-ivory/[0.32]">{{ __('Your code') }}</p>
-                        <p class="mt-1 font-display text-2xl text-[#F3C3CF]">{{ $member->referral_code }}</p>
+                        <p class="mt-1 font-display text-2xl text-boss-gold-light">{{ $member->referral_code }}</p>
                     </div>
                 </article>
 
                 <article class="rounded-2xl border border-white/[0.07] bg-boss-panel-strong p-5">
-                    <p class="text-[0.65rem] uppercase tracking-[0.18em] text-[#EEB4C3]/70">{{ __('How rewards work') }}</p>
+                    <p class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-gold/70">{{ __('How rewards work') }}</p>
                     <div class="mt-4 space-y-3 text-sm leading-6 text-boss-ivory/[0.46]">
                         <p>{{ __('1. Submit a referral with photos and permission.') }}</p>
                         <p>{{ __('2. Admin reviews or converts the lead into an application.') }}</p>
@@ -66,7 +66,7 @@
 
             <form method="POST" action="{{ route('member.referrals.store') }}" enctype="multipart/form-data" class="rounded-2xl border border-white/[0.07] bg-boss-panel-strong p-5 shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
                 @csrf
-                <p class="text-[0.65rem] uppercase tracking-[0.18em] text-[#EEB4C3]/70">{{ __('Referral Lead') }}</p>
+                <p class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-gold/70">{{ __('Referral Lead') }}</p>
                 <h2 class="mt-2 font-display text-2xl text-boss-ivory">{{ __('Send a candidate to admin') }}</h2>
 
                 <div class="mt-5 grid gap-4 sm:grid-cols-2">
@@ -125,9 +125,9 @@
                     </div>
                 </div>
 
-                <div class="mt-5 rounded-xl border border-[#EEB4C3]/15 bg-[#EEB4C3]/[0.06] p-4">
+                <div class="mt-5 rounded-xl border border-boss-gold/15 bg-boss-gold/[0.06] p-4">
                     <label for="consent_confirmed" class="flex items-start gap-3 text-sm leading-6 text-boss-ivory/[0.7]">
-                        <input id="consent_confirmed" name="consent_confirmed" type="checkbox" value="1" class="mt-1 rounded border-white/15 bg-white/5 text-[#EEB4C3] focus:ring-[#EEB4C3]" @checked(old('consent_confirmed'))>
+                        <input id="consent_confirmed" name="consent_confirmed" type="checkbox" value="1" class="mt-1 rounded border-white/15 bg-white/5 text-boss-gold focus:ring-boss-gold" @checked(old('consent_confirmed'))>
                         <span>{{ __("I confirm I have permission to share this candidate's contact details and photos, and I believe they are 18 years of age or older.") }}</span>
                     </label>
                     <x-input-error class="mt-1.5" :messages="$errors->get('consent_confirmed')" />
@@ -163,7 +163,7 @@
                             <span class="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[0.64rem] text-boss-ivory/[0.55]">
                                 {{ $referral->statusLabel() }}
                             </span>
-                            <span class="rounded-full border border-[#EEB4C3]/15 bg-[#EEB4C3]/[0.07] px-2.5 py-1 text-[0.64rem] text-[#F3C3CF]">
+                            <span class="rounded-full border border-boss-gold/15 bg-boss-gold/[0.07] px-2.5 py-1 text-[0.64rem] text-boss-gold-light">
                                 {{ $referral->rewardStatusLabel() }}
                             </span>
                             <span class="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[0.64rem] text-boss-ivory/[0.42]">

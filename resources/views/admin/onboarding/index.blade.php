@@ -64,13 +64,13 @@
                     <div class="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-6 py-5">
                         <div class="flex items-center gap-4">
                             <div
-                                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#EEB4C3]/25 bg-[#EEB4C3]/10 font-display text-base text-[#EEB4C3]"
+                                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-boss-gold/25 bg-boss-gold/10 font-display text-base text-boss-gold"
                                 x-text="selected.name.charAt(0).toUpperCase()"
                             ></div>
                             <div>
                                 <h2 class="font-display text-lg font-semibold text-boss-ivory" x-text="selected.name"></h2>
                                 <p class="text-sm text-boss-ivory/45" x-text="selected.email"></p>
-                                <p x-show="selected.profile && selected.profile.stage_name" class="mt-0.5 text-sm text-[#EEB4C3]/70" x-text="selected.profile && selected.profile.stage_name ? '« ' + selected.profile.stage_name + ' »' : ''"></p>
+                                <p x-show="selected.profile && selected.profile.stage_name" class="mt-0.5 text-sm text-boss-gold/70" x-text="selected.profile && selected.profile.stage_name ? '« ' + selected.profile.stage_name + ' »' : ''"></p>
                             </div>
                         </div>
                         <button
@@ -92,11 +92,11 @@
                             <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-4">
                                 <div class="mb-2 flex items-center justify-between">
                                     <p class="text-[0.68rem] uppercase tracking-[0.14em] text-boss-ivory/35">Onboarding Progress</p>
-                                    <span class="text-xs font-semibold text-[#EEB4C3]" x-text="selected.profile.onboarding_percent + '%'"></span>
+                                    <span class="text-xs font-semibold text-boss-gold" x-text="selected.profile.onboarding_percent + '%'"></span>
                                 </div>
                                 <div class="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
                                     <div
-                                        class="h-full rounded-full bg-[#EEB4C3] transition-all duration-500"
+                                        class="h-full rounded-full bg-boss-gold transition-all duration-500"
                                         :style="'width: ' + selected.profile.onboarding_percent + '%'"
                                     ></div>
                                 </div>
@@ -204,7 +204,7 @@
                                         <p class="mb-2 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Platforms</p>
                                         <div class="flex flex-wrap gap-1.5">
                                             <template x-for="platform in selected.profile.platforms" :key="platform">
-                                                <span class="rounded-full bg-[#EEB4C3]/10 px-2.5 py-0.5 text-[0.7rem] text-[#EEB4C3]" x-text="platform"></span>
+                                                <span class="rounded-full bg-boss-gold/10 px-2.5 py-0.5 text-[0.7rem] text-boss-gold" x-text="platform"></span>
                                             </template>
                                         </div>
                                     </div>
@@ -285,7 +285,7 @@
                                             <div class="flex items-center justify-between px-3 py-2">
                                                 <span class="text-[0.65rem] font-medium text-boss-ivory/50">Valid ID</span>
                                                 <div class="flex items-center gap-2">
-                                                    <a :href="selected.profile.doc_id_view" target="_blank" rel="noopener" class="text-[0.62rem] text-[#EEB4C3] transition hover:text-[#F3C3CF]">View</a>
+                                                    <a :href="selected.profile.doc_id_view" target="_blank" rel="noopener" class="text-[0.62rem] text-boss-gold transition hover:text-boss-gold-light">View</a>
                                                     <a :href="selected.profile.doc_id_download" class="text-[0.62rem] text-boss-ivory/30 transition hover:text-boss-ivory/60" download>Download</a>
                                                 </div>
                                             </div>
@@ -333,7 +333,7 @@
                                             <div class="flex items-center justify-between px-3 py-2">
                                                 <span class="text-[0.65rem] font-medium text-boss-ivory/50">Platform Codes</span>
                                                 <div class="flex items-center gap-2">
-                                                    <a :href="selected.profile.doc_codes_view" target="_blank" rel="noopener" class="text-[0.62rem] text-[#EEB4C3] transition hover:text-[#F3C3CF]">View</a>
+                                                    <a :href="selected.profile.doc_codes_view" target="_blank" rel="noopener" class="text-[0.62rem] text-boss-gold transition hover:text-boss-gold-light">View</a>
                                                     <a :href="selected.profile.doc_codes_download" class="text-[0.62rem] text-boss-ivory/30 transition hover:text-boss-ivory/60" download>Download</a>
                                                 </div>
                                             </div>
@@ -378,7 +378,7 @@
                                     <template x-if="selected.profile.community_role_assigned_at">
                                         <div>
                                             <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Discord Role Assigned</p>
-                                            <p class="mt-0.5 text-sm text-[#EEB4C3]" x-text="selected.profile.community_role_assigned_at"></p>
+                                            <p class="mt-0.5 text-sm text-boss-gold" x-text="selected.profile.community_role_assigned_at"></p>
                                         </div>
                                     </template>
                                 </div>
@@ -404,7 +404,7 @@
                                             <div class="flex items-center justify-between gap-3">
                                                 <div class="min-w-0">
                                                     <p class="truncate text-sm font-medium text-boss-ivory/75" x-text="course.title"></p>
-                                                    <p class="mt-0.5 text-[0.62rem] uppercase tracking-[0.12em]" :class="course.is_unlocked ? 'text-green-300/70' : (course.access_request_status === 'pending' ? 'text-[#EEB4C3]/75' : (course.access_request_status === 'rejected' ? 'text-red-300/70' : 'text-boss-ivory/28'))" x-text="course.is_unlocked ? 'Unlocked' : (course.access_request_label || 'Locked pending Kayla approval')"></p>
+                                                    <p class="mt-0.5 text-[0.62rem] uppercase tracking-[0.12em]" :class="course.is_unlocked ? 'text-green-300/70' : (course.access_request_status === 'pending' ? 'text-boss-gold/75' : (course.access_request_status === 'rejected' ? 'text-red-300/70' : 'text-boss-ivory/28'))" x-text="course.is_unlocked ? 'Unlocked' : (course.access_request_label || 'Locked pending Kayla approval')"></p>
                                                 </div>
                                                 <template x-if="course.is_unlocked">
                                                     <form :action="course.lock_url" method="POST" class="shrink-0">
@@ -421,7 +421,7 @@
                                                             type="submit"
                                                             :disabled="!selected.profile.is_verified"
                                                             class="rounded-lg px-3 py-1.5 text-[0.68rem] font-semibold transition disabled:cursor-not-allowed disabled:border disabled:border-white/[0.06] disabled:bg-white/[0.03] disabled:text-boss-ivory/24"
-                                                            :class="selected.profile.is_verified ? 'bg-[#EEB4C3] text-boss-ink hover:opacity-90' : ''"
+                                                            :class="selected.profile.is_verified ? 'bg-boss-gold text-boss-ink hover:opacity-90' : ''"
                                                             x-text="selected.profile.is_verified ? (course.access_request_status === 'pending' ? 'Approve & Unlock' : 'Unlock') : 'Verify first'"
                                                         ></button>
                                                     </form>
@@ -433,16 +433,16 @@
                                             <template x-if="course.access_phases && course.access_phases.length">
                                                 <div class="mt-2 space-y-1.5">
                                                     <template x-for="phase in course.access_phases" :key="phase.key">
-                                                        <div class="rounded-lg border border-[#EEB4C3]/10 bg-[#EEB4C3]/[0.035] px-3 py-2">
-                                                            <p class="text-[0.58rem] uppercase tracking-[0.12em] text-[#EEB4C3]/55" x-text="phase.label"></p>
+                                                        <div class="rounded-lg border border-boss-gold/10 bg-boss-gold/[0.035] px-3 py-2">
+                                                            <p class="text-[0.58rem] uppercase tracking-[0.12em] text-boss-gold/55" x-text="phase.label"></p>
                                                             <p class="mt-1 whitespace-pre-line text-[0.68rem] leading-relaxed text-boss-ivory/40" x-text="phase.instructions"></p>
                                                         </div>
                                                     </template>
                                                 </div>
                                             </template>
                                             <template x-if="course.access_request_notes">
-                                                <div class="mt-2 rounded-lg border border-[#EEB4C3]/10 bg-[#EEB4C3]/[0.04] px-3 py-2">
-                                                    <p class="text-[0.58rem] uppercase tracking-[0.12em] text-[#EEB4C3]/55">Model access note</p>
+                                                <div class="mt-2 rounded-lg border border-boss-gold/10 bg-boss-gold/[0.04] px-3 py-2">
+                                                    <p class="text-[0.58rem] uppercase tracking-[0.12em] text-boss-gold/55">Model access note</p>
                                                     <p class="mt-1 whitespace-pre-line text-[0.72rem] leading-relaxed text-boss-ivory/55" x-text="course.access_request_notes"></p>
                                                 </div>
                                             </template>
@@ -605,7 +605,7 @@
                 [__('Discord Roles'), $stats['role_assigned']],
             ] as $stat)
                 <div class="pd-stat">
-                    <p class="font-display text-[2rem] leading-none text-[#EEB4C3]">{{ $stat[1] }}</p>
+                    <p class="font-display text-[2rem] leading-none text-boss-gold">{{ $stat[1] }}</p>
                     <p class="mt-3 text-[0.68rem] uppercase tracking-[0.08em] text-boss-ivory/50">{{ $stat[0] }}</p>
                 </div>
             @endforeach
@@ -694,14 +694,14 @@
                             >
                                 <td class="align-middle">
                                     <div class="flex items-center gap-3">
-                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#EEB4C3]/20 bg-[#EEB4C3]/10 font-display text-[0.72rem] text-[#EEB4C3]">
+                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-boss-gold/20 bg-boss-gold/10 font-display text-[0.72rem] text-boss-gold">
                                             {{ strtoupper(substr($model->name, 0, 1)) }}
                                         </div>
                                         <div>
                                             <div class="font-medium text-boss-ivory">{{ $model->name }}</div>
                                             <div class="text-[0.74rem] text-boss-ivory/35">{{ $model->email }}</div>
                                             @if ($profile?->stage_name)
-                                                <div class="text-[0.72rem] text-[#EEB4C3]/70">{{ $profile->stage_name }}</div>
+                                                <div class="text-[0.72rem] text-boss-gold/70">{{ $profile->stage_name }}</div>
                                             @endif
                                         </div>
                                     </div>
@@ -719,7 +719,7 @@
                                         @if ($profile?->isVerified())
                                             <span class="rounded-full bg-green-400/10 px-2 py-0.5 text-[0.62rem] text-green-300">Verified ✓</span>
                                         @elseif ($profile?->verification_status === \App\Models\ModelProfile::VERIFICATION_SUBMITTED)
-                                            <span class="rounded-full bg-[#EEB4C3]/10 px-2 py-0.5 text-[0.62rem] text-[#EEB4C3]">Review</span>
+                                            <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.62rem] text-boss-gold">Review</span>
                                         @elseif ($profile?->verification_status === \App\Models\ModelProfile::VERIFICATION_REJECTED)
                                             <span class="rounded-full bg-red-400/10 px-2 py-0.5 text-[0.62rem] text-red-300">Resubmit</span>
                                         @else
@@ -738,7 +738,7 @@
                                 </td>
                                 <td class="align-middle">
                                     @if ($profile)
-                                        <span class="rounded-full px-2.5 py-1 text-[0.65rem] {{ $profile->isVerified() ? 'bg-green-400/10 text-green-300' : ($profile->verification_status === \App\Models\ModelProfile::VERIFICATION_SUBMITTED ? 'bg-[#EEB4C3]/10 text-[#EEB4C3]' : ($profile->verification_status === \App\Models\ModelProfile::VERIFICATION_REJECTED ? 'bg-red-400/10 text-red-300' : 'bg-white/[0.04] text-boss-ivory/35')) }}">
+                                        <span class="rounded-full px-2.5 py-1 text-[0.65rem] {{ $profile->isVerified() ? 'bg-green-400/10 text-green-300' : ($profile->verification_status === \App\Models\ModelProfile::VERIFICATION_SUBMITTED ? 'bg-boss-gold/10 text-boss-gold' : ($profile->verification_status === \App\Models\ModelProfile::VERIFICATION_REJECTED ? 'bg-red-400/10 text-red-300' : 'bg-white/[0.04] text-boss-ivory/35')) }}">
                                             {{ $profile->verificationStatusLabel() }}
                                         </span>
                                     @else
