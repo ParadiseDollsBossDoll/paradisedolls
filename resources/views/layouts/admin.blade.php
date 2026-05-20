@@ -75,6 +75,13 @@
             'count'  => 0,
         ],
         [
+            'route'  => 'admin.site-editor.edit',
+            'label'  => __('Site Editor'),
+            'active' => request()->routeIs('admin.site-editor.*'),
+            'icon'   => 'site-editor',
+            'count'  => 0,
+        ],
+        [
             'route'  => 'community.show',
             'label'  => __('Community Chat'),
             'active' => request()->routeIs('community.*'),
@@ -162,6 +169,8 @@
                                 <svg viewBox="0 0 16 16"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/></svg>
                             @elseif ($link['icon'] === 'stories')
                                 <svg viewBox="0 0 16 16"><path d="M8 1l1.85 3.75L14 5.75l-3 2.9.7 4.1L8 10.75l-3.7 2 .7-4.1L2 5.75l4.15-.5z"/></svg>
+                            @elseif ($link['icon'] === 'site-editor')
+                                <svg viewBox="0 0 16 16"><path d="M2 3h12v10H2z"/><path d="M5 6h6M5 9h4"/><path d="M11.5 11.5l2.5 2.5"/></svg>
                             @elseif ($link['icon'] === 'community')
                                 <svg viewBox="0 0 16 16"><path d="M14 10c0 1.1-.9 2-2 2H4l-3 3V4c0-1.1.9-2 2-2h9c1.1 0 2 .9 2 2v6z"/></svg>
                             @endif

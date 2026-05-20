@@ -8,14 +8,16 @@
         : 'member.dashboard';
 
     $links = [
-        ['route' => 'our-story', 'label' => __('Our Story')],
-        ['route' => 'work-from-home', 'label' => __('Work From Home')],
-        ['route' => 'work-from-paradise', 'label' => __('Work From Paradise')],
-        ['route' => 'perks', 'label' => __('Perks')],
-        ['route' => 'multistreaming', 'label' => __('Multistreaming')],
-        ['route' => 'success-stories', 'label' => __('Success Stories')],
-        ['route' => $memberRoute, 'label' => __('Members'), 'auth' => true],
+        ['route' => 'our-story', 'label' => marketing_content('shared.nav.our_story_label')],
+        ['route' => 'work-from-home', 'label' => marketing_content('shared.nav.work_from_home_label')],
+        ['route' => 'work-from-paradise', 'label' => marketing_content('shared.nav.work_from_paradise_label')],
+        ['route' => 'perks', 'label' => marketing_content('shared.nav.perks_label')],
+        ['route' => 'multistreaming', 'label' => marketing_content('shared.nav.multistreaming_label')],
+        ['route' => 'success-stories', 'label' => marketing_content('shared.nav.success_stories_label')],
+        ['route' => $memberRoute, 'label' => marketing_content('shared.nav.members_label'), 'auth' => true],
     ];
+
+    $applyUrl = marketing_link('shared.nav.apply_url', route('home').'#apply');
 @endphp
 
 <nav
@@ -60,15 +62,15 @@
                         class="hidden rounded-md border border-current px-6 py-2.5 text-[0.65rem] uppercase tracking-[0.14em] transition-all duration-300 hover:border-[#EEB4C3] hover:bg-[#EEB4C3] hover:text-white md:inline-flex"
                         x-bind:class="transparent && !scrolled && !navOpen ? 'text-white' : 'text-boss-dark'"
                     >
-                        {{ __('Log in') }}
+                        {{ marketing_content('shared.nav.login_label') }}
                     </a>
                 @endunless
 
                 <a
-                    href="{{ route('home') }}#apply"
+                    href="{{ $applyUrl }}"
                     class="hidden rounded-md bg-[#EEB4C3] px-4 py-2 text-[0.65rem] uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#e0a0b5] md:inline-flex"
                 >
-                    {{ __('Become A Doll') }}
+                    {{ marketing_content('shared.nav.apply_label') }}
                 </a>
 
                 <button
@@ -112,16 +114,16 @@
                         class="block w-full border border-boss-gold py-3 text-center text-[0.7rem] uppercase tracking-[0.14em] text-boss-gold transition-colors hover:bg-boss-gold hover:text-white"
                         @click="navOpen = false"
                     >
-                        {{ __('Log in') }}
+                        {{ marketing_content('shared.nav.login_label') }}
                     </a>
                 @endunless
 
                 <a
-                    href="{{ route('home') }}#apply"
+                    href="{{ $applyUrl }}"
                     class="block w-full rounded-md bg-[#EEB4C3] py-3 text-center text-[0.7rem] uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#e0a0b5]"
                     @click="navOpen = false"
                 >
-                    {{ __('Become A Doll') }}
+                    {{ marketing_content('shared.nav.apply_label') }}
                 </a>
             </div>
         </div>

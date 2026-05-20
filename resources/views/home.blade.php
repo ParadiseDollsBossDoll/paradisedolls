@@ -1,10 +1,14 @@
 <x-layouts.marketing :transparentNav="true" :title="__('Home')">
     @php
-        $heroImg = asset('images/home/main-photo-page.jpeg');
-        $workspaceImg = asset('images/17.jpeg');
-        $villaImg = asset('images/18.jpeg');
-        $academyImg = asset('images/16.jpeg');
-        $communityImg = asset('images/19.jpeg');
+        $heroImg = marketing_image('home.hero.image');
+        $workspaceImg = marketing_image('home.intro.image');
+        $heroParagraphs = marketing_paragraphs('home.hero.body');
+        $lifestyleCards = marketing_items('home.lifestyle.cards');
+        $founderCards = marketing_items('home.founder.cards');
+        $systemCards = marketing_items('home.system.cards');
+        $blueprintFormats = marketing_items('home.blueprint.formats');
+        $blueprintOrder = marketing_items('home.blueprint.order_items');
+        $groundedCards = marketing_items('home.grounded.cards');
         $countryCallingCodes = config('country_calling_codes', []);
         $selectedPhoneCountry = old('phone_country', 'PH');
         $phoneCountries = collect($countryCallingCodes)
@@ -24,16 +28,16 @@
         <div class="relative z-10 mx-auto w-full max-w-7xl px-4 pt-24 sm:px-6 lg:px-8">
             <div class="max-w-4xl text-white">
                 <h1 class="font-display text-[clamp(3.1rem,8vw,7rem)] leading-[0.96] text-white">
-                    {{ __('Welcome to Paradise Dolls') }}
+                    {{ marketing_content('home.hero.title') }}
                 </h1>
                 <p class="mt-7 max-w-2xl text-[1.05rem] leading-relaxed text-white/78">
-                    {{ __('A luxury feminine community and Academy for beginners, creators, and ambitious women who want remote income, confidence, freedom, friendships and a life they truly love.') }}
-                    <br><br>
-                    {{ __('Through the Boss Doll Blueprint, mentorship, multi-streaming, and a supportive girls-girl community, we help women grow in confidence, step into their rich girl era, and become the best version of themselves, together.') }}
+                    @foreach ($heroParagraphs as $paragraph)
+                        {{ $paragraph }}@if (! $loop->last)<br><br>@endif
+                    @endforeach
                 </p>
                 <div class="mt-10 flex flex-wrap gap-3">
-                    <a href="#apply" class="rounded-md bg-[#EEB4C3] px-9 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Become A Doll') }}</a>
-                    <a href="{{ route('multistreaming') }}" class="rounded-md border border-white/40 px-9 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white hover:text-boss-dark">{{ __('Boss Doll MultiStream') }}</a>
+                    <a href="{{ marketing_link('home.hero.primary_url', '#apply') }}" class="rounded-md bg-[#EEB4C3] px-9 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#e0a0b5]">{{ marketing_content('home.hero.primary_label') }}</a>
+                    <a href="{{ marketing_link('home.hero.secondary_url', route('multistreaming')) }}" class="rounded-md border border-white/40 px-9 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white hover:text-boss-dark">{{ marketing_content('home.hero.secondary_label') }}</a>
                 </div>
             </div>
         </div>
@@ -42,25 +46,25 @@
     <section class="bg-white py-24">
         <div class="mx-auto grid max-w-7xl grid-cols-1 gap-14 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
             <div>
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Beginner Friendly') }}</p>
-                <h2 class="font-display text-[clamp(2.1rem,4vw,3.35rem)] leading-tight text-boss-dark">{{ __('Luxury support without the intimidating agency feeling') }}</h2>
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ marketing_content('home.intro.eyebrow') }}</p>
+                <h2 class="font-display text-[clamp(2.1rem,4vw,3.35rem)] leading-tight text-boss-dark">{{ marketing_content('home.intro.title') }}</h2>
                 <p class="mt-6 max-w-2xl text-[0.96rem] leading-relaxed text-boss-dark/62">
-                    {{ __('Paradise Dolls is built for women from real backgrounds, not only influencers with huge followings. You bring ambition and consistency. The team brings systems, guidance, onboarding, account preparation, safety standards, and a clear learning path.') }}
+                    {{ marketing_content('home.intro.body') }}
                 </p>
 
                 <div class="mt-10 grid gap-4 md:grid-cols-2">
                     <div class="border border-boss-pink/60 bg-boss-muted p-6">
-                        <h3 class="font-display text-[1.25rem] text-boss-dark">{{ __('The agency handles') }}</h3>
+                        <h3 class="font-display text-[1.25rem] text-boss-dark">{{ marketing_content('home.intro.agency_title') }}</h3>
                         <ul class="mt-5 space-y-3 text-[0.86rem] text-boss-dark/62">
-                            @foreach ([__('onboarding and account setup'), __('verification preparation'), __('profile guidance'), __('support systems and structure')] as $item)
+                            @foreach (marketing_items('home.intro.agency_items') as $item)
                                 <li class="flex gap-3"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-boss-rose"></span>{{ $item }}</li>
                             @endforeach
                         </ul>
                     </div>
                     <div class="border border-boss-pink/60 bg-boss-muted p-6">
-                        <h3 class="font-display text-[1.25rem] text-boss-dark">{{ __('You learn') }}</h3>
+                        <h3 class="font-display text-[1.25rem] text-boss-dark">{{ marketing_content('home.intro.learn_title') }}</h3>
                         <ul class="mt-5 space-y-3 text-[0.86rem] text-boss-dark/62">
-                            @foreach ([__('how to stream professionally'), __('how platforms and tools work'), __('how to engage customers'), __('how to maximise earnings confidently')] as $item)
+                            @foreach (marketing_items('home.intro.learn_items') as $item)
                                 <li class="flex gap-3"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-boss-rose"></span>{{ $item }}</li>
                             @endforeach
                         </ul>
@@ -73,8 +77,8 @@
                     <img src="{{ $workspaceImg }}" alt="" class="h-full w-full object-cover">
                 </div>
                 <div class="absolute -bottom-7 -left-4 bg-boss-pink px-7 py-5 shadow-luxe sm:-left-7">
-                    <p class="font-display text-[1.8rem] leading-none text-boss-dark">{{ __('Support') }}</p>
-                    <p class="mt-1 text-[0.62rem] uppercase tracking-[0.16em] text-boss-dark/55">{{ __('from application to going live') }}</p>
+                    <p class="font-display text-[1.8rem] leading-none text-boss-dark">{{ marketing_content('home.intro.badge_title') }}</p>
+                    <p class="mt-1 text-[0.62rem] uppercase tracking-[0.16em] text-boss-dark/55">{{ marketing_content('home.intro.badge_text') }}</p>
                 </div>
             </div>
         </div>
@@ -83,23 +87,19 @@
     <section class="bg-boss-cream py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-12 max-w-3xl">
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Freedom & Lifestyle') }}</p>
-                <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Work remotely, build income, and create a life that feels bigger') }}</h2>
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ marketing_content('home.lifestyle.eyebrow') }}</p>
+                <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ marketing_content('home.lifestyle.title') }}</h2>
             </div>
 
             <div class="grid gap-5 lg:grid-cols-3">
-                @foreach ([
-                    [$villaImg, __('Paradise living'), __('Tropical locations, villas, cafés, beach clubs, and flexible schedules that make remote income feel tangible.')],
-                    [$academyImg, __('Professional systems'), __('Walkthroughs, strategy, equipment guidance, and platform education designed to make the work practical.')],
-                    [$communityImg, __('Feminine community'), __('A supportive movement with mentorship, motivation, and structure so members are not left alone.')],
-                ] as $card)
+                @foreach ($lifestyleCards as $card)
                     <div class="group overflow-hidden bg-white shadow-luxe">
                         <div class="aspect-[4/3] overflow-hidden">
-                            <img src="{{ $card[0] }}" alt="" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105">
+                            <img src="{{ \App\Support\MarketingContent::imageUrl($card['image'] ?? '') }}" alt="" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105">
                         </div>
                         <div class="p-6">
-                            <h3 class="font-display text-[1.35rem] text-boss-dark">{{ $card[1] }}</h3>
-                            <p class="mt-3 text-[0.86rem] leading-relaxed text-boss-dark/58">{{ $card[2] }}</p>
+                            <h3 class="font-display text-[1.35rem] text-boss-dark">{{ $card['title'] ?? '' }}</h3>
+                            <p class="mt-3 text-[0.86rem] leading-relaxed text-boss-dark/58">{{ $card['body'] ?? '' }}</p>
                         </div>
                     </div>
                 @endforeach
@@ -110,24 +110,19 @@
     <section class="bg-boss-dark py-24 text-boss-ivory">
         <div class="mx-auto grid max-w-7xl grid-cols-1 gap-14 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
             <div class="border border-white/[0.07] bg-white/[0.035] p-7">
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Meet Kayla') }}</p>
-                <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight">{{ __('Why Paradise Dolls exists') }}</h2>
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ marketing_content('home.founder.eyebrow') }}</p>
+                <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight">{{ marketing_content('home.founder.title') }}</h2>
                 <p class="mt-6 text-[0.92rem] leading-relaxed text-boss-ivory/55">
-                    {{ __('Kayla built Paradise Dolls after more than 15 years in the industry, seeing too many women dropped into agencies without the support, confidence, structure, or business education they needed to succeed.') }}
+                    {{ marketing_content('home.founder.body') }}
                 </p>
-                <a href="{{ route('our-story') }}" class="mt-8 inline-flex text-[0.72rem] uppercase tracking-[0.16em] text-boss-gold hover:text-boss-gold-light">{{ __('Read the Founder Story') }} -></a>
+                <a href="{{ marketing_link('home.founder.link_url', route('our-story')) }}" class="mt-8 inline-flex text-[0.72rem] uppercase tracking-[0.16em] text-boss-gold hover:text-boss-gold-light">{{ marketing_content('home.founder.link_label') }} -></a>
             </div>
 
             <div class="grid gap-4 md:grid-cols-2">
-                @foreach ([
-                    [__('Survival became strategy'), __('From no safety net to building online businesses, brands, and networks that created real financial freedom.')],
-                    [__('Experience became education'), __('The hard lessons became a blueprint for confidence, consistency, branding, mindset, and platform strategy.')],
-                    [__('Agency became community'), __('The goal is not to leave girls figuring it out alone. It is support, mentorship, and a team that wants members to win.')],
-                    [__('Opportunity became the mission'), __('Paradise Dolls exists to help women step into income, travel, flexibility, and the most successful version of themselves.')],
-                ] as $item)
+                @foreach ($founderCards as $item)
                     <div class="border border-white/[0.07] bg-boss-panel p-6">
-                        <h3 class="font-display text-[1.15rem] text-boss-gold-light">{{ $item[0] }}</h3>
-                        <p class="mt-3 text-[0.84rem] leading-relaxed text-boss-ivory/48">{{ $item[1] }}</p>
+                        <h3 class="font-display text-[1.15rem] text-boss-gold-light">{{ $item['title'] ?? '' }}</h3>
+                        <p class="mt-3 text-[0.84rem] leading-relaxed text-boss-ivory/48">{{ $item['body'] ?? '' }}</p>
                     </div>
                 @endforeach
             </div>
@@ -138,24 +133,20 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-12 grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
                 <div>
-                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('The Core System') }}</p>
-                    <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('One stream. Multiple platforms. More visibility.') }}</h2>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ marketing_content('home.system.eyebrow') }}</p>
+                    <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ marketing_content('home.system.title') }}</h2>
                 </div>
                 <p class="text-[0.95rem] leading-relaxed text-boss-dark/60">
-                    {{ __('Paradise Dolls positions multistreaming as the main advantage: simultaneous visibility across platforms, diversified income, stronger traffic, and a smarter system for turning one live session into multiple opportunities.') }}
+                    {{ marketing_content('home.system.body') }}
                 </p>
             </div>
 
             <div class="grid gap-4 md:grid-cols-3">
-                @foreach ([
-                    [__('Traffic'), __('Reach audiences across multiple platforms without multiplying your workload.')],
-                    [__('Monetisation'), __('Understand rankings, customer value systems, earnings tools, and retention.')],
-                    [__('Confidence'), __('Use walkthroughs to navigate controls, messages, platform tools, and live-stream flow.')],
-                ] as $item)
+                @foreach ($systemCards as $item)
                     <div class="border border-boss-pink/60 bg-boss-muted p-7">
                         <span class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-rose">{{ __('Multistreaming') }}</span>
-                        <h3 class="mt-4 font-display text-[1.35rem] text-boss-dark">{{ $item[0] }}</h3>
-                        <p class="mt-3 text-[0.86rem] leading-relaxed text-boss-dark/58">{{ $item[1] }}</p>
+                        <h3 class="mt-4 font-display text-[1.35rem] text-boss-dark">{{ $item['title'] ?? '' }}</h3>
+                        <p class="mt-3 text-[0.86rem] leading-relaxed text-boss-dark/58">{{ $item['body'] ?? '' }}</p>
                     </div>
                 @endforeach
             </div>
@@ -165,30 +156,22 @@
     <section class="bg-boss-muted py-24">
         <div class="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-8">
             <div>
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Private LMS') }}</p>
-                <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Boss Doll Blueprint') }}</h2>
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ marketing_content('home.blueprint.eyebrow') }}</p>
+                <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ marketing_content('home.blueprint.title') }}</h2>
                 <p class="mt-6 text-[0.95rem] leading-relaxed text-boss-dark/62">
-                    {{ __('The members area is designed as a luxury feminine streaming operating system, not a generic course library. The core is the walkthrough system: platform navigation, monetisation tools, stream controls, customer interaction, rankings, earnings systems, and customer retention.') }}
+                    {{ marketing_content('home.blueprint.body') }}
                 </p>
                 <div class="mt-8 grid gap-3 sm:grid-cols-3">
-                    @foreach ([__('PDF guides with screenshots'), __('Canva-style presentations'), __('Screen-recorded walkthroughs')] as $format)
+                    @foreach ($blueprintFormats as $format)
                         <div class="border border-boss-pink/70 bg-white p-4 text-[0.78rem] leading-relaxed text-boss-dark/62">{{ $format }}</div>
                     @endforeach
                 </div>
             </div>
 
             <div class="bg-boss-dark p-6 text-boss-ivory shadow-luxe">
-                <p class="mb-5 text-[0.66rem] uppercase tracking-[0.2em] text-boss-gold">{{ __('Academy order') }}</p>
+                <p class="mb-5 text-[0.66rem] uppercase tracking-[0.2em] text-boss-gold">{{ marketing_content('home.blueprint.order_title') }}</p>
                 <div class="space-y-3">
-                    @foreach ([
-                        __('Introduction to Kayla & Paradise Dolls'),
-                        __('Safety & professionalism'),
-                        __('Stream preparation'),
-                        __('Equipment & setup guidance'),
-                        __('Platform walkthrough systems'),
-                        __('Customer psychology and conversion strategy'),
-                        __('Passive income, content, and messaging income'),
-                    ] as $step)
+                    @foreach ($blueprintOrder as $step)
                         <div class="flex gap-4 border border-white/[0.07] bg-white/[0.035] p-4">
                             <span class="font-display text-boss-gold">{{ str_pad((string) $loop->iteration, 2, '0', STR_PAD_LEFT) }}</span>
                             <p class="text-[0.86rem] text-boss-ivory/60">{{ $step }}</p>
@@ -201,17 +184,13 @@
 
     <section class="bg-boss-pink py-20">
         <div class="mx-auto max-w-5xl px-4 text-center">
-            <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Community, Safety, Professionalism') }}</p>
-            <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Glamorous, but grounded') }}</h2>
+            <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ marketing_content('home.grounded.eyebrow') }}</p>
+            <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ marketing_content('home.grounded.title') }}</h2>
             <div class="mt-10 grid gap-4 md:grid-cols-3">
-                @foreach ([
-                    [__('Safety guidance'), __('Clear standards around age, verification, privacy, and professional conduct.')],
-                    [__('Structured support'), __('Onboarding, checklists, mentorship, and admin review before training begins.')],
-                    [__('All-girl energy'), __('A motivating community that feels aspirational, feminine, and achievable.')],
-                ] as $item)
+                @foreach ($groundedCards as $item)
                     <div class="bg-white p-6 text-left shadow-luxe">
-                        <h3 class="font-display text-[1.2rem] text-boss-dark">{{ $item[0] }}</h3>
-                        <p class="mt-3 text-[0.84rem] leading-relaxed text-boss-dark/58">{{ $item[1] }}</p>
+                        <h3 class="font-display text-[1.2rem] text-boss-dark">{{ $item['title'] ?? '' }}</h3>
+                        <p class="mt-3 text-[0.84rem] leading-relaxed text-boss-dark/58">{{ $item['body'] ?? '' }}</p>
                     </div>
                 @endforeach
             </div>
@@ -222,10 +201,10 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-12 flex flex-col justify-between gap-5 md:flex-row md:items-end">
                 <div class="max-w-3xl">
-                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Testimonials & Success Stories') }}</p>
-                    <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Community wins make the opportunity feel real') }}</h2>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ marketing_content('home.testimonials.eyebrow') }}</p>
+                    <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ marketing_content('home.testimonials.title') }}</h2>
                 </div>
-                <a href="{{ route('success-stories') }}" class="text-[0.72rem] uppercase tracking-[0.16em] text-boss-rose hover:text-boss-dark">{{ __('View stories') }} -></a>
+                <a href="{{ route('success-stories') }}" class="text-[0.72rem] uppercase tracking-[0.16em] text-boss-rose hover:text-boss-dark">{{ marketing_content('home.testimonials.link_label') }} -></a>
             </div>
 
             @php
@@ -303,9 +282,9 @@
     <section id="apply" class="scroll-mt-24 bg-white py-24">
         <div class="mx-auto max-w-2xl px-4">
             <div class="mb-12 text-center">
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Application') }}</p>
-                <h2 class="font-display text-[clamp(1.9rem,4vw,2.75rem)] text-boss-dark">{{ __('Apply to Paradise Dolls') }}</h2>
-                <p class="mx-auto mt-4 max-w-xl text-[0.9rem] leading-relaxed text-boss-dark/56">{{ __('No experience is required. The onboarding team reviews every application privately and will guide approved members through the next steps.') }}</p>
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ marketing_content('home.apply.eyebrow') }}</p>
+                <h2 class="font-display text-[clamp(1.9rem,4vw,2.75rem)] text-boss-dark">{{ marketing_content('home.apply.title') }}</h2>
+                <p class="mx-auto mt-4 max-w-xl text-[0.9rem] leading-relaxed text-boss-dark/56">{{ marketing_content('home.apply.body') }}</p>
             </div>
 
             @if (session('application_sent'))
@@ -313,8 +292,8 @@
                     <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-boss-pink">
                         <span class="font-display text-[2rem] text-boss-rose">OK</span>
                     </div>
-                    <h3 class="mb-4 font-display text-[2rem] text-boss-dark">{{ __('Application Received') }}</h3>
-                    <p class="text-[0.95rem] leading-relaxed text-boss-dark/60">{{ __('Thank you for applying. The onboarding team will review your details and contact you with the next step.') }}</p>
+                    <h3 class="mb-4 font-display text-[2rem] text-boss-dark">{{ marketing_content('home.apply.success_title') }}</h3>
+                    <p class="text-[0.95rem] leading-relaxed text-boss-dark/60">{{ marketing_content('home.apply.success_body') }}</p>
                 </div>
             @else
                 <form method="POST" action="{{ route('apply.store') }}" enctype="multipart/form-data" class="space-y-5" data-application-form>
@@ -491,7 +470,7 @@
                     <x-input-error class="-mt-2" :messages="$errors->get('age_confirmed')" />
 
                     <button type="submit" class="w-full rounded-md bg-[#EEB4C3] py-4 text-[0.75rem] uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Submit Application') }}</button>
-                    <p class="text-center text-[0.75rem] text-boss-dark/40">{{ __('Approved applicants receive account instructions and the Model Information Form next.') }}</p>
+                    <p class="text-center text-[0.75rem] text-boss-dark/40">{{ marketing_content('home.apply.footer_note') }}</p>
                 </form>
                 <script>
                     document.addEventListener('DOMContentLoaded', function () {

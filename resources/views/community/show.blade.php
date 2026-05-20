@@ -27,6 +27,7 @@
             ['href' => route('admin.models.progress'),    'label' => __('Members'),        'icon' => 'members',       'active' => false, 'count' => 0],
             ['href' => route('admin.courses.index'),      'label' => __('Courses'),        'icon' => 'courses',       'active' => false, 'count' => 0],
             ['href' => route('admin.testimonials.index'), 'label' => __('Testimonials'),   'icon' => 'stories',       'active' => false, 'count' => 0],
+            ['href' => route('admin.site-editor.edit'),   'label' => __('Site Editor'),    'icon' => 'site-editor',   'active' => false, 'count' => 0],
             ['href' => route('community.show'),           'label' => __('Community Chat'), 'icon' => 'community',     'active' => true,  'count' => 0],
         ];
         $sidebarSubtitle  = __('Admin Panel');
@@ -134,6 +135,8 @@
                                 <svg viewBox="0 0 16 16"><circle cx="5.5" cy="5" r="2.5"/><path d="M1 13c0-2.5 2-4.5 4.5-4.5S10 10.5 10 13"/><circle cx="11.5" cy="5.5" r="2"/><path d="M10 12.5c.2-1.4 1.3-2.5 2.7-2.5 1.5 0 2.8 1.1 2.8 2.5"/></svg>
                             @elseif ($link['icon'] === 'stories')
                                 <svg viewBox="0 0 16 16"><path d="M3 2h10v12H3z"/><path d="M5.5 5h5M5.5 8h5M5.5 11h3"/></svg>
+                            @elseif ($link['icon'] === 'site-editor')
+                                <svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M5 5h6M5 8h6M5 11h3"/></svg>
                             @elseif ($link['icon'] === 'referrals')
                                 <svg viewBox="0 0 16 16"><circle cx="5" cy="5" r="2.5"/><circle cx="11.5" cy="4.5" r="2"/><path d="M1.5 13c0-2.5 1.8-4.5 4-4.5 1.4 0 2.6.7 3.3 1.8"/><path d="M9.5 10.5h4M11.5 8.5v4"/></svg>
                             @endif

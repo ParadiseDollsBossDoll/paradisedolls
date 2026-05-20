@@ -1,20 +1,20 @@
-@php($hero = asset('images/15.jpeg'))
-<x-layouts.marketing :transparentNav="true" :title="__('Success Stories')">
+@php($hero = marketing_image('success_stories.hero.image'))
+<x-layouts.marketing :transparentNav="true" :title="marketing_content('success_stories.hero.title')">
     <section class="relative flex min-h-[58vh] items-center justify-center overflow-hidden pt-24">
         <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ $hero }}');"></div>
         <div class="absolute inset-0 bg-black/55"></div>
         <div class="relative z-10 mx-auto max-w-4xl px-4 text-center text-white">
-            <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Community Wins') }}</p>
-            <h1 class="font-display text-[clamp(2.7rem,6vw,4.5rem)] leading-tight">{{ __('Success Stories') }}</h1>
-            <p class="mx-auto mt-6 max-w-2xl text-[1rem] leading-relaxed text-white/78">{{ __('Real stories, confidence shifts, and lifestyle wins from the Paradise Dolls community.') }}</p>
+            <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ marketing_content('success_stories.hero.eyebrow') }}</p>
+            <h1 class="font-display text-[clamp(2.7rem,6vw,4.5rem)] leading-tight">{{ marketing_content('success_stories.hero.title') }}</h1>
+            <p class="mx-auto mt-6 max-w-2xl text-[1rem] leading-relaxed text-white/78">{{ marketing_content('success_stories.hero.body') }}</p>
         </div>
     </section>
 
     <section class="bg-[#f3f3f5] py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-12 max-w-3xl">
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Community Testimonials') }}</p>
-                <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('Real words from approved Paradise Dolls members') }}</h2>
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ marketing_content('success_stories.testimonials.eyebrow') }}</p>
+                <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ marketing_content('success_stories.testimonials.title') }}</h2>
             </div>
 
             <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -36,8 +36,8 @@
                     </article>
                 @empty
                     <div class="col-span-full rounded-lg bg-white px-6 py-16 text-center shadow-[0_18px_45px_rgba(15,15,20,0.08)]">
-                        <p class="font-display text-[1.5rem] text-boss-dark">{{ __('Success stories are coming soon') }}</p>
-                        <p class="mx-auto mt-3 max-w-lg text-[0.9rem] leading-relaxed text-boss-dark/58">{{ __('The team can add approved member testimonials from the admin dashboard as the community grows.') }}</p>
+                        <p class="font-display text-[1.5rem] text-boss-dark">{{ marketing_content('success_stories.empty.title') }}</p>
+                        <p class="mx-auto mt-3 max-w-lg text-[0.9rem] leading-relaxed text-boss-dark/58">{{ marketing_content('success_stories.empty.body') }}</p>
                     </div>
                 @endforelse
             </div>

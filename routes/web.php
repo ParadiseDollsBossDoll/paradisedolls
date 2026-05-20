@@ -143,6 +143,10 @@ Route::middleware(['auth', 'verified'])->prefix('notifications')->name('notifica
 
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
+    Route::get('/site-editor', [AdminSettingsController::class, 'editMarketingContent'])->name('site-editor.edit');
+    Route::put('/site-editor', [AdminSettingsController::class, 'updateMarketingContent'])
+        ->middleware('throttle:admin-actions')
+        ->name('site-editor.update');
     Route::post('/settings/theme', [AdminSettingsController::class, 'updateTheme'])->name('settings.theme');
 
     // ── Autosave endpoints (higher rate limit, JSON responses) ───────────────
