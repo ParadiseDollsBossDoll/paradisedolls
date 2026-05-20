@@ -1,4 +1,4 @@
-<x-member-layout>
+﻿<x-member-layout>
     @php
         $color = $course->displayColor();
     @endphp
@@ -12,7 +12,7 @@
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <div class="mb-2 flex flex-wrap items-center gap-2">
-                        <a href="{{ route('member.courses.learn.show', $course->slug) }}" class="text-[0.72rem] text-boss-ivory/35 transition-colors hover:text-boss-gold"><- {{ __('Learning Room') }}</a>
+                        <a href="{{ route('member.courses.learn.show', $course->slug) }}" class="text-[0.72rem] text-boss-ivory/35 transition-colors hover:text-[#EEB4C3]"><- {{ __('Learning Room') }}</a>
                         <span class="text-boss-ivory/12">/</span>
                         <span class="rounded-full border px-2.5 py-1 text-[0.65rem]" style="background-color: {{ $course->displayColorBackground() }}; color: {{ $color }}; border-color: {{ $color }}25;">{{ $course->displayPlatform() }}</span>
                     </div>
@@ -23,7 +23,7 @@
                 <div class="min-w-[180px]">
                     <div class="mb-1 flex items-center justify-between text-[0.68rem] text-boss-ivory/35">
                         <span>{{ __('Course progress') }}</span>
-                        <span class="text-boss-gold">{{ $progress['percent'] }}%</span>
+                        <span class="text-[#EEB4C3]">{{ $progress['percent'] }}%</span>
                     </div>
                     <div class="pd-progress-track">
                         <div class="pd-progress-bar" style="width: {{ $progress['percent'] }}%"></div>
@@ -66,3 +66,4 @@
         </section>
     </div>
 </x-member-layout>
+

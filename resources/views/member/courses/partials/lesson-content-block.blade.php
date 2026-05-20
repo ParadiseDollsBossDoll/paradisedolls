@@ -1,4 +1,4 @@
-@php
+﻿@php
     $blockType                = $block->flowType();
     $blockImageUrl            = $block->imageUrl();
     $blockFileUrl             = $block->fileUrl();
@@ -116,7 +116,7 @@
                 </div>
                 @if ($blockFileUrl)
                     <a href="{{ $blockFileUrl }}" target="_blank" rel="noopener noreferrer"
-                       class="shrink-0 inline-flex items-center gap-2 rounded-lg border border-boss-gold/28 bg-boss-gold/[0.10] px-4 py-2 text-[0.75rem] font-medium text-boss-gold transition-colors hover:bg-boss-gold/[0.18]">
+                       class="shrink-0 inline-flex items-center gap-2 rounded-lg border border-[#EEB4C3]/28 bg-[#EEB4C3]/[0.10] px-4 py-2 text-[0.75rem] font-medium text-[#EEB4C3] transition-colors hover:bg-[#EEB4C3]/[0.18]">
                         <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[1.5]">
                             <path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9M10 2h4m0 0v4m0-4L7 9"/>
                         </svg>
@@ -135,7 +135,7 @@
                     {{-- Loading --}}
                     <div x-show="loading && !error"
                          class="flex items-center justify-center gap-3 bg-[#060610] py-16">
-                        <svg class="h-5 w-5 animate-spin text-boss-gold/50" viewBox="0 0 24 24" fill="none">
+                        <svg class="h-5 w-5 animate-spin text-[#EEB4C3]/50" viewBox="0 0 24 24" fill="none">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                         </svg>
@@ -196,7 +196,7 @@
                     <p class="mt-0.5 truncate text-[0.88rem] font-medium text-boss-ivory">{{ $block->title ?: __('Lesson Slides') }}</p>
                 </div>
                 <a href="{{ $blockPresentationOpenUrl }}" target="_blank" rel="noopener noreferrer"
-                   class="shrink-0 inline-flex items-center gap-2 rounded-lg border border-boss-gold/28 bg-boss-gold/[0.10] px-4 py-2 text-[0.75rem] font-medium text-boss-gold transition-colors hover:bg-boss-gold/[0.18]">
+                   class="shrink-0 inline-flex items-center gap-2 rounded-lg border border-[#EEB4C3]/28 bg-[#EEB4C3]/[0.10] px-4 py-2 text-[0.75rem] font-medium text-[#EEB4C3] transition-colors hover:bg-[#EEB4C3]/[0.18]">
                     <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[1.5]">
                         <path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9M10 2h4m0 0v4m0-4L7 9"/>
                     </svg>
@@ -220,11 +220,11 @@
                             </template>
                         </div>
                         <div class="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.05] bg-boss-panel px-4 py-3">
-                            <button type="button" @click="current = Math.max(0, current - 1)" x-bind:disabled="current === 0" class="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-[0.72rem] text-boss-ivory/50 transition-colors hover:border-boss-gold/25 hover:text-boss-gold disabled:opacity-35">
+                            <button type="button" @click="current = Math.max(0, current - 1)" x-bind:disabled="current === 0" class="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-[0.72rem] text-boss-ivory/50 transition-colors hover:border-[#EEB4C3]/25 hover:text-[#EEB4C3] disabled:opacity-35">
                                 {{ __('Previous') }}
                             </button>
                             <span class="text-[0.72rem] text-boss-ivory/38" x-text="`{{ __('Slide') }} ${current + 1} / ${slides.length}`"></span>
-                            <button type="button" @click="current = Math.min(slides.length - 1, current + 1)" x-bind:disabled="current === slides.length - 1" class="rounded-lg border border-boss-gold/24 bg-boss-gold/[0.10] px-3 py-2 text-[0.72rem] text-boss-gold transition-colors hover:bg-boss-gold/[0.16] disabled:opacity-35">
+                            <button type="button" @click="current = Math.min(slides.length - 1, current + 1)" x-bind:disabled="current === slides.length - 1" class="rounded-lg border border-[#EEB4C3]/24 bg-[#EEB4C3]/[0.10] px-3 py-2 text-[0.72rem] text-[#EEB4C3] transition-colors hover:bg-[#EEB4C3]/[0.16] disabled:opacity-35">
                                 {{ __('Next') }}
                             </button>
                         </div>
@@ -261,3 +261,4 @@
         </div>
 
 @endswitch
+

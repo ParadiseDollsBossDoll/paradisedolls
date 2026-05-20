@@ -97,6 +97,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ isset($title) ? $title.' - '.config('app.name') : config('app.name') }}</title>
         <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+        <script>(function(){function applyVars(s){var h=document.documentElement;h.classList.toggle('light-mode',s.mode==='light');if(s.primary){h.style.setProperty('--pd-primary',s.primary);h.style.setProperty('--pd-gold',s.primary);}if(s.primaryLight){h.style.setProperty('--pd-primary-hover',s.primaryLight);h.style.setProperty('--pd-gold-light',s.primaryLight);}}try{var s=JSON.parse(localStorage.getItem('pd-theme-v2')||'null');if(!s){var old=localStorage.getItem('pd-theme');s={mode:old==='light'?'light':'dark',primary:'#EEB4C3',primaryLight:'#F3C3CF'};}applyVars(s);}catch(e){applyVars({mode:'light',primary:'#EEB4C3',primaryLight:'#F3C3CF'});}window.pdApplyTheme=function(s){applyVars(s);localStorage.setItem('pd-theme-v2',JSON.stringify(s));};window.pdToggleTheme=function(){try{var s=JSON.parse(localStorage.getItem('pd-theme-v2')||'{}');s.mode=document.documentElement.classList.toggle('light-mode')?'light':'dark';localStorage.setItem('pd-theme-v2',JSON.stringify(s));}catch(e){};};}());</script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased pd-dark-surface min-h-screen" x-data="{ sidebarOpen: false }">
@@ -161,14 +162,14 @@
                             @endif
                             <span class="flex-1">{{ $link['label'] }}</span>
                             @if ($link['count'] > 0)
-                                <span class="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c9a96e] px-1 text-[0.52rem] font-bold text-[#080808]">{{ $link['count'] }}</span>
+                                <span class="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-[#EEB4C3] px-1 text-[0.52rem] font-bold text-[#09070A]">{{ $link['count'] }}</span>
                             @endif
                         </a>
                     @endforeach
                 </nav>
 
                 <div class="elysian-side-footer">
-                    <a href="{{ route('admin.courses.create') }}" class="elysian-side-footer-btn" style="color: rgba(201,169,110,0.7);" @click="sidebarOpen = false">
+                    <a href="{{ route('admin.courses.create') }}" class="elysian-side-footer-btn" style="color: rgba(238,180,195,0.7);" @click="sidebarOpen = false">
                         <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v6M5 8h6"/></svg>
                         <span>{{ __('New Course') }}</span>
                     </a>

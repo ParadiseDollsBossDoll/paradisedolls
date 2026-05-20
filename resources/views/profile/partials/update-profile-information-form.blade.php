@@ -48,10 +48,7 @@
         <button
             type="submit"
             :disabled="saving"
-            class="inline-flex items-center gap-2 rounded-full border px-5 py-2 text-[0.75rem] font-medium tracking-wide transition-all disabled:opacity-50"
-            style="border-color: rgba(201,169,110,0.35); background: rgba(201,169,110,0.11); color: #C9A96E;"
-            onmouseover="this.style.background='rgba(201,169,110,0.20)'"
-            onmouseout="this.style.background='rgba(201,169,110,0.11)'"
+            class="pd-profile-save-btn tracking-wide disabled:opacity-50"
         >
             <svg x-show="saving" class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="32" stroke-dashoffset="12"/>

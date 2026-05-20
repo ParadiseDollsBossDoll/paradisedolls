@@ -1,4 +1,4 @@
-<x-guest-layout>
+﻿<x-guest-layout>
     <form method="POST" action="{{ route('register') }}">
         @csrf
 
@@ -40,7 +40,7 @@
         </div>
 
         <div class="flex items-center justify-end mt-4">
-            <a class="text-sm text-boss-ivory/42 underline transition-colors hover:text-boss-gold" href="{{ route('login') }}">
+            <a class="text-sm text-boss-ivory/42 underline transition-colors hover:text-[#EEB4C3]" href="{{ route('login') }}">
                 {{ __('Already registered?') }}
             </a>
 
@@ -50,3 +50,4 @@
         </div>
     </form>
 </x-guest-layout>
+

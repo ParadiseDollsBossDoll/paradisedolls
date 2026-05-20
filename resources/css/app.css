@@ -5,19 +5,37 @@
 @tailwind utilities;
 
 :root {
-    --pd-void: #080808;
-    --pd-ink: #0c0a0b;
-    --pd-panel: #130f12;
-    --pd-panel-strong: #1a1218;
-    --pd-dark: #140e12;
-    --pd-gold: #c9a96e;
-    --pd-gold-light: #e8c88a;
-    --pd-gold-hover: #b89058;
-    --pd-rose: #c4687a;
-    --pd-pink: #f7d6e0;
-    --pd-cream: #f5ede6;
-    --pd-muted: #fafaf8;
-    --pd-ivory: #f0ede8;
+    /* ── Primary pink/blush palette ────────────────────── */
+    --pd-primary:        #EEB4C3;
+    --pd-primary-hover:  #F3C3CF;
+    --pd-primary-soft:   rgba(238, 180, 195, 0.14);
+    --pd-rose-muted:     #DFA1B4;
+    --pd-deep-rose:      #6B344A;
+
+    /* ── Dark luxury surfaces ──────────────────────────── */
+    --pd-void:           #09070A;
+    --pd-ink:            #09070A;
+    --pd-panel:          #171016;
+    --pd-panel-strong:   #21161D;
+    --pd-dark:           #171016;
+
+    /* ── Legacy aliases (kept so existing class refs work) */
+    --pd-gold:           #EEB4C3;
+    --pd-gold-light:     #F3C3CF;
+    --pd-gold-hover:     #DFA1B4;
+
+    /* ── Semantic ─────────────────────────────────────── */
+    --pd-border:         rgba(238, 180, 195, 0.18);
+    --pd-text:           #FFF8F6;
+    --pd-text-muted:     #A99CA3;
+    --pd-luxury:         #E6C37A;   /* only for special highlights */
+
+    /* ── Light surfaces (landing-page sections) ─────────  */
+    --pd-pink:           #f7d6e0;
+    --pd-cream:          #f5ede6;
+    --pd-muted:          #fafaf8;
+    --pd-ivory:          #FFF8F6;
+    --pd-rose:           #c4687a;
 }
 
 html {
@@ -29,7 +47,7 @@ body {
 }
 
 ::selection {
-    background: rgba(201, 169, 110, 0.35);
+    background: rgba(238, 180, 195, 0.35);
 }
 
 [x-cloak] {
@@ -37,13 +55,8 @@ body {
 }
 
 @keyframes pd-testimonial-marquee {
-    from {
-        transform: translateX(-50%);
-    }
-
-    to {
-        transform: translateX(0);
-    }
+    from { transform: translateX(-50%); }
+    to   { transform: translateX(0); }
 }
 
 .pd-testimonial-carousel {
@@ -71,8 +84,11 @@ body {
 }
 
 @layer components {
+
+    /* ── Typography ───────────────────────────────────── */
+
     .pd-kicker {
-        color: var(--pd-gold);
+        color: var(--pd-primary);
         font-size: 0.68rem;
         letter-spacing: 0.24em;
         text-transform: uppercase;
@@ -85,46 +101,50 @@ body {
     }
 
     .pd-text-gradient {
-        background: linear-gradient(135deg, var(--pd-ivory) 20%, var(--pd-gold-light) 100%);
+        background: linear-gradient(135deg, var(--pd-ivory) 20%, var(--pd-primary) 100%);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
     }
 
+    /* ── Surfaces ─────────────────────────────────────── */
+
     .pd-dark-surface {
         background:
-            radial-gradient(ellipse 70% 42% at 50% -10%, rgba(201, 169, 110, 0.09), transparent 70%),
-            radial-gradient(ellipse 50% 35% at 92% 30%, rgba(196, 104, 122, 0.06), transparent 70%),
+            radial-gradient(ellipse 70% 42% at 50% -10%, rgba(238, 180, 195, 0.09), transparent 70%),
+            radial-gradient(ellipse 50% 35% at 92% 30%, rgba(107, 52, 74, 0.07), transparent 70%),
             var(--pd-void);
         color: var(--pd-ivory);
     }
 
     .pd-panel {
         background: var(--pd-panel);
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--pd-border);
         border-radius: 1rem;
-        box-shadow: 0 22px 60px rgba(0, 0, 0, 0.18);
+        box-shadow: 0 22px 60px rgba(0, 0, 0, 0.22);
     }
 
     .pd-panel-strong {
         background: var(--pd-panel-strong);
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--pd-border);
         border-radius: 0.75rem;
     }
 
     .pd-card-light {
         background: #fff;
-        border: 1px solid rgba(247, 214, 224, 0.75);
+        border: 1px solid rgba(238, 180, 195, 0.45);
         border-radius: 0.5rem;
-        box-shadow: 0 16px 45px rgba(20, 14, 18, 0.06);
+        box-shadow: 0 16px 45px rgba(9, 7, 10, 0.06);
     }
 
     .pd-stat {
         background: var(--pd-panel-strong);
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--pd-border);
         border-radius: 0.75rem;
         padding: 1.25rem;
     }
+
+    /* ── Dashboard hero ──────────────────────────────── */
 
     .pd-dashboard-hero {
         position: relative;
@@ -133,11 +153,11 @@ body {
         gap: 1.5rem;
         overflow: hidden;
         border-radius: 0.9rem;
-        border: 1px solid rgba(255, 255, 255, 0.065);
+        border: 1px solid var(--pd-border);
         background:
-            linear-gradient(135deg, rgba(26, 18, 24, 0.94), rgba(19, 15, 18, 0.92)),
-            radial-gradient(circle at 78% 15%, rgba(201, 169, 110, 0.18), transparent 34%);
-        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.22);
+            linear-gradient(135deg, rgba(33, 22, 29, 0.94), rgba(23, 16, 22, 0.92)),
+            radial-gradient(circle at 78% 15%, rgba(238, 180, 195, 0.18), transparent 34%);
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.26);
         padding: clamp(1.35rem, 3vw, 2rem);
     }
 
@@ -146,7 +166,7 @@ body {
         position: absolute;
         inset: 0;
         pointer-events: none;
-        background: linear-gradient(90deg, rgba(255, 255, 255, 0.035), transparent 42%);
+        background: linear-gradient(90deg, rgba(238, 180, 195, 0.04), transparent 42%);
     }
 
     .pd-dashboard-hero-copy,
@@ -166,14 +186,16 @@ body {
         min-width: 0;
     }
 
+    /* ── Progress ring ───────────────────────────────── */
+
     .pd-dashboard-ring {
         width: 7rem;
         height: 7rem;
         flex-shrink: 0;
         border-radius: 50%;
-        background: conic-gradient(var(--pd-gold-light) var(--progress), rgba(255, 255, 255, 0.07) 0);
+        background: conic-gradient(var(--pd-primary) var(--progress), rgba(255, 255, 255, 0.07) 0);
         padding: 1px;
-        box-shadow: inset 0 0 0 1px rgba(201, 169, 110, 0.1);
+        box-shadow: inset 0 0 0 1px rgba(238, 180, 195, 0.12);
     }
 
     .pd-dashboard-ring > div {
@@ -184,7 +206,7 @@ body {
         align-items: center;
         justify-content: center;
         border-radius: 50%;
-        background: #171116;
+        background: #1a1018;
         text-align: center;
     }
 
@@ -192,7 +214,7 @@ body {
         font-family: "Playfair Display", Georgia, serif;
         font-size: 1.65rem;
         line-height: 1;
-        color: var(--pd-gold);
+        color: var(--pd-primary);
     }
 
     .pd-dashboard-ring span {
@@ -200,16 +222,18 @@ body {
         font-size: 0.55rem;
         letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: rgba(240, 237, 232, 0.32);
+        color: rgba(255, 248, 246, 0.32);
     }
+
+    /* ── Readiness panel ─────────────────────────────── */
 
     .pd-dashboard-readiness {
         display: flex;
         flex-direction: column;
         gap: 1.1rem;
         border-radius: 0.8rem;
-        border: 1px solid rgba(255, 255, 255, 0.055);
-        background: rgba(26, 18, 24, 0.82);
+        border: 1px solid var(--pd-border);
+        background: rgba(33, 22, 29, 0.82);
         padding: 1.1rem;
     }
 
@@ -219,30 +243,33 @@ body {
 
     .pd-dashboard-stat {
         min-height: 7rem;
-        background: linear-gradient(145deg, rgba(26, 18, 24, 0.96), rgba(19, 15, 18, 0.96));
+        background: linear-gradient(145deg, rgba(33, 22, 29, 0.96), rgba(23, 16, 22, 0.96));
     }
+
+    /* ── Buttons ─────────────────────────────────────── */
 
     .pd-btn-primary {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-        background: linear-gradient(135deg, var(--pd-gold), var(--pd-gold-light));
-        color: #07070c;
-        border: 1px solid rgba(201, 169, 110, 0.35);
+        background: var(--pd-primary);
+        color: #09070A;
+        border: 1px solid rgba(238, 180, 195, 0.35);
         border-radius: 0.7rem;
         padding: 0.85rem 1.15rem;
         font-size: 0.74rem;
         font-weight: 600;
         letter-spacing: 0.13em;
         text-transform: uppercase;
-        box-shadow: 0 12px 34px rgba(201, 169, 110, 0.18);
-        transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+        box-shadow: 0 10px 28px rgba(238, 180, 195, 0.22);
+        transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
     }
 
     .pd-btn-primary:hover {
+        background: var(--pd-primary-hover);
         transform: translateY(-1px);
-        box-shadow: 0 16px 44px rgba(201, 169, 110, 0.25);
+        box-shadow: 0 14px 38px rgba(238, 180, 195, 0.32);
     }
 
     .pd-btn-secondary {
@@ -251,8 +278,8 @@ body {
         justify-content: center;
         gap: 0.5rem;
         background: rgba(255, 255, 255, 0.04);
-        color: rgba(240, 237, 232, 0.72);
-        border: 1px solid rgba(255, 255, 255, 0.09);
+        color: rgba(255, 248, 246, 0.68);
+        border: 1px solid var(--pd-border);
         border-radius: 0.7rem;
         padding: 0.75rem 1rem;
         font-size: 0.74rem;
@@ -262,9 +289,9 @@ body {
     }
 
     .pd-btn-secondary:hover {
-        border-color: rgba(201, 169, 110, 0.35);
-        color: var(--pd-gold-light);
-        background: rgba(201, 169, 110, 0.08);
+        border-color: rgba(238, 180, 195, 0.45);
+        color: var(--pd-primary);
+        background: var(--pd-primary-soft);
     }
 
     .pd-btn-danger {
@@ -288,11 +315,13 @@ body {
         color: #fff;
     }
 
+    /* ── Inputs ──────────────────────────────────────── */
+
     .pd-input {
         width: 100%;
         border-radius: 0.6rem;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(255, 255, 255, 0.045);
+        border: 1px solid rgba(238, 180, 195, 0.14);
+        background: rgba(238, 180, 195, 0.04);
         color: var(--pd-ivory);
         font-size: 0.8rem;
         padding: 0.55rem 0.75rem;
@@ -301,7 +330,7 @@ body {
     }
 
     .pd-input::placeholder {
-        color: rgba(240, 237, 232, 0.24);
+        color: rgba(255, 248, 246, 0.22);
     }
 
     .pd-input option,
@@ -311,23 +340,23 @@ body {
     }
 
     .pd-input option:checked {
-        background: var(--pd-gold);
+        background: var(--pd-primary);
         color: var(--pd-ink);
     }
 
     .pd-input option:disabled {
-        color: rgba(240, 237, 232, 0.32);
+        color: rgba(255, 248, 246, 0.28);
     }
 
     .pd-input:focus {
-        border-color: rgba(201, 169, 110, 0.42);
-        box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.08);
-        background: rgba(255, 255, 255, 0.065);
+        border-color: rgba(238, 180, 195, 0.52);
+        box-shadow: 0 0 0 3px rgba(238, 180, 195, 0.1);
+        background: rgba(238, 180, 195, 0.07);
     }
 
     .pd-input-light {
         width: 100%;
-        border: 1px solid rgba(247, 214, 224, 0.9);
+        border: 1px solid rgba(238, 180, 195, 0.7);
         background: var(--pd-muted);
         color: #1a1a1a;
         border-radius: 0.5rem;
@@ -338,13 +367,13 @@ body {
     }
 
     .pd-input-light:focus {
-        border-color: var(--pd-rose);
-        box-shadow: 0 0 0 3px rgba(196, 104, 122, 0.12);
+        border-color: var(--pd-primary);
+        box-shadow: 0 0 0 3px rgba(238, 180, 195, 0.14);
     }
 
     .pd-label {
         display: block;
-        color: rgba(240, 237, 232, 0.48);
+        color: rgba(255, 248, 246, 0.45);
         font-size: 0.67rem;
         letter-spacing: 0.16em;
         text-transform: uppercase;
@@ -358,6 +387,8 @@ body {
         text-transform: uppercase;
     }
 
+    /* ── Progress bar ────────────────────────────────── */
+
     .pd-progress-track {
         height: 0.4rem;
         width: 100%;
@@ -369,9 +400,11 @@ body {
     .pd-progress-bar {
         height: 100%;
         border-radius: 999px;
-        background: linear-gradient(90deg, var(--pd-gold), var(--pd-gold-light));
+        background: linear-gradient(90deg, var(--pd-rose-muted), var(--pd-primary));
         transition: width 350ms ease;
     }
+
+    /* ── Table ───────────────────────────────────────── */
 
     .pd-table {
         width: 100%;
@@ -380,7 +413,7 @@ body {
     }
 
     .pd-table thead {
-        color: rgba(240, 237, 232, 0.35);
+        color: rgba(255, 248, 246, 0.32);
         font-size: 0.66rem;
         letter-spacing: 0.14em;
         text-transform: uppercase;
@@ -389,7 +422,7 @@ body {
     .pd-table th,
     .pd-table td {
         padding: 1rem 1.25rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+        border-bottom: 1px solid var(--pd-border);
     }
 
     .pd-table tbody tr {
@@ -397,8 +430,10 @@ body {
     }
 
     .pd-table tbody tr:hover {
-        background: rgba(255, 255, 255, 0.025);
+        background: rgba(238, 180, 195, 0.03);
     }
+
+    /* ── Badge ───────────────────────────────────────── */
 
     .pd-badge {
         display: inline-flex;
@@ -408,26 +443,27 @@ body {
         padding: 0.25rem 0.65rem;
         font-size: 0.66rem;
         font-weight: 500;
-        border: 1px solid rgba(201, 169, 110, 0.22);
-        background: rgba(201, 169, 110, 0.1);
-        color: var(--pd-gold-light);
+        border: 1px solid rgba(238, 180, 195, 0.28);
+        background: rgba(238, 180, 195, 0.1);
+        color: var(--pd-primary);
     }
-    /* ─── Community Chat Shell (Elysian) ─────────────────────── */
+
+    /* ── Community Chat Shell (Elysian) ──────────────── */
 
     .elysian-sidebar {
         width: 220px;
         flex-shrink: 0;
         display: flex;
         flex-direction: column;
-        background: #0d0b10;
-        border-right: 1px solid rgba(255, 255, 255, 0.04);
+        background: #0e0b0d;
+        border-right: 1px solid var(--pd-border);
         overflow: hidden;
         transition: transform 280ms ease;
     }
 
     .elysian-brand {
         padding: 1.1rem 1rem;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.35);
+        border-bottom: 1px solid rgba(238, 180, 195, 0.07);
     }
 
     .elysian-brand-title {
@@ -435,7 +471,7 @@ body {
         font-weight: 700;
         letter-spacing: 0.2em;
         text-transform: uppercase;
-        color: #c9a96e;
+        color: var(--pd-primary);
     }
 
     .elysian-brand-sub {
@@ -443,17 +479,17 @@ body {
         font-size: 0.52rem;
         letter-spacing: 0.16em;
         text-transform: uppercase;
-        color: rgba(240, 237, 232, 0.28);
+        color: rgba(255, 248, 246, 0.28);
     }
 
     .elysian-side-profile {
         padding: 0.7rem;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+        border-bottom: 1px solid rgba(238, 180, 195, 0.07);
     }
 
     .elysian-side-profile-inner {
-        background: rgba(201, 169, 110, 0.04);
-        border: 1px solid rgba(201, 169, 110, 0.08);
+        background: rgba(238, 180, 195, 0.04);
+        border: 1px solid rgba(238, 180, 195, 0.1);
         border-radius: 0.7rem;
         padding: 0.6rem;
     }
@@ -475,14 +511,14 @@ body {
         width: 2.1rem;
         height: 2.1rem;
         border-radius: 50%;
-        background: rgba(201, 169, 110, 0.12);
-        border: 1px solid rgba(201, 169, 110, 0.25);
+        background: rgba(238, 180, 195, 0.12);
+        border: 1px solid rgba(238, 180, 195, 0.28);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 0.62rem;
         font-weight: 700;
-        color: #e8c88a;
+        color: var(--pd-primary);
         letter-spacing: 0.04em;
         overflow: hidden;
     }
@@ -504,13 +540,13 @@ body {
         height: 0.6rem;
         border-radius: 50%;
         background: #4ade80;
-        border: 2px solid #0d0b10;
+        border: 2px solid #0e0b0d;
     }
 
     .elysian-side-name {
         font-size: 0.76rem;
         font-weight: 600;
-        color: #f0ede8;
+        color: var(--pd-ivory);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -519,7 +555,7 @@ body {
     .elysian-side-sub {
         margin-top: 0.1rem;
         font-size: 0.56rem;
-        color: rgba(240, 237, 232, 0.3);
+        color: rgba(255, 248, 246, 0.3);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -527,16 +563,16 @@ body {
 
     .elysian-side-progress {
         margin-top: 0.65rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.055);
+        border-top: 1px solid rgba(238, 180, 195, 0.1);
         padding-top: 0.55rem;
         font-size: 0.52rem;
         letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: rgba(240, 237, 232, 0.25);
+        color: rgba(255, 248, 246, 0.25);
     }
 
     .elysian-side-progress strong {
-        color: #c9a96e;
+        color: var(--pd-primary);
         font-size: 0.6rem;
         letter-spacing: 0;
     }
@@ -546,13 +582,13 @@ body {
         width: 100%;
         overflow: hidden;
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.055);
+        background: rgba(238, 180, 195, 0.1);
     }
 
     .elysian-side-progress-track > div {
         height: 100%;
         border-radius: inherit;
-        background: linear-gradient(90deg, #c9a96e, #e8c88a);
+        background: linear-gradient(90deg, var(--pd-rose-muted), var(--pd-primary));
         transition: width 500ms ease;
     }
 
@@ -572,7 +608,7 @@ body {
         padding: 0.55rem 0.8rem;
         border-radius: 0.55rem;
         font-size: 0.78rem;
-        color: rgba(240, 237, 232, 0.4);
+        color: rgba(255, 248, 246, 0.38);
         text-decoration: none;
         border: 1px solid transparent;
         transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
@@ -588,20 +624,20 @@ body {
     }
 
     .elysian-nav-item:hover {
-        background: rgba(255, 255, 255, 0.04);
-        color: rgba(240, 237, 232, 0.72);
-        border-color: rgba(255, 255, 255, 0.04);
+        background: rgba(238, 180, 195, 0.06);
+        color: rgba(255, 248, 246, 0.7);
+        border-color: rgba(238, 180, 195, 0.08);
     }
 
     .elysian-nav-item.active {
-        background: rgba(201, 169, 110, 0.1);
-        border-color: rgba(201, 169, 110, 0.18);
-        color: #e8c88a;
+        background: rgba(238, 180, 195, 0.1);
+        border-color: rgba(238, 180, 195, 0.22);
+        color: var(--pd-primary);
     }
 
     .elysian-side-footer {
         padding: 0.55rem 0.6rem;
-        border-top: 1px solid rgba(0, 0, 0, 0.35);
+        border-top: 1px solid rgba(238, 180, 195, 0.07);
     }
 
     .elysian-side-footer-btn {
@@ -612,7 +648,7 @@ body {
         padding: 0.5rem 0.8rem;
         border-radius: 0.55rem;
         font-size: 0.74rem;
-        color: rgba(240, 237, 232, 0.26);
+        color: rgba(255, 248, 246, 0.26);
         background: none;
         border: none;
         cursor: pointer;
@@ -649,8 +685,8 @@ body {
         padding: 0 1.1rem;
         height: 3.25rem;
         flex-shrink: 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-        background: rgba(10, 10, 15, 0.92);
+        border-bottom: 1px solid var(--pd-border);
+        background: rgba(14, 11, 13, 0.92);
         backdrop-filter: blur(8px);
     }
 
@@ -667,10 +703,10 @@ body {
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        border: 1px solid rgba(201, 169, 110, 0.18);
+        border: 1px solid rgba(238, 180, 195, 0.22);
         border-radius: 999px;
-        background: rgba(201, 169, 110, 0.075);
-        color: var(--pd-gold);
+        background: rgba(238, 180, 195, 0.07);
+        color: var(--pd-primary);
         padding: 0.55rem 0.9rem;
         font-size: 0.62rem;
         font-weight: 700;
@@ -681,9 +717,9 @@ body {
     }
 
     .elysian-topbar-refer:hover {
-        border-color: rgba(201, 169, 110, 0.34);
-        background: rgba(201, 169, 110, 0.14);
-        color: var(--pd-gold-light);
+        border-color: rgba(238, 180, 195, 0.42);
+        background: rgba(238, 180, 195, 0.14);
+        color: var(--pd-primary-hover);
     }
 
     .elysian-mobile-toggle {
@@ -702,13 +738,13 @@ body {
         display: block;
         width: 1rem;
         height: 1.5px;
-        background: rgba(240, 237, 232, 0.4);
+        background: rgba(255, 248, 246, 0.4);
         border-radius: 1px;
     }
 
     .elysian-breadcrumb {
         font-size: 0.68rem;
-        color: rgba(240, 237, 232, 0.28);
+        color: rgba(255, 248, 246, 0.28);
         flex: 1;
         min-width: 0;
         white-space: nowrap;
@@ -733,13 +769,13 @@ body {
 
     .elysian-topbar-greeting p:first-child {
         font-size: 0.58rem;
-        color: rgba(240, 237, 232, 0.28);
+        color: rgba(255, 248, 246, 0.28);
     }
 
     .elysian-topbar-greeting p:last-child {
         font-size: 0.7rem;
         font-weight: 500;
-        color: #c9a96e;
+        color: var(--pd-primary);
         max-width: 10rem;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -751,14 +787,14 @@ body {
         width: 1.8rem;
         height: 1.8rem;
         border-radius: 50%;
-        background: rgba(201, 169, 110, 0.1);
-        border: 1px solid rgba(201, 169, 110, 0.2);
+        background: rgba(238, 180, 195, 0.1);
+        border: 1px solid rgba(238, 180, 195, 0.25);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 0.58rem;
         font-weight: 700;
-        color: #e8c88a;
+        color: var(--pd-primary);
         letter-spacing: 0.04em;
         flex-shrink: 0;
         overflow: hidden;
@@ -779,13 +815,13 @@ body {
         width: min(13.5rem, calc(100vw - 2rem));
         overflow: hidden;
         border-radius: 0.75rem;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        background: #151015;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.42);
+        border: 1px solid var(--pd-border);
+        background: #18111a;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.48);
     }
 
     .elysian-profile-dropdown-head {
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        border-bottom: 1px solid var(--pd-border);
         padding: 0.75rem 0.85rem;
     }
 
@@ -802,7 +838,7 @@ body {
         margin-top: 0.2rem;
         display: block;
         font-size: 0.62rem;
-        color: rgba(240, 237, 232, 0.35);
+        color: rgba(255, 248, 246, 0.32);
     }
 
     .elysian-profile-dropdown a,
@@ -812,7 +848,7 @@ body {
         padding: 0.66rem 0.85rem;
         text-align: left;
         font-size: 0.74rem;
-        color: rgba(240, 237, 232, 0.55);
+        color: rgba(255, 248, 246, 0.52);
         transition: background 150ms ease, color 150ms ease;
     }
 
@@ -824,12 +860,12 @@ body {
 
     .elysian-profile-dropdown a:hover,
     .elysian-profile-dropdown button:hover {
-        background: rgba(201, 169, 110, 0.08);
-        color: var(--pd-gold-light);
+        background: rgba(238, 180, 195, 0.08);
+        color: var(--pd-primary);
     }
 
     .elysian-profile-dropdown form {
-        border-top: 1px solid rgba(255, 255, 255, 0.055);
+        border-top: 1px solid var(--pd-border);
     }
 
     .elysian-profile-dropdown form button:hover {
@@ -851,7 +887,7 @@ body {
 
     .community-scroll {
         scrollbar-width: thin;
-        scrollbar-color: rgba(255, 255, 255, 0.07) transparent;
+        scrollbar-color: rgba(238, 180, 195, 0.1) transparent;
     }
 
     .community-scroll::-webkit-scrollbar {
@@ -863,7 +899,7 @@ body {
     }
 
     .community-scroll::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.07);
+        background: rgba(238, 180, 195, 0.1);
         border-radius: 2px;
     }
 }
@@ -872,7 +908,8 @@ body {
 @media (max-width: 1279px) {
     .elysian-sidebar {
         position: fixed;
-        inset-y: 0;
+        top: 0;
+        bottom: 0;
         left: 0;
         z-index: 50;
         transform: translateX(-100%);
@@ -928,7 +965,7 @@ body {
     z-index: 20;
 }
 
-/* ── Module collapse animation ─────────────────────────────────────────── */
+/* ── Module collapse animation ─────────────────────────── */
 
 .pd-collapse {
     display: grid;
@@ -941,18 +978,16 @@ body {
     min-height: 0;
 }
 
-/* ── Themed scrollbars (dark/gold premium style) ──────────────────────── */
+/* ── Themed scrollbars ─────────────────────────────────── */
 
-/* Firefox */
 .pd-dark-surface,
 .pd-dark-surface *,
 .pd-scroll,
 .pd-scroll * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(201, 169, 110, 0.18) transparent;
+    scrollbar-color: rgba(238, 180, 195, 0.16) transparent;
 }
 
-/* WebKit (Chrome, Safari, Edge) */
 .pd-dark-surface ::-webkit-scrollbar,
 .pd-scroll::-webkit-scrollbar {
     width: 4px;
@@ -966,17 +1001,311 @@ body {
 
 .pd-dark-surface ::-webkit-scrollbar-thumb,
 .pd-scroll::-webkit-scrollbar-thumb {
-    background: rgba(201, 169, 110, 0.18);
+    background: rgba(238, 180, 195, 0.16);
     border-radius: 10px;
     transition: background 200ms ease;
 }
 
 .pd-dark-surface ::-webkit-scrollbar-thumb:hover,
 .pd-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(201, 169, 110, 0.38);
+    background: rgba(238, 180, 195, 0.34);
 }
 
 .pd-dark-surface ::-webkit-scrollbar-corner,
 .pd-scroll::-webkit-scrollbar-corner {
     background: transparent;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PROFILE PAGE — themed CSS classes (used instead of inline styles)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.pd-profile-card-bg {
+    background: linear-gradient(105deg, rgba(238,180,195,0.09) 0%, rgba(196,104,122,0.04) 45%, transparent 75%), #171016;
+}
+
+.pd-inner-card-bg {
+    background: #171016;
+}
+
+.pd-card-shine {
+    background: linear-gradient(90deg, transparent, rgba(238,180,195,0.28), transparent);
+}
+
+.pd-avatar-inner {
+    background: radial-gradient(circle at 30% 25%, rgba(238,180,195,0.22), rgba(12,10,16,0.96) 70%);
+}
+
+.pd-role-badge {
+    background: rgba(238,180,195,0.08);
+    border-color: rgba(238,180,195,0.2);
+    color: rgba(238,180,195,0.78);
+}
+
+.pd-profile-icon-badge {
+    background: rgba(238,180,195,0.09);
+    border: 1px solid rgba(238,180,195,0.18);
+    color: #EEB4C3;
+}
+
+.pd-profile-save-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(238,180,195,0.38);
+    background: rgba(238,180,195,0.11);
+    color: #EEB4C3;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    transition: background 150ms ease;
+}
+
+.pd-profile-save-btn:hover:not(:disabled) {
+    background: rgba(238,180,195,0.2);
+}
+
+.pd-profile-save-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LIGHT MODE — applied when <html class="light-mode">
+   ═══════════════════════════════════════════════════════════════════ */
+
+html.light-mode body {
+    background: #F7F3F5;
+}
+
+html.light-mode .pd-dark-surface {
+    background: #F7F3F5;
+    color: #1A0E14;
+}
+
+/* ── text-boss-ivory/* → dark text ──────────────────────────────── */
+html.light-mode .text-boss-ivory                { color: #1A0E14; }
+html.light-mode .text-boss-ivory\/90            { color: rgba(26,14,20,0.9); }
+html.light-mode .text-boss-ivory\/80            { color: rgba(26,14,20,0.8); }
+html.light-mode .text-boss-ivory\/70            { color: rgba(26,14,20,0.7); }
+html.light-mode .text-boss-ivory\/65            { color: rgba(26,14,20,0.65); }
+html.light-mode .text-boss-ivory\/60            { color: rgba(26,14,20,0.6); }
+html.light-mode .text-boss-ivory\/55            { color: rgba(26,14,20,0.55); }
+html.light-mode .text-boss-ivory\/50            { color: rgba(26,14,20,0.5); }
+html.light-mode .text-boss-ivory\/48            { color: rgba(26,14,20,0.48); }
+html.light-mode .text-boss-ivory\/45            { color: rgba(26,14,20,0.45); }
+html.light-mode .text-boss-ivory\/42            { color: rgba(26,14,20,0.42); }
+html.light-mode .text-boss-ivory\/40            { color: rgba(26,14,20,0.4); }
+html.light-mode .text-boss-ivory\/38            { color: rgba(26,14,20,0.38); }
+html.light-mode .text-boss-ivory\/35            { color: rgba(26,14,20,0.35); }
+html.light-mode .text-boss-ivory\/33            { color: rgba(26,14,20,0.33); }
+html.light-mode .text-boss-ivory\/30            { color: rgba(26,14,20,0.3); }
+html.light-mode .text-boss-ivory\/28            { color: rgba(26,14,20,0.28); }
+html.light-mode .text-boss-ivory\/25            { color: rgba(26,14,20,0.25); }
+html.light-mode .text-boss-ivory\/22            { color: rgba(26,14,20,0.22); }
+html.light-mode .text-boss-ivory\/20            { color: rgba(26,14,20,0.2); }
+
+/* ── border-white/* → soft pink border ──────────────────────────── */
+html.light-mode .border-white\/\[0\.05\]        { border-color: rgba(238,180,195,0.35); }
+html.light-mode .border-white\/\[0\.06\]        { border-color: rgba(238,180,195,0.38); }
+html.light-mode .border-white\/\[0\.07\]        { border-color: rgba(238,180,195,0.4); }
+html.light-mode .border-white\/\[0\.08\]        { border-color: rgba(238,180,195,0.42); }
+html.light-mode .border-white\/\[0\.09\]        { border-color: rgba(238,180,195,0.45); }
+
+/* ── bg-white/* → solid white so rows stay visible ──────────────── */
+html.light-mode .bg-white\/\[0\.02\]            { background-color: #FFFFFF; }
+html.light-mode .bg-white\/\[0\.025\]           { background-color: #FFFFFF; }
+html.light-mode .bg-white\/\[0\.03\]            { background-color: #FFFFFF; }
+html.light-mode .bg-white\/\[0\.04\]            { background-color: #FFFFFF; }
+html.light-mode .bg-white\/5                    { background-color: #FFFFFF; }
+
+/* ── Profile card backgrounds ───────────────────────────────────── */
+html.light-mode .pd-profile-card-bg {
+    background: linear-gradient(105deg, rgba(238,180,195,0.18) 0%, rgba(238,180,195,0.06) 45%, transparent 75%), #FFFFFF;
+}
+html.light-mode .pd-inner-card-bg              { background: #FFFFFF; }
+html.light-mode .pd-avatar-inner {
+    background: radial-gradient(circle at 30% 25%, rgba(238,180,195,0.35), rgba(255,255,255,0.95) 70%);
+}
+html.light-mode .pd-role-badge {
+    background: rgba(238,180,195,0.15);
+    border-color: rgba(238,180,195,0.45);
+    color: #B5527A;
+}
+html.light-mode .pd-profile-icon-badge {
+    background: rgba(238,180,195,0.15);
+    border-color: rgba(238,180,195,0.4);
+    color: #B5527A;
+}
+html.light-mode .pd-profile-save-btn {
+    border-color: rgba(238,180,195,0.6);
+    background: rgba(238,180,195,0.15);
+    color: #B5527A;
+}
+html.light-mode .pd-profile-save-btn:hover:not(:disabled) {
+    background: rgba(238,180,195,0.28);
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────── */
+html.light-mode .elysian-sidebar {
+    background: #FFFFFF;
+    border-right-color: rgba(238,180,195,0.4);
+}
+html.light-mode .elysian-brand              { border-bottom-color: rgba(238,180,195,0.25); }
+html.light-mode .elysian-side-profile       { border-bottom-color: rgba(238,180,195,0.25); }
+html.light-mode .elysian-side-profile-inner {
+    background: rgba(238,180,195,0.1);
+    border-color: rgba(238,180,195,0.35);
+}
+html.light-mode .elysian-side-name          { color: #1A0E14; }
+html.light-mode .elysian-side-sub           { color: rgba(26,14,20,0.5); }
+html.light-mode .elysian-side-progress {
+    color: rgba(26,14,20,0.4);
+    border-top-color: rgba(238,180,195,0.25);
+}
+html.light-mode .elysian-nav-item           { color: rgba(26,14,20,0.55); }
+html.light-mode .elysian-nav-item:hover {
+    background: rgba(238,180,195,0.12);
+    color: #1A0E14;
+    border-color: rgba(238,180,195,0.3);
+}
+html.light-mode .elysian-nav-item.active {
+    background: rgba(238,180,195,0.22);
+    border-color: rgba(238,180,195,0.55);
+    color: #B5527A;
+}
+html.light-mode .elysian-side-footer        { border-top-color: rgba(238,180,195,0.25); }
+html.light-mode .elysian-side-footer-btn    { color: rgba(26,14,20,0.45); }
+html.light-mode .elysian-online-dot         { border-color: #FFFFFF; }
+
+/* ── Topbar ──────────────────────────────────────────────────────── */
+html.light-mode .elysian-topbar {
+    background: rgba(255,255,255,0.97);
+    border-bottom-color: rgba(238,180,195,0.35);
+    box-shadow: 0 1px 16px rgba(238,180,195,0.15);
+}
+html.light-mode .elysian-breadcrumb                      { color: rgba(26,14,20,0.42); }
+html.light-mode .elysian-topbar-greeting p:first-child   { color: rgba(26,14,20,0.42); }
+html.light-mode .elysian-topbar-greeting p:last-child    { color: #B5527A; }
+html.light-mode .elysian-mobile-toggle span              { background: rgba(26,14,20,0.45); }
+html.light-mode .elysian-topbar-avatar {
+    background: rgba(238,180,195,0.2);
+    border-color: rgba(238,180,195,0.5);
+}
+
+/* ── Profile dropdown ────────────────────────────────────────────── */
+html.light-mode .elysian-profile-dropdown {
+    background: #FFFFFF;
+    border-color: rgba(238,180,195,0.4);
+    box-shadow: 0 12px 40px rgba(238,180,195,0.18);
+}
+html.light-mode .elysian-profile-dropdown-head  { border-bottom-color: rgba(238,180,195,0.3); }
+html.light-mode .elysian-profile-dropdown-head p { color: #1A0E14; }
+html.light-mode .elysian-profile-dropdown-head span { color: rgba(26,14,20,0.45); }
+html.light-mode .elysian-profile-dropdown a,
+html.light-mode .elysian-profile-dropdown button { color: rgba(26,14,20,0.6); }
+html.light-mode .elysian-profile-dropdown a:hover,
+html.light-mode .elysian-profile-dropdown button:hover {
+    background: rgba(238,180,195,0.12);
+    color: #B5527A;
+}
+html.light-mode .elysian-profile-dropdown form  { border-top-color: rgba(238,180,195,0.25); }
+
+/* ── Panels / cards ──────────────────────────────────────────────── */
+html.light-mode .pd-panel {
+    background: #FFFFFF;
+    border-color: rgba(238,180,195,0.4);
+    box-shadow: 0 4px 24px rgba(238,180,195,0.12);
+}
+html.light-mode .pd-panel-strong {
+    background: #FFF5F8;
+    border-color: rgba(238,180,195,0.4);
+}
+html.light-mode .pd-stat {
+    background: #FFFFFF;
+    border-color: rgba(238,180,195,0.4);
+}
+
+/* ── Dashboard hero ──────────────────────────────────────────────── */
+html.light-mode .pd-dashboard-hero {
+    background:
+        linear-gradient(135deg, rgba(255,245,250,0.98), rgba(255,240,246,0.98)),
+        radial-gradient(circle at 78% 15%, rgba(238,180,195,0.3), transparent 34%);
+    border-color: rgba(238,180,195,0.4);
+    box-shadow: 0 8px 32px rgba(238,180,195,0.14);
+}
+html.light-mode .pd-dashboard-ring > div   { background: #FFFFFF; }
+html.light-mode .pd-dashboard-readiness {
+    background: rgba(255,255,255,0.9);
+    border-color: rgba(238,180,195,0.35);
+}
+html.light-mode .pd-dashboard-stat {
+    background: linear-gradient(145deg, rgba(255,245,250,0.98), rgba(255,240,246,0.98));
+}
+
+/* ── Table ───────────────────────────────────────────────────────── */
+html.light-mode .pd-table thead            { color: rgba(26,14,20,0.45); }
+html.light-mode .pd-table th,
+html.light-mode .pd-table td               { border-bottom-color: rgba(238,180,195,0.3); }
+html.light-mode .pd-table tbody tr:hover   { background: rgba(238,180,195,0.07); }
+
+/* ── Inputs ──────────────────────────────────────────────────────── */
+html.light-mode .pd-input {
+    background: #FFFFFF;
+    border-color: rgba(238,180,195,0.5);
+    color: #1A0E14;
+}
+html.light-mode .pd-input::placeholder     { color: rgba(26,14,20,0.35); }
+html.light-mode .pd-input:focus {
+    border-color: #EEB4C3;
+    box-shadow: 0 0 0 3px rgba(238,180,195,0.2);
+    background: #FFFFFF;
+}
+html.light-mode .pd-input option,
+html.light-mode .pd-input optgroup         { background: #FFFFFF; color: #1A0E14; }
+html.light-mode .pd-label                  { color: rgba(26,14,20,0.55); }
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
+html.light-mode .pd-btn-secondary {
+    background: #FFFFFF;
+    color: rgba(26,14,20,0.65);
+    border-color: rgba(238,180,195,0.5);
+}
+html.light-mode .pd-btn-secondary:hover {
+    background: rgba(238,180,195,0.12);
+    color: #B5527A;
+    border-color: rgba(238,180,195,0.7);
+}
+
+/* ── Badge ───────────────────────────────────────────────────────── */
+html.light-mode .pd-badge {
+    background: rgba(238,180,195,0.18);
+    border-color: rgba(238,180,195,0.5);
+    color: #B5527A;
+}
+
+/* ── Primary color: use deeper rose for text on white bg ────────── */
+html.light-mode {
+    --pd-primary:       #EEB4C3;
+    --pd-primary-hover: #DFA1B4;
+    --pd-gold:          #EEB4C3;
+    --pd-gold-light:    #F3C3CF;
+}
+
+/* ── Text gradient ───────────────────────────────────────────────── */
+html.light-mode .pd-text-gradient {
+    background: linear-gradient(135deg, #1A0E14 20%, #B5527A 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* ── Scrollbars ──────────────────────────────────────────────────── */
+html.light-mode .pd-dark-surface ::-webkit-scrollbar-thumb,
+html.light-mode .pd-scroll::-webkit-scrollbar-thumb {
+    background: rgba(238,180,195,0.35);
+}
+html.light-mode .community-scroll          { scrollbar-color: rgba(238,180,195,0.3) transparent; }
+html.light-mode .community-scroll::-webkit-scrollbar-thumb { background: rgba(238,180,195,0.3); }

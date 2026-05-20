@@ -1,4 +1,4 @@
-<div
+﻿<div
     x-show="bunnyModalOpen"
     x-cloak
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
@@ -10,7 +10,7 @@
                 <p class="pd-kicker">{{ __('Bunny Stream') }}</p>
                 <h3 class="pd-heading mt-1 text-[1.25rem] text-boss-ivory">{{ __('Select Existing Bunny Video') }}</h3>
             </div>
-            <button type="button" class="rounded-lg border border-white/[0.07] bg-white/[0.04] px-3 py-1.5 text-[0.72rem] text-boss-ivory/45 transition-colors hover:text-boss-gold" @click="closeBunnyPicker()">
+            <button type="button" class="rounded-lg border border-white/[0.07] bg-white/[0.04] px-3 py-1.5 text-[0.72rem] text-boss-ivory/45 transition-colors hover:text-[#EEB4C3]" @click="closeBunnyPicker()">
                 {{ __('Close') }}
             </button>
         </div>
@@ -42,7 +42,7 @@
                 </template>
 
                 <template x-for="video in bunnyVideos" :key="video.id">
-                    <button type="button" class="flex w-full items-center gap-3 border-t border-white/[0.05] px-4 py-3 text-left transition-colors first:border-t-0 hover:bg-boss-gold/[0.06]" @click="selectBunnyVideo(video)">
+                    <button type="button" class="flex w-full items-center gap-3 border-t border-white/[0.05] px-4 py-3 text-left transition-colors first:border-t-0 hover:bg-[#EEB4C3]/[0.06]" @click="selectBunnyVideo(video)">
                         <div class="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/[0.06] bg-[#08080f] text-[0.58rem] text-boss-ivory/25">
                             <img x-show="video.thumbnail_url" x-bind:src="video.thumbnail_url" x-bind:alt="video.title" class="h-full w-full object-cover">
                             <span x-show="!video.thumbnail_url">{{ __('No thumb') }}</span>
@@ -55,10 +55,11 @@
                                 <span x-text="video.id"></span>
                             </p>
                         </div>
-                        <span class="text-[0.68rem] text-boss-gold">{{ __('Use') }}</span>
+                        <span class="text-[0.68rem] text-[#EEB4C3]">{{ __('Use') }}</span>
                     </button>
                 </template>
             </div>
         </div>
     </div>
 </div>
+
