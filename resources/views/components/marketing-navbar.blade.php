@@ -27,10 +27,14 @@
         <div class="flex h-16 items-center justify-between md:h-20">
             <a
                 href="{{ route('home') }}"
-                class="font-display text-[0.82rem] uppercase tracking-[0.28em] transition-colors duration-300"
-                x-bind:class="transparent && !scrolled && !navOpen ? 'text-white' : 'text-boss-gold'"
+                class="inline-flex items-center transition-opacity duration-300 hover:opacity-85"
+                aria-label="{{ config('app.name') }}"
             >
-                {{ config('app.name') }}
+                <img
+                    src="{{ asset('images/brand/get-rich-with-paradise-dolls-logo.png') }}"
+                    alt="{{ config('app.name') }}"
+                    class="h-auto w-[102px] object-contain sm:w-[122px] xl:w-[140px]"
+                >
             </a>
 
             <div class="hidden items-center gap-7 lg:flex">

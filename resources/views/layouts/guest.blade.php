@@ -22,7 +22,11 @@
                     <a href="{{ route('home') }}" class="text-[0.65rem] uppercase tracking-[0.28em] text-boss-gold/70 transition-colors hover:text-boss-gold">
                         {{ __('Back to site') }}
                     </a>
-                    <h1 class="pd-heading pd-text-gradient mt-6 text-[2.1rem]">{{ config('app.name') }}</h1>
+                    <img
+                        src="{{ asset('images/brand/get-rich-with-paradise-dolls-logo.png') }}"
+                        alt="{{ config('app.name') }}"
+                        class="mx-auto mt-6 h-auto w-[210px] object-contain sm:w-[240px]"
+                    >
                     <p class="mt-2 text-[0.82rem] text-boss-ivory/35">{{ __('Member access and training portal') }}</p>
                 </div>
 

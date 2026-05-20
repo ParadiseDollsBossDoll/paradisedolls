@@ -75,7 +75,11 @@
             <aside class="elysian-sidebar" :class="shellDrawerOpen ? 'is-open' : ''">
                 <div class="elysian-brand">
                     <div>
-                        <div class="elysian-brand-title">&#10022; PARADISEDOLLZ &#10022;</div>
+                        <img
+                            src="{{ asset('images/brand/get-rich-with-paradise-dolls-logo.png') }}"
+                            alt="{{ config('app.name') }}"
+                            class="h-auto w-[122px] object-contain"
+                        >
                         <div class="elysian-brand-sub">{{ $sidebarSubtitle }}</div>
                     </div>
                 </div>

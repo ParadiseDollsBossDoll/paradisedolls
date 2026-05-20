@@ -1,6 +1,6 @@
 <x-layouts.marketing :transparentNav="true" :title="__('Home')">
     @php
-        $heroImg = asset('images/7.jpeg');
+        $heroImg = asset('images/home/main-photo-page.jpeg');
         $workspaceImg = asset('images/17.jpeg');
         $villaImg = asset('images/18.jpeg');
         $academyImg = asset('images/16.jpeg');

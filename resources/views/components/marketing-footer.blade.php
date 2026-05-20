@@ -18,9 +18,11 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="mb-12 grid grid-cols-1 gap-12 md:grid-cols-4">
             <div class="md:col-span-2">
-                <p class="font-display mb-4 text-[0.9rem] uppercase tracking-[0.28em] text-boss-gold">
-                    {{ config('app.name') }}
-                </p>
+                <img
+                    src="{{ asset('images/brand/get-rich-with-paradise-dolls-logo.png') }}"
+                    alt="{{ config('app.name') }}"
+                    class="mb-4 h-auto w-[154px] object-contain"
+                >
                 <p class="max-w-sm text-[0.875rem] leading-relaxed text-white/50">
                     {{ __('A luxury feminine opportunity platform and Boss Doll Blueprint academy for remote income, community, and confident online success.') }}
                 </p>
