@@ -25,7 +25,7 @@
         ],
         [
             'route'  => 'member.testimonials.create',
-            'label'  => __('My Testimony'),
+            'label'  => __('My Success Story'),
             'active' => request()->routeIs('member.testimonials.*'),
             'icon'   => 'stories',
         ],

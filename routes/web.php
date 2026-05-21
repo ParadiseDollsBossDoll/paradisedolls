@@ -199,6 +199,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     Route::get('/models/progress', [AdminModelProgressController::class, 'index'])->name('models.progress');
     Route::get('/onboarding', [AdminOnboardingController::class, 'index'])->name('onboarding.index');
+    Route::get('/onboarding/{profile}', [AdminOnboardingController::class, 'show'])->name('onboarding.show');
     Route::get('/onboarding/{profile}/details', [AdminOnboardingController::class, 'details'])->name('onboarding.details');
     Route::get('/academy-files', [AdminAcademyFileController::class, 'show'])->name('academy-files.show');
     Route::get('/onboarding/{profile}/documents/{document}', [AdminOnboardingController::class, 'downloadDocument'])

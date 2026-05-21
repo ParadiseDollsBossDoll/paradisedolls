@@ -7,7 +7,7 @@
 @endphp
 <x-layouts.marketing :transparentNav="true" :title="marketing_content('our_story.hero.title')">
     <section class="relative flex min-h-[72vh] items-end overflow-hidden pt-24">
-        <div class="absolute inset-0 bg-cover bg-center bg-top" style="background-image: url('{{ $heroImg }}');"></div>
+        <img src="{{ $heroImg }}" alt="" class="absolute inset-0 h-full w-full object-cover object-top" aria-hidden="true">
         <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent"></div>
         <div class="relative z-10 mx-auto w-full max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
             <p class="mb-4 text-[0.7rem] uppercase tracking-[0.38em] text-boss-gold">{{ marketing_content('our_story.hero.eyebrow') }}</p>

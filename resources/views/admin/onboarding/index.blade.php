@@ -73,15 +73,25 @@
                                 <p x-show="selected.profile && selected.profile.stage_name" class="mt-0.5 text-sm text-boss-gold/70" x-text="selected.profile && selected.profile.stage_name ? '« ' + selected.profile.stage_name + ' »' : ''"></p>
                             </div>
                         </div>
-                        <button
-                            @click="open = false"
-                            class="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.06] text-boss-ivory/50 transition hover:border-white/[0.12] hover:text-boss-ivory"
-                            aria-label="Close"
-                        >
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <template x-if="selected.profile">
+                                <a
+                                    :href="'{{ url('admin/onboarding') }}/' + selected.profile.id"
+                                    class="rounded-lg border border-boss-gold/20 bg-boss-gold/[0.07] px-3 py-1.5 text-[0.72rem] font-medium text-boss-gold transition hover:bg-boss-gold/[0.13]"
+                                >
+                                    Full Profile
+                                </a>
+                            </template>
+                            <button
+                                @click="open = false"
+                                class="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.06] text-boss-ivory/50 transition hover:border-white/[0.12] hover:text-boss-ivory"
+                                aria-label="Close"
+                            >
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     {{-- Scrollable body --}}
@@ -196,15 +206,71 @@
                                             <p class="mt-0.5 text-sm text-boss-ivory/80" x-text="selected.profile.timezone"></p>
                                         </div>
                                     </template>
+                                    <template x-if="selected.profile.nationality">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Nationality</p>
+                                            <p class="mt-0.5 text-sm text-boss-ivory/80" x-text="selected.profile.nationality"></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="selected.profile.spoken_languages">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Spoken Languages</p>
+                                            <p class="mt-0.5 text-sm text-boss-ivory/80" x-text="selected.profile.spoken_languages"></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="selected.profile.social_handles">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Social Handles</p>
+                                            <p class="mt-0.5 text-sm text-boss-ivory/80" x-text="selected.profile.social_handles"></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="selected.profile.with_other_agency">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">With Another Agency?</p>
+                                            <p class="mt-0.5 text-sm text-boss-ivory/80" x-text="selected.profile.with_other_agency"></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="selected.profile.hear_about_us">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">How They Found Us</p>
+                                            <p class="mt-0.5 text-sm text-boss-ivory/80" x-text="selected.profile.hear_about_us"></p>
+                                        </div>
+                                    </template>
                                 </div>
 
-                                {{-- Platforms --}}
+                                {{-- Platforms they want to be on --}}
                                 <template x-if="selected.profile.platforms && selected.profile.platforms.length > 0">
                                     <div>
-                                        <p class="mb-2 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Platforms</p>
+                                        <p class="mb-2 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">{{ __('Platforms they\'d like to be on') }}</p>
                                         <div class="flex flex-wrap gap-1.5">
                                             <template x-for="platform in selected.profile.platforms" :key="platform">
                                                 <span class="rounded-full bg-boss-gold/10 px-2.5 py-0.5 text-[0.7rem] text-boss-gold" x-text="platform"></span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                {{-- Current platforms they're already on --}}
+                                <template x-if="selected.profile.current_platforms">
+                                    <div>
+                                        <p class="mb-1.5 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">{{ __('Currently active on') }}</p>
+                                        <p class="text-[0.82rem] leading-relaxed text-boss-ivory/70" x-text="selected.profile.current_platforms"></p>
+                                    </div>
+                                </template>
+
+                                {{-- Fetishes & Kinks Checklist --}}
+                                <template x-if="selected.profile.fetishes_checklist && Object.keys(selected.profile.fetishes_checklist).length > 0">
+                                    <div>
+                                        <p class="mb-2 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">{{ __('Fetishes & Kinks Checklist') }}</p>
+                                        <div class="space-y-1 max-h-72 overflow-y-auto pr-1">
+                                            <template x-for="[item, answer] in Object.entries(selected.profile.fetishes_checklist)" :key="item">
+                                                <div class="flex items-center justify-between gap-2 rounded-md px-2 py-1 text-[0.74rem]"
+                                                    :class="answer === 'Yes' ? 'bg-emerald-400/8 text-boss-ivory/70' : (answer === 'No' ? 'bg-red-400/8 text-boss-ivory/50' : 'bg-boss-gold/8 text-boss-ivory/65')">
+                                                    <span x-text="item"></span>
+                                                    <span class="shrink-0 rounded-full px-2 py-0.5 text-[0.6rem] font-semibold"
+                                                        :class="answer === 'Yes' ? 'bg-emerald-400/15 text-emerald-300' : (answer === 'No' ? 'bg-red-400/15 text-red-300' : 'bg-boss-gold/15 text-boss-gold')"
+                                                        x-text="answer"></span>
+                                                </div>
                                             </template>
                                         </div>
                                     </div>
@@ -239,6 +305,124 @@
                                     <div>
                                         <p class="mb-1 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Experience Notes</p>
                                         <p class="whitespace-pre-line text-sm leading-relaxed text-boss-ivory/65" x-text="selected.profile.experience_notes"></p>
+                                    </div>
+                                </template>
+
+                                {{-- Appearance --}}
+                                <template x-if="selected.profile.height || selected.profile.weight || selected.profile.hair_color || selected.profile.eye_color || selected.profile.body_type || selected.profile.has_tattoos_piercings">
+                                    <div class="border-t border-white/[0.04] pt-3">
+                                        <p class="mb-2 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Appearance & Style</p>
+                                        <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[0.78rem]">
+                                            <template x-if="selected.profile.height">
+                                                <div class="flex gap-2"><span class="text-boss-ivory/38">Height</span><span class="text-boss-ivory/70" x-text="selected.profile.height"></span></div>
+                                            </template>
+                                            <template x-if="selected.profile.weight">
+                                                <div class="flex gap-2"><span class="text-boss-ivory/38">Weight</span><span class="text-boss-ivory/70" x-text="selected.profile.weight"></span></div>
+                                            </template>
+                                            <template x-if="selected.profile.hair_color">
+                                                <div class="flex gap-2"><span class="text-boss-ivory/38">Hair</span><span class="text-boss-ivory/70" x-text="selected.profile.hair_color"></span></div>
+                                            </template>
+                                            <template x-if="selected.profile.eye_color">
+                                                <div class="flex gap-2"><span class="text-boss-ivory/38">Eyes</span><span class="text-boss-ivory/70" x-text="selected.profile.eye_color"></span></div>
+                                            </template>
+                                            <template x-if="selected.profile.body_type">
+                                                <div class="flex gap-2"><span class="text-boss-ivory/38">Body</span><span class="text-boss-ivory/70" x-text="selected.profile.body_type"></span></div>
+                                            </template>
+                                            <template x-if="selected.profile.has_tattoos_piercings">
+                                                <div class="col-span-2 flex gap-2"><span class="text-boss-ivory/38">Tattoos/Piercings</span><span class="text-boss-ivory/70" x-text="selected.profile.has_tattoos_piercings"></span></div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                {{-- Work Preferences --}}
+                                <template x-if="(selected.profile.work_interests && selected.profile.work_interests.length > 0) || (selected.profile.comfort_levels && selected.profile.comfort_levels.length > 0) || selected.profile.custom_content_ok || selected.profile.worn_items_ok">
+                                    <div class="border-t border-white/[0.04] pt-3">
+                                        <p class="mb-2 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Work Preferences</p>
+                                        <div class="space-y-2">
+                                            <template x-if="selected.profile.work_interests && selected.profile.work_interests.length > 0">
+                                                <div>
+                                                    <p class="mb-1 text-[0.6rem] text-boss-ivory/30">Interests</p>
+                                                    <div class="flex flex-wrap gap-1">
+                                                        <template x-for="item in selected.profile.work_interests" :key="item">
+                                                            <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.65rem] text-boss-gold" x-text="item"></span>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <template x-if="selected.profile.comfort_levels && selected.profile.comfort_levels.length > 0">
+                                                <div>
+                                                    <p class="mb-1 text-[0.6rem] text-boss-ivory/30">Comfort levels</p>
+                                                    <div class="flex flex-wrap gap-1">
+                                                        <template x-for="item in selected.profile.comfort_levels" :key="item">
+                                                            <span class="rounded-full bg-white/[0.05] px-2 py-0.5 text-[0.65rem] text-boss-ivory/60" x-text="item"></span>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <div class="flex gap-4 text-[0.78rem]">
+                                                <template x-if="selected.profile.custom_content_ok">
+                                                    <div class="flex gap-1.5"><span class="text-boss-ivory/38">Custom content</span><span class="text-boss-ivory/70" x-text="selected.profile.custom_content_ok"></span></div>
+                                                </template>
+                                                <template x-if="selected.profile.worn_items_ok">
+                                                    <div class="flex gap-1.5"><span class="text-boss-ivory/38">Worn items</span><span class="text-boss-ivory/70" x-text="selected.profile.worn_items_ok"></span></div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                {{-- Availability extras --}}
+                                <template x-if="selected.profile.weekly_availability || selected.profile.availability_preference || selected.profile.has_private_space">
+                                    <div>
+                                        <p class="mb-1.5 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Schedule Details</p>
+                                        <div class="space-y-1 text-[0.78rem]">
+                                            <template x-if="selected.profile.weekly_availability">
+                                                <div class="flex gap-2"><span class="text-boss-ivory/38">Weekly hours</span><span class="text-boss-ivory/70" x-text="selected.profile.weekly_availability"></span></div>
+                                            </template>
+                                            <template x-if="selected.profile.availability_preference">
+                                                <div class="flex gap-2"><span class="text-boss-ivory/38">Preferred schedule</span><span class="text-boss-ivory/70" x-text="selected.profile.availability_preference"></span></div>
+                                            </template>
+                                            <template x-if="selected.profile.has_private_space">
+                                                <div class="flex gap-2"><span class="text-boss-ivory/38">Private space</span><span class="text-boss-ivory/70" x-text="selected.profile.has_private_space"></span></div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                {{-- Payout --}}
+                                <template x-if="(selected.profile.payout_methods && selected.profile.payout_methods.length > 0) || selected.profile.payout_country">
+                                    <div>
+                                        <p class="mb-2 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Payout Information</p>
+                                        <div class="space-y-1.5">
+                                            <template x-if="selected.profile.payout_methods && selected.profile.payout_methods.length > 0">
+                                                <div class="flex flex-wrap gap-1">
+                                                    <template x-for="method in selected.profile.payout_methods" :key="method">
+                                                        <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.65rem] text-boss-gold" x-text="method"></span>
+                                                    </template>
+                                                    <template x-if="selected.profile.payout_method_other">
+                                                        <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.65rem] text-boss-gold" x-text="selected.profile.payout_method_other"></span>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                            <template x-if="selected.profile.payout_country">
+                                                <div class="flex gap-2 text-[0.78rem]"><span class="text-boss-ivory/38">Country</span><span class="text-boss-ivory/70" x-text="selected.profile.payout_country"></span></div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                {{-- Extra details --}}
+                                <template x-if="selected.profile.model_vibe">
+                                    <div>
+                                        <p class="mb-1 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Vibe / Niche</p>
+                                        <p class="whitespace-pre-line text-sm leading-relaxed text-boss-ivory/65" x-text="selected.profile.model_vibe"></p>
+                                    </div>
+                                </template>
+                                <template x-if="selected.profile.anything_else">
+                                    <div>
+                                        <p class="mb-1 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Anything Else</p>
+                                        <p class="whitespace-pre-line text-sm leading-relaxed text-boss-ivory/65" x-text="selected.profile.anything_else"></p>
                                     </div>
                                 </template>
 
@@ -642,6 +826,31 @@
                                         'city'                        => $profile->city,
                                         'timezone'                    => $profile->timezone,
                                         'platforms'                   => $profile->platforms ?? [],
+                                        'current_platforms'           => $profile->current_platforms,
+                                        'fetishes_checklist'          => $profile->fetishes_checklist ?? [],
+                                        'nationality'                 => $profile->nationality,
+                                        'spoken_languages'            => $profile->spoken_languages,
+                                        'social_handles'              => $profile->social_handles,
+                                        'with_other_agency'           => $profile->with_other_agency,
+                                        'hear_about_us'               => $profile->hear_about_us,
+                                        'height'                      => $profile->height,
+                                        'weight'                      => $profile->weight,
+                                        'hair_color'                  => $profile->hair_color,
+                                        'eye_color'                   => $profile->eye_color,
+                                        'body_type'                   => $profile->body_type,
+                                        'has_tattoos_piercings'       => $profile->has_tattoos_piercings,
+                                        'work_interests'              => $profile->work_interests ?? [],
+                                        'comfort_levels'              => $profile->comfort_levels ?? [],
+                                        'custom_content_ok'           => $profile->custom_content_ok,
+                                        'worn_items_ok'               => $profile->worn_items_ok,
+                                        'weekly_availability'         => $profile->weekly_availability,
+                                        'availability_preference'     => $profile->availability_preference,
+                                        'has_private_space'           => $profile->has_private_space,
+                                        'payout_methods'              => $profile->payout_methods ?? [],
+                                        'payout_method_other'         => $profile->payout_method_other,
+                                        'payout_country'              => $profile->payout_country,
+                                        'model_vibe'                  => $profile->model_vibe,
+                                        'anything_else'               => $profile->anything_else,
                                         'equipment'                   => $profile->equipment ?? [],
                                         'availability'                => $profile->availability,
                                         'goals'                       => $profile->goals,
@@ -745,13 +954,18 @@
                                         <span class="text-[0.72rem] text-boss-ivory/24">No profile</span>
                                     @endif
                                 </td>
-                                <td class="align-middle text-right">
-                                    <span class="inline-flex items-center gap-1 text-[0.72rem] text-boss-ivory/30">
-                                        View
-                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                        </svg>
-                                    </span>
+                                <td class="align-middle text-right" @click.stop>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <span class="inline-flex items-center gap-1 text-[0.72rem] text-boss-ivory/30">
+                                            Quick view
+                                        </span>
+                                        @if ($profile)
+                                            <a href="{{ route('admin.onboarding.show', $profile) }}"
+                                               class="rounded-lg border border-boss-gold/20 bg-boss-gold/[0.07] px-2.5 py-1 text-[0.7rem] text-boss-gold transition hover:bg-boss-gold/[0.13]">
+                                                Full Profile
+                                            </a>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -768,5 +982,4 @@
 
     </div>
 </x-admin-layout>
-
 

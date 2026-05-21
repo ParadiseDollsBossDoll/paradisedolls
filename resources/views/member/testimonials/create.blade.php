@@ -7,8 +7,8 @@
         <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
                 <p class="pd-kicker">{{ __('Success Stories') }}</p>
-                <h1 class="pd-heading pd-text-gradient mt-2 text-[clamp(2rem,4vw,2.6rem)]">{{ __('Share Your Testimonial') }}</h1>
-                <p class="mt-2 max-w-2xl text-[0.86rem] leading-relaxed text-boss-ivory/40">{{ __('Submitted testimonials go to the Paradise Dolls team for approval before they appear on the public site.') }}</p>
+                <h1 class="pd-heading pd-text-gradient mt-2 text-[clamp(2rem,4vw,2.6rem)]">{{ __('Share Your Success Story') }}</h1>
+                <p class="mt-2 max-w-2xl text-[0.86rem] leading-relaxed text-boss-ivory/40">{{ __('Submitted success stories go to the Paradise Dolls team for approval before they appear on the public site.') }}</p>
             </div>
             <a href="{{ route('success-stories') }}" class="pd-btn-secondary self-start sm:self-auto">{{ __('View public stories') }}</a>
         </header>
@@ -40,7 +40,7 @@
                                 @endif
                             </div>
                             <div class="min-w-0">
-                                <p class="text-[0.82rem] text-boss-ivory/70">{{ __('This will be used as your testimonial avatar.') }}</p>
+                                <p class="text-[0.82rem] text-boss-ivory/70">{{ __('This will be used as your success story avatar.') }}</p>
                                 <a href="{{ route('profile.edit') }}" class="mt-1 inline-flex text-[0.7rem] text-boss-gold hover:text-boss-gold-light">{{ __('Change profile photo') }} -></a>
                             </div>
                         </div>
@@ -49,7 +49,7 @@
                     <div>
                         <x-input-label for="name" :value="__('Display name')" />
                         <x-text-input id="name" name="name" type="text" class="mt-2" :value="old('name', auth()->user()->name)" required />
-                        <p class="mt-1.5 text-[0.62rem] leading-relaxed text-boss-ivory/25">{{ __('Shown above your handle on the testimonial card.') }}</p>
+                        <p class="mt-1.5 text-[0.62rem] leading-relaxed text-boss-ivory/25">{{ __('Shown above your handle on the success story card.') }}</p>
                         <x-input-error class="mt-2" :messages="$errors->get('name')" />
                     </div>
                 </div>
@@ -62,8 +62,8 @@
                 </div>
 
                 <div>
-                    <x-input-label for="quote" :value="__('Testimonial text')" />
-                    <textarea id="quote" name="quote" rows="6" class="pd-input mt-2" required maxlength="700" placeholder="{{ __('Write the short testimonial text shown in the landing page card.') }}">{{ old('quote') }}</textarea>
+                    <x-input-label for="quote" :value="__('Success story text')" />
+                    <textarea id="quote" name="quote" rows="6" class="pd-input mt-2" required maxlength="700" placeholder="{{ __('Write your success story text shown on the landing page card.') }}">{{ old('quote') }}</textarea>
                     <x-input-error class="mt-2" :messages="$errors->get('quote')" />
                 </div>
 
@@ -106,7 +106,7 @@
                         </div>
                     @empty
                         <div class="rounded-sm border border-white/[0.06] bg-white/[0.025] p-5 text-[0.82rem] leading-relaxed text-boss-ivory/35">
-                            {{ __('Once you submit a testimonial, its approval status will show here.') }}
+                            {{ __('Once you submit a success story, its approval status will show here.') }}
                         </div>
                     @endforelse
                 </div>

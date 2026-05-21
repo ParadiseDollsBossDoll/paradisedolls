@@ -1,7 +1,7 @@
 @php($hero = marketing_image('success_stories.hero.image'))
 <x-layouts.marketing :transparentNav="true" :title="marketing_content('success_stories.hero.title')">
     <section class="relative flex min-h-[58vh] items-center justify-center overflow-hidden pt-24">
-        <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ $hero }}');"></div>
+        <img src="{{ $hero }}" alt="" class="absolute inset-0 h-full w-full object-cover" aria-hidden="true">
         <div class="absolute inset-0 bg-black/55"></div>
         <div class="relative z-10 mx-auto max-w-4xl px-4 text-center text-white">
             <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ marketing_content('success_stories.hero.eyebrow') }}</p>

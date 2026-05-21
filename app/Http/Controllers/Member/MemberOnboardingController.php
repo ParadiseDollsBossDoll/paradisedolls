@@ -24,7 +24,10 @@ class MemberOnboardingController extends Controller
 
         return view('member.onboarding.edit', [
             'profile' => $profile,
-            'platformOptions' => $this->platformOptions(),
+            'platformOptions'    => $this->streamingPlatformOptions(),
+            'fanSiteOptions'     => $this->fanSiteOptions(),
+            'socialMediaOptions' => $this->socialMediaOptions(),
+            'fetishSections'     => $this->fetishSections(),
             'equipmentOptions' => $this->equipmentOptions(),
             'phoneCountries' => $this->phoneCountries($callingCodes),
             'selectedPhoneCountry' => $phoneInput['country'],
@@ -39,6 +42,12 @@ class MemberOnboardingController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $callingCodes = config('country_calling_codes', []);
+        $platformOptions = $this->allPlatformOptions();
+        $equipmentOptions = $this->equipmentOptions();
+        $workInterestOptions = $this->workInterestOptions();
+        $comfortLevelOptions = $this->comfortLevelOptions();
+        $payoutMethodOptions = $this->payoutMethodOptions();
+        $fetishItems = $this->fetishItems();
 
         $validated = $request->validate([
             'legal_name' => ['required', 'string', 'max:255'],
@@ -51,9 +60,46 @@ class MemberOnboardingController extends Controller
             'city' => ['nullable', 'string', 'max:120'],
             'timezone' => ['nullable', 'string', 'max:120'],
             'platforms' => ['nullable', 'array', 'max:12'],
-            'platforms.*' => ['string', 'max:80'],
+            'platforms.*' => ['string', 'max:80', Rule::in($platformOptions)],
+            // Basic Info extras
+            'nationality'              => ['nullable', 'string', 'max:255'],
+            'spoken_languages'         => ['nullable', 'string', 'max:255'],
+            'social_handles'           => ['nullable', 'string', 'max:255'],
+            'with_other_agency'        => ['nullable', 'string', 'max:255'],
+            'hear_about_us'            => ['nullable', 'string', 'max:255'],
+            // Appearance
+            'height'                   => ['nullable', 'string', 'max:50'],
+            'weight'                   => ['nullable', 'string', 'max:50'],
+            'hair_color'               => ['nullable', 'string', 'max:100'],
+            'eye_color'                => ['nullable', 'string', 'max:100'],
+            'body_type'                => ['nullable', 'string', 'max:255'],
+            'has_tattoos_piercings'    => ['nullable', 'string', 'max:500'],
+            // Platforms
+            'current_platforms'        => ['nullable', 'string', 'max:1000'],
+            // Work preferences
+            'work_interests'           => ['nullable', 'array', 'max:4'],
+            'work_interests.*'         => ['string', 'max:100', Rule::in($workInterestOptions)],
+            'comfort_levels'           => ['nullable', 'array', 'max:8'],
+            'comfort_levels.*'         => ['string', 'max:100', Rule::in($comfortLevelOptions)],
+            'custom_content_ok'        => ['nullable', 'string', 'in:Yes,No,Maybe'],
+            'worn_items_ok'            => ['nullable', 'string', 'in:Yes,No,Maybe'],
+            // Fetishes checklist
+            'fetishes_checklist'       => ['nullable', 'array', 'max:'.count($fetishItems)],
+            'fetishes_checklist.*'     => ['nullable', 'string', 'in:Yes,No,Sometimes'],
+            // Availability
+            'weekly_availability'      => ['nullable', 'string', 'max:255'],
+            'availability_preference'  => ['nullable', 'string', 'max:255'],
+            'has_private_space'        => ['nullable', 'string', 'in:Yes,No,Working on it'],
+            // Payout
+            'payout_methods'           => ['nullable', 'array', 'max:4'],
+            'payout_methods.*'         => ['string', 'max:100', Rule::in($payoutMethodOptions)],
+            'payout_method_other'      => ['nullable', 'string', 'max:255'],
+            'payout_country'           => ['nullable', 'string', 'max:255'],
+            // Extra details
+            'model_vibe'               => ['nullable', 'string', 'max:1000'],
+            'anything_else'            => ['nullable', 'string', 'max:2000'],
             'equipment' => ['nullable', 'array', 'max:12'],
-            'equipment.*' => ['string', 'max:80'],
+            'equipment.*' => ['string', 'max:80', Rule::in($equipmentOptions)],
             'availability' => ['required', 'string', 'max:5000'],
             'goals' => ['required', 'string', 'max:5000'],
             'experience_notes' => ['nullable', 'string', 'max:5000'],
@@ -94,11 +140,20 @@ class MemberOnboardingController extends Controller
             $validated['emergency_contact_phone_number']
         );
 
+        $validated['platforms'] = $this->valuesFromOptions($validated['platforms'] ?? [], $platformOptions);
+        $validated['equipment'] = $this->valuesFromOptions($validated['equipment'] ?? [], $equipmentOptions);
+        $validated['work_interests'] = $this->valuesFromOptions($validated['work_interests'] ?? [], $workInterestOptions);
+        $validated['comfort_levels'] = $this->valuesFromOptions($validated['comfort_levels'] ?? [], $comfortLevelOptions);
+        $validated['payout_methods'] = $this->valuesFromOptions($validated['payout_methods'] ?? [], $payoutMethodOptions);
+        $validated['fetishes_checklist'] = $this->filterFetishChecklist($validated['fetishes_checklist'] ?? []);
+
+        if (! in_array('Other', $validated['payout_methods'], true)) {
+            $validated['payout_method_other'] = null;
+        }
+
         $profile = $this->profile();
         $profile->forceFill([
             ...$validated,
-            'platforms' => $validated['platforms'] ?? [],
-            'equipment' => $validated['equipment'] ?? [],
             'information_submitted_at' => $profile->information_submitted_at ?? now(),
         ])->save();
 
@@ -119,11 +174,13 @@ class MemberOnboardingController extends Controller
     {
         return collect($callingCodes)
             ->map(fn (array $country, string $countryCode) => [
-                'value' => $countryCode,
-                'name' => $country['name'],
-                'code' => $country['code'],
-                'flag' => 'https://flagcdn.com/w40/'.strtolower($countryCode).'.png',
+                'value'   => $countryCode,
+                'name'    => $country['name'],
+                'code'    => $country['code'],
+                'dialNum' => (int) ltrim($country['code'], '+'),
+                'flag'    => 'https://flagcdn.com/w40/'.strtolower($countryCode).'.png',
             ])
+            ->sortBy('dialNum')
             ->values()
             ->all();
     }
@@ -267,21 +324,149 @@ class MemberOnboardingController extends Controller
 
     private function platformOptions(): array
     {
+        return $this->streamingPlatformOptions();
+    }
+
+    private function allPlatformOptions(): array
+    {
+        return array_values(array_unique([
+            ...$this->streamingPlatformOptions(),
+            ...$this->fanSiteOptions(),
+            ...$this->socialMediaOptions(),
+        ]));
+    }
+
+    private function streamingPlatformOptions(): array
+    {
         return [
             'Chaturbate',
-            'Stripchat',
-            'OnlyFans',
-            'Fansly',
             'Babestation',
+            'Camsoda',
+            'Stripchat',
             'LiveJasmin',
-            'BongaCams',
-            'Cam4',
-            'CamSoda',
             'MyFreeCams',
+            'BongaCams',
             'Flirt4Free',
             'Streamate',
-            'TikTok',
+            'Cam4',
+            'XLoveCam',
+            'XXXPanded',
+        ];
+    }
+
+    private function fanSiteOptions(): array
+    {
+        return [
+            'OnlyFans',
+            'Fansly',
+            'LoyalFans',
+            'Playboy',
+            'ChatAI',
+        ];
+    }
+
+    private function socialMediaOptions(): array
+    {
+        return [
             'Instagram',
+            'TikTok',
+            'Twitter',
+            'Telegram',
+            'Snapchat',
+        ];
+    }
+
+    private function fetishSections(): array
+    {
+        return [
+            [
+                'title' => 'Lingerie / Tease Shows',
+                'items' => [
+                    'Topless',
+                    'Fully Nude',
+                    'Pussy Play / Fingering',
+                    'Toys (Solo)',
+                    'Anal (Solo)',
+                    'Squirting',
+                    'Girl/Girl (G/G)',
+                    'Boy/Girl (B/G) – must be verified',
+                    'Couples Shows',
+                    'Group Shows',
+                    'Shower/Bath Shows',
+                    'Oil Shows',
+                    'Outdoor Shows',
+                    'Public Shows (must be safe/legal)',
+                ],
+            ],
+            [
+                'title' => 'Fetish / Kink',
+                'items' => [
+                    'Foot Fetish (showing soles, toes, heels)',
+                    'JOI (Jerk Off Instruction)',
+                    'SPH (Small Penis Humiliation)',
+                    'CEI (Cum Eating Instruction)',
+                    'Domination (light)',
+                    'Domination (hardcore)',
+                    'Submissive (obedient, brat, etc.)',
+                    'Findom (Financial Domination)',
+                    'Roleplay (student/teacher, nurse, etc.)',
+                    'Cosplay (costumes, fantasy characters)',
+                    'Dirty Talk / Verbal Tease',
+                    'Humiliation (light)',
+                    'Humiliation (extreme)',
+                    'Cuckold / Cuckquean Play',
+                    'Giantess / Shrinking Fetish',
+                    'Sissy Training',
+                    'Chastity / Keyholding',
+                    'Fetish Outfit Requests (latex, leather, socks, heels, etc.)',
+                ],
+            ],
+            [
+                'title' => 'Bodily / Sensation Fetishes',
+                'items' => [
+                    'Oil / Lotion Play',
+                    'Shower / Bath Shows',
+                    'Wet & Messy (e.g. food play, cream, etc.)',
+                    'Squirting',
+                    'Spitting (on self or POV)',
+                    'Sweaty / Gym Content',
+                    'Twerking / Ass Play',
+                    'Nipple Play',
+                    'Pussy Play / Fingering',
+                    'Anal Play (solo)',
+                    'Gaping',
+                ],
+            ],
+            [
+                'title' => 'Feet, Legs, & Stockings',
+                'items' => [
+                    'Foot Close-Ups',
+                    'Shoeplay / Heels',
+                    'Socks / Dirty Socks',
+                    'Stockings / Pantyhose',
+                    'Toe Curling / Wrinkled Soles',
+                ],
+            ],
+            [
+                'title' => 'Dom/Sub Kinks & Taboo Play',
+                'note'  => 'Only if legal and site-approved',
+                'items' => [
+                    'Pet Play (Kitten, Puppy)',
+                    'Age Play (18+ only)',
+                    'Degradation',
+                    'Collar / Leash Content',
+                    'Role Reversal / Power Swap',
+                    'Impact Play (light spanking)',
+                ],
+            ],
+            [
+                'title' => 'Clean Fetish Extras',
+                'items' => [
+                    'Shaving (legs, pussy, etc.)',
+                    'Hair Brushing / Hair Play',
+                    'Nail Fetish (polish, filing, close-ups)',
+                ],
+            ],
         ];
     }
 
@@ -298,6 +483,75 @@ class MemberOnboardingController extends Controller
             'Stable internet',
             'Private room',
         ];
+    }
+
+    private function workInterestOptions(): array
+    {
+        return [
+            'OnlyFans Content',
+            'Webcam Premium Shows',
+            'Freemium Webcam',
+            'All Types',
+        ];
+    }
+
+    private function comfortLevelOptions(): array
+    {
+        return [
+            'Tease / Lingerie',
+            'Topless',
+            'Nude',
+            'Toys (Solo)',
+            'Girl/Girl',
+            'Fetish',
+            'Anal (Solo)',
+            'Domination / Roleplay',
+        ];
+    }
+
+    private function payoutMethodOptions(): array
+    {
+        return [
+            'Wise',
+            'Bank Transfer',
+            'Crypto',
+            'Other',
+        ];
+    }
+
+    private function fetishItems(): array
+    {
+        return collect($this->fetishSections())
+            ->flatMap(fn (array $section) => $section['items'])
+            ->values()
+            ->all();
+    }
+
+    private function valuesFromOptions(mixed $values, array $allowedOptions): array
+    {
+        if (! is_array($values)) {
+            return [];
+        }
+
+        return collect($values)
+            ->filter(fn ($value) => is_string($value) && in_array($value, $allowedOptions, true))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function filterFetishChecklist(mixed $values): array
+    {
+        if (! is_array($values)) {
+            return [];
+        }
+
+        $allowedItems = array_fill_keys($this->fetishItems(), true);
+        $allowedAnswers = ['Yes', 'No', 'Sometimes'];
+
+        return collect($values)
+            ->filter(fn ($answer, $item) => isset($allowedItems[$item]) && in_array($answer, $allowedAnswers, true))
+            ->all();
     }
 
     private function sendConfirmation(ModelProfile $profile): void

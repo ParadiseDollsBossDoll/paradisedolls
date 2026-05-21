@@ -29,7 +29,7 @@ class AdminOnboardingController extends Controller
     {
         $models = User::query()
             ->where('role', 'model')
-            ->with(['courseAccessRequests.course', 'courseEnrollments', 'modelProfile.application', 'modelProfile.verificationReviewer'])
+            ->with('modelProfile')
             ->orderBy('name')
             ->paginate(20);
 
@@ -48,6 +48,33 @@ class AdminOnboardingController extends Controller
         ];
 
         return view('admin.onboarding.index', compact('models', 'stageOptions', 'stats'));
+    }
+
+    public function show(ModelProfile $profile): View
+    {
+        $profile->loadMissing('user.courseAccessRequests.course', 'user.courseEnrollments', 'verificationReviewer');
+
+        $unlockedCourseIds = $profile->user->courseEnrollments
+            ->pluck('course_id')
+            ->map(fn ($courseId) => (int) $courseId)
+            ->all();
+
+        $courses = Course::query()
+            ->where('is_published', true)
+            ->orderBy('sort_order')
+            ->orderBy('title')
+            ->get();
+
+        $accessRequestsByCourse = $profile->user->courseAccessRequests->keyBy('course_id');
+
+        return view('admin.onboarding.show', [
+            'profile'               => $profile,
+            'user'                  => $profile->user,
+            'courses'               => $courses,
+            'unlockedCourseIds'     => $unlockedCourseIds,
+            'accessRequestsByCourse' => $accessRequestsByCourse,
+            'stageOptions'          => ModelProfile::onboardingStageOptions(),
+        ]);
     }
 
     public function details(ModelProfile $profile): JsonResponse

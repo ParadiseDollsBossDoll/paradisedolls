@@ -13,16 +13,18 @@
         $selectedPhoneCountry = old('phone_country', 'PH');
         $phoneCountries = collect($countryCallingCodes)
             ->map(fn (array $country, string $countryCode) => [
-                'value' => $countryCode,
-                'name' => $country['name'],
-                'code' => $country['code'],
-                'flag' => 'https://flagcdn.com/w40/'.strtolower($countryCode).'.png',
+                'value'   => $countryCode,
+                'name'    => $country['name'],
+                'code'    => $country['code'],
+                'dialNum' => (int) ltrim($country['code'], '+'),
+                'flag'    => 'https://flagcdn.com/w40/'.strtolower($countryCode).'.png',
             ])
+            ->sortBy('dialNum')
             ->values();
     @endphp
 
     <section class="relative flex min-h-screen items-center overflow-hidden">
-        <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ $heroImg }}');"></div>
+        <img src="{{ $heroImg }}" alt="" class="absolute inset-0 h-full w-full object-cover" aria-hidden="true">
         <div class="absolute inset-0 bg-gradient-to-b from-black/45 via-black/40 to-boss-dark/95"></div>
 
         <div class="relative z-10 mx-auto w-full max-w-7xl px-4 pt-24 sm:px-6 lg:px-8">
@@ -289,11 +291,19 @@
 
             @if (session('application_sent'))
                 <div class="py-14 text-center">
-                    <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-boss-pink">
-                        <span class="font-display text-[2rem] text-boss-rose">OK</span>
+                    {{-- Gold tick icon with glow --}}
+                    <div class="relative mx-auto mb-7 h-20 w-20">
+                        <div class="absolute inset-0 scale-125 rounded-full bg-gradient-to-br from-[#C9A96E]/25 to-[#EEB4C3]/20 blur-xl"></div>
+                        <div class="relative flex h-20 w-20 items-center justify-center rounded-full border border-[#C9A96E]/35 bg-gradient-to-br from-[#fffcf7] to-[#fff5e8] shadow-[0_8px_28px_rgba(201,169,110,0.22)]">
+                            <svg viewBox="0 0 24 24" class="h-9 w-9 text-[#C9A96E]" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12l5 5L20 7"/>
+                            </svg>
+                        </div>
+                        {{-- Small sparkle decorations --}}
+                        <span class="absolute -right-1 -top-1 text-[0.9rem] leading-none">✨</span>
                     </div>
                     <h3 class="mb-4 font-display text-[2rem] text-boss-dark">{{ marketing_content('home.apply.success_title') }}</h3>
-                    <p class="text-[0.95rem] leading-relaxed text-boss-dark/60">{{ marketing_content('home.apply.success_body') }}</p>
+                    <p class="whitespace-pre-line text-[0.95rem] leading-relaxed text-boss-dark/60">{{ marketing_content('home.apply.success_body') }}</p>
                 </div>
             @else
                 <form method="POST" action="{{ route('apply.store') }}" enctype="multipart/form-data" class="space-y-5" data-application-form>
@@ -327,18 +337,33 @@
                                     class="relative"
                                     x-data="{
                                         open: false,
+                                        search: '',
                                         selected: @js($selectedPhoneCountry),
                                         countries: @js($phoneCountries),
                                         get current() {
-                                            return this.countries.find((country) => country.value === this.selected) || this.countries[0];
+                                            return this.countries.find((c) => c.value === this.selected) || this.countries[0];
+                                        },
+                                        get filtered() {
+                                            const q = this.search.trim().toLowerCase();
+                                            if (!q) return this.countries;
+                                            return this.countries.filter(c =>
+                                                c.code.replace('+','').startsWith(q) ||
+                                                c.code.includes(q) ||
+                                                c.name.toLowerCase().includes(q)
+                                            );
+                                        },
+                                        openDropdown() {
+                                            this.open = true;
+                                            this.$nextTick(() => this.$refs.countrySearch?.focus());
                                         },
                                         selectCountry(value) {
                                             this.selected = value;
+                                            this.search = '';
                                             this.open = false;
                                         },
                                     }"
-                                    @keydown.escape.window="open = false"
-                                    @click.outside="open = false"
+                                    @keydown.escape.window="open = false; search = ''"
+                                    @click.outside="open = false; search = ''"
                                 >
                                     <label id="application-phone-country-label" class="pd-label-light normal-case tracking-normal leading-[1.5]">{{ __('Country code') }}</label>
                                     <input type="hidden" name="phone_country" x-model="selected" data-phone-country>
@@ -348,35 +373,54 @@
                                         aria-labelledby="application-phone-country-label"
                                         aria-haspopup="listbox"
                                         :aria-expanded="open.toString()"
-                                        @click="open = ! open"
+                                        @click="openDropdown()"
                                     >
                                         <img :src="current.flag" :alt="current.name" class="h-3.5 w-5 rounded-[2px] object-cover shadow-sm">
                                         <span class="min-w-0 flex-1 text-[0.86rem]" x-text="current.code"></span>
-                                        <span class="text-[0.62rem] text-boss-dark/35" aria-hidden="true">v</span>
+                                        <svg class="h-3 w-3 text-boss-dark/35 transition-transform" :class="open ? 'rotate-180' : ''" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
                                     </button>
 
                                     <div
                                         x-cloak
                                         x-show="open"
                                         x-transition
-                                        class="absolute left-0 top-full z-50 mt-1 max-h-64 w-40 overflow-y-auto rounded-md border border-boss-pink bg-white py-1 shadow-luxe"
+                                        class="absolute left-0 top-full z-50 mt-1 w-52 overflow-hidden rounded-md border border-boss-pink bg-white shadow-luxe"
                                         role="listbox"
                                         aria-labelledby="application-phone-country-label"
                                     >
-                                        <template x-for="country in countries" :key="country.value">
-                                            <button
-                                                type="button"
-                                                class="flex w-full items-center gap-2 px-3 py-2 text-left text-[0.84rem] text-boss-dark transition-colors hover:bg-boss-cream"
-                                                :class="selected === country.value ? 'bg-boss-pink/45 text-boss-rose' : ''"
-                                                role="option"
-                                                :aria-selected="(selected === country.value).toString()"
-                                                :title="country.name"
-                                                @click="selectCountry(country.value)"
+                                        {{-- Search input --}}
+                                        <div class="border-b border-boss-pink/30 p-2">
+                                            <input
+                                                x-ref="countrySearch"
+                                                type="text"
+                                                x-model="search"
+                                                placeholder="{{ __('Type code or country…') }}"
+                                                class="w-full rounded-md border border-boss-pink/40 bg-boss-cream/50 px-2.5 py-1.5 text-[0.8rem] text-boss-dark placeholder-boss-dark/35 outline-none focus:border-boss-rose/60 focus:ring-1 focus:ring-boss-rose/30"
+                                                @keydown.escape.stop="open = false; search = ''"
+                                                autocomplete="off"
                                             >
-                                                <img :src="country.flag" :alt="country.name" class="h-3.5 w-5 rounded-[2px] object-cover shadow-sm">
-                                                <span x-text="country.code"></span>
-                                            </button>
-                                        </template>
+                                        </div>
+                                        {{-- Results list --}}
+                                        <div class="max-h-56 overflow-y-auto py-1">
+                                            <template x-if="filtered.length === 0">
+                                                <p class="px-3 py-3 text-center text-[0.78rem] text-boss-dark/40">{{ __('No results') }}</p>
+                                            </template>
+                                            <template x-for="country in filtered" :key="country.value">
+                                                <button
+                                                    type="button"
+                                                    class="flex w-full items-center gap-2 px-3 py-2 text-left text-[0.84rem] text-boss-dark transition-colors hover:bg-boss-cream"
+                                                    :class="selected === country.value ? 'bg-boss-pink/45 text-boss-rose font-medium' : ''"
+                                                    role="option"
+                                                    :aria-selected="(selected === country.value).toString()"
+                                                    :title="country.name"
+                                                    @click="selectCountry(country.value)"
+                                                >
+                                                    <img :src="country.flag" :alt="country.name" class="h-3.5 w-5 shrink-0 rounded-[2px] object-cover shadow-sm">
+                                                    <span class="shrink-0 font-medium" x-text="country.code"></span>
+                                                    <span class="min-w-0 truncate text-[0.72rem] text-boss-dark/50" x-text="country.name"></span>
+                                                </button>
+                                            </template>
+                                        </div>
                                     </div>
                                 </div>
                                 <div>

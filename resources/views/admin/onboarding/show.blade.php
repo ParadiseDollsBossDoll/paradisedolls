@@ -1,0 +1,587 @@
+<x-admin-layout>
+    <div class="mx-auto max-w-6xl space-y-6 text-boss-ivory">
+
+        {{-- ── Header ──────────────────────────────────────────────── --}}
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <a href="{{ route('admin.onboarding.index') }}" class="mb-3 inline-flex items-center gap-1.5 text-[0.75rem] text-boss-ivory/40 transition hover:text-boss-ivory/70">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    {{ __('Back to Onboarding') }}
+                </a>
+                <div class="flex items-center gap-4">
+                    <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-boss-gold/25 bg-boss-gold/10 font-display text-xl text-boss-gold">
+                        {{ strtoupper(substr($user->name, 0, 1)) }}
+                    </div>
+                    <div>
+                        <h1 class="pd-heading text-[1.6rem] leading-tight text-boss-ivory">{{ $user->name }}</h1>
+                        @if ($profile->stage_name)
+                            <p class="text-[0.82rem] text-boss-gold/80">{{ $profile->stage_name }}</p>
+                        @endif
+                        <p class="text-[0.74rem] text-boss-ivory/35">{{ $user->email }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-[0.72rem] text-boss-ivory/60">
+                    {{ $profile->onboardingStageLabel() }}
+                </span>
+                <span class="rounded-full bg-boss-gold/10 px-3 py-1 text-[0.72rem] font-semibold text-boss-gold">
+                    {{ $profile->onboardingPercent() }}% complete
+                </span>
+                <span class="text-[0.72rem] text-boss-ivory/30">Joined {{ $user->created_at->toFormattedDateString() }}</span>
+            </div>
+        </div>
+
+        {{-- ── Flash messages ──────────────────────────────────────── --}}
+        @if (session('status'))
+            <div class="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm text-green-200">{{ session('status') }}</div>
+        @endif
+        @if ($errors->any())
+            <div class="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">
+                @foreach ($errors->all() as $error)<div>{{ $error }}</div>@endforeach
+            </div>
+        @endif
+
+        {{-- ── Onboarding progress timeline ────────────────────────── --}}
+        <section class="pd-panel-strong p-5">
+            <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Onboarding Progress') }}</p>
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                @php
+                    $steps = [
+                        ['label' => 'Account Created',   'done' => true,                                'icon' => '👤'],
+                        ['label' => 'Info Form',          'done' => $profile->hasInformationForm(),      'icon' => '📋'],
+                        ['label' => 'Docs Submitted',     'done' => $profile->hasVerificationSubmission(), 'icon' => '📄'],
+                        ['label' => 'Verified',           'done' => $profile->isVerified(),              'icon' => '✅'],
+                        ['label' => 'Discord Invited',    'done' => $profile->isCommunityInvited(),      'icon' => '💬'],
+                        ['label' => 'Role Assigned',      'done' => $profile->isCommunityRoleAssigned(), 'icon' => '🎉'],
+                    ];
+                @endphp
+                @foreach ($steps as $step)
+                    <div class="flex flex-col items-center gap-2 rounded-xl border p-3 text-center
+                        {{ $step['done'] ? 'border-green-400/20 bg-green-400/[0.06]' : 'border-white/[0.05] bg-white/[0.02]' }}">
+                        <span class="text-xl">{{ $step['icon'] }}</span>
+                        <p class="text-[0.65rem] leading-snug {{ $step['done'] ? 'text-green-300' : 'text-boss-ivory/30' }}">{{ $step['label'] }}</p>
+                        @if ($step['done'])
+                            <span class="rounded-full bg-green-400/15 px-2 py-0.5 text-[0.6rem] text-green-300">Done</span>
+                        @else
+                            <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.6rem] text-boss-ivory/25">Pending</span>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+            @if ($profile->information_submitted_at)
+                <p class="mt-3 text-[0.7rem] text-boss-ivory/28">Info form submitted {{ $profile->information_submitted_at->toFormattedDateString() }}</p>
+            @endif
+        </section>
+
+        <div class="grid gap-6 lg:grid-cols-[1fr_340px]">
+
+            {{-- ════════════════ LEFT COLUMN ════════════════ --}}
+            <div class="space-y-5">
+
+                {{-- Identity & Contact --}}
+                <section class="pd-panel-strong p-5">
+                    <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Identity & Contact') }}</p>
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-3 text-[0.82rem]">
+                        @foreach ([
+                            ['Legal Name',        $profile->legal_name],
+                            ['Stage Name',        $profile->stage_name],
+                            ['Date of Birth',     $profile->date_of_birth?->format('M d, Y')],
+                            ['Phone',             $profile->phone],
+                            ['Country',           $profile->country],
+                            ['City',              $profile->city],
+                            ['Timezone',          $profile->timezone],
+                            ['Nationality',       $profile->nationality],
+                            ['Spoken Languages',  $profile->spoken_languages],
+                            ['Social Handles',    $profile->social_handles],
+                            ['With Another Agency', $profile->with_other_agency],
+                            ['How Found Us',      $profile->hear_about_us],
+                        ] as [$label, $value])
+                            @if ($value)
+                                <div>
+                                    <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">{{ $label }}</p>
+                                    <p class="mt-0.5 text-boss-ivory/75">{{ $value }}</p>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                </section>
+
+                {{-- Appearance & Style --}}
+                @if ($profile->height || $profile->weight || $profile->hair_color || $profile->eye_color || $profile->body_type || $profile->has_tattoos_piercings)
+                    <section class="pd-panel-strong p-5">
+                        <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Appearance & Style') }}</p>
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-3 text-[0.82rem]">
+                            @foreach ([
+                                ['Height',              $profile->height],
+                                ['Weight',              $profile->weight],
+                                ['Hair Color',          $profile->hair_color],
+                                ['Eye Color',           $profile->eye_color],
+                                ['Body Type',           $profile->body_type],
+                                ['Tattoos & Piercings', $profile->has_tattoos_piercings],
+                            ] as [$label, $value])
+                                @if ($value)
+                                    <div>
+                                        <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">{{ $label }}</p>
+                                        <p class="mt-0.5 text-boss-ivory/75">{{ $value }}</p>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
+
+                {{-- Platforms & Equipment --}}
+                @if ($profile->platforms || $profile->current_platforms || $profile->equipment)
+                    <section class="pd-panel-strong p-5">
+                        <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Platforms & Equipment') }}</p>
+                        <div class="space-y-4">
+                            @if ($profile->platforms)
+                                <div>
+                                    <p class="mb-2 text-[0.7rem] text-boss-ivory/40">{{ __('Platforms they\'d like to be on') }}</p>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        @foreach ($profile->platforms as $p)
+                                            <span class="rounded-full bg-boss-gold/10 px-2.5 py-0.5 text-[0.7rem] text-boss-gold">{{ $p }}</span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                            @if ($profile->current_platforms)
+                                <div>
+                                    <p class="mb-1 text-[0.7rem] text-boss-ivory/40">{{ __('Currently active on') }}</p>
+                                    <p class="text-[0.82rem] leading-relaxed text-boss-ivory/70">{{ $profile->current_platforms }}</p>
+                                </div>
+                            @endif
+                            @if ($profile->equipment)
+                                <div>
+                                    <p class="mb-2 text-[0.7rem] text-boss-ivory/40">{{ __('Equipment') }}</p>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        @foreach ($profile->equipment as $item)
+                                            <span class="rounded-full bg-white/[0.05] px-2.5 py-0.5 text-[0.7rem] text-boss-ivory/60">{{ $item }}</span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </section>
+                @endif
+
+                {{-- Work Preferences --}}
+                @if ($profile->work_interests || $profile->comfort_levels || $profile->custom_content_ok || $profile->worn_items_ok)
+                    <section class="pd-panel-strong p-5">
+                        <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Work Preferences') }}</p>
+                        <div class="space-y-4">
+                            @if ($profile->work_interests)
+                                <div>
+                                    <p class="mb-2 text-[0.7rem] text-boss-ivory/40">{{ __('Work Interests') }}</p>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        @foreach ($profile->work_interests as $item)
+                                            <span class="rounded-full bg-boss-gold/10 px-2.5 py-0.5 text-[0.7rem] text-boss-gold">{{ $item }}</span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                            @if ($profile->comfort_levels)
+                                <div>
+                                    <p class="mb-2 text-[0.7rem] text-boss-ivory/40">{{ __('Comfort Levels') }}</p>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        @foreach ($profile->comfort_levels as $item)
+                                            <span class="rounded-full bg-white/[0.05] px-2.5 py-0.5 text-[0.7rem] text-boss-ivory/60">{{ $item }}</span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                            <div class="flex flex-wrap gap-6 text-[0.82rem]">
+                                @if ($profile->custom_content_ok)
+                                    <div>
+                                        <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Custom Content</p>
+                                        <p class="mt-0.5 text-boss-ivory/75">{{ $profile->custom_content_ok }}</p>
+                                    </div>
+                                @endif
+                                @if ($profile->worn_items_ok)
+                                    <div>
+                                        <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Worn Items</p>
+                                        <p class="mt-0.5 text-boss-ivory/75">{{ $profile->worn_items_ok }}</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </section>
+                @endif
+
+                {{-- Availability & Schedule --}}
+                @if ($profile->availability || $profile->weekly_availability || $profile->availability_preference || $profile->has_private_space || $profile->goals || $profile->experience_notes)
+                    <section class="pd-panel-strong p-5">
+                        <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Availability & Schedule') }}</p>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-3 text-[0.82rem]">
+                                @foreach ([
+                                    ['Weekly Hours',      $profile->weekly_availability],
+                                    ['Preferred Schedule',$profile->availability_preference],
+                                    ['Private Space',     $profile->has_private_space],
+                                ] as [$label, $value])
+                                    @if ($value)
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">{{ $label }}</p>
+                                            <p class="mt-0.5 text-boss-ivory/75">{{ $value }}</p>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                            @foreach ([
+                                ['Availability',     $profile->availability],
+                                ['Goals',            $profile->goals],
+                                ['Experience Notes', $profile->experience_notes],
+                            ] as [$label, $value])
+                                @if ($value)
+                                    <div>
+                                        <p class="mb-1 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">{{ $label }}</p>
+                                        <p class="whitespace-pre-line text-[0.82rem] leading-relaxed text-boss-ivory/70">{{ $value }}</p>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
+
+                {{-- Payout Information --}}
+                @if ($profile->payout_methods || $profile->payout_method_other || $profile->payout_country)
+                    <section class="pd-panel-strong p-5">
+                        <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Payout Information') }}</p>
+                        <div class="space-y-3">
+                            @if ($profile->payout_methods)
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach ($profile->payout_methods as $method)
+                                        <span class="rounded-full bg-boss-gold/10 px-2.5 py-0.5 text-[0.7rem] text-boss-gold">{{ $method }}</span>
+                                    @endforeach
+                                    @if ($profile->payout_method_other)
+                                        <span class="rounded-full bg-boss-gold/10 px-2.5 py-0.5 text-[0.7rem] text-boss-gold">{{ $profile->payout_method_other }}</span>
+                                    @endif
+                                </div>
+                            @endif
+                            @if ($profile->payout_country)
+                                <div class="text-[0.82rem]">
+                                    <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Country / Region</p>
+                                    <p class="mt-0.5 text-boss-ivory/75">{{ $profile->payout_country }}</p>
+                                </div>
+                            @endif
+                        </div>
+                    </section>
+                @endif
+
+                {{-- Extra Details --}}
+                @if ($profile->model_vibe || $profile->anything_else)
+                    <section class="pd-panel-strong p-5">
+                        <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Extra Details') }}</p>
+                        <div class="space-y-4">
+                            @if ($profile->model_vibe)
+                                <div>
+                                    <p class="mb-1 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Vibe / Niche</p>
+                                    <p class="whitespace-pre-line text-[0.82rem] leading-relaxed text-boss-ivory/70">{{ $profile->model_vibe }}</p>
+                                </div>
+                            @endif
+                            @if ($profile->anything_else)
+                                <div>
+                                    <p class="mb-1 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Anything Else</p>
+                                    <p class="whitespace-pre-line text-[0.82rem] leading-relaxed text-boss-ivory/70">{{ $profile->anything_else }}</p>
+                                </div>
+                            @endif
+                        </div>
+                    </section>
+                @endif
+
+                {{-- Fetishes & Kinks Checklist --}}
+                @if ($profile->fetishes_checklist && count($profile->fetishes_checklist) > 0)
+                    <section class="pd-panel-strong p-5" x-data="{ open: false }">
+                        <button type="button" @click="open = !open" class="flex w-full items-center justify-between">
+                            <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Fetishes & Kinks Checklist') }}</p>
+                            <svg class="h-4 w-4 shrink-0 text-boss-ivory/30 transition-transform" :class="open ? 'rotate-180' : ''" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
+                        </button>
+                        <div x-show="open" x-cloak x-transition class="mt-4 space-y-1 max-h-96 overflow-y-auto pr-1">
+                            @foreach ($profile->fetishes_checklist as $item => $answer)
+                                <div class="flex items-center justify-between gap-3 rounded-md px-3 py-1.5 text-[0.76rem]
+                                    {{ $answer === 'Yes' ? 'bg-emerald-400/[0.08] text-boss-ivory/72' : ($answer === 'No' ? 'bg-red-400/[0.08] text-boss-ivory/50' : 'bg-boss-gold/[0.07] text-boss-ivory/65') }}">
+                                    <span>{{ $item }}</span>
+                                    <span class="shrink-0 rounded-full px-2 py-0.5 text-[0.6rem] font-semibold
+                                        {{ $answer === 'Yes' ? 'bg-emerald-400/15 text-emerald-300' : ($answer === 'No' ? 'bg-red-400/15 text-red-300' : 'bg-boss-gold/15 text-boss-gold') }}">
+                                        {{ $answer }}
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
+
+                {{-- Emergency Contact & Discord --}}
+                @if ($profile->emergency_contact_name || $profile->emergency_contact_phone || $profile->discord_username || $profile->discord_user_id)
+                    <section class="pd-panel-strong p-5">
+                        <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Emergency Contact & Discord') }}</p>
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-3 text-[0.82rem]">
+                            @foreach ([
+                                ['Contact Name',    $profile->emergency_contact_name],
+                                ['Contact Phone',   $profile->emergency_contact_phone],
+                                ['Discord Username',$profile->discord_username],
+                                ['Discord User ID', $profile->discord_user_id],
+                            ] as [$label, $value])
+                                @if ($value)
+                                    <div>
+                                        <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">{{ $label }}</p>
+                                        <p class="mt-0.5 text-boss-ivory/75">{{ $value }}</p>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
+
+            </div>
+
+            {{-- ════════════════ RIGHT COLUMN ════════════════ --}}
+            <div class="space-y-5">
+
+                {{-- Admin Actions --}}
+                <section class="pd-panel-strong p-5">
+                    <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Admin Actions') }}</p>
+
+                    {{-- Onboarding stage --}}
+                    <form action="{{ route('admin.onboarding.stage', $profile) }}" method="POST" class="mb-4">
+                        @csrf
+                        <label class="mb-1 block text-[0.7rem] text-boss-ivory/40">{{ __('Onboarding stage') }}</label>
+                        <div class="flex gap-2">
+                            <select name="onboarding_stage" class="pd-input flex-1 text-sm">
+                                @foreach ($stageOptions as $value => $label)
+                                    <option value="{{ $value }}" @selected($profile->onboarding_stage === $value || (! $profile->onboarding_stage && $value === \App\Models\ModelProfile::STAGE_REGISTRATION))>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            <button type="submit" class="shrink-0 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-[0.75rem] font-medium text-boss-ivory/70 transition hover:bg-white/[0.07] hover:text-boss-ivory">Save</button>
+                        </div>
+                    </form>
+
+                    <div class="space-y-2">
+                        {{-- Request verification --}}
+                        @if ($profile->hasInformationForm() && ! $profile->isVerified() && $profile->verification_status !== \App\Models\ModelProfile::VERIFICATION_SUBMITTED)
+                            <form action="{{ route('admin.onboarding.request-verification', $profile) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="pd-btn-primary w-full text-sm">{{ __('Send Verification Request Email') }}</button>
+                            </form>
+                        @endif
+
+                        {{-- Verify --}}
+                        @if ($profile->verification_status === \App\Models\ModelProfile::VERIFICATION_SUBMITTED)
+                            <form action="{{ route('admin.onboarding.verify', $profile) }}" method="POST" class="space-y-2">
+                                @csrf
+                                <textarea name="verification_notes" rows="2" class="pd-input w-full text-sm" placeholder="{{ __('Optional approval notes…') }}">{{ old('verification_notes', $profile->verification_notes) }}</textarea>
+                                <button type="submit" class="w-full rounded-xl bg-green-500/20 px-4 py-2.5 text-sm font-medium text-green-300 transition hover:bg-green-500/30">{{ __('✓ Approve & Send Approval Email') }}</button>
+                            </form>
+                        @endif
+
+                        {{-- Reject --}}
+                        @if ($profile->hasVerificationSubmission() && ! $profile->isVerified())
+                            <form action="{{ route('admin.onboarding.reject-verification', $profile) }}" method="POST" class="space-y-2">
+                                @csrf
+                                <textarea name="verification_notes" rows="2" class="pd-input w-full text-sm" placeholder="{{ __('Reason for resubmission (required)…') }}" required></textarea>
+                                <button type="submit" class="w-full rounded-xl bg-red-500/15 px-4 py-2.5 text-sm font-medium text-red-300 transition hover:bg-red-500/25">{{ __('Request Resubmission') }}</button>
+                            </form>
+                        @endif
+
+                        {{-- Community invite --}}
+                        @if ($profile->isVerified() && ! $profile->community_invited_at)
+                            <form action="{{ route('admin.onboarding.community-invite', $profile) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="pd-btn-primary w-full text-sm">{{ __('Send Discord Community Access Email') }}</button>
+                            </form>
+                        @endif
+
+                        {{-- Mark role assigned --}}
+                        @if ($profile->isVerified() && $profile->community_invited_at && ! $profile->community_role_assigned_at)
+                            <form action="{{ route('admin.onboarding.community-role-assigned', $profile) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-boss-ivory/70 transition hover:bg-white/[0.07] hover:text-boss-ivory">{{ __('Mark Discord Role Assigned') }}</button>
+                            </form>
+                        @endif
+
+                        @if ($profile->community_role_assigned_at)
+                            <p class="py-2 text-center text-sm text-green-300/70">{{ __('Fully onboarded ✓') }}</p>
+                        @endif
+                    </div>
+                </section>
+
+                {{-- Verification status --}}
+                <section class="pd-panel-strong p-5">
+                    <p class="mb-3 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Verification Status') }}</p>
+                    <span class="rounded-full px-3 py-1 text-[0.72rem] font-medium
+                        {{ $profile->isVerified() ? 'bg-green-400/10 text-green-300' : ($profile->verification_status === \App\Models\ModelProfile::VERIFICATION_SUBMITTED ? 'bg-boss-gold/10 text-boss-gold' : ($profile->verification_status === \App\Models\ModelProfile::VERIFICATION_REJECTED ? 'bg-red-400/10 text-red-300' : 'bg-white/[0.05] text-boss-ivory/40')) }}">
+                        {{ $profile->verificationStatusLabel() }}
+                    </span>
+                    @if ($profile->verification_submitted_at)
+                        <p class="mt-2 text-[0.7rem] text-boss-ivory/30">Submitted {{ $profile->verification_submitted_at->toFormattedDateString() }}</p>
+                    @endif
+                    @if ($profile->verification_reviewed_at)
+                        <p class="text-[0.7rem] text-boss-ivory/30">
+                            Reviewed {{ $profile->verification_reviewed_at->toFormattedDateString() }}
+                            @if ($profile->verificationReviewer) by {{ $profile->verificationReviewer->name }}@endif
+                        </p>
+                    @endif
+                    @if ($profile->verification_notes)
+                        <div class="mt-3 rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
+                            <p class="mb-1 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Notes</p>
+                            <p class="whitespace-pre-line text-[0.78rem] leading-relaxed text-boss-ivory/60">{{ $profile->verification_notes }}</p>
+                        </div>
+                    @endif
+                </section>
+
+                {{-- Verification Documents --}}
+                @if ($profile->id_document_path || $profile->selfie_with_id_path || $profile->platform_codes_path)
+                    <section class="pd-panel-strong p-5">
+                        <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Verification Documents') }}</p>
+                        <div class="space-y-2">
+                            @foreach ([
+                                ['id',     'Government ID',  '🪪'],
+                                ['selfie', 'Selfie with ID', '🤳'],
+                                ['codes',  'Platform Codes', '📸'],
+                            ] as [$type, $docLabel, $icon])
+                                @php $path = match($type) { 'id' => $profile->id_document_path, 'selfie' => $profile->selfie_with_id_path, 'codes' => $profile->platform_codes_path }; @endphp
+                                @if ($path)
+                                    <div class="flex items-center justify-between gap-3 rounded-xl border border-white/[0.06] bg-white/[0.025] px-4 py-3">
+                                        <div class="flex items-center gap-2.5">
+                                            <span class="text-base">{{ $icon }}</span>
+                                            <p class="text-[0.8rem] font-medium text-boss-ivory/80">{{ $docLabel }}</p>
+                                        </div>
+                                        <div class="flex shrink-0 gap-2">
+                                            <a href="{{ route('admin.onboarding.documents.view', [$profile, $type]) }}" target="_blank"
+                                               class="rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-[0.72rem] text-boss-ivory/60 transition hover:bg-white/[0.08] hover:text-boss-ivory">
+                                                View
+                                            </a>
+                                            <a href="{{ route('admin.onboarding.documents.show', [$profile, $type]) }}"
+                                               class="rounded-lg border border-boss-gold/20 bg-boss-gold/[0.07] px-3 py-1.5 text-[0.72rem] text-boss-gold transition hover:bg-boss-gold/[0.14]">
+                                                Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="flex items-center gap-2.5 rounded-xl border border-white/[0.04] bg-white/[0.01] px-4 py-3 opacity-40">
+                                        <span class="text-base">{{ $icon }}</span>
+                                        <p class="text-[0.78rem] text-boss-ivory/35">{{ $docLabel }} — not uploaded</p>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
+
+                {{-- Verification Instructions --}}
+                <section class="pd-panel-strong p-5">
+                    <p class="mb-3 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Custom Verification Instructions') }}</p>
+                    <form action="{{ route('admin.onboarding.verification-instructions', $profile) }}" method="POST" class="space-y-2">
+                        @csrf
+                        <textarea name="verification_request_instructions" rows="3" class="pd-input w-full text-sm" placeholder="{{ __('Optional instructions shown to the member in the verification request email…') }}">{{ old('verification_request_instructions', $profile->verification_request_instructions) }}</textarea>
+                        <button type="submit" class="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-boss-ivory/70 transition hover:bg-white/[0.07] hover:text-boss-ivory">{{ __('Save Instructions') }}</button>
+                    </form>
+                </section>
+
+            </div>
+        </div>
+
+        {{-- ── Website Walkthrough Access (full width) ─────────────── --}}
+        @if ($courses->count() > 0)
+            <section class="pd-panel-strong p-5">
+                <div class="mb-5 flex items-center justify-between">
+                    <div>
+                        <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Website Walkthrough Access') }}</p>
+                        <p class="mt-1 text-[0.72rem] text-boss-ivory/30">{{ $courses->count() }} modules &nbsp;·&nbsp; {{ count($unlockedCourseIds) }} unlocked</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                    @foreach ($courses as $course)
+                        @php
+                            $isUnlocked = in_array((int) $course->id, $unlockedCourseIds, true);
+                            $accessRequest = $accessRequestsByCourse->get($course->id);
+                        @endphp
+                        <div
+                            class="flex flex-col overflow-hidden rounded-xl border transition
+                                {{ $isUnlocked ? 'border-green-400/20 bg-green-400/[0.04]' : 'border-white/[0.06] bg-white/[0.02]' }}"
+                            x-data="{ showResubmit: false }"
+                        >
+                            {{-- Card body --}}
+                            <div class="flex flex-1 flex-col gap-2 p-4">
+                                <div class="flex items-start justify-between gap-2">
+                                    {{-- Status dot --}}
+                                    <span class="mt-1 h-2 w-2 shrink-0 rounded-full {{ $isUnlocked ? 'bg-green-400' : 'bg-white/20' }}"></span>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-[0.8rem] font-medium leading-snug text-boss-ivory/85">{{ $course->title }}</p>
+                                        @if ($course->displayPlatform())
+                                            <p class="mt-0.5 text-[0.62rem] text-boss-ivory/28">{{ $course->displayPlatform() }}</p>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="mt-auto pt-1">
+                                    @if ($isUnlocked)
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-green-400/12 px-2 py-0.5 text-[0.6rem] font-medium text-green-300">
+                                            Unlocked
+                                        </span>
+                                    @elseif ($accessRequest)
+                                        <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.6rem] text-boss-gold">{{ $accessRequest->statusLabel() }}</span>
+                                    @else
+                                        <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.6rem] text-boss-ivory/25">Locked</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Member notes --}}
+                            @if ($accessRequest?->member_notes)
+                                <div class="border-t border-white/[0.04] bg-white/[0.015] px-3 py-1.5">
+                                    <p class="line-clamp-2 text-[0.65rem] leading-relaxed text-boss-ivory/35">{{ $accessRequest->member_notes }}</p>
+                                </div>
+                            @endif
+
+                            {{-- Action footer --}}
+                            <div class="border-t border-white/[0.04] bg-white/[0.015] px-3 py-2.5">
+                                @if (! $isUnlocked && $profile->isVerified())
+                                    <form action="{{ route('admin.onboarding.courses.unlock', [$profile, $course]) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="w-full rounded-lg bg-green-500/15 py-1.5 text-[0.7rem] font-medium text-green-300 transition hover:bg-green-500/25">
+                                            Unlock Access
+                                        </button>
+                                    </form>
+                                @elseif ($isUnlocked)
+                                    <form action="{{ route('admin.onboarding.courses.lock', [$profile, $course]) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="w-full rounded-lg border border-white/[0.07] bg-white/[0.02] py-1.5 text-[0.7rem] text-boss-ivory/35 transition hover:border-red-400/20 hover:bg-red-400/[0.07] hover:text-red-300/70">
+                                            Revoke Access
+                                        </button>
+                                    </form>
+                                @elseif ($accessRequest)
+                                    <button
+                                        type="button"
+                                        @click="showResubmit = !showResubmit"
+                                        class="w-full rounded-lg border border-white/[0.06] bg-white/[0.02] py-1.5 text-[0.7rem] text-boss-ivory/35 transition hover:border-boss-gold/20 hover:text-boss-gold/60"
+                                        :class="showResubmit ? 'border-boss-gold/20 text-boss-gold/60' : ''"
+                                    >
+                                        Request Resubmission
+                                    </button>
+                                @else
+                                    <p class="py-1 text-center text-[0.65rem] text-boss-ivory/20">Not yet requested</p>
+                                @endif
+                            </div>
+
+                            {{-- Resubmission form (toggled) --}}
+                            @if ($accessRequest && ! $isUnlocked)
+                                <div x-show="showResubmit" x-cloak x-transition class="border-t border-white/[0.04] px-3 pb-3 pt-2">
+                                    <form action="{{ route('admin.onboarding.courses.resubmission', [$profile, $course]) }}" method="POST" class="flex gap-1.5">
+                                        @csrf
+                                        <input type="text" name="admin_notes" class="pd-input flex-1 py-1.5 text-[0.72rem]" placeholder="Reason…" required>
+                                        <button type="submit" class="shrink-0 rounded-lg bg-boss-gold/10 px-2.5 py-1.5 text-[0.7rem] font-medium text-boss-gold transition hover:bg-boss-gold/20">
+                                            Send
+                                        </button>
+                                    </form>
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+    </div>
+</x-admin-layout>

@@ -90,7 +90,7 @@ class MarketingContent
                     ['key' => 'apply.title', 'label' => 'Application section title', 'type' => 'text', 'default' => 'Apply to Paradise Dolls'],
                     ['key' => 'apply.body', 'label' => 'Application section body', 'type' => 'textarea', 'default' => 'No experience is required. The onboarding team reviews every application privately and will guide approved members through the next steps.'],
                     ['key' => 'apply.success_title', 'label' => 'Application success title', 'type' => 'text', 'default' => 'Application Received'],
-                    ['key' => 'apply.success_body', 'label' => 'Application success body', 'type' => 'textarea', 'default' => 'Thank you for applying. The onboarding team will review your details and contact you with the next step.'],
+                    ['key' => 'apply.success_body', 'label' => 'Application success body', 'type' => 'textarea', 'default' => "We're so excited you've taken your first step with Paradise Dolls.\nYour application has been received successfully and our team will contact you soon."],
                     ['key' => 'apply.footer_note', 'label' => 'Application footer note', 'type' => 'textarea', 'default' => 'Approved applicants receive account instructions and the Model Information Form next.'],
                 ],
             ],

@@ -66,7 +66,7 @@ cd /var/www/paradisedollz
 nano .env
 ```
 
-Use `deployment/env.production.example` as the template, but replace every
+Use `deployment/.env.production` as the template, but replace every
 `CHANGE_ME` value. Generate the app key with:
 
 ```bash
