@@ -630,6 +630,25 @@
                                                     <p class="mt-1 whitespace-pre-line text-[0.72rem] leading-relaxed text-boss-ivory/55" x-text="course.access_request_notes"></p>
                                                 </div>
                                             </template>
+                                            <template x-if="course.proof_files && course.proof_files.length">
+                                                <div class="mt-2 rounded-lg border border-boss-gold/10 bg-boss-gold/[0.04] px-3 py-2">
+                                                    <p class="text-[0.58rem] uppercase tracking-[0.12em] text-boss-gold/55">Course proof files</p>
+                                                    <div class="mt-2 space-y-1.5">
+                                                        <template x-for="file in course.proof_files" :key="file.id">
+                                                            <div class="flex items-center justify-between gap-2 rounded-lg border border-white/[0.04] bg-black/10 px-2.5 py-2">
+                                                                <div class="min-w-0">
+                                                                    <p class="truncate text-[0.72rem] text-boss-ivory/65" x-text="file.name"></p>
+                                                                    <p class="text-[0.6rem] text-boss-ivory/30" x-text="file.size || file.mime_type || 'Uploaded proof'"></p>
+                                                                </div>
+                                                                <div class="flex shrink-0 gap-2 text-[0.62rem]">
+                                                                    <a :href="file.view_url" target="_blank" rel="noopener" class="text-boss-gold transition hover:text-boss-gold-light">View</a>
+                                                                    <a :href="file.download_url" class="text-boss-ivory/35 transition hover:text-boss-ivory/65">Download</a>
+                                                                </div>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
                                             <template x-if="course.access_admin_notes">
                                                 <div class="mt-2 rounded-lg border border-red-400/10 bg-red-400/[0.04] px-3 py-2">
                                                     <p class="text-[0.58rem] uppercase tracking-[0.12em] text-red-200/55">Kayla resubmission note</p>
@@ -982,4 +1001,3 @@
 
     </div>
 </x-admin-layout>
-

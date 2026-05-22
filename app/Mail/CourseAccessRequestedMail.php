@@ -18,7 +18,7 @@ class CourseAccessRequestedMail extends Mailable implements ShouldQueue
         public CourseAccessRequest $accessRequest,
         public string $adminUrl,
     ) {
-        $this->accessRequest->loadMissing('course');
+        $this->accessRequest->loadMissing('course', 'proofFiles', 'user');
     }
 
     public function envelope(): Envelope

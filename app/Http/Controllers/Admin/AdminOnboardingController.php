@@ -9,6 +9,7 @@ use App\Mail\VerificationRequestMail;
 use App\Mail\VerificationResubmissionMail;
 use App\Models\Course;
 use App\Models\CourseAccessRequest;
+use App\Models\CourseAccessRequestFile;
 use App\Models\ModelProfile;
 use App\Models\User;
 use App\Notifications\SystemNotification;
@@ -52,7 +53,7 @@ class AdminOnboardingController extends Controller
 
     public function show(ModelProfile $profile): View
     {
-        $profile->loadMissing('user.courseAccessRequests.course', 'user.courseEnrollments', 'verificationReviewer');
+        $profile->loadMissing('user.courseAccessRequests.course', 'user.courseAccessRequests.proofFiles', 'user.courseEnrollments', 'verificationReviewer');
 
         $unlockedCourseIds = $profile->user->courseEnrollments
             ->pluck('course_id')
@@ -79,7 +80,7 @@ class AdminOnboardingController extends Controller
 
     public function details(ModelProfile $profile): JsonResponse
     {
-        $profile->loadMissing('user.courseAccessRequests.course', 'user.courseEnrollments');
+        $profile->loadMissing('user.courseAccessRequests.course', 'user.courseAccessRequests.proofFiles', 'user.courseEnrollments');
 
         $unlockedCourseIds = $profile->user->courseEnrollments
             ->pluck('course_id')
@@ -119,6 +120,9 @@ class AdminOnboardingController extends Controller
                     'access_request_notes' => $accessRequest?->member_notes,
                     'access_admin_notes' => $accessRequest?->admin_notes,
                     'access_requested_at' => $accessRequest?->created_at?->toFormattedDateString(),
+                    'proof_files' => $accessRequest
+                        ? $accessRequest->proofFiles->map(fn (CourseAccessRequestFile $file) => $this->courseAccessProofPayload($profile, $course, $file))->values()
+                        : [],
                     'is_unlocked' => in_array((int) $course->id, $unlockedCourseIds, true),
                     'unlock_url' => route('admin.onboarding.courses.unlock', [$profile, $course]),
                     'lock_url' => route('admin.onboarding.courses.lock', [$profile, $course]),
@@ -382,6 +386,16 @@ class AdminOnboardingController extends Controller
         return Storage::disk('local')->response($path);
     }
 
+    public function downloadCourseAccessProof(ModelProfile $profile, Course $course, CourseAccessRequestFile $file): StreamedResponse
+    {
+        return $this->serveCourseAccessProof($profile, $course, $file, download: true);
+    }
+
+    public function viewCourseAccessProof(ModelProfile $profile, Course $course, CourseAccessRequestFile $file): StreamedResponse
+    {
+        return $this->serveCourseAccessProof($profile, $course, $file, download: false);
+    }
+
     private function resolveDocumentPath(ModelProfile $profile, string $document): ?string
     {
         $field = match ($document) {
@@ -392,6 +406,58 @@ class AdminOnboardingController extends Controller
         };
 
         return $profile->{$field};
+    }
+
+    private function courseAccessProofPayload(ModelProfile $profile, Course $course, CourseAccessRequestFile $file): array
+    {
+        return [
+            'id' => $file->id,
+            'name' => $file->original_name,
+            'size' => $file->displaySize(),
+            'mime_type' => $file->mime_type,
+            'view_url' => route('admin.onboarding.courses.proofs.view', [$profile, $course, $file]),
+            'download_url' => route('admin.onboarding.courses.proofs.show', [$profile, $course, $file]),
+        ];
+    }
+
+    private function serveCourseAccessProof(ModelProfile $profile, Course $course, CourseAccessRequestFile $file, bool $download): StreamedResponse
+    {
+        $file->loadMissing('accessRequest');
+        $accessRequest = $file->accessRequest;
+
+        abort_unless(
+            $accessRequest
+            && (int) $accessRequest->user_id === (int) $profile->user_id
+            && (int) $accessRequest->course_id === (int) $course->id,
+            404
+        );
+
+        abort_unless($file->disk === 'local', 404);
+
+        $path = trim(str_replace('\\', '/', (string) $file->path), '/');
+        abort_unless($path !== '' && ! str_contains($path, '..') && ! str_contains($path, "\0"), 404);
+        abort_unless(Storage::disk('local')->exists($path), 404);
+
+        $safeMimes = [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+            'application/pdf',
+        ];
+        $mime = in_array($file->mime_type, $safeMimes, true) ? $file->mime_type : 'application/octet-stream';
+        $name = basename(preg_replace('/[^\w.\- ]/', '_', $file->original_name));
+
+        if ($download) {
+            return Storage::disk('local')->download($path, $name, [
+                'Content-Type' => $mime,
+                'Cache-Control' => 'private, max-age=3600',
+            ]);
+        }
+
+        return Storage::disk('local')->response($path, $name, [
+            'Content-Type' => $mime,
+            'Cache-Control' => 'private, max-age=3600',
+        ]);
     }
 
     private function sendMail(ModelProfile $profile, mixed $mail): void

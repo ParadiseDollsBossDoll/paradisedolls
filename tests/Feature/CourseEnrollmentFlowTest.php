@@ -5,9 +5,11 @@ namespace Tests\Feature;
 use App\Mail\CourseAccessRequestedMail;
 use App\Models\Course;
 use App\Models\CourseAccessRequest;
+use App\Models\CourseAccessRequestFile;
 use App\Models\ModelProfile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -119,8 +121,10 @@ class CourseEnrollmentFlowTest extends TestCase
             ->assertSee('x-show="accessModalOpen"', false)
             ->assertSee('Access Requirements From Kayla')
             ->assertSee('Submit your platform QR code.')
-            ->assertSee('Upload Platform Codes')
-            ->assertSee('member/verification', false)
+            ->assertSee('Course proof files')
+            ->assertSee('Upload screenshots or proof Kayla requested for this specific course.')
+            ->assertDontSee('Upload Platform Codes')
+            ->assertDontSee('member/verification', false)
             ->assertSee('Tell Kayla what QR/code verification steps you completed for this course.')
             ->assertSeeInOrder([
                 'Website Verification Process',
@@ -150,11 +154,20 @@ class CourseEnrollmentFlowTest extends TestCase
             'status' => CourseAccessRequest::STATUS_PENDING,
             'member_notes' => 'Adding one more detail while Kayla reviews.',
         ]);
+        $accessRequest = CourseAccessRequest::query()
+            ->where('course_id', $course->id)
+            ->where('user_id', $member->id)
+            ->firstOrFail();
+        $reviewUrl = route('admin.onboarding.show', [
+            'profile' => $profile,
+            'course_request' => $accessRequest->id,
+        ], false);
         $this->assertSame(1, $admin->notifications()->where('type', \App\Notifications\SystemNotification::class)->count());
         $adminNotification = $admin->notifications()->first();
         $this->assertNotNull($adminNotification);
         $this->assertSame('course_access_requested', $adminNotification->data['category']);
         $this->assertSame('Course access requested', $adminNotification->data['title']);
+        $this->assertSame($reviewUrl, $adminNotification->data['action_url']);
 
         $this->actingAs($admin)
             ->get(route('notifications.index'))
@@ -175,9 +188,30 @@ class CourseEnrollmentFlowTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('notifications.open', $adminNotification))
-            ->assertRedirect(route('admin.onboarding.index', ['model' => $member->id], false));
+            ->assertRedirect($reviewUrl);
 
         $this->assertNotNull($adminNotification->fresh()->read_at);
+
+        $this->actingAs($admin)
+            ->get($reviewUrl)
+            ->assertOk()
+            ->assertSee('requestOpen: true', false)
+            ->assertSee('Course Access Review');
+
+        $admin->notify(new \App\Notifications\SystemNotification(
+            title: 'Legacy course access requested',
+            body: 'Old notification format.',
+            actionUrl: route('admin.onboarding.index', ['model' => $member->id], false),
+            category: 'course_access_requested',
+        ));
+        $legacyNotification = $admin->notifications()
+            ->get()
+            ->first(fn ($notification) => ($notification->data['title'] ?? null) === 'Legacy course access requested');
+        $this->assertNotNull($legacyNotification);
+
+        $this->actingAs($admin)
+            ->post(route('notifications.open', $legacyNotification))
+            ->assertRedirect($reviewUrl);
 
         $this->actingAs($admin)
             ->post(route('admin.onboarding.courses.unlock', [$profile, $course]))
@@ -199,6 +233,362 @@ class CourseEnrollmentFlowTest extends TestCase
             ->first(fn ($notification) => ($notification->data['category'] ?? null) === 'course_access_approved');
         $this->assertNotNull($memberNotification);
         $this->assertSame('Course access approved', $memberNotification->data['title']);
+    }
+
+    public function test_verified_member_can_submit_course_access_proof_files(): void
+    {
+        Storage::fake('local');
+        Mail::fake();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
+        $course = Course::create([
+            'title' => 'QR Proof Guide',
+            'slug' => 'qr-proof-guide',
+            'platform_label' => 'Stripchat',
+            'description' => 'Upload course-specific proof.',
+            'course_access_requirements' => 'Upload QR proof for this course.',
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($member)
+            ->post(route('member.courses.request-access', $course->slug), [
+                'member_notes' => 'I completed the QR registration.',
+                'proof_files' => [
+                    UploadedFile::fake()->create('qr-proof.png', 100, 'image/png'),
+                    UploadedFile::fake()->create('registration-proof.pdf', 100, 'application/pdf'),
+                ],
+            ])
+            ->assertRedirect(route('member.courses.show', $course->slug));
+
+        $accessRequest = CourseAccessRequest::query()
+            ->where('course_id', $course->id)
+            ->where('user_id', $member->id)
+            ->firstOrFail();
+
+        $this->assertDatabaseHas('course_access_requests', [
+            'id' => $accessRequest->id,
+            'status' => CourseAccessRequest::STATUS_PENDING,
+            'member_notes' => 'I completed the QR registration.',
+        ]);
+        $this->assertSame(2, $accessRequest->proofFiles()->count());
+
+        $proofFile = $accessRequest->proofFiles()->where('original_name', 'qr-proof.png')->firstOrFail();
+        $this->assertStringStartsWith('course-access-proofs/'.$member->id.'/'.$course->id.'/', $proofFile->path);
+        Storage::disk('local')->assertExists($proofFile->path);
+
+        $this->actingAs($member)
+            ->get(route('member.courses.show', $course->slug))
+            ->assertOk()
+            ->assertSee('Uploaded course proof')
+            ->assertSee('qr-proof.png')
+            ->assertSee('registration-proof.pdf');
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.show', $profile))
+            ->assertOk()
+            ->assertSee('Course proof files')
+            ->assertSee('qr-proof.png')
+            ->assertSee('registration-proof.pdf');
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.courses.proofs.view', [$profile, $course, $proofFile]))
+            ->assertOk();
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.courses.proofs.show', [$profile, $course, $proofFile]))
+            ->assertOk();
+
+        Mail::assertQueued(CourseAccessRequestedMail::class, fn (CourseAccessRequestedMail $mail) => $mail->accessRequest->proofFiles->pluck('original_name')->contains('qr-proof.png'));
+    }
+
+    public function test_pending_course_access_request_can_receive_more_proof_files(): void
+    {
+        Storage::fake('local');
+        Mail::fake();
+
+        User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
+        $course = Course::create([
+            'title' => 'Pending Proof Guide',
+            'slug' => 'pending-proof-guide',
+            'platform_label' => 'General',
+            'description' => 'Add more proof.',
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($member)
+            ->post(route('member.courses.request-access', $course->slug), [
+                'member_notes' => 'Initial request.',
+            ])
+            ->assertRedirect(route('member.courses.show', $course->slug));
+
+        $this->actingAs($member)
+            ->post(route('member.courses.request-access', $course->slug), [
+                'member_notes' => 'Adding screenshot.',
+                'proof_files' => [
+                    UploadedFile::fake()->create('extra-proof.jpg', 100, 'image/jpeg'),
+                ],
+            ])
+            ->assertRedirect(route('member.courses.show', $course->slug));
+
+        $accessRequest = CourseAccessRequest::query()
+            ->where('course_id', $course->id)
+            ->where('user_id', $member->id)
+            ->firstOrFail();
+
+        $this->assertSame(CourseAccessRequest::STATUS_PENDING, $accessRequest->status);
+        $this->assertSame('Adding screenshot.', $accessRequest->member_notes);
+        $this->assertSame(1, $accessRequest->proofFiles()->count());
+        Mail::assertQueued(CourseAccessRequestedMail::class, 2);
+    }
+
+    public function test_rejected_course_access_request_can_be_resubmitted_with_proof_files(): void
+    {
+        Storage::fake('local');
+
+        $member = User::factory()->create(['role' => 'model']);
+        ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
+        $course = Course::create([
+            'title' => 'Resubmission Proof Guide',
+            'slug' => 'resubmission-proof-guide',
+            'platform_label' => 'General',
+            'description' => 'Resubmit proof.',
+            'is_published' => true,
+        ]);
+        CourseAccessRequest::create([
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+            'status' => CourseAccessRequest::STATUS_REJECTED,
+            'member_notes' => 'Old note.',
+            'admin_notes' => 'Upload the missing screenshot.',
+            'reviewed_by' => User::factory()->create(['role' => 'admin'])->id,
+            'reviewed_at' => now(),
+        ]);
+
+        $this->actingAs($member)
+            ->post(route('member.courses.request-access', $course->slug), [
+                'member_notes' => 'Uploaded the missing screenshot.',
+                'proof_files' => [
+                    UploadedFile::fake()->create('missing-screenshot.webp', 100, 'image/webp'),
+                ],
+            ])
+            ->assertRedirect(route('member.courses.show', $course->slug));
+
+        $accessRequest = CourseAccessRequest::query()
+            ->where('course_id', $course->id)
+            ->where('user_id', $member->id)
+            ->firstOrFail();
+
+        $this->assertSame(CourseAccessRequest::STATUS_PENDING, $accessRequest->status);
+        $this->assertSame('Uploaded the missing screenshot.', $accessRequest->member_notes);
+        $this->assertNull($accessRequest->reviewed_by);
+        $this->assertNull($accessRequest->reviewed_at);
+        $this->assertNull($accessRequest->admin_notes);
+        $this->assertSame(1, $accessRequest->proofFiles()->count());
+    }
+
+    public function test_course_access_proof_upload_rejects_invalid_files(): void
+    {
+        Storage::fake('local');
+
+        $member = User::factory()->create(['role' => 'model']);
+        ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
+        $course = Course::create([
+            'title' => 'Invalid Proof Guide',
+            'slug' => 'invalid-proof-guide',
+            'platform_label' => 'General',
+            'description' => 'Reject invalid proof.',
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($member)
+            ->from(route('member.courses.show', $course->slug))
+            ->post(route('member.courses.request-access', $course->slug), [
+                'proof_files' => [
+                    UploadedFile::fake()->create('malware.exe', 10, 'application/octet-stream'),
+                ],
+            ])
+            ->assertRedirect(route('member.courses.show', $course->slug))
+            ->assertSessionHasErrors('proof_files.0');
+
+        $this->assertDatabaseMissing('course_access_requests', [
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+        ]);
+    }
+
+    public function test_course_access_proof_upload_rejects_oversized_files(): void
+    {
+        Storage::fake('local');
+
+        $member = User::factory()->create(['role' => 'model']);
+        ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
+        $course = Course::create([
+            'title' => 'Large Proof Guide',
+            'slug' => 'large-proof-guide',
+            'platform_label' => 'General',
+            'description' => 'Reject oversized proof.',
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($member)
+            ->from(route('member.courses.show', $course->slug))
+            ->post(route('member.courses.request-access', $course->slug), [
+                'proof_files' => [
+                    UploadedFile::fake()->create('large-proof.pdf', 10241, 'application/pdf'),
+                ],
+            ])
+            ->assertRedirect(route('member.courses.show', $course->slug))
+            ->assertSessionHasErrors('proof_files.0');
+
+        $this->assertDatabaseMissing('course_access_requests', [
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+        ]);
+    }
+
+    public function test_unverified_member_cannot_submit_course_access_proof_files(): void
+    {
+        Storage::fake('local');
+
+        $member = User::factory()->create(['role' => 'model']);
+        ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_SUBMITTED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
+        $course = Course::create([
+            'title' => 'Unverified Proof Guide',
+            'slug' => 'unverified-proof-guide',
+            'platform_label' => 'General',
+            'description' => 'Block unverified proof.',
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($member)
+            ->post(route('member.courses.request-access', $course->slug), [
+                'member_notes' => 'Here is my proof.',
+                'proof_files' => [
+                    UploadedFile::fake()->create('proof.pdf', 100, 'application/pdf'),
+                ],
+            ])
+            ->assertRedirect(route('member.courses.show', $course->slug))
+            ->assertSessionHas('status', 'Verification must be approved before Kayla can review course access.');
+
+        $this->assertDatabaseMissing('course_access_requests', [
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+        ]);
+        $this->assertDatabaseCount('course_access_request_files', 0);
+    }
+
+    public function test_course_access_proof_files_are_scoped_to_the_correct_profile_and_course(): void
+    {
+        Storage::fake('local');
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        $otherMember = User::factory()->create(['role' => 'model']);
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
+        $otherProfile = ModelProfile::create([
+            'user_id' => $otherMember->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+            'verification_submitted_at' => now(),
+            'id_document_path' => 'verifications/2/id.jpg',
+            'selfie_with_id_path' => 'verifications/2/selfie.jpg',
+        ]);
+        $course = Course::create([
+            'title' => 'Scoped Proof Guide',
+            'slug' => 'scoped-proof-guide',
+            'platform_label' => 'General',
+            'description' => 'Scoped proof.',
+            'is_published' => true,
+        ]);
+        $otherCourse = Course::create([
+            'title' => 'Other Proof Guide',
+            'slug' => 'other-proof-guide',
+            'platform_label' => 'General',
+            'description' => 'Other proof.',
+            'is_published' => true,
+        ]);
+        $accessRequest = CourseAccessRequest::create([
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+            'status' => CourseAccessRequest::STATUS_PENDING,
+        ]);
+        Storage::disk('local')->put('course-access-proofs/'.$member->id.'/'.$course->id.'/proof.png', 'proof');
+        $proofFile = $accessRequest->proofFiles()->create([
+            'disk' => 'local',
+            'path' => 'course-access-proofs/'.$member->id.'/'.$course->id.'/proof.png',
+            'original_name' => 'proof.png',
+            'mime_type' => 'image/png',
+            'size' => 5,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.courses.proofs.view', [$profile, $course, $proofFile]))
+            ->assertOk();
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.courses.proofs.view', [$otherProfile, $course, $proofFile]))
+            ->assertNotFound();
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.courses.proofs.view', [$profile, $otherCourse, $proofFile]))
+            ->assertNotFound();
+
+        $this->actingAs($otherMember)
+            ->get(route('admin.onboarding.courses.proofs.view', [$profile, $course, $proofFile]))
+            ->assertForbidden();
     }
 
     public function test_only_enrolled_members_can_use_course_chat_and_progress(): void

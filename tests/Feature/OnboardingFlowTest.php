@@ -570,6 +570,7 @@ class OnboardingFlowTest extends TestCase
     public function test_admin_can_request_course_access_resubmission_and_member_can_resubmit(): void
     {
         Mail::fake();
+        Storage::fake('local');
 
         $admin = User::factory()->create(['role' => 'admin']);
         $member = User::factory()->create(['role' => 'model']);
@@ -603,14 +604,14 @@ class OnboardingFlowTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('admin.onboarding.courses.resubmission', [$profile, $course]), [
-                'admin_notes' => 'Please upload the QR screenshot in Platform codes and explain what happened.',
+                'admin_notes' => 'Please upload the QR screenshot as course proof and explain what happened.',
             ])
             ->assertRedirect();
 
         $accessRequest->refresh();
 
         $this->assertSame(CourseAccessRequest::STATUS_REJECTED, $accessRequest->status);
-        $this->assertSame('Please upload the QR screenshot in Platform codes and explain what happened.', $accessRequest->admin_notes);
+        $this->assertSame('Please upload the QR screenshot as course proof and explain what happened.', $accessRequest->admin_notes);
         $this->assertSame($admin->id, $accessRequest->reviewed_by);
 
         $notification = $member->notifications()->first();
@@ -618,7 +619,7 @@ class OnboardingFlowTest extends TestCase
         $this->assertSame('course_access_resubmission', $notification->data['category']);
         $this->assertSame('Course access needs resubmission', $notification->data['title']);
         $this->assertTrue($course->fresh()->accessRequestFor($member)->isRejected());
-        $this->assertSame('Please upload the QR screenshot in Platform codes and explain what happened.', $course->fresh()->accessRequestFor($member)->admin_notes);
+        $this->assertSame('Please upload the QR screenshot as course proof and explain what happened.', $course->fresh()->accessRequestFor($member)->admin_notes);
         $this->assertDatabaseMissing('course_enrollments', [
             'course_id' => $course->id,
             'user_id' => $member->id,
@@ -627,23 +628,29 @@ class OnboardingFlowTest extends TestCase
         $this->actingAs($member)
             ->get(route('member.courses.show', $course->slug))
             ->assertOk()
-            ->assertSee('Please upload the QR screenshot in Platform codes and explain what happened.')
+            ->assertSee('Please upload the QR screenshot as course proof and explain what happened.')
             ->assertSee('Admin note')
-            ->assertSee('Upload Platform Codes')
+            ->assertSee('Course proof files')
+            ->assertSee('Upload screenshots or proof Kayla requested for this specific course.')
+            ->assertDontSee('Upload Platform Codes')
             ->assertSee('Resubmit Access Request');
 
         $this->actingAs($member)
             ->post(route('member.courses.request-access', $course->slug), [
-                'member_notes' => 'Uploaded the QR screenshot in Platform codes.',
+                'member_notes' => 'Uploaded the QR screenshot as course proof.',
+                'proof_files' => [
+                    UploadedFile::fake()->create('qr-screenshot.png', 100, 'image/png'),
+                ],
             ])
             ->assertRedirect(route('member.courses.show', $course->slug));
 
         $accessRequest->refresh();
 
         $this->assertSame(CourseAccessRequest::STATUS_PENDING, $accessRequest->status);
-        $this->assertSame('Uploaded the QR screenshot in Platform codes.', $accessRequest->member_notes);
+        $this->assertSame('Uploaded the QR screenshot as course proof.', $accessRequest->member_notes);
         $this->assertNull($accessRequest->admin_notes);
         $this->assertNull($accessRequest->reviewed_by);
+        $this->assertSame(1, $accessRequest->proofFiles()->count());
     }
 
     public function test_admin_cannot_unlock_course_until_member_is_verified(): void

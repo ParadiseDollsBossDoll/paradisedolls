@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CourseAccessRequest extends Model
 {
@@ -43,6 +44,11 @@ class CourseAccessRequest extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function proofFiles(): HasMany
+    {
+        return $this->hasMany(CourseAccessRequestFile::class);
     }
 
     public function isPending(): bool

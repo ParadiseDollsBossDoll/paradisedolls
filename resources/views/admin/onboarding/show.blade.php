@@ -482,8 +482,11 @@
             </div>
         </div>
 
-        {{-- ── Website Walkthrough Access (full width) ─────────────── --}}
+        {{-- Website Walkthrough Access --}}
         @if ($courses->count() > 0)
+            @php
+                $reviewCourseRequestId = (int) request()->query('course_request', 0);
+            @endphp
             <section class="pd-panel-strong p-5">
                 <div class="mb-5 flex items-center justify-between">
                     <div>
@@ -498,9 +501,10 @@
                             $accessRequest = $accessRequestsByCourse->get($course->id);
                         @endphp
                         <div
-                            class="flex flex-col overflow-hidden rounded-xl border transition
+                            class="flex min-h-[13rem] flex-col overflow-hidden rounded-xl border transition
                                 {{ $isUnlocked ? 'border-green-400/20 bg-green-400/[0.04]' : 'border-white/[0.06] bg-white/[0.02]' }}"
-                            x-data="{ showResubmit: false }"
+                            x-data="{ requestOpen: @js($accessRequest && (int) $accessRequest->id === $reviewCourseRequestId), showResubmit: false }"
+                            @keydown.escape.window="requestOpen = false"
                         >
                             {{-- Card body --}}
                             <div class="flex flex-1 flex-col gap-2 p-4">
@@ -508,14 +512,14 @@
                                     {{-- Status dot --}}
                                     <span class="mt-1 h-2 w-2 shrink-0 rounded-full {{ $isUnlocked ? 'bg-green-400' : 'bg-white/20' }}"></span>
                                     <div class="min-w-0 flex-1">
-                                        <p class="text-[0.8rem] font-medium leading-snug text-boss-ivory/85">{{ $course->title }}</p>
+                                        <p class="line-clamp-2 text-[0.8rem] font-medium leading-snug text-boss-ivory/85">{{ $course->title }}</p>
                                         @if ($course->displayPlatform())
                                             <p class="mt-0.5 text-[0.62rem] text-boss-ivory/28">{{ $course->displayPlatform() }}</p>
                                         @endif
                                     </div>
                                 </div>
 
-                                <div class="mt-auto pt-1">
+                                <div class="mt-auto space-y-2 pt-3">
                                     @if ($isUnlocked)
                                         <span class="inline-flex items-center gap-1 rounded-full bg-green-400/12 px-2 py-0.5 text-[0.6rem] font-medium text-green-300">
                                             Unlocked
@@ -525,19 +529,36 @@
                                     @else
                                         <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.6rem] text-boss-ivory/25">Locked</span>
                                     @endif
+
+                                    @if ($accessRequest)
+                                        <div class="flex flex-wrap gap-1.5">
+                                            @if (filled($accessRequest->member_notes))
+                                                <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.58rem] text-boss-ivory/35">Note</span>
+                                            @endif
+                                            @if ($accessRequest->proofFiles->isNotEmpty())
+                                                <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.58rem] text-boss-gold">
+                                                    {{ trans_choice(':count proof file|:count proof files', $accessRequest->proofFiles->count(), ['count' => $accessRequest->proofFiles->count()]) }}
+                                                </span>
+                                            @endif
+                                            @if (filled($accessRequest->admin_notes))
+                                                <span class="rounded-full bg-red-400/10 px-2 py-0.5 text-[0.58rem] text-red-200/70">Resubmission note</span>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
 
-                            {{-- Member notes --}}
-                            @if ($accessRequest?->member_notes)
-                                <div class="border-t border-white/[0.04] bg-white/[0.015] px-3 py-1.5">
-                                    <p class="line-clamp-2 text-[0.65rem] leading-relaxed text-boss-ivory/35">{{ $accessRequest->member_notes }}</p>
-                                </div>
-                            @endif
-
                             {{-- Action footer --}}
-                            <div class="border-t border-white/[0.04] bg-white/[0.015] px-3 py-2.5">
-                                @if (! $isUnlocked && $profile->isVerified())
+                            <div class="space-y-2 border-t border-white/[0.04] bg-white/[0.015] px-3 py-2.5">
+                                @if ($accessRequest)
+                                    <button
+                                        type="button"
+                                        @click="requestOpen = true"
+                                        class="w-full rounded-lg border border-boss-gold/20 bg-boss-gold/[0.07] py-1.5 text-[0.7rem] font-medium text-boss-gold transition hover:bg-boss-gold/[0.13]"
+                                    >
+                                        Review Request
+                                    </button>
+                                @elseif (! $isUnlocked && $profile->isVerified())
                                     <form action="{{ route('admin.onboarding.courses.unlock', [$profile, $course]) }}" method="POST">
                                         @csrf
                                         <button type="submit" class="w-full rounded-lg bg-green-500/15 py-1.5 text-[0.7rem] font-medium text-green-300 transition hover:bg-green-500/25">
@@ -551,30 +572,133 @@
                                             Revoke Access
                                         </button>
                                     </form>
-                                @elseif ($accessRequest)
-                                    <button
-                                        type="button"
-                                        @click="showResubmit = !showResubmit"
-                                        class="w-full rounded-lg border border-white/[0.06] bg-white/[0.02] py-1.5 text-[0.7rem] text-boss-ivory/35 transition hover:border-boss-gold/20 hover:text-boss-gold/60"
-                                        :class="showResubmit ? 'border-boss-gold/20 text-boss-gold/60' : ''"
-                                    >
-                                        Request Resubmission
-                                    </button>
                                 @else
                                     <p class="py-1 text-center text-[0.65rem] text-boss-ivory/20">Not yet requested</p>
                                 @endif
                             </div>
 
-                            {{-- Resubmission form (toggled) --}}
-                            @if ($accessRequest && ! $isUnlocked)
-                                <div x-show="showResubmit" x-cloak x-transition class="border-t border-white/[0.04] px-3 pb-3 pt-2">
-                                    <form action="{{ route('admin.onboarding.courses.resubmission', [$profile, $course]) }}" method="POST" class="flex gap-1.5">
-                                        @csrf
-                                        <input type="text" name="admin_notes" class="pd-input flex-1 py-1.5 text-[0.72rem]" placeholder="Reason…" required>
-                                        <button type="submit" class="shrink-0 rounded-lg bg-boss-gold/10 px-2.5 py-1.5 text-[0.7rem] font-medium text-boss-gold transition hover:bg-boss-gold/20">
-                                            Send
-                                        </button>
-                                    </form>
+                            @if ($accessRequest)
+                                <div
+                                    x-show="requestOpen"
+                                    x-cloak
+                                    class="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-4 py-5 backdrop-blur-sm"
+                                    role="dialog"
+                                    aria-modal="true"
+                                    @click.self="requestOpen = false"
+                                >
+                                    <div
+                                        x-show="requestOpen"
+                                        x-transition:enter="transition ease-out duration-200"
+                                        x-transition:enter-start="translate-y-4 scale-[0.98] opacity-0"
+                                        x-transition:enter-end="translate-y-0 scale-100 opacity-100"
+                                        x-transition:leave="transition ease-in duration-150"
+                                        x-transition:leave-start="translate-y-0 scale-100 opacity-100"
+                                        x-transition:leave-end="translate-y-4 scale-[0.98] opacity-0"
+                                        class="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-boss-gold/20 bg-[#101014] shadow-2xl"
+                                    >
+                                        <div class="flex shrink-0 items-start justify-between gap-4 border-b border-white/[0.06] px-5 py-4 md:px-6">
+                                            <div>
+                                                <p class="pd-kicker">Course Access Review</p>
+                                                <h3 class="pd-heading mt-1 text-[1.35rem] leading-tight text-boss-ivory">{{ $course->title }}</h3>
+                                                <p class="mt-1 text-[0.76rem] text-boss-ivory/38">
+                                                    {{ $user->name }} &middot; {{ $accessRequest->statusLabel() }}
+                                                </p>
+                                            </div>
+                                            <button type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] text-boss-ivory/50 transition hover:text-boss-ivory" @click="requestOpen = false" aria-label="Close request review">
+                                                <svg viewBox="0 0 16 16" class="h-4 w-4 fill-none stroke-current stroke-[1.7]"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+                                            </button>
+                                        </div>
+
+                                        <div class="flex-1 space-y-4 overflow-y-auto px-5 py-5 md:px-6">
+                                            @if (filled($accessRequest->member_notes))
+                                                <div class="rounded-xl border border-white/[0.07] bg-white/[0.025] p-4">
+                                                    <p class="pd-kicker">Model Access Note</p>
+                                                    <p class="mt-2 whitespace-pre-line text-[0.86rem] leading-relaxed text-boss-ivory/65">{{ $accessRequest->member_notes }}</p>
+                                                </div>
+                                            @else
+                                                <div class="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                                                    <p class="text-[0.82rem] text-boss-ivory/35">No access note was submitted.</p>
+                                                </div>
+                                            @endif
+
+                                            @if ($accessRequest->proofFiles->isNotEmpty())
+                                                <div class="rounded-xl border border-boss-gold/15 bg-boss-gold/[0.045] p-4">
+                                                    <p class="pd-kicker">Course proof files</p>
+                                                    <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                                                        @foreach ($accessRequest->proofFiles as $file)
+                                                            <div class="flex items-center justify-between gap-3 rounded-lg border border-white/[0.06] bg-black/10 px-3 py-2.5">
+                                                                <div class="min-w-0">
+                                                                    <p class="truncate text-[0.78rem] text-boss-ivory/70">{{ $file->original_name }}</p>
+                                                                    @if ($file->displaySize())
+                                                                        <p class="text-[0.64rem] text-boss-ivory/30">{{ $file->displaySize() }}</p>
+                                                                    @endif
+                                                                </div>
+                                                                <div class="flex shrink-0 gap-2">
+                                                                    <a href="{{ route('admin.onboarding.courses.proofs.view', [$profile, $course, $file]) }}" target="_blank" rel="noopener" class="text-[0.68rem] text-boss-gold transition hover:text-boss-gold-light">View</a>
+                                                                    <a href="{{ route('admin.onboarding.courses.proofs.show', [$profile, $course, $file]) }}" class="text-[0.68rem] text-boss-ivory/35 transition hover:text-boss-ivory/65">Download</a>
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <div class="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                                                    <p class="pd-kicker">Course proof files</p>
+                                                    <p class="mt-2 text-[0.82rem] text-boss-ivory/35">No course-specific files were uploaded yet.</p>
+                                                </div>
+                                            @endif
+
+                                            @if (filled($accessRequest->admin_notes))
+                                                <div class="rounded-xl border border-red-400/20 bg-red-400/[0.08] p-4">
+                                                    <p class="text-[0.64rem] uppercase tracking-[0.14em] text-red-200/65">Kayla Resubmission Note</p>
+                                                    <p class="mt-2 whitespace-pre-line text-[0.86rem] leading-relaxed text-red-100/78">{{ $accessRequest->admin_notes }}</p>
+                                                </div>
+                                            @endif
+
+                                            <div class="rounded-xl border border-white/[0.07] bg-white/[0.025] p-4">
+                                                <p class="pd-kicker">Actions</p>
+                                                <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                                                    @if (! $isUnlocked && $profile->isVerified())
+                                                        <form action="{{ route('admin.onboarding.courses.unlock', [$profile, $course]) }}" method="POST">
+                                                            @csrf
+                                                            <button type="submit" class="w-full rounded-lg bg-green-500/15 px-3 py-2 text-[0.78rem] font-medium text-green-300 transition hover:bg-green-500/25">
+                                                                Approve & Unlock
+                                                            </button>
+                                                        </form>
+                                                    @endif
+
+                                                    @if ($isUnlocked)
+                                                        <form action="{{ route('admin.onboarding.courses.lock', [$profile, $course]) }}" method="POST">
+                                                            @csrf
+                                                            <button type="submit" class="w-full rounded-lg border border-red-400/20 bg-red-400/[0.07] px-3 py-2 text-[0.78rem] font-medium text-red-300/80 transition hover:bg-red-400/[0.12]">
+                                                                Revoke Access
+                                                            </button>
+                                                        </form>
+                                                    @endif
+
+                                                    @if (! $isUnlocked)
+                                                        <button
+                                                            type="button"
+                                                            @click="showResubmit = ! showResubmit"
+                                                            class="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-[0.78rem] font-medium text-boss-ivory/55 transition hover:border-boss-gold/20 hover:text-boss-gold sm:col-span-2"
+                                                        >
+                                                            Request Resubmission
+                                                        </button>
+                                                    @endif
+                                                </div>
+
+                                                @if (! $isUnlocked)
+                                                    <form x-show="showResubmit" x-cloak x-transition action="{{ route('admin.onboarding.courses.resubmission', [$profile, $course]) }}" method="POST" class="mt-3 space-y-2">
+                                                        @csrf
+                                                        <textarea name="admin_notes" rows="3" class="pd-input w-full text-sm" placeholder="Tell the model what to fix or upload next." required></textarea>
+                                                        <button type="submit" class="rounded-lg bg-boss-gold/10 px-3 py-2 text-[0.78rem] font-medium text-boss-gold transition hover:bg-boss-gold/20">
+                                                            Send Resubmission Request
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             @endif
                         </div>

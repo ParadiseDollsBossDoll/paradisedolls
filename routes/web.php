@@ -206,6 +206,10 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         ->name('onboarding.documents.show');
     Route::get('/onboarding/{profile}/documents/{document}/view', [AdminOnboardingController::class, 'viewDocument'])
         ->name('onboarding.documents.view');
+    Route::get('/onboarding/{profile}/courses/{course}/proofs/{file}', [AdminOnboardingController::class, 'downloadCourseAccessProof'])
+        ->name('onboarding.courses.proofs.show');
+    Route::get('/onboarding/{profile}/courses/{course}/proofs/{file}/view', [AdminOnboardingController::class, 'viewCourseAccessProof'])
+        ->name('onboarding.courses.proofs.view');
 
     Route::middleware('throttle:admin-actions')->group(function () {
         Route::post('/onboarding/{profile}/stage', [AdminOnboardingController::class, 'updateStage'])

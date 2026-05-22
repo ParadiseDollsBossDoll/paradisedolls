@@ -493,7 +493,7 @@ npm ci && npm run build
 - Document root must point to `/public`
 - PHP version: 8.2+
 - Enable `mod_rewrite` (`.htaccess` is already in `public/`)
-- Set `upload_max_filesize` and `post_max_size` to at least 20MB (for ID uploads and photos)
+- Set `upload_max_filesize` to at least `10M` and `post_max_size`/Nginx `client_max_body_size` to at least `64M` for multi-file course proof uploads.
 - Cron for queue (if using database queue): `* * * * * php /path/to/artisan queue:work --stop-when-empty`
 
 **Storage symlink:**

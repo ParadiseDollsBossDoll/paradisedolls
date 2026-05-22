@@ -33,6 +33,17 @@
         </div>
     @endif
 
+    @if ($accessRequest->proofFiles->isNotEmpty())
+        <div style="margin: 0 0 1rem; padding: 1rem; background-color: #f7f7f7;">
+            <p style="margin: 0 0 0.5rem; font-weight: 700;">{{ __('Course proof files') }}</p>
+            <ul style="margin: 0; padding-left: 1.25rem;">
+                @foreach ($accessRequest->proofFiles as $file)
+                    <li>{{ $file->original_name }} @if ($file->displaySize())({{ $file->displaySize() }})@endif</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <p style="margin: 0 0 2rem;">
         <a href="{{ $adminUrl }}" style="display: inline-block; background-color: #c9a96e; color: #ffffff; text-decoration: none; padding: 0.65rem 1.25rem; font-weight: 600;">{{ __('Review in admin onboarding') }}</a>
     </p>

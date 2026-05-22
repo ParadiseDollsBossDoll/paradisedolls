@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CourseAccessRequest;
+use App\Models\ModelProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -32,6 +34,7 @@ class NotificationController extends Controller
         Cache::forget('notification_bell_'.$request->user()->id);
 
         $actionUrl = $notification->data['action_url'] ?? null;
+        $actionUrl = $this->courseAccessReviewUrlFromNotification($notification, $actionUrl) ?? $actionUrl;
 
         return redirect()->to($this->safeActionUrl($actionUrl, $request));
     }
@@ -54,6 +57,10 @@ class NotificationController extends Controller
 
         $baseUrl = rtrim((string) config('app.url'), '/');
         $actionUrl = trim($actionUrl);
+
+        if ($profileUrl = $this->legacyOnboardingProfileUrl($actionUrl)) {
+            return $profileUrl;
+        }
 
         if (
             str_contains($actionUrl, "\0")
@@ -82,5 +89,108 @@ class NotificationController extends Controller
         }
 
         return route($request->user()->isAdmin() ? 'admin.dashboard' : 'member.dashboard');
+    }
+
+    private function legacyOnboardingProfileUrl(string $actionUrl): ?string
+    {
+        $parts = parse_url($actionUrl);
+
+        if ($parts === false) {
+            return null;
+        }
+
+        $path = '/'.ltrim((string) ($parts['path'] ?? ''), '/');
+
+        if ($path !== '/admin/onboarding') {
+            return null;
+        }
+
+        parse_str((string) ($parts['query'] ?? ''), $query);
+
+        $modelId = filter_var($query['model'] ?? null, FILTER_VALIDATE_INT);
+
+        if (! $modelId) {
+            return null;
+        }
+
+        $profile = ModelProfile::query()
+            ->where('user_id', $modelId)
+            ->first(['id']);
+
+        return $profile
+            ? route('admin.onboarding.show', $profile, false)
+            : null;
+    }
+
+    private function courseAccessReviewUrlFromNotification(DatabaseNotification $notification, ?string $actionUrl): ?string
+    {
+        if (
+            blank($actionUrl)
+            || ($notification->data['category'] ?? null) !== 'course_access_requested'
+        ) {
+            return null;
+        }
+
+        $parts = parse_url(trim($actionUrl));
+
+        if ($parts === false) {
+            return null;
+        }
+
+        parse_str((string) ($parts['query'] ?? ''), $query);
+
+        if (filter_var($query['course_request'] ?? null, FILTER_VALIDATE_INT)) {
+            return null;
+        }
+
+        $profile = $this->profileFromOnboardingActionUrl($actionUrl);
+
+        if (! $profile) {
+            return null;
+        }
+
+        $accessRequest = CourseAccessRequest::query()
+            ->where('user_id', $profile->user_id)
+            ->latest('updated_at')
+            ->latest('id')
+            ->first(['id']);
+
+        return $accessRequest
+            ? route('admin.onboarding.show', [
+                'profile' => $profile,
+                'course_request' => $accessRequest->id,
+            ], false)
+            : null;
+    }
+
+    private function profileFromOnboardingActionUrl(string $actionUrl): ?ModelProfile
+    {
+        $parts = parse_url($actionUrl);
+
+        if ($parts === false) {
+            return null;
+        }
+
+        $path = '/'.ltrim((string) ($parts['path'] ?? ''), '/');
+
+        if (preg_match('#^/admin/onboarding/(\d+)$#', $path, $matches) === 1) {
+            return ModelProfile::query()->find((int) $matches[1], ['id', 'user_id']);
+        }
+
+        if ($path !== '/admin/onboarding') {
+            return null;
+        }
+
+        parse_str((string) ($parts['query'] ?? ''), $query);
+
+        $modelId = filter_var($query['model'] ?? null, FILTER_VALIDATE_INT);
+
+        if (! $modelId) {
+            return null;
+        }
+
+        return ModelProfile::query()
+            ->where('user_id', $modelId)
+            ->first(['id', 'user_id']);
     }
 }

@@ -7,7 +7,8 @@
         $requirements = $course->requirementItems();
         $accessRequirements = $course->accessRequirementItems();
         $accessPhases = $course->accessPhaseInstructions();
-        $shouldOpenAccessModal = ! $isEnrolled && (bool) $courseAccessRequest?->isRejected();
+        $proofUploadHasErrors = $errors->has('member_notes') || $errors->has('proof_files') || $errors->has('proof_files.*');
+        $shouldOpenAccessModal = ! $isEnrolled && ((bool) $courseAccessRequest?->isRejected() || $proofUploadHasErrors);
         $resourceCount = ($course->has_course_outline && filled($course->course_outline_url) ? 1 : 0)
             + ($course->has_intro ? 1 : 0)
             + $course->lessons->whereNotNull('pdf_url')->count();
@@ -195,13 +196,54 @@
                                         <p class="mt-1 whitespace-pre-line text-[0.78rem] leading-relaxed text-boss-ivory/60">{{ $courseAccessRequest->member_notes }}</p>
                                     </div>
                                 @endif
-                            @else
-                                <p class="mt-4 text-[0.84rem] leading-relaxed text-boss-ivory/56">{{ __('If Kayla requested QR/code proof, upload screenshots from your Verification page under Platform codes before requesting access.') }}</p>
-                                <a href="{{ route('member.verification.edit') }}" class="mt-3 inline-flex rounded-xl border border-boss-gold/20 bg-boss-gold/10 px-3 py-2 text-[0.72rem] font-semibold text-boss-gold transition-colors hover:border-boss-gold/40 hover:bg-boss-gold/15">
-                                    {{ __('Upload Platform Codes') }}
-                                </a>
 
-                                <form method="POST" action="{{ route('member.courses.request-access', $course->slug) }}" class="mt-4 space-y-3">
+                                @if ($courseAccessRequest->proofFiles->isNotEmpty())
+                                    <div class="mt-3 rounded-lg border border-boss-gold/10 bg-boss-gold/[0.04] px-3 py-2">
+                                        <p class="text-[0.62rem] uppercase tracking-[0.12em] text-boss-gold/55">{{ __('Uploaded course proof') }}</p>
+                                        <div class="mt-2 space-y-1.5">
+                                            @foreach ($courseAccessRequest->proofFiles as $file)
+                                                <p class="text-[0.76rem] text-boss-ivory/60">{{ $file->original_name }} @if ($file->displaySize())<span class="text-boss-ivory/35">({{ $file->displaySize() }})</span>@endif</p>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <form method="POST" action="{{ route('member.courses.request-access', $course->slug) }}" enctype="multipart/form-data" class="mt-4 space-y-3">
+                                    @csrf
+                                    <textarea
+                                        name="member_notes"
+                                        rows="3"
+                                        class="pd-input text-sm"
+                                        placeholder="{{ __('Add any extra details Kayla should know about the proof you uploaded.') }}"
+                                    >{{ old('member_notes', $courseAccessRequest->member_notes) }}</textarea>
+                                    <x-input-error class="mt-2" :messages="$errors->get('member_notes')" />
+
+                                    <div>
+                                        <label for="proof_files_pending" class="pd-label">{{ __('Course proof files') }}</label>
+                                        <p class="mt-1 text-[0.72rem] leading-relaxed text-boss-ivory/38">{{ __('Upload screenshots or proof Kayla requested for this specific course.') }}</p>
+                                        <input id="proof_files_pending" type="file" name="proof_files[]" multiple accept=".jpg,.jpeg,.png,.webp,.pdf" class="pd-input mt-2">
+                                        <p class="mt-1 text-[0.68rem] text-boss-ivory/30">{{ __('Up to 5 files per upload. JPG, PNG, WEBP, or PDF. Max 10MB each.') }}</p>
+                                        <x-input-error class="mt-2" :messages="$errors->get('proof_files')" />
+                                        <x-input-error class="mt-2" :messages="$errors->get('proof_files.*')" />
+                                    </div>
+
+                                    <button type="submit" class="pd-btn-primary">
+                                        {{ __('Update Access Request') }}
+                                    </button>
+                                </form>
+                            @else
+                                @if ($courseAccessRequest?->proofFiles->isNotEmpty())
+                                    <div class="mt-3 rounded-lg border border-boss-gold/10 bg-boss-gold/[0.04] px-3 py-2">
+                                        <p class="text-[0.62rem] uppercase tracking-[0.12em] text-boss-gold/55">{{ __('Uploaded course proof') }}</p>
+                                        <div class="mt-2 space-y-1.5">
+                                            @foreach ($courseAccessRequest->proofFiles as $file)
+                                                <p class="text-[0.76rem] text-boss-ivory/60">{{ $file->original_name }} @if ($file->displaySize())<span class="text-boss-ivory/35">({{ $file->displaySize() }})</span>@endif</p>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <form method="POST" action="{{ route('member.courses.request-access', $course->slug) }}" enctype="multipart/form-data" class="mt-4 space-y-3">
                                     @csrf
                                     <textarea
                                         name="member_notes"
@@ -210,6 +252,16 @@
                                         placeholder="{{ __('Tell Kayla what QR/code verification steps you completed for this course.') }}"
                                     >{{ old('member_notes', $courseAccessRequest?->isRejected() ? $courseAccessRequest->member_notes : '') }}</textarea>
                                     <x-input-error class="mt-2" :messages="$errors->get('member_notes')" />
+
+                                    <div>
+                                        <label for="proof_files" class="pd-label">{{ __('Course proof files') }}</label>
+                                        <p class="mt-1 text-[0.72rem] leading-relaxed text-boss-ivory/38">{{ __('Upload screenshots or proof Kayla requested for this specific course.') }}</p>
+                                        <input id="proof_files" type="file" name="proof_files[]" multiple accept=".jpg,.jpeg,.png,.webp,.pdf" class="pd-input mt-2">
+                                        <p class="mt-1 text-[0.68rem] text-boss-ivory/30">{{ __('Up to 5 files per upload. JPG, PNG, WEBP, or PDF. Max 10MB each.') }}</p>
+                                        <x-input-error class="mt-2" :messages="$errors->get('proof_files')" />
+                                        <x-input-error class="mt-2" :messages="$errors->get('proof_files.*')" />
+                                    </div>
+
                                     <button type="submit" class="pd-btn-primary">
                                         {{ $courseAccessRequest?->isRejected() ? __('Resubmit Access Request') : __('Request Access') }}
                                     </button>
@@ -308,4 +360,3 @@
         </section>
     </div>
 </x-member-layout>
-

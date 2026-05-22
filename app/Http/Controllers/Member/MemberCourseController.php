@@ -142,6 +142,7 @@ class MemberCourseController extends Controller
         $isEnrolled = $course->isEnrolledBy($request->user());
         $isVerified = (bool) $request->user()->modelProfile()->first()?->isVerified();
         $courseAccessRequest = $course->accessRequestFor($request->user());
+        $courseAccessRequest?->loadMissing('proofFiles');
         $progress = $this->courseProgress($course, $request->user()->id);
         $resumeLesson = $this->resumeLesson($course, $request->user()->id);
         $communityChannel = $course->communityChannels()
@@ -178,6 +179,8 @@ class MemberCourseController extends Controller
 
         $validated = $request->validate([
             'member_notes' => ['nullable', 'string', 'max:5000'],
+            'proof_files' => ['nullable', 'array', 'max:5'],
+            'proof_files.*' => ['file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:10240'],
         ]);
 
         $accessRequest = CourseAccessRequest::query()
@@ -190,9 +193,18 @@ class MemberCourseController extends Controller
                 'member_notes' => $validated['member_notes'] ?? $accessRequest->member_notes,
             ])->save();
 
+            $uploadedFiles = $this->storeCourseAccessProofs($accessRequest, $request);
+
+            if ($uploadedFiles > 0) {
+                $accessRequest->load(['course', 'user', 'proofFiles']);
+                $this->notifyAdminOfAccessRequest($accessRequest);
+            }
+
             return redirect()
                 ->route('member.courses.show', $course->slug)
-                ->with('status', __('Your access request is already pending. Kayla will review it soon.'));
+                ->with('status', $uploadedFiles > 0
+                    ? __('Course proof uploaded. Kayla will review it soon.')
+                    : __('Your access request is already pending. Kayla will review it soon.'));
         }
 
         $accessRequest ??= new CourseAccessRequest([
@@ -208,7 +220,9 @@ class MemberCourseController extends Controller
             'admin_notes' => null,
         ])->save();
 
-        $accessRequest->load(['course', 'user']);
+        $this->storeCourseAccessProofs($accessRequest, $request);
+
+        $accessRequest->load(['course', 'user', 'proofFiles']);
         $this->notifyAdminOfAccessRequest($accessRequest);
 
         return redirect()
@@ -298,8 +312,40 @@ class MemberCourseController extends Controller
             ->firstOrFail();
     }
 
+    private function storeCourseAccessProofs(CourseAccessRequest $accessRequest, Request $request): int
+    {
+        if (! $request->hasFile('proof_files')) {
+            return 0;
+        }
+
+        $directory = 'course-access-proofs/'.$accessRequest->user_id.'/'.$accessRequest->course_id;
+        $uploaded = 0;
+
+        foreach ($request->file('proof_files', []) as $file) {
+            if (! $file) {
+                continue;
+            }
+
+            $path = $file->store($directory, 'local');
+
+            $accessRequest->proofFiles()->create([
+                'disk' => 'local',
+                'path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize(),
+            ]);
+
+            $uploaded++;
+        }
+
+        return $uploaded;
+    }
+
     private function notifyAdminOfAccessRequest(CourseAccessRequest $accessRequest): void
     {
+        $adminUrl = $this->adminCourseAccessReviewUrl($accessRequest);
+
         User::query()
             ->where('role', 'admin')
             ->each(fn (User $admin) => $admin->notify(new SystemNotification(
@@ -308,18 +354,30 @@ class MemberCourseController extends Controller
                     'model' => $accessRequest->user->name,
                     'course' => $accessRequest->course->title,
                 ]),
-                actionUrl: route('admin.onboarding.index', ['model' => $accessRequest->user_id], false),
+                actionUrl: $adminUrl,
                 category: 'course_access_requested',
             )));
 
         try {
             Mail::to(config('paradise.onboarding_email'))->queue(new CourseAccessRequestedMail(
                 accessRequest: $accessRequest,
-                adminUrl: route('admin.onboarding.index'),
+                adminUrl: url($adminUrl),
             ));
         } catch (Throwable $e) {
             report($e);
         }
+    }
+
+    private function adminCourseAccessReviewUrl(CourseAccessRequest $accessRequest): string
+    {
+        $profile = $accessRequest->user->modelProfile()->first();
+
+        return $profile
+            ? route('admin.onboarding.show', [
+                'profile' => $profile,
+                'course_request' => $accessRequest->id,
+            ], false)
+            : route('admin.onboarding.index', absolute: false);
     }
 
     private function learningView(Request $request, Course $course, ?Lesson $selectedLesson, ?array $progress = null): View

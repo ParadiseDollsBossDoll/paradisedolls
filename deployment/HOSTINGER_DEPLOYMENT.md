@@ -101,6 +101,8 @@ For Ubuntu 24.04/PHP 8.3, make sure this line is:
 fastcgi_pass unix:/run/php/php8.3-fpm.sock;
 ```
 
+Keep `client_max_body_size` at `64M` or higher so course access proof uploads can include multiple 10MB files.
+
 Enable the site:
 
 ```bash
