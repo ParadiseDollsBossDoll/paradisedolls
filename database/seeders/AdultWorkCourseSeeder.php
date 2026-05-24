@@ -25,13 +25,14 @@ class AdultWorkCourseSeeder extends Seeder
         );
 
         $modules = [
-            // MODULE 1
+
+            // (1) Introduction
             [
                 'title'       => 'Introduction',
-                'description' => 'Welcome to the AdultWork Boss Doll Blueprint.',
+                'description' => 'A welcome introduction to AdultWork and what you can expect from this course.',
                 'lessons'     => [
                     [
-                        'title'      => 'Welcome to AdultWork',
+                        'title'      => 'Introduction',
                         'intro_only' => true,
                         'overview'   => 'Welcome to the AdultWork Boss Doll Blueprint. Kayla will introduce you to AdultWork — one of the longest-running premium adult entertainment platforms online, originally launched in the UK in 2003. This platform combines webcam streaming, private calls, phone chat, messaging services, adult content sales, and profile advertising all in one place, giving you multiple income streams from a single account. Your dedicated support team — Julio, Ely, and Jhonpaul — are here to help you every step of the way with live support, real-time help, and a safe and secure environment. Your account has already been fully set up by the Paradise Dolls team, so you will be ready to start broadcasting straight away.',
                         'steps'      => json_encode([
@@ -50,13 +51,39 @@ class AdultWorkCourseSeeder extends Seeder
                     ],
                 ],
             ],
-            // MODULE 2
+
+            // (2) About Adultwork
             [
-                'title'       => 'Logging In & Getting Started',
-                'description' => 'How to access your AdultWork account, navigate the platform, and open the broadcaster.',
+                'title'       => 'About Adultwork',
+                'description' => 'Learn what AdultWork is, how it works, and why it is one of the most established adult platforms online.',
                 'lessons'     => [
                     [
-                        'title'    => 'Logging In & Getting Started',
+                        'title'    => 'About Adultwork',
+                        'overview' => 'AdultWork is one of the most established premium adult platforms in the world, operating since 2003. Unlike token-based freemium sites, AdultWork operates on a pay-per-minute model — meaning customers pay directly for every minute they spend in your room. It is a multi-service marketplace offering webcam broadcasting, private video calls, phone chat, messaging, adult content sales, and profile advertising all under one roof. This gives you multiple income streams from a single account.',
+                        'steps'    => json_encode([
+                            'Understand that AdultWork is a pay-per-minute platform — customers pay for every minute they spend with you',
+                            'Note the multiple income streams available: live webcam, private calls, phone chat, messaging, content sales',
+                            'AdultWork has been running since 2003 and has a large, established UK and international audience',
+                            'Your account is fully set up by the Paradise Dolls team — you do not need to register again',
+                            'The platform operates in GBP (British pounds) — all rates and earnings are in £',
+                        ]),
+                        'tips'     => json_encode([
+                            'AdultWork rewards consistency — the more regularly you go live, the better your ranking and traffic',
+                            'The pay-per-minute model means serious customers who stay in your room generate consistent earnings',
+                            'Unlike freemium sites, AdultWork customers expect premium content — position yourself confidently',
+                            'Take time to understand the platform before going live — this course covers everything you need',
+                        ]),
+                    ],
+                ],
+            ],
+
+            // (3) Logging in And Get Started
+            [
+                'title'       => 'Logging in And Get Started',
+                'description' => 'How to access your AdultWork account using your provided login credentials.',
+                'lessons'     => [
+                    [
+                        'title'    => 'Logging in And Get Started',
                         'overview' => 'AdultWork is one of the longest-running premium adult platforms on the web. When you first come onto the site, head to the official website at www.adultwork.com and you will be taken straight to the login page. From there, simply enter your provided login details to access your account, navigate the platform, manage your profile, and start exploring all the different earning features available to you.',
                         'steps'    => json_encode([
                             'Open your desktop browser and go to www.adultwork.com',
@@ -74,46 +101,20 @@ class AdultWorkCourseSeeder extends Seeder
                             'Never create a duplicate account — always use the provided login credentials',
                         ]),
                     ],
+                ],
+            ],
+
+            // (4) Accessing Broadcast Interface
+            [
+                'title'       => 'Accessing Broadcast Interface',
+                'description' => 'Locate the Broadcast Now button and understand the broadcaster interface layout.',
+                'lessons'     => [
                     [
-                        'title'    => 'Navigating the AdultWork Home Page',
-                        'overview' => 'Once you have successfully logged in, you will arrive at the AdultWork home page. At the top of the screen you will see the main navigation bar containing sections including Home, Logout, Search, My Details, Emails Bookings & Messages, Help, and Broadcast Now. You may also notice featured sections across the platform such as Escort of the Day, Direct Cam of the Day, Phone Chat Member of the Day, and Content Creator of the Day.',
-                        'steps'    => json_encode([
-                            'After logging in, take a moment to familiarise yourself with the home page layout',
-                            'Locate the main navigation bar at the top of the screen',
-                            'Identify key sections: Home, Logout, Search, My Details, Emails Bookings & Messages, Help',
-                            'Locate the Broadcast Now button at the top right of the navigation bar (highlighted yellow)',
-                            'Notice the featured sections on the homepage — these highlight popular and active profiles',
-                            'Be aware: some areas of AdultWork include escort or meet-up related services — Paradise Dolls does NOT promote this',
-                            'Read the platform rules and stay aware of personal safety at all times',
-                        ]),
-                        'tips'     => json_encode([
-                            'AdultWork is a large multi-service marketplace — your focus is webcam streaming as the primary income stream',
-                            'The featured sections show popular profiles — positioning and featuring (covered later) gets you there',
-                            'Familiarise yourself with the navigation before going live so you can find things quickly',
-                            'Your profile will usually already be set up by the team, but you can personalise or update it whenever needed',
-                        ]),
-                    ],
-                    [
-                        'title'    => 'Accessing the Broadcast Now Button',
-                        'overview' => 'Before exploring the rest of the platform, the first priority is learning how to go live and start your broadcast. Your account is already fully set up with your profile, bio, and account details completed, meaning you can begin broadcasting straight away. To open the broadcaster, click the Broadcast Now button at the top of the navigation bar.',
+                        'title'    => 'Accessing Broadcast Interface',
+                        'overview' => 'Before exploring the rest of the platform, the first priority is learning how to go live and start your broadcast. Your account is already fully set up with your profile, bio, and account details completed, meaning you can begin broadcasting straight away. To open the broadcaster, click the Broadcast Now button at the top of the navigation bar. This opens the AdultWork broadcaster interface — where you will host all your live shows, whether in premium pay-per-minute or freemium/public chat format.',
                         'steps'    => json_encode([
                             'Locate the Broadcast Now button in the top navigation bar (highlighted yellow)',
-                            'Click Broadcast Now — a new browser window will open',
-                            'This new window is where you will begin setting up your live stream and entering the broadcast interface',
-                            'Your profile, bio, and account details are already completed — you are ready to broadcast straight away',
-                        ]),
-                        'tips'     => json_encode([
-                            'The broadcaster opens in a separate window from the main AdultWork website',
-                            'Your account is fully set up so you can start broadcasting without any additional setup',
-                            'Do not press Start yet — review your settings in the following lessons first',
-                            'The broadcaster will show OFFLINE status until you click the Start button',
-                        ]),
-                    ],
-                    [
-                        'title'    => 'Accessing the Broadcaster Interface',
-                        'overview' => 'This is the AdultWork broadcaster interface — where you will host all your live shows, whether you choose to work in a premium pay-per-minute format or a freemium/public chat style format. Once you have clicked Broadcast Now, the broadcaster loads and you will see your webcam window on the left, the chat panel on the right, and the green Start button at the top right.',
-                        'steps'    => json_encode([
-                            'The broadcaster interface opens in a new browser window after clicking Broadcast Now',
+                            'Click Broadcast Now — a new browser window will open with the broadcaster interface',
                             'On the left side you will see your webcam window where your camera feed will display',
                             'On the right side you will see the chat/message area',
                             'At the top right you will see the green Start button and orange Boost button',
@@ -121,18 +122,19 @@ class AdultWorkCourseSeeder extends Seeder
                             'Do not press Start yet — go through the settings lessons first to ensure everything is configured correctly',
                         ]),
                         'tips'     => json_encode([
-                            'You can work in premium pay-per-minute format or freemium/public chat format',
-                            'The broadcaster shows OFFLINE status until you click Start — viewers cannot see you yet',
-                            'The orange Boost button is used to boost your viewership in the next hour via DirectCam Boost',
-                            'Take time to explore the layout before going live so nothing catches you off guard',
+                            'The broadcaster opens in a separate window from the main AdultWork website',
+                            'Your account is fully set up so you can start broadcasting without any additional setup',
+                            'Do not press Start yet — review your settings in the following lessons first',
+                            'The orange Boost button is used to boost your viewership via DirectCam Boost',
                         ]),
                     ],
                 ],
             ],
-            // MODULE 3
+
+            // (5) Consent Required
             [
-                'title'       => 'Consent & Broadcaster Overview',
-                'description' => 'Understanding the consent requirement and a full breakdown of the broadcaster interface once you go live.',
+                'title'       => 'Consent Required',
+                'description' => 'Understand and complete the consent confirmation required before broadcasting.',
                 'lessons'     => [
                     [
                         'title'    => 'Consent Required',
@@ -153,8 +155,16 @@ class AdultWorkCourseSeeder extends Seeder
                             'Broadcast modes will be configured in detail in the Broadcast Mode Settings module',
                         ]),
                     ],
+                ],
+            ],
+
+            // (6) Broadcast Overview
+            [
+                'title'       => 'Broadcast Overview',
+                'description' => 'A full breakdown of the broadcaster interface once you are connected and live.',
+                'lessons'     => [
                     [
-                        'title'    => 'AdultWork Broadcaster Overview',
+                        'title'    => 'Broadcast Overview',
                         'overview' => 'Once you press the Start button, your broadcaster will begin connecting and preparing your stream to go live. System messages will appear in the chat panel confirming connection status: Connecting to Server, Connected, Ready. The webcam window on the left (highlighted blue) shows your live camera feed. Near your webcam window is a microphone icon — Green means microphone ON, Red means microphone OFF. Next to the microphone button is a small settings cog where you can adjust stream preferences.',
                         'steps'    => json_encode([
                             'Click the green Start button on the right-hand side of the broadcaster',
@@ -175,219 +185,98 @@ class AdultWorkCourseSeeder extends Seeder
                     ],
                 ],
             ],
-            // MODULE 4
+
+            // (7) Broadcast Mode Settings
             [
                 'title'       => 'Broadcast Mode Settings',
-                'description' => 'Configuring Free Mode, Group Mode, Private Mode, and saving your broadcaster settings.',
+                'description' => 'Access the broadcaster settings Modes tab and understand how to save your configuration.',
                 'lessons'     => [
                     [
-                        'title'    => 'Broadcast Mode Settings Overview & Save Changes',
+                        'title'    => 'Broadcast Mode Settings',
                         'overview' => 'Inside the broadcaster settings (accessed via the settings cog), the Modes tab gives you full control over how viewers access your stream. You will see options for Free Mode, Group Mode, and Private Mode. After configuring all your modes and rates, you must click the purple Save Changes button to apply everything before going live.',
                         'steps'    => json_encode([
                             'Click the settings cog (gear icon) below your webcam window to open the Settings panel',
                             'Click the Modes tab at the top of the settings panel',
                             'You will see three mode sections: Free Mode (Green), Group Mode (Pink), Private Mode (Yellow)',
-                            'After adjusting all modes and rates, review your settings one final time',
-                            'Confirm your Group Rate Per Minute is correct',
-                            'Confirm your Private Rate Per Minute is correct',
-                            'Click the purple Save Changes button at the bottom of the settings panel',
+                            'Free Mode: optional — allows clothed free previews for a limited time period',
+                            'Group Mode: tick Enable Group Mode and set your Group Rate Per Minute',
+                            'Private Mode: tick Enable Private Mode and set your Private Rate Per Minute (always higher than group)',
+                            'After adjusting all modes and rates, click the purple Save Changes button at the bottom',
                             'Close the settings panel — your settings are now live for your broadcast',
                         ]),
                         'tips'     => json_encode([
                             'Always save before going live — unsaved settings will revert to previous values',
-                            'Check your rates at the start of every session to ensure they are what you intend to charge',
+                            'Keep both Group Mode and Private Mode ticked at all times for maximum earning flexibility',
+                            'Never enable Free Preview to Guests — only allow registered members access to your free preview',
                             'Pre-live final checklist: camera visible, microphone working, mode confirmed, rates saved',
-                            'If you change rates between sessions, always save and verify before going live again',
-                        ]),
-                    ],
-                    [
-                        'title'    => 'Free Mode',
-                        'overview' => 'The Free Mode section (highlighted green) lets you enable Free Preview Mode — allowing viewers to watch a clothed session for a limited time period before being prompted to enter a paid private or group session. This is entirely optional and depends on your preferred streaming style.',
-                        'steps'    => json_encode([
-                            'In the Modes tab of the Settings panel, find the Free Mode section (highlighted green at top)',
-                            'You will see: Enable Free Preview Mode checkbox',
-                            'Below this you will see: Enable Free Preview to Guests option',
-                            'IMPORTANT: NEVER enable Free Preview to Guests',
-                            '"Guests" means anyone visiting AdultWork without a registered account — this exposes your room to the entire internet',
-                            'If using free mode, only allow it for registered site members (not guests)',
-                            'Set Max period (recommended: 5 minutes) and Within any period of (recommended: 12 hours)',
-                        ]),
-                        'tips'     => json_encode([
-                            'Never enable free preview to guests — only allow registered members access to your free preview',
-                            'Free mode is optional — you can run purely on Group and Private modes with no free access',
-                            'Setting max 5 minutes every 12 hours limits freeloaders while still attracting paying customers',
-                            'Free preview viewers can tip you and are potential private/group session customers',
-                        ]),
-                    ],
-                    [
-                        'title'    => 'Group Mode',
-                        'overview' => 'Group Mode (highlighted in pink in the settings) allows multiple customers to join your session simultaneously, each paying a per-minute rate. This is a great way to earn from several viewers at the same time. Make sure Enable Group Mode is ticked and your Group Rate Per Minute is set correctly before going live.',
-                        'steps'    => json_encode([
-                            'In the Modes tab of the Settings panel, find the Group Mode section (highlighted pink)',
-                            'Tick the Enable Group Mode checkbox',
-                            'Set your Group Rate Per Minute in the text field below (example: £1.50 per minute)',
-                            'Each customer who joins the group session is charged this amount per minute',
-                            'Group rate is typically lower than private rate as multiple customers pay simultaneously',
-                            'Ensure the Group Mode checkbox remains ticked — always keep this enabled',
-                        ]),
-                        'tips'     => json_encode([
-                            'Group rate is lower per customer but earns from multiple people at the same time',
-                            'Always keep Group Mode enabled — it provides an additional income opportunity every session',
-                            'The example rate shown in training is £1.50/min — adjust to match your audience and confidence',
-                            'Group mode works well alongside private mode — offer both for maximum earnings',
-                        ]),
-                    ],
-                    [
-                        'title'    => 'Private Mode',
-                        'overview' => 'Private Mode (highlighted in yellow in the settings) is a one-to-one exclusive session between yourself and a single customer. Private sessions are charged at a higher rate because they offer the customer undivided, exclusive access to you. Make sure Enable Private Mode is ticked and your Private Rate Per Minute reflects this premium pricing.',
-                        'steps'    => json_encode([
-                            'In the Modes tab of the Settings panel, find the Private Mode section (highlighted yellow)',
-                            'Tick the Enable Private Mode checkbox',
-                            'Set your Private Rate Per Minute in the text field below (example: £2.99 per minute)',
-                            'Private rate should always be higher than your group rate',
-                            'Private sessions are one-to-one — the customer pays for exclusive undivided attention',
-                            'Ensure Private Mode remains ticked — always keep this enabled alongside Group Mode',
-                        ]),
-                        'tips'     => json_encode([
-                            'Private sessions command a premium — always charge more than your group rate',
-                            'The example private rate shown in training is £2.99/min — increase this as your confidence grows',
-                            'Always keep both Private and Group Mode enabled for maximum earning flexibility',
-                            'Higher private rates attract more serious and committed spenders over time',
                         ]),
                     ],
                 ],
             ],
-            // MODULE 5
+
+            // (8) Devices & Video Settings
             [
                 'title'       => 'Devices & Video Settings',
-                'description' => 'Configuring your camera, microphone, video quality, chat display, and notification sounds.',
+                'description' => 'Configure your camera, microphone, and video quality in the broadcaster Devices tab.',
                 'lessons'     => [
                     [
-                        'title'    => 'Video Device — Camera Selection',
-                        'overview' => 'The Devices tab inside broadcaster settings (highlighted blue) is where you configure your camera. The Video Device section (highlighted green) shows your currently active camera and allows you to switch between devices using a dropdown.',
+                        'title'    => 'Devices & Video Settings',
+                        'overview' => 'The Devices tab inside broadcaster settings is where you configure your camera, microphone, and video quality. The Video Device section (highlighted green) shows your currently active camera. The Audio Device section (highlighted red) is where you select your microphone. The Video Quality section (highlighted yellow) lets you set your stream resolution. Always verify all three before going live.',
                         'steps'    => json_encode([
                             'Click the settings cog below your webcam window to open the Settings panel',
                             'Click the Devices tab (highlighted blue) at the top of the settings panel',
-                            'Find the Video Device section (highlighted green)',
-                            'Your currently selected camera will appear (e.g. SplitCam Virtual Camera)',
-                            'Click the dropdown arrow next to the device name to view all available cameras',
-                            'Options may include: Flip Camera, Virtual Camera, HD Webcam, Built-in Camera',
-                            'Select the camera you want to use for your stream',
+                            'VIDEO DEVICE: find the Video Device section (highlighted green), click the dropdown to select your camera (e.g. HD Webcam, SplitCam Virtual Camera)',
                             'If your camera is not listed, click Refresh Devices at the bottom of the panel',
-                            'If problems persist, contact the Paradise Dolls team for support',
+                            'AUDIO DEVICE: find the Audio Device section (highlighted red), click the dropdown to select your microphone',
+                            'Check the audio level bar below the dropdown to confirm your mic is picking up sound',
+                            'VIDEO QUALITY: find the Video Quality section (highlighted yellow), recommended setting: 1280x720 HD',
+                            'If your stream lags or freezes, reduce the video quality setting to match your internet speed',
+                            'Always verify: correct camera selected, correct microphone selected, quality matched to your setup',
                         ]),
                         'tips'     => json_encode([
                             'Use an HD webcam or high-quality laptop camera for the best stream quality',
-                            'Virtual cameras (e.g. OBS, SplitCam) will also appear in the dropdown list',
-                            'Make sure your browser has camera and microphone permissions enabled',
-                            'If the camera is not showing video after selection, click Refresh Devices and try again',
-                        ]),
-                    ],
-                    [
-                        'title'    => 'Audio Device — Microphone Selection',
-                        'overview' => 'Beneath the video device settings, the Audio Device section (highlighted red) is where you select your microphone. Always double-check your correct microphone is selected, it is working, and your sound levels are clear before going live.',
-                        'steps'    => json_encode([
-                            'In the Devices tab, find the Audio Device section (highlighted red)',
-                            'Click the dropdown arrow to select your microphone (e.g. Microphone - High Definition Audio Device)',
-                            'Ensure your correct microphone is selected before going live',
-                            'Check the audio level bar below the dropdown to confirm your mic is picking up sound',
-                            'Always double-check: correct microphone selected, microphone is working, sound levels are clear',
-                        ]),
-                        'tips'     => json_encode([
-                            'Always verify your correct microphone is selected before going live',
-                            'The microphone icon in the broadcaster shows Green = ON and Red = OFF — always check it',
-                            'Poor audio quality will drive customers away — a working mic is as important as a working camera',
-                            'If mic is not working, try selecting a different device from the dropdown and refreshing',
-                        ]),
-                    ],
-                    [
-                        'title'    => 'Video Quality & Resolution',
-                        'overview' => 'The Video Quality section (highlighted yellow) is where you set your stream resolution. Matching your video quality to your hardware and internet speed ensures a stable, professional stream.',
-                        'steps'    => json_encode([
-                            'In the Devices tab, find the Video Quality section (highlighted yellow)',
-                            'Recommended setting: 1280x720 — High Quality (HD) for a clear and stable stream',
-                            'If using a 4K camera or high-resolution webcam, you may also choose 4K or Ultra HD options',
-                            'Always match your video quality to your internet speed, computer performance, and camera capability',
-                            'Using settings that are too high for your setup may cause: Lag, Freezing, Audio delay, Stream disconnections',
-                            'If your stream lags or freezes, reduce the video quality setting',
-                        ]),
-                        'tips'     => json_encode([
-                            '1280x720 HD is the recommended setting for most setups — clear quality with stable performance',
-                            'A stable HD stream is always better than an unstable ultra-high quality stream',
-                            'Too high a video quality for your internet speed causes lag, freezing, and audio delay',
-                            'Test your stream quality before going live to catch any issues early',
-                        ]),
-                    ],
-                    [
-                        'title'    => 'Chat Settings & Notification Sounds',
-                        'overview' => 'The Chat tab inside broadcaster settings lets you personalise the chat display including timestamps and font size. The Sounds tab lets you set custom audio alerts for when customers enter, exit, send messages, or request private and group sessions.',
-                        'steps'    => json_encode([
-                            'In Settings, click the Chat tab',
-                            'Toggle Timestamps on or off as preferred',
-                            'Set your chat font Size using the dropdown (options: Small, Medium, Large, XL, 2XL, 3XL)',
-                            'Click the Sounds tab in Settings',
-                            'Customise sounds for: Chat Enter, Chat Exit, Chat Message, Group/Private Request, Group/Private Exit, Tip, Offline',
-                            'Click the play button (triangle) next to each sound to preview it before selecting',
-                            'Set a clearly audible sound for Group/Private Request — this is the most important alert',
-                        ]),
-                        'tips'     => json_encode([
-                            'Large or XL font size makes chat easier to read at a glance during a live show',
-                            'The Group/Private Request sound is the most important — make it audible so you never miss a customer requesting a session',
-                            'A cash register-style sound for Group/Private Exit gives you a satisfying earnings reminder',
-                            'Customising sounds makes your streaming setup feel more professional and helps you stay on top of activity in your room',
+                            'Always verify your correct microphone is selected — poor audio drives customers away',
+                            '1280x720 HD is the recommended setting for most setups — stable and clear',
+                            'If the camera or mic is not working after selection, click Refresh Devices and try again',
                         ]),
                     ],
                 ],
             ],
-            // MODULE 6
+
+            // (9) Important Reminder
             [
-                'title'       => 'Customer Information Panel & Chat Box',
-                'description' => 'Understanding the customer information columns in your broadcaster and using the chat box effectively.',
+                'title'       => 'Important Reminder',
+                'description' => 'Key rules and important reminders to keep in mind before and during your broadcasts.',
                 'lessons'     => [
                     [
-                        'title'    => 'Customer Information Panel',
-                        'overview' => 'Below your webcam window in the broadcaster, you will see a set of information columns that track all the customers currently in your room. These columns give you a real-time view of who is watching, how long they have been there, and how much they are spending.',
+                        'title'    => 'Important Reminder',
+                        'overview' => 'Before going live on AdultWork there are some important rules and reminders to keep in mind. These platform guidelines protect both you and your account. Always ensure you are the only person appearing in the broadcast, never share personal contact details in chat or on your profile, and always complete your consent before your content goes live. Following these rules keeps your account in good standing and ensures a safe, professional broadcasting experience.',
                         'steps'    => json_encode([
-                            'Look at the area directly below your webcam window in the broadcaster',
-                            'You will see columns: User (customer username), Mode (Free/Private/Group), Time (time customer entered your room), Duration (how long they have been in your room), Total (total amount earned from that session), Country (where the customer is viewing from), Actions (moderation and interaction controls)',
-                            'Use this panel to monitor active viewers and track session earnings in real time',
-                            'Before going live: always check your camera is showing, always check your microphone is on (green), double-check which streaming mode you are in, make sure you are fully ready before pressing Start',
+                            'You must be the verified account holder — only you should appear in your broadcast',
+                            'Never share personal contact details (phone number, email, social media) in chat or on your profile',
+                            'Always complete the consent confirmation before broadcasting or uploading new content',
+                            'Do NOT create a second account — always use your provided login credentials',
+                            'Never skip the pre-live checklist: camera, microphone, mode, rates — check everything before pressing Start',
+                            'Never enable Free Preview to Guests — only registered members should have free access',
+                            'If you have any questions or run into issues, contact the Paradise Dolls support team immediately',
                         ]),
                         'tips'     => json_encode([
-                            'The Customer Information Panel helps you keep track of who is in your room and what mode they are on',
-                            'Monitoring the Total column lets you see your earnings building in real time during a session',
-                            'The Actions column lets you moderate your room — remove or block disruptive customers',
-                            'Always run through your pre-live checklist before pressing Start every single session',
-                        ]),
-                    ],
-                    [
-                        'title'    => 'Chat Box & Messaging',
-                        'overview' => 'At the bottom of the broadcaster interface on the right-hand side, you will find the chat box where you type messages to customers in your room. Staying active in chat is one of the most important habits for a successful live stream — it builds connection, keeps viewers engaged, and increases the likelihood of private or group session bookings.',
-                        'steps'    => json_encode([
-                            'Locate the chat box at the very bottom of the right-hand broadcaster panel',
-                            'Click inside the message box and type your message',
-                            'Click the smiley face emoji button (green arrow indicator) to open the emoji picker',
-                            'Select an emoji to add it to your message',
-                            'Click the arrow/triangle send button (yellow arrow indicator) to send your message',
-                            'Alternatively, press Enter or Return on your keyboard to send',
-                            'Your message will appear in the chat room visible to all customers in the room',
-                        ]),
-                        'tips'     => json_encode([
-                            'Always acknowledge customers by name when they enter your room — it builds instant connection',
-                            'Stay active in chat even between private sessions — keep the energy up',
-                            'Use emojis to make your chat lively, friendly, and engaging',
-                            'Responding quickly to messages builds rapport and turns one-time visitors into regulars',
+                            'Your account safety is your top priority — following platform rules protects your earnings and your account',
+                            'If a customer asks for personal contact details, politely decline — keep all communication within the platform',
+                            'When in doubt, reach out to your support team (Julio, Ely, Jhonpaul) before taking any action',
+                            'Consistent rule-following builds a trusted, long-term account that earns more over time',
                         ]),
                     ],
                 ],
             ],
-            // MODULE 7
+
+            // (10) Accessing your profile details & webcam
             [
-                'title'       => 'Profile Details & Webcam Settings',
-                'description' => 'Navigating to your profile details and understanding your full webcam settings management menu.',
+                'title'       => 'Accessing your profile details & webcam',
+                'description' => 'Navigate to your Profile Details and open the Webcam management tab.',
                 'lessons'     => [
                     [
-                        'title'    => 'Accessing Your Profile Details & Webcam Settings',
+                        'title'    => 'Accessing your profile details & webcam',
                         'overview' => 'To manage your profile settings, rates, positioning, and webcam configuration, navigate to My Details in the top navigation bar. From there go to Edit Profile > Profile Details. Inside Profile Details you will find tabs along the top. Click the Webcam tab to access your full DirectCam management panel.',
                         'steps'    => json_encode([
                             'Click My Details (highlighted purple) in the top navigation bar',
@@ -405,8 +294,16 @@ class AdultWorkCourseSeeder extends Seeder
                             'If using the new beta interface, you can also reach your profile via clicking your username initial (top right) then My Profile',
                         ]),
                     ],
+                ],
+            ],
+
+            // (11) Understanding your webcam settings menu
+            [
+                'title'       => 'Understanding your webcam settings menu',
+                'description' => 'Learn what each section of the Webcam management menu controls.',
+                'lessons'     => [
                     [
-                        'title'    => 'Understanding Your Webcam Settings Menu',
+                        'title'    => 'Understanding your webcam settings menu',
                         'overview' => 'Once you open the Webcam tab, a new page appears with a management menu on the left side. This menu controls how your profile appears, how your stream works, and how viewers interact with your room. Your account will already have been set up during onboarding, but this walkthrough shows you where to go when you need to update anything.',
                         'steps'    => json_encode([
                             'After clicking the Webcam tab, a new page loads with a left-side management menu',
@@ -414,26 +311,56 @@ class AdultWorkCourseSeeder extends Seeder
                             'Under Account Settings you will see: DirectCam Settings, Category & Strapline',
                             'Dashboard: overview of your DirectCam activity and availability calendar',
                             'Availability: set your streaming schedule',
-                            'Positioning: bid for your position on the front page (covered in detail in the next module)',
+                            'Positioning: bid for your position on the front page (covered in detail in a later module)',
                             'DirectCam Settings: manage your rates, Free Preview Mode, Group Mode, Private Mode',
                             'Category & Strapline: set your category and tagline for search discoverability',
                         ]),
                         'tips'     => json_encode([
                             'Ideally your account is already set up from onboarding — use this menu when you need to change or update anything',
-                            'DirectCam Settings is where you manage rates and toggle modes on and off (covered next)',
+                            'DirectCam Settings is where you manage rates and toggle modes on and off',
                             'Positioning and Featuring are both accessed through this menu and are essential daily tasks',
                             'The Webcam tab can also be accessed from the new beta interface via username initial > My DirectCam',
                         ]),
                     ],
                 ],
             ],
-            // MODULE 8
+
+            // (12) Understanding Rates, Free & Private Modes
             [
-                'title'       => 'Rates, Modes & Positioning',
-                'description' => 'How to change your rates, control free and private modes, and master the positioning bidding system.',
+                'title'       => 'Understanding Rates, Free & Private Modes',
+                'description' => 'Learn how Free Mode, Group Mode, and Private Mode work and how to configure them correctly.',
                 'lessons'     => [
                     [
-                        'title'    => 'Changing Your Rates',
+                        'title'    => 'Understanding Rates, Free & Private Modes',
+                        'overview' => 'Inside DirectCam Settings you will find three broadcasting modes: Free Mode, Group Mode, and Private Mode. Free Mode (highlighted green) is optional — it allows clothed free previews for a limited time to attract viewers. Group Mode (highlighted pink) allows multiple customers to pay per minute simultaneously. Private Mode (highlighted yellow) is a one-to-one exclusive session at a higher rate. Understanding how each mode works and how to price them correctly is essential for maximising your earnings.',
+                        'steps'    => json_encode([
+                            'Go to My Details > Edit Profile > Profile Details > Webcam tab > DirectCam Settings',
+                            'FREE MODE (green section): optionally tick Enable Free Preview Mode — set Max period to 5 minutes, Within any period to 12 hours',
+                            'IMPORTANT: NEVER enable Free Preview to Guests — only allow registered members',
+                            'GROUP MODE (pink section): tick Enable Group Mode, set Group rate per min (example: £1.99/min)',
+                            'Group rate is lower per customer but earns from multiple viewers simultaneously',
+                            'PRIVATE MODE (yellow section): tick Enable Private Mode, set Private rate per min (example: £3.30/min)',
+                            'Private rate must always be HIGHER than group rate — it is an exclusive one-to-one session',
+                            'Always keep both Group Mode and Private Mode ticked — never untick them',
+                            'Click Save to confirm all rate and mode settings',
+                        ]),
+                        'tips'     => json_encode([
+                            'Never enable free preview to guests — only allow registered site members',
+                            'Group rate is lower per person but earns from multiple customers at the same time',
+                            'Private rate should always be higher — customers pay a premium for exclusive undivided attention',
+                            'Always keep both Group and Private Mode enabled for maximum earning flexibility every session',
+                        ]),
+                    ],
+                ],
+            ],
+
+            // (13) Changing your Rates
+            [
+                'title'       => 'Changing your Rates',
+                'description' => 'Update your Group and Private per-minute rates in DirectCam Settings.',
+                'lessons'     => [
+                    [
+                        'title'    => 'Changing your Rates',
                         'overview' => 'Your rates directly control how much customers pay per minute during your live sessions. Group and Private rates are set inside the DirectCam Settings section of your Webcam menu. The example rates shown in training are £1.99 per minute for Group and £3.30 per minute for Private — all rates are in GBP (British pounds). Always have the mode checkboxes ticked.',
                         'steps'    => json_encode([
                             'Go to My Details > Edit Profile > Profile Details > Webcam tab > DirectCam Settings (left-side menu)',
@@ -453,8 +380,16 @@ class AdultWorkCourseSeeder extends Seeder
                             'As your audience and confidence grow, gradually increase your rates over time',
                         ]),
                     ],
+                ],
+            ],
+
+            // (14) Turning Free & Private modes on/off
+            [
+                'title'       => 'Turning Free & Private modes on/off',
+                'description' => 'Configure Free Preview Mode in DirectCam Settings to attract and convert viewers.',
+                'lessons'     => [
                     [
-                        'title'    => 'Turning Free & Private Modes On/Off',
+                        'title'    => 'Turning Free & Private modes on/off',
                         'overview' => 'Inside DirectCam Settings, you can also configure Free Preview Mode — an optional setting that allows clothed free sessions to entice viewers into paid group or private sessions. When premium traffic is quiet, free mode can bring significantly more viewers to your room. The recommended approach is a maximum of 5 minutes free preview every 12 hours to prevent freeloaders.',
                         'steps'    => json_encode([
                             'In DirectCam Settings, find the Free Preview Mode section (highlighted pink)',
@@ -472,6 +407,14 @@ class AdultWorkCourseSeeder extends Seeder
                             'Free chat viewers can tip credits and are natural candidates to convert to private or group sessions',
                         ]),
                     ],
+                ],
+            ],
+
+            // (15) Understanding Positioning
+            [
+                'title'       => 'Understanding Positioning',
+                'description' => 'Master the AdultWork positioning bidding system to get maximum front-page traffic.',
+                'lessons'     => [
                     [
                         'title'    => 'Understanding Positioning',
                         'overview' => 'Positioning controls where your profile appears in AdultWork search results and on the front page. It is a bidding system where you use credits to bid on 1-hour time slots. The colour-coded status system tells you where you will be placed: Red (1–2 credits) = bottom of page, Amber (3–5 credits) = middle of page, Green/Strong (5–9 credits) = top of page. The top of the page brings the most traffic. This is a three-step process: Select Bidding Hours → Refine Bids → Confirmation.',
@@ -495,13 +438,14 @@ class AdultWorkCourseSeeder extends Seeder
                     ],
                 ],
             ],
-            // MODULE 9
+
+            // (16) Featuring Daily - What it means
             [
-                'title'       => 'Featuring & Profile Photos',
-                'description' => 'Featuring your profile for front-page visibility, managing your personal details, profile photos, consent, and public gallery.',
+                'title'       => 'Featuring Daily - What it means',
+                'description' => 'Understand what featuring is and why you should feature your profile every day you go live.',
                 'lessons'     => [
                     [
-                        'title'    => 'Featuring Daily',
+                        'title'    => 'Featuring Daily - What it means',
                         'overview' => 'Featuring is a powerful visibility boost that places your profile on the AdultWork front page for full 24-hour periods. It increases your traffic, attracts new viewers, gains followers, and is especially effective for newer creators building their audience. Featuring is accessed through your account dropdown by clicking your username initial at the top right of the page. The recommendation is to feature every single day you plan to go live.',
                         'steps'    => json_encode([
                             'Click your username initial (e.g. T for TiaDoll) at the top right corner of the AdultWork page (highlighted with green arrow)',
@@ -521,29 +465,16 @@ class AdultWorkCourseSeeder extends Seeder
                             'You can also feature your Movie Library, Private Gallery, and Erotica for additional content exposure',
                         ]),
                     ],
+                ],
+            ],
+
+            // (17) Profile Photos
+            [
+                'title'       => 'Profile Photos',
+                'description' => 'Upload and update your profile photos to attract more traffic to your room.',
+                'lessons'     => [
                     [
-                        'title'    => 'Understanding Your Personal Details Section',
-                        'overview' => 'Your Personal Details section in Profile Details is where you manage your core profile information including date of birth, gender, orientation, interests, and your bio and summary. The interests tick-box section is particularly important — each category you select increases how often your profile appears in search results across AdultWork.',
-                        'steps'    => json_encode([
-                            'Go to My Details > Edit Profile > Profile Details',
-                            'Click the Personal Details tab (highlighted green at top of the page)',
-                            'Date of Birth (green highlight): enter or update — does not need to be your real DOB for privacy',
-                            'Gender (yellow highlight): select your gender setting for the profile',
-                            'Orientation (red highlight): select your orientation for the profile',
-                            'I Enjoy The Following (pink highlight): tick all relevant categories — more categories ticked = more searchable = more traffic',
-                            'Summary (purple highlight): short headline customers see first in search — already written by the team',
-                            'Details/Bio (purple highlight): full bio and description — already written by team but you can personalise',
-                            'Click Save and View or Save at the bottom of the page to apply all changes',
-                        ]),
-                        'tips'     => json_encode([
-                            'Tick as many relevant interest categories as possible — each one adds to your search discoverability',
-                            'Your bio and summary were crafted by the Paradise Dolls team during onboarding and can be personalised',
-                            'Do NOT include email addresses, phone numbers, URLs, or social media handles in your bio or summary',
-                            'Do NOT write "Available Today" or specific dates in your summary — use the Availability page for scheduling',
-                        ]),
-                    ],
-                    [
-                        'title'    => 'Uploading & Changing Your Pictures',
+                        'title'    => 'Profile Photos',
                         'overview' => 'Your profile pictures are among the first things customers see in search results and on the AdultWork homepage. Keeping them updated, clear, and high quality directly affects how much traffic your profile attracts. Profile pictures are managed in the Pictures tab of your Profile Details page, with slots for up to 3 images.',
                         'steps'    => json_encode([
                             'Go to My Details > Edit Profile > Profile Details > Pictures tab',
@@ -563,9 +494,46 @@ class AdultWorkCourseSeeder extends Seeder
                             'Active profiles with high-quality, current photos attract significantly more viewers than stale profiles',
                         ]),
                     ],
+                ],
+            ],
+
+            // (18) Personal Details
+            [
+                'title'       => 'Personal Details',
+                'description' => 'Manage your profile bio, interests, and personal details for maximum search discoverability.',
+                'lessons'     => [
                     [
-                        'title'    => 'Understanding The Manage Consent Button',
-                        'overview' => 'Content cannot appear on AdultWork until consent has been confirmed. The Manage Consent button is located on the Pictures page. When clicked, it opens a consent declaration where you confirm the content is yours and that everyone appearing in it has been verified and consented. This step is mandatory — without it, your photos will not appear on the platform.',
+                        'title'    => 'Personal Details',
+                        'overview' => 'Your Personal Details section in Profile Details is where you manage your core profile information including date of birth, gender, orientation, interests, and your bio and summary. The interests tick-box section is particularly important — each category you select increases how often your profile appears in search results across AdultWork.',
+                        'steps'    => json_encode([
+                            'Go to My Details > Edit Profile > Profile Details',
+                            'Click the Personal Details tab (highlighted green at top of the page)',
+                            'Date of Birth (green highlight): enter or update — does not need to be your real DOB for privacy',
+                            'Gender (yellow highlight): select your gender setting for the profile',
+                            'Orientation (red highlight): select your orientation for the profile',
+                            'I Enjoy The Following (pink highlight): tick all relevant categories — more categories ticked = more searchable = more traffic',
+                            'Summary (purple highlight): short headline customers see first in search — already written by the team',
+                            'Details/Bio (purple highlight): full bio and description — already written by team but you can personalise',
+                            'Click Save and View or Save at the bottom of the page to apply all changes',
+                        ]),
+                        'tips'     => json_encode([
+                            'Tick as many relevant interest categories as possible — each one adds to your search discoverability',
+                            'Your bio and summary were crafted by the Paradise Dolls team during onboarding and can be personalised',
+                            'Do NOT include email addresses, phone numbers, URLs, or social media handles in your bio or summary',
+                            'Do NOT write "Available Today" or specific dates in your summary — use the Availability page for scheduling',
+                        ]),
+                    ],
+                ],
+            ],
+
+            // (19) How to complete your consent
+            [
+                'title'       => 'How to complete your consent',
+                'description' => 'Step-by-step walkthrough of completing the consent declaration for your uploaded content.',
+                'lessons'     => [
+                    [
+                        'title'    => 'How to complete your consent',
+                        'overview' => 'Content cannot appear on AdultWork until consent has been confirmed. The Manage Consent button is located on the Pictures page. When clicked, it opens a consent declaration where you confirm the content is yours and that everyone appearing in it has been verified and consented. This step is mandatory — without it, your photos will not appear on the platform. You must complete this process every time you upload new content.',
                         'steps'    => json_encode([
                             'On the Pictures page, locate the warning: "Your content will not appear on the Site until you have confirmed consent"',
                             'Click the green Manage Consent button (highlighted green)',
@@ -575,35 +543,25 @@ class AdultWorkCourseSeeder extends Seeder
                             'Tick "I confirm I\'ve done what\'s asked in the above points"',
                             'Click the purple Confirm button',
                             'Your consent is now confirmed and content will be approved to display on the platform',
+                            'Repeat this process every time you upload new photos or content',
                         ]),
                         'tips'     => json_encode([
                             'Consent must be completed every time you upload new photos or content',
                             'Without completing consent, your photos and content will NOT appear on AdultWork',
                             'The Reset Consent button is available if you need to start the consent process over',
-                            'Keep consent up to date — missing or expired consent removes content visibility from the platform',
-                        ]),
-                    ],
-                    [
-                        'title'    => 'How To Complete Consent',
-                        'overview' => 'When you click the Manage Consent button, a Content Consent box opens where you select the correct consent option and confirm. This final step is extremely important because it refreshes and updates the consent status for your uploaded content. Without completing this correctly your photos or content may not approve or appear on the platform properly.',
-                        'steps'    => json_encode([
-                            'Click the Manage Consent button to open the Content Consent panel',
-                            'You will see consent options: "I am the only person to appear in the content" OR options for content featuring other verified persons',
-                            'If only you appear: tick "I am the only person to appear in the content"',
-                            'If other verified persons appear: tick all relevant checkboxes (written consent, identity verified, consent to distribute, all over 18)',
-                            'Tick "I confirm I\'ve done what\'s asked in the above points"',
-                            'Click the purple Confirm button',
-                            'This refreshes and updates the consent status for your uploaded content — your photos will now appear on the platform',
-                        ]),
-                        'tips'     => json_encode([
-                            'This step must be completed every time you upload new photos or content',
-                            'Without this confirmation your content will not appear on the site',
-                            'The Reset Consent button is available at the bottom if you need to restart the process',
                             'The platform may occasionally switch between old and new interface versions — if this happens, simply refresh and try again',
                         ]),
                     ],
+                ],
+            ],
+
+            // (20) Uploading Your photos
+            [
+                'title'       => 'Uploading Your photos',
+                'description' => 'Upload images to your public free gallery to build an attractive, active-looking profile.',
+                'lessons'     => [
                     [
-                        'title'    => 'Uploading Your Photos',
+                        'title'    => 'Uploading Your photos',
                         'overview' => 'After your profile photos are set up, uploading images to your public free gallery is the next step to building an attractive and active-looking profile. The free gallery shows customers additional photos when they visit your profile page. Access the upload section via the Upload Your Pictures and Movies section of the Pictures tab.',
                         'steps'    => json_encode([
                             'In My Details > Edit Profile > Profile Details > Pictures tab, scroll down past the profile photo section',
@@ -616,7 +574,6 @@ class AdultWorkCourseSeeder extends Seeder
                             'On the Reorder Images page: drag photos to your preferred order if uploading multiple, click Next',
                             'On the Consent page: tick "I am the only person to appear in the content", tick "I confirm I\'ve done what\'s asked", click the purple Upload button',
                             'Your photos will appear in your public free gallery immediately',
-                            'To view your profile as a customer would: click your username initial > My Profile > View Profile',
                         ]),
                         'tips'     => json_encode([
                             'Public gallery photos are visible to all customers browsing your profile — keep them attractive and current',
@@ -627,13 +584,14 @@ class AdultWorkCourseSeeder extends Seeder
                     ],
                 ],
             ],
-            // MODULE 10
+
+            // (21) Congratulations you are now ready
             [
-                'title'       => 'You\'re Ready',
+                'title'       => 'Congratulations you are now ready',
                 'description' => 'You are now fully trained on AdultWork — go live and start earning.',
                 'lessons'     => [
                     [
-                        'title'      => 'You\'re Ready — Go Live on AdultWork',
+                        'title'      => 'Congratulations you are now ready',
                         'intro_only' => true,
                         'overview'   => 'Amazing — you are now fully trained and understand the basics of how to stream, broadcast, and navigate your way around AdultWork. By this stage this should be your third or fourth platform setup, so everything should be coming together much more naturally and confidently. You now understand the power of multi-streaming — not only across token and freemium websites but also across premium platforms — while learning how to alternate and balance between the two styles. To go live: click the camcorder icon on the left-hand side of the newer interface (highlighted green), or use the Broadcast Now button from the top navigation. The broadcaster software will open, complete your pre-live checklist, hit the Start button, and you are ready to make money. Welcome to AdultWork with Paradise Dolls!',
                         'steps'      => json_encode([
@@ -654,6 +612,33 @@ class AdultWorkCourseSeeder extends Seeder
                     ],
                 ],
             ],
+
+            // (22) Outro
+            [
+                'title'       => 'Outro',
+                'description' => 'The closing outro for the AdultWork Boss Doll Blueprint course.',
+                'lessons'     => [
+                    [
+                        'title'      => 'Outro',
+                        'intro_only' => true,
+                        'overview'   => 'You have now completed the AdultWork Boss Doll Blueprint. You are fully equipped with everything you need to broadcast confidently, manage your profile, set your rates, position yourself for maximum traffic, and build a successful presence on one of the most established premium adult platforms in the world. Keep going live consistently, position and feature every day you stream, engage with your customers in chat, and keep your profile updated. The Paradise Dolls team is always here to support you. Now go out there and make it happen — you have got everything you need.',
+                        'steps'      => json_encode([
+                            'Go live consistently — every session builds your reputation and your regular customer base',
+                            'Position and feature every day you plan to stream for maximum visibility',
+                            'Keep your profile photos and bio updated to maintain an active, attractive profile',
+                            'Engage with customers in chat — connection converts viewers into regulars',
+                            'Reach out to your Paradise Dolls support team any time you need help or guidance',
+                        ]),
+                        'tips'       => json_encode([
+                            'Consistency is the single biggest factor in long-term success on AdultWork',
+                            'Your support team is always here — never hesitate to reach out for help',
+                            'Every session is a learning experience — keep improving and keep going',
+                            'You are now a Paradise Doll on AdultWork — own it and make it work for you',
+                        ]),
+                    ],
+                ],
+            ],
+
         ];
 
         $moduleOrder = 1;
@@ -687,81 +672,21 @@ class AdultWorkCourseSeeder extends Seeder
                 if ($lesson->contentBlocks()->count() === 0) {
                     if ($isIntroOnly) {
                         $blocks = [
-                            [
-                                'block_type' => 'heading',
-                                'title'      => $lessonData['title'],
-                                'content'    => null,
-                                'sort_order' => 1,
-                            ],
-                            [
-                                'block_type' => 'text',
-                                'title'      => 'Overview',
-                                'content'    => $lessonData['overview'] ?? '',
-                                'sort_order' => 2,
-                            ],
-                            [
-                                'block_type' => 'video',
-                                'title'      => 'Presentation Video',
-                                'content'    => null,
-                                'sort_order' => 3,
-                            ],
-                            [
-                                'block_type' => 'steps',
-                                'title'      => 'Key Steps',
-                                'content'    => $lessonData['steps'] ?? null,
-                                'sort_order' => 4,
-                            ],
-                            [
-                                'block_type' => 'tips',
-                                'title'      => 'Tips & Reminders',
-                                'content'    => $lessonData['tips'] ?? null,
-                                'sort_order' => 5,
-                            ],
+                            ['block_type' => 'heading', 'title' => $lessonData['title'],    'content' => null,                    'sort_order' => 1],
+                            ['block_type' => 'text',    'title' => 'Overview',              'content' => $lessonData['overview'], 'sort_order' => 2],
+                            ['block_type' => 'video',   'title' => 'Presentation Video',    'content' => null,                    'sort_order' => 3],
+                            ['block_type' => 'steps',   'title' => 'Key Steps',             'content' => $lessonData['steps'],    'sort_order' => 4],
+                            ['block_type' => 'tips',    'title' => 'Tips & Reminders',      'content' => $lessonData['tips'],     'sort_order' => 5],
                         ];
                     } else {
                         $blocks = [
-                            [
-                                'block_type' => 'heading',
-                                'title'      => $lessonData['title'],
-                                'content'    => null,
-                                'sort_order' => 1,
-                            ],
-                            [
-                                'block_type' => 'text',
-                                'title'      => 'Overview',
-                                'content'    => $lessonData['overview'] ?? '',
-                                'sort_order' => 2,
-                            ],
-                            [
-                                'block_type' => 'video',
-                                'title'      => 'Presentation Video',
-                                'content'    => null,
-                                'sort_order' => 3,
-                            ],
-                            [
-                                'block_type' => 'heading',
-                                'title'      => 'Now Follow Along',
-                                'content'    => null,
-                                'sort_order' => 4,
-                            ],
-                            [
-                                'block_type' => 'video',
-                                'title'      => 'Walkthrough Video',
-                                'content'    => null,
-                                'sort_order' => 5,
-                            ],
-                            [
-                                'block_type' => 'steps',
-                                'title'      => 'Step-by-Step Guide',
-                                'content'    => $lessonData['steps'] ?? null,
-                                'sort_order' => 6,
-                            ],
-                            [
-                                'block_type' => 'tips',
-                                'title'      => 'Tips & Reminders',
-                                'content'    => $lessonData['tips'] ?? null,
-                                'sort_order' => 7,
-                            ],
+                            ['block_type' => 'heading', 'title' => $lessonData['title'],    'content' => null,                    'sort_order' => 1],
+                            ['block_type' => 'text',    'title' => 'Overview',              'content' => $lessonData['overview'], 'sort_order' => 2],
+                            ['block_type' => 'video',   'title' => 'Presentation Video',    'content' => null,                    'sort_order' => 3],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along',      'content' => null,                    'sort_order' => 4],
+                            ['block_type' => 'video',   'title' => 'Walkthrough Video',     'content' => null,                    'sort_order' => 5],
+                            ['block_type' => 'steps',   'title' => 'Step-by-Step Guide',    'content' => $lessonData['steps'],    'sort_order' => 6],
+                            ['block_type' => 'tips',    'title' => 'Tips & Reminders',      'content' => $lessonData['tips'],     'sort_order' => 7],
                         ];
                     }
 
