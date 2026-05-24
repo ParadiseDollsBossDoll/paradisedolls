@@ -427,7 +427,7 @@ class MarketingContent
         $value = self::value($key, $fallback);
 
         if (is_array($value)) {
-            return implode("\n", array_filter(array_map('strval', $value)));
+            return trim(self::stringify($value));
         }
 
         return trim((string) $value);
@@ -438,7 +438,10 @@ class MarketingContent
         $value = self::value($key, []);
 
         if (is_array($value)) {
-            return array_values(array_filter(array_map(fn ($item) => trim((string) $item), $value), fn ($item) => $item !== ''));
+            return array_values(array_filter(
+                array_map(fn ($item) => trim(self::stringify($item)), $value),
+                fn ($item) => $item !== ''
+            ));
         }
 
         return self::splitParagraphs((string) $value);
@@ -449,7 +452,10 @@ class MarketingContent
         $value = self::value($key, []);
 
         if (is_array($value)) {
-            return array_values(array_filter($value, fn ($item) => self::hasContent($item)));
+            return array_values(array_filter(
+                array_map(fn ($item) => self::normalizeItem($item), $value),
+                fn ($item) => self::hasContent($item)
+            ));
         }
 
         return self::splitLines((string) $value);
@@ -518,7 +524,7 @@ class MarketingContent
         }
 
         if (is_array($value)) {
-            return implode("\n", array_map('strval', $value));
+            return self::stringify($value);
         }
 
         return (string) $value;
@@ -580,5 +586,39 @@ class MarketingContent
         }
 
         return trim((string) $value) !== '';
+    }
+
+    private static function normalizeItem(mixed $item): mixed
+    {
+        if (! is_array($item)) {
+            return trim((string) $item);
+        }
+
+        $normalized = [];
+
+        foreach ($item as $key => $value) {
+            $normalized[$key] = trim(self::stringify($value));
+        }
+
+        return $normalized;
+    }
+
+    private static function stringify(mixed $value, string $separator = "\n"): string
+    {
+        if (! is_array($value)) {
+            return (string) $value;
+        }
+
+        $parts = [];
+
+        foreach ($value as $item) {
+            $text = trim(self::stringify($item, $separator));
+
+            if ($text !== '') {
+                $parts[] = $text;
+            }
+        }
+
+        return implode($separator, $parts);
     }
 }
