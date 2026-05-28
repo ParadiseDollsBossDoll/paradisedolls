@@ -133,6 +133,35 @@ class AdminCourseManagementTest extends TestCase
         $this->assertNotNull($notification->fresh()->read_at);
     }
 
+    public function test_admin_can_move_course_order_from_index_cards(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $first = Course::create([
+            'title' => 'Chaturbate Boss Doll Blueprint',
+            'slug' => 'chaturbate-boss-doll-blueprint',
+            'platform_label' => 'Chaturbate',
+            'description' => 'Chaturbate walkthrough.',
+            'is_published' => true,
+            'sort_order' => 1,
+        ]);
+        $second = Course::create([
+            'title' => 'Stripchat Boss Doll Blueprint',
+            'slug' => 'stripchat-boss-doll-blueprint',
+            'platform_label' => 'Stripchat',
+            'description' => 'Stripchat walkthrough.',
+            'is_published' => true,
+            'sort_order' => 2,
+        ]);
+
+        $this->actingAs($admin)->patch(route('admin.courses.move', $second), [
+            'direction' => 'up',
+        ])->assertRedirect(route('admin.courses.index'));
+
+        $this->assertSame(2, $first->fresh()->sort_order);
+        $this->assertSame(1, $second->fresh()->sort_order);
+    }
+
     public function test_admin_can_upload_course_and_lesson_visual_images(): void
     {
         Storage::fake('public');

@@ -269,8 +269,11 @@ class AdminCourseController extends Controller
         [$updates[$idx]['sort_order'], $updates[$swapIdx]['sort_order']] =
             [$updates[$swapIdx]['sort_order'], $updates[$idx]['sort_order']];
 
-        // Single upsert writes all positions atomically — one query instead of N
-        DB::transaction(fn () => Course::upsert($updates, ['id'], ['sort_order']));
+        DB::transaction(function () use ($updates): void {
+            foreach ($updates as $update) {
+                Course::whereKey($update['id'])->update(['sort_order' => $update['sort_order']]);
+            }
+        });
 
         return redirect()->route('admin.courses.index')->with('status', __('Course order updated.'));
     }
