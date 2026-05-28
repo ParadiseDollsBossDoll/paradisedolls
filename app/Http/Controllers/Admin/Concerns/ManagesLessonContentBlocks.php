@@ -316,7 +316,7 @@ trait ManagesLessonContentBlocks
             return $this->storeLessonBlockFile($file, 'academy/lesson-content/images');
         }
 
-        Storage::disk('public')->put($path, $contents);
+        Storage::disk('local')->put($path, $contents);
 
         return $path;
     }

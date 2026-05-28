@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class AdminLessonController extends Controller
@@ -131,6 +132,27 @@ class AdminLessonController extends Controller
         $lesson->delete();
 
         return redirect()->route('admin.courses.edit', $course)->with('status', __('Lesson removed.'));
+    }
+
+    public function reorder(Request $request, Course $course): JsonResponse
+    {
+        $validated = $request->validate([
+            'order'   => ['required', 'array', 'max:500'],
+            'order.*' => [
+                'required',
+                'integer',
+                'distinct',
+                Rule::exists('lessons', 'id')->where(fn ($q) => $q->where('course_id', $course->id)),
+            ],
+        ]);
+
+        DB::transaction(function () use ($validated, $course): void {
+            foreach ($validated['order'] as $position => $lessonId) {
+                $course->lessons()->whereKey($lessonId)->update(['sort_order' => $position + 1]);
+            }
+        });
+
+        return response()->json(['reordered' => true]);
     }
 
     // ── Autosave JSON endpoints ─────────────────────────────────────────────

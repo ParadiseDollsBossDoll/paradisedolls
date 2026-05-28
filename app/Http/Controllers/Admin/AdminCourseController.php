@@ -245,6 +245,36 @@ class AdminCourseController extends Controller
         return redirect()->route('admin.courses.index')->with('status', __('Course visibility updated.'));
     }
 
+    public function move(Request $request, Course $course): RedirectResponse
+    {
+        $validated = $request->validate(['direction' => ['required', Rule::in(['up', 'down'])]]);
+
+        // Load only what we need to determine order
+        $all = Course::orderBy('sort_order')->orderBy('title')->orderBy('id')
+            ->get(['id', 'sort_order'])
+            ->values();
+
+        $idx = $all->search(fn ($c) => $c->id === $course->id);
+        if ($idx === false) {
+            return redirect()->route('admin.courses.index');
+        }
+
+        $swapIdx = $validated['direction'] === 'up' ? $idx - 1 : $idx + 1;
+        if ($swapIdx < 0 || $swapIdx >= $all->count()) {
+            return redirect()->route('admin.courses.index');
+        }
+
+        // Assign clean 1-based positions in PHP, then swap the two affected rows
+        $updates = $all->map(fn ($c, $pos) => ['id' => $c->id, 'sort_order' => $pos + 1])->all();
+        [$updates[$idx]['sort_order'], $updates[$swapIdx]['sort_order']] =
+            [$updates[$swapIdx]['sort_order'], $updates[$idx]['sort_order']];
+
+        // Single upsert writes all positions atomically — one query instead of N
+        DB::transaction(fn () => Course::upsert($updates, ['id'], ['sort_order']));
+
+        return redirect()->route('admin.courses.index')->with('status', __('Course order updated.'));
+    }
+
     public function uploadBlockFile(Request $request): JsonResponse
     {
         $type = $request->input('type');
@@ -268,14 +298,14 @@ class AdminCourseController extends Controller
             default => 'academy/lesson-content/presentations',
         };
 
-        $path = $request->file('file')->store($directory, 'public');
+        $path = $request->file('file')->store($directory, 'local');
         $slideImages = $type === 'presentation'
             ? $this->createPresentationSlideImages($path)
             : [];
 
         return response()->json([
             'path' => $path,
-            'url' => Storage::disk('public')->url($path),
+            'url' => route('admin.academy-files.show', ['path' => $path]),
             'slide_images' => $slideImages,
         ]);
     }

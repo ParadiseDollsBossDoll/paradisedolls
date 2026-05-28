@@ -7,6 +7,7 @@ use App\Models\CourseModule;
 use App\Models\Lesson;
 use App\Models\LessonContentBlock;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class StripchatCourseSeeder extends Seeder
 {
@@ -38,11 +39,14 @@ class StripchatCourseSeeder extends Seeder
             ]
         );
 
-        $this->seedModules($course);
+        DB::transaction(fn () => $this->seedModules($course));
     }
 
     private function seedModules(Course $course): void
     {
+        $syncedModuleIds = [];
+        $syncedLessonIds = [];
+
         foreach ($this->moduleData() as $moduleIndex => $moduleRow) {
             $lessons = $moduleRow['lessons'];
             unset($moduleRow['lessons']);
@@ -55,6 +59,7 @@ class StripchatCourseSeeder extends Seeder
                     'sort_order'   => $moduleIndex + 1,
                 ])
             );
+            $syncedModuleIds[] = $module->id;
 
             foreach ($lessons as $lessonIndex => $lessonRow) {
                 $blocks = $lessonRow['blocks'];
@@ -69,17 +74,45 @@ class StripchatCourseSeeder extends Seeder
                         'sort_order'       => $lessonIndex + 1,
                     ])
                 );
+                $syncedLessonIds[] = $lesson->id;
 
-                if ($lesson->contentBlocks()->count() === 0) {
-                    foreach ($blocks as $blockIndex => $block) {
-                        LessonContentBlock::query()->create(array_merge($block, [
-                            'lesson_id'  => $lesson->id,
-                            'sort_order' => $blockIndex + 1,
-                        ]));
+                $syncedBlockIds = [];
+                foreach ($blocks as $blockIndex => $block) {
+                    $blockModel = LessonContentBlock::query()
+                        ->where('lesson_id', $lesson->id)
+                        ->where('sort_order', $blockIndex + 1)
+                        ->first();
+
+                    $blockData = array_merge($block, [
+                        'lesson_id' => $lesson->id,
+                        'sort_order' => $blockIndex + 1,
+                    ]);
+
+                    if ($blockModel) {
+                        $blockModel->forceFill($blockData)->save();
+                    } else {
+                        $blockModel = LessonContentBlock::query()->create($blockData);
                     }
+
+                    $syncedBlockIds[] = $blockModel->id;
                 }
+
+                LessonContentBlock::query()
+                    ->where('lesson_id', $lesson->id)
+                    ->whereNotIn('id', $syncedBlockIds)
+                    ->delete();
             }
         }
+
+        Lesson::query()
+            ->where('course_id', $course->id)
+            ->whereNotIn('id', $syncedLessonIds)
+            ->delete();
+
+        CourseModule::query()
+            ->where('course_id', $course->id)
+            ->whereNotIn('id', $syncedModuleIds)
+            ->delete();
     }
 
     private function moduleData(): array

@@ -161,6 +161,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         // Lesson autosave (JSON)
         Route::post('/courses/{course}/lessons/autosave', [AdminLessonController::class, 'autosave'])->name('courses.lessons.autosave');
         Route::put('/courses/{course}/lessons/{lesson}/autosave', [AdminLessonController::class, 'autosaveUpdate'])->name('courses.lessons.autosave.update');
+        Route::patch('/courses/{course}/lessons/reorder', [AdminLessonController::class, 'reorder'])->name('courses.lessons.reorder');
 
         // Course details-only save (JSON, no lesson/module sync)
         Route::patch('/courses/{course}/details', [AdminCourseController::class, 'updateDetails'])->name('courses.update-details');
@@ -239,6 +240,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         Route::post('/bunny/videos/upload-intent', [BunnyVideoController::class, 'uploadIntent'])->name('bunny.videos.upload-intent');
         Route::get('/bunny/videos/{videoId}', [BunnyVideoController::class, 'show'])->name('bunny.videos.show');
         Route::patch('/courses/{course}/visibility', [AdminCourseController::class, 'visibility'])->name('courses.visibility');
+        Route::patch('/courses/{course}/move', [AdminCourseController::class, 'move'])->name('courses.move');
         Route::get('/courses/{course}/preview', [AdminCourseController::class, 'preview'])->name('courses.preview');
         Route::get('/courses/{course}/lessons/{lesson}/preview', [AdminCourseController::class, 'previewLesson'])->name('courses.lessons.preview');
         Route::post('/courses/block-file', [AdminCourseController::class, 'uploadBlockFile'])->name('courses.block-file');

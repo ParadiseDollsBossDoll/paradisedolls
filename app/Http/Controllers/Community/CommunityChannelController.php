@@ -11,6 +11,7 @@ use App\Support\CommunityModeration;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 
 class CommunityChannelController extends Controller
 {
@@ -167,7 +168,7 @@ class CommunityChannelController extends Controller
 
         $validated = $request->validate([
             'channels' => ['required', 'array', 'min:1'],
-            'channels.*' => ['integer', 'exists:community_channels,id'],
+            'channels.*' => ['integer', Rule::exists('community_channels', 'id')->where('is_archived', false)],
         ]);
 
         foreach ($validated['channels'] as $index => $channelId) {

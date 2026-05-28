@@ -143,6 +143,7 @@
                 moduleSave: @js(route('admin.courses.modules.store', $course)),
                 moduleDelete: @js(route('admin.courses.modules.store', $course)),
                 lessonSave: @js(route('admin.courses.lessons.autosave', $course)),
+                lessonReorder: @js(route('admin.courses.lessons.reorder', $course)),
                 lessonDelete: @js(route('admin.courses.lessons.destroy', [$course, '__LESSON_ID__'])),
             },
         })"
@@ -797,6 +798,18 @@
                                         </a>
                                     </template>
                                     <button type="button"
+                                        @click="moveLesson(index, -1, lessonModuleFilter)"
+                                        x-bind:disabled="lessonFilteredIndex(lesson, lessonModuleFilter) === 0"
+                                        class="rounded border border-white/[0.06] bg-white/[0.03] px-2 py-1 text-[0.63rem] text-boss-ivory/35 transition-colors hover:text-boss-gold disabled:opacity-25">
+                                        &larr; {{ __('Left') }}
+                                    </button>
+                                    <button type="button"
+                                        @click="moveLesson(index, 1, lessonModuleFilter)"
+                                        x-bind:disabled="lessonFilteredIndex(lesson, lessonModuleFilter) === lessonsForFilter(lessonModuleFilter).length - 1"
+                                        class="rounded border border-white/[0.06] bg-white/[0.03] px-2 py-1 text-[0.63rem] text-boss-ivory/35 transition-colors hover:text-boss-gold disabled:opacity-25">
+                                        {{ __('Right') }} &rarr;
+                                    </button>
+                                    <button type="button"
                                         @click="lessonMoveNotice = null; activeLessonKey = removeLessonForFilter(index, lessonModuleFilter)"
                                         class="rounded border border-red-400/10 bg-red-400/[0.05] px-2 py-1 text-[0.63rem] text-red-400/60 transition-colors hover:text-red-300">
                                         {{ __('Remove') }}
@@ -859,5 +872,4 @@
         @include('admin.courses.partials.bunny-video-modal')
     </div>
 </x-admin-layout>
-
 

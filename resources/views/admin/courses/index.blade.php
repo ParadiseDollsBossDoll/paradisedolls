@@ -147,6 +147,10 @@
                         </div>
 
                         {{-- ── Admin action toolbar ─────────────────────────── --}}
+                        @php
+                            $isFirst = $loop->first && $courses->onFirstPage();
+                            $isLast  = $loop->last  && !$courses->hasMorePages();
+                        @endphp
                         <div class="shrink-0 border-t border-white/[0.04] px-5 py-3.5">
                             <div class="flex items-center gap-2">
 
@@ -174,6 +178,36 @@
 
                                 {{-- Divider --}}
                                 <div class="h-5 w-px shrink-0 bg-white/[0.06]"></div>
+
+                                {{-- Move Left --}}
+                                <form method="POST" action="{{ route('admin.courses.move', $course) }}">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="direction" value="up">
+                                    <button
+                                        type="submit"
+                                        title="{{ __('Move left') }}"
+                                        @disabled($isFirst)
+                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.03] text-boss-ivory/38 transition-colors hover:border-white/[0.14] hover:text-boss-ivory/80 disabled:cursor-not-allowed disabled:opacity-25"
+                                    >
+                                        <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[2]"><path d="M10 3L5 8l5 5"/></svg>
+                                    </button>
+                                </form>
+
+                                {{-- Move Right --}}
+                                <form method="POST" action="{{ route('admin.courses.move', $course) }}">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="direction" value="down">
+                                    <button
+                                        type="submit"
+                                        title="{{ __('Move right') }}"
+                                        @disabled($isLast)
+                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.03] text-boss-ivory/38 transition-colors hover:border-white/[0.14] hover:text-boss-ivory/80 disabled:cursor-not-allowed disabled:opacity-25"
+                                    >
+                                        <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[2]"><path d="M6 3l5 5-5 5"/></svg>
+                                    </button>
+                                </form>
 
                                 {{-- Preview --}}
                                 <a

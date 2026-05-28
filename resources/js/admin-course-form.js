@@ -792,6 +792,87 @@ window.adminCourseForm = function adminCourseForm(config) {
             }));
         },
 
+        moveLesson(globalIndex, direction, filter) {
+            const lesson = this.lessons[globalIndex];
+            if (!lesson) return;
+
+            const filtered = this.lessonsForFilter(filter);
+            const filteredIdx = filtered.findIndex((l) => this.lessonKey(l) === this.lessonKey(lesson));
+            const newFilteredIdx = filteredIdx + direction;
+
+            if (newFilteredIdx < 0 || newFilteredIdx >= filtered.length) return;
+
+            const swapLesson = filtered[newFilteredIdx];
+            const swapGlobalIdx = this.lessons.findIndex((l) => this.lessonKey(l) === this.lessonKey(swapLesson));
+
+            const lessons = [...this.lessons];
+            [lessons[globalIndex], lessons[swapGlobalIdx]] = [lessons[swapGlobalIdx], lessons[globalIndex]];
+            this.lessons = lessons;
+            this.reorderLessons();
+
+            if (config.autosaveUrls?.lessonReorder && this.autosave.isOnline) {
+                this.$nextTick(() => this.persistLessonOrder());
+                return;
+            }
+
+            // Fallback for drafts/offline mode: persist both affected lessons when possible.
+            const movedKey = this.lessonKey(lesson);
+            const swappedKey = this.lessonKey(swapLesson);
+            const moved = this.lessons.find((l) => this.lessonKey(l) === movedKey);
+            const swapped = this.lessons.find((l) => this.lessonKey(l) === swappedKey);
+            if (moved?.id) this.$nextTick(() => this.autosaveLessonNow(moved));
+            if (swapped?.id) this.$nextTick(() => this.autosaveLessonNow(swapped));
+        },
+
+        reorderLessons() {
+            this.lessons = this.lessons.map((lesson, index) => ({
+                ...lesson,
+                sort_order: index + 1,
+            }));
+        },
+
+        lessonFilteredIndex(lesson, filter) {
+            const filtered = this.lessonsForFilter(filter);
+            return filtered.findIndex((l) => this.lessonKey(l) === this.lessonKey(lesson));
+        },
+
+        async persistLessonOrder() {
+            if (!config.autosaveUrls?.lessonReorder || !this.autosave.isOnline) {
+                this.saveLocalDraft();
+                return;
+            }
+
+            const order = this.lessons
+                .filter((lesson) => lesson.id)
+                .map((lesson) => Number(lesson.id));
+
+            if (!order.length) {
+                this.saveLocalDraft();
+                return;
+            }
+
+            try {
+                this.setAutosaveStatus('saving', 'Saving lesson order...');
+
+                const response = await fetch(config.autosaveUrls.lessonReorder, {
+                    method: 'PATCH',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': this.csrfToken(),
+                    },
+                    body: JSON.stringify({ order }),
+                });
+
+                await this.jsonResponse(response);
+                this.setAutosaveStatus('saved', 'Lesson order saved.');
+                this.saveLocalDraft();
+            } catch (error) {
+                this.setAutosaveStatus('error', error.message || 'Lesson order save failed.');
+                this.saveLocalDraft();
+            }
+        },
+
         // ── Module/lesson linkage ───────────────────────────────────────────
 
         syncLessonModule(lesson) {
@@ -1539,6 +1620,7 @@ window.adminCourseForm = function adminCourseForm(config) {
         },
 
         debugCourseSubmit(form) {
+            if (!import.meta.env.DEV) return;
             try {
                 console.group('[ParadiseDollz] Course lesson flow submit');
                 console.table(this.modules.map((module, moduleIndex) => ({
