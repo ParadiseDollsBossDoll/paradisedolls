@@ -4,10 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\ModelApplication;
 use App\Models\LessonProgress;
 use App\Models\User;
+use App\Support\CommunityPresence;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class AdminModelProgressController extends Controller
@@ -112,6 +117,42 @@ class AdminModelProgressController extends Controller
         ]);
     }
 
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        abort_unless($user->isModel(), 403, 'Only model accounts can be deleted from the member directory.');
+
+        $request->validate([
+            'confirm_member_delete' => ['accepted'],
+        ]);
+
+        $memberName = $user->name;
+        $redirectQuery = array_filter([
+            'search' => filled($request->input('search')) ? (string) $request->input('search') : null,
+            'page' => filled($request->input('page')) ? (int) $request->input('page') : null,
+        ]);
+
+        DB::transaction(function () use ($user): void {
+            $user->loadMissing([
+                'modelProfile.application',
+                'courseAccessRequests.proofFiles',
+            ]);
+
+            $this->deleteMemberStoredFiles($user);
+            $this->deleteLinkedApplications($user);
+
+            $user->notifications()->delete();
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+
+            $user->delete();
+        });
+
+        CommunityPresence::forgetMemberDirectory();
+
+        return redirect()
+            ->route('admin.models.progress', $redirectQuery)
+            ->with('status', __(':name has been deleted from the system.', ['name' => $memberName]));
+    }
+
     /**
      * @param  Collection<int, Course>  $courses
      * @return array<string, int>
@@ -147,6 +188,56 @@ class AdminModelProgressController extends Controller
                 ->filter(fn ($count): bool => (int) $count > 0)
                 ->count(),
         ];
+    }
+
+    private function deleteMemberStoredFiles(User $user): void
+    {
+        if (filled($user->profile_photo_path)) {
+            Storage::disk('public')->delete($user->profile_photo_path);
+        }
+
+        $profile = $user->modelProfile;
+        if ($profile) {
+            Storage::disk('local')->delete(array_filter([
+                $profile->id_document_path,
+                $profile->selfie_with_id_path,
+                $profile->platform_codes_path,
+            ]));
+        }
+
+        foreach ($user->courseAccessRequests as $accessRequest) {
+            foreach ($accessRequest->proofFiles as $proofFile) {
+                if (
+                    in_array($proofFile->disk, ['local', 'public'], true)
+                    && filled($proofFile->path)
+                ) {
+                    Storage::disk($proofFile->disk)->delete($proofFile->path);
+                }
+            }
+        }
+
+        Storage::disk('local')->deleteDirectory('course-access-proofs/'.$user->id);
+        Storage::disk('local')->deleteDirectory('verifications/'.$user->id);
+    }
+
+    private function deleteLinkedApplications(User $user): void
+    {
+        $applications = ModelApplication::query()
+            ->where('user_id', $user->id)
+            ->when($user->modelProfile?->model_application_id, function ($query, int $applicationId): void {
+                $query->orWhere('id', $applicationId);
+            })
+            ->get();
+
+        foreach ($applications as $application) {
+            foreach ($application->photo_paths ?? [] as $path) {
+                if (filled($path)) {
+                    Storage::disk('local')->delete($path);
+                }
+            }
+
+            $application->delete();
+        }
     }
 
     /**

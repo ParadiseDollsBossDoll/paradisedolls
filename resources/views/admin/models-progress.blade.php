@@ -9,7 +9,42 @@
 @endphp
 
 <x-admin-layout>
-    <div class="mx-auto max-w-[1500px] space-y-7 text-boss-ivory">
+    <div
+        x-data="{
+            deleteDialog: {
+                open: false,
+                form: null,
+                name: '',
+                submitting: false,
+            },
+            openMemberDeleteDialog(event) {
+                const form = event.target.closest('form');
+
+                this.deleteDialog.open = true;
+                this.deleteDialog.form = form;
+                this.deleteDialog.name = form?.dataset.memberName || '';
+                this.deleteDialog.submitting = false;
+            },
+            closeMemberDeleteDialog() {
+                if (this.deleteDialog.submitting) {
+                    return;
+                }
+
+                this.deleteDialog.open = false;
+                this.deleteDialog.form = null;
+                this.deleteDialog.name = '';
+            },
+            confirmMemberDelete() {
+                if (! this.deleteDialog.form) {
+                    return;
+                }
+
+                this.deleteDialog.submitting = true;
+                HTMLFormElement.prototype.submit.call(this.deleteDialog.form);
+            },
+        }"
+        class="mx-auto max-w-[1500px] space-y-7 text-boss-ivory"
+    >
         <header class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
                 <p class="pd-kicker">{{ __('Members') }}</p>
@@ -24,6 +59,16 @@
                 {{ __('Academy Overview') }}
             </div>
         </header>
+
+        @if (session('status'))
+            <div class="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm text-green-200">{{ session('status') }}</div>
+        @endif
+
+        @if ($errors->any())
+            <div class="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">
+                {{ $errors->first() }}
+            </div>
+        @endif
 
         <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div class="rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-5 shadow-[0_18px_45px_rgba(0,0,0,0.2)]">
@@ -114,38 +159,58 @@
                                     $isSelected = $selectedMemberId === $member['id'];
                                 @endphp
 
-                                <a
-                                    href="{{ $memberUrl }}"
-                                    class="block rounded-xl border p-4 text-left transition {{ $isSelected ? 'border-boss-gold/35 bg-boss-gold/[0.09] shadow-[0_18px_38px_rgba(238, 180, 195, 0.1)]' : 'border-white/[0.055] bg-white/[0.025] hover:border-white/[0.12] hover:bg-white/[0.04]' }}"
-                                >
-                                    <div class="flex items-start gap-3">
-                                        <div class="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-boss-gold/[0.22] bg-[radial-gradient(circle_at_top,rgba(238, 180, 195, 0.32),rgba(19,15,18,0.94)_70%)] font-display text-sm text-boss-gold-light">
-                                            <span>{{ $member['initials'] }}</span>
-                                            @if ($member['profile_photo_url'])
-                                                <img class="absolute inset-0 h-full w-full object-cover" src="{{ $member['profile_photo_url'] }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
-                                            @endif
-                                        </div>
+                                <div class="rounded-xl border p-4 text-left transition {{ $isSelected ? 'border-boss-gold/35 bg-boss-gold/[0.09] shadow-[0_18px_38px_rgba(238, 180, 195, 0.1)]' : 'border-white/[0.055] bg-white/[0.025] hover:border-white/[0.12] hover:bg-white/[0.04]' }}">
+                                    <a href="{{ $memberUrl }}" class="block">
+                                        <div class="flex items-start gap-3">
+                                            <div class="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-boss-gold/[0.22] bg-[radial-gradient(circle_at_top,rgba(238, 180, 195, 0.32),rgba(19,15,18,0.94)_70%)] font-display text-sm text-boss-gold-light">
+                                                <span>{{ $member['initials'] }}</span>
+                                                @if ($member['profile_photo_url'])
+                                                    <img class="absolute inset-0 h-full w-full object-cover" src="{{ $member['profile_photo_url'] }}" alt="{{ __('Profile photo') }}" onerror="this.remove()">
+                                                @endif
+                                            </div>
 
-                                        <div class="min-w-0 flex-1">
-                                            <div class="flex items-start justify-between gap-3">
-                                                <div class="min-w-0">
-                                                    <p class="truncate text-sm font-semibold text-boss-ivory">{{ $member['name'] }}</p>
-                                                    <p class="mt-0.5 truncate text-xs text-boss-ivory/[0.38]">{{ $member['email'] }}</p>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-start justify-between gap-3">
+                                                    <div class="min-w-0">
+                                                        <p class="truncate text-sm font-semibold text-boss-ivory">{{ $member['name'] }}</p>
+                                                        <p class="mt-0.5 truncate text-xs text-boss-ivory/[0.38]">{{ $member['email'] }}</p>
+                                                    </div>
+                                                    <span class="font-display text-lg text-boss-gold-light">{{ $member['overall_percent'] }}%</span>
                                                 </div>
-                                                <span class="font-display text-lg text-boss-gold-light">{{ $member['overall_percent'] }}%</span>
-                                            </div>
 
-                                            <div class="pd-progress-track mt-3">
-                                                <div class="pd-progress-bar" style="width: {{ $member['overall_percent'] }}%"></div>
-                                            </div>
+                                                <div class="pd-progress-track mt-3">
+                                                    <div class="pd-progress-bar" style="width: {{ $member['overall_percent'] }}%"></div>
+                                                </div>
 
-                                            <div class="mt-3 flex items-center justify-between gap-3 text-[0.68rem] text-boss-ivory/[0.35]">
-                                                <span>{{ $member['completed_lessons'] }} / {{ $member['total_lessons'] }} {{ __('lessons') }}</span>
-                                                <span>{{ $member['completed_courses'] }} / {{ $courses->count() }} {{ __('courses') }}</span>
+                                                <div class="mt-3 flex items-center justify-between gap-3 text-[0.68rem] text-boss-ivory/[0.35]">
+                                                    <span>{{ $member['completed_lessons'] }} / {{ $member['total_lessons'] }} {{ __('lessons') }}</span>
+                                                    <span>{{ $member['completed_courses'] }} / {{ $courses->count() }} {{ __('courses') }}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </a>
+                                    </a>
+
+                                    <form
+                                        method="POST"
+                                        action="{{ route('admin.models.destroy', $member['id']) }}"
+                                        class="mt-4 border-t border-white/[0.06] pt-3"
+                                        data-member-name="{{ $member['name'] }}"
+                                        @submit.prevent="openMemberDeleteDialog($event)"
+                                    >
+                                        @csrf
+                                        @method('DELETE')
+                                        <input type="hidden" name="confirm_member_delete" value="1">
+                                        @if ($search !== '')
+                                            <input type="hidden" name="search" value="{{ $search }}">
+                                        @endif
+                                        @if ($directoryMembers->currentPage() > 1)
+                                            <input type="hidden" name="page" value="{{ $directoryMembers->currentPage() }}">
+                                        @endif
+                                        <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg border border-red-300/15 bg-red-400/10 px-3 py-2 text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-red-200 transition hover:border-red-300/35 hover:bg-red-400/15">
+                                            {{ __('Delete member') }}
+                                        </button>
+                                    </form>
+                                </div>
                             @endforeach
                         </div>
 
@@ -246,16 +311,38 @@
                                     </div>
                                 </div>
 
-                                <a
-                                    href="{{ $modalCloseUrl }}"
-                                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-boss-ivory/50 transition hover:border-boss-gold/25 hover:text-boss-gold-light"
-                                    aria-label="{{ __('Close progress modal') }}"
-                                    @click.prevent="close()"
-                                >
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18 18 6M6 6l12 12" />
-                                    </svg>
-                                </a>
+                                <div class="flex shrink-0 items-center gap-2">
+                                    <form
+                                        method="POST"
+                                        action="{{ route('admin.models.destroy', $selectedProgress['id']) }}"
+                                        data-member-name="{{ $selectedProgress['name'] }}"
+                                        @submit.prevent="openMemberDeleteDialog($event)"
+                                    >
+                                        @csrf
+                                        @method('DELETE')
+                                        <input type="hidden" name="confirm_member_delete" value="1">
+                                        @if ($search !== '')
+                                            <input type="hidden" name="search" value="{{ $search }}">
+                                        @endif
+                                        @if ($directoryMembers->currentPage() > 1)
+                                            <input type="hidden" name="page" value="{{ $directoryMembers->currentPage() }}">
+                                        @endif
+                                        <button type="submit" class="hidden rounded-xl border border-red-300/15 bg-red-400/10 px-3 py-2 text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-red-200 transition hover:border-red-300/35 hover:bg-red-400/15 sm:inline-flex">
+                                            {{ __('Delete member') }}
+                                        </button>
+                                    </form>
+
+                                    <a
+                                        href="{{ $modalCloseUrl }}"
+                                        class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-boss-ivory/50 transition hover:border-boss-gold/25 hover:text-boss-gold-light"
+                                        aria-label="{{ __('Close progress modal') }}"
+                                        @click.prevent="close()"
+                                    >
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18 18 6M6 6l12 12" />
+                                        </svg>
+                                    </a>
+                                </div>
                             </div>
                         </div>
 
@@ -383,6 +470,63 @@
                 </div>
             @endif
         @endif
+
+        <div
+            x-show="deleteDialog.open"
+            x-cloak
+            x-transition.opacity.duration.150ms
+            class="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 px-4 py-6 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-member-dialog-title"
+            @keydown.escape.window="closeMemberDeleteDialog()"
+            @click.self="closeMemberDeleteDialog()"
+        >
+            <section
+                x-show="deleteDialog.open"
+                x-transition:enter="transition duration-180 ease-out"
+                x-transition:enter-start="translate-y-4 scale-[0.98] opacity-0"
+                x-transition:enter-end="translate-y-0 scale-100 opacity-100"
+                class="w-full max-w-lg overflow-hidden rounded-2xl border border-red-300/15 bg-[linear-gradient(135deg,rgba(28,19,24,0.98),rgba(12,9,12,0.98))] text-boss-ivory shadow-[0_28px_90px_rgba(0,0,0,0.65)]"
+            >
+                <div class="border-b border-white/[0.06] p-5">
+                    <p class="text-[0.64rem] uppercase tracking-[0.18em] text-red-200/70">{{ __('Permanent Action') }}</p>
+                    <h2 id="delete-member-dialog-title" class="mt-2 font-display text-2xl text-boss-ivory">{{ __('Delete member account?') }}</h2>
+                    <p class="mt-2 text-sm leading-6 text-boss-ivory/50">
+                        {{ __('This will permanently remove the member login, profile, course progress, uploaded verification files, course proof files, and linked application.') }}
+                    </p>
+                </div>
+
+                <div class="space-y-4 p-5">
+                    <div class="rounded-xl border border-red-300/15 bg-red-400/10 px-4 py-3">
+                        <p class="text-[0.65rem] uppercase tracking-[0.16em] text-red-200/60">{{ __('Member') }}</p>
+                        <p class="mt-1 font-semibold text-red-100" x-text="deleteDialog.name || '{{ __('Selected member') }}'"></p>
+                    </div>
+
+                    <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                        <button
+                            type="button"
+                            class="pd-btn-secondary h-11 justify-center"
+                            :disabled="deleteDialog.submitting"
+                            @click="closeMemberDeleteDialog()"
+                        >
+                            {{ __('Cancel') }}
+                        </button>
+                        <button
+                            type="button"
+                            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-red-300/20 bg-red-400/15 px-5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-red-100 transition hover:border-red-300/35 hover:bg-red-400/25 disabled:cursor-wait disabled:opacity-60"
+                            :disabled="deleteDialog.submitting"
+                            @click="confirmMemberDelete()"
+                        >
+                            <svg x-show="deleteDialog.submitting" x-cloak class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle class="opacity-25" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M21 12a9 9 0 0 1-9 9v-3a6 6 0 0 0 6-6h3Z"></path>
+                            </svg>
+                            <span x-text="deleteDialog.submitting ? '{{ __('Deleting') }}' : '{{ __('Delete member') }}'"></span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
     </div>
 </x-admin-layout>
-

@@ -199,6 +199,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/referrals', [AdminReferralController::class, 'index'])->name('referrals.index');
 
     Route::get('/models/progress', [AdminModelProgressController::class, 'index'])->name('models.progress');
+    Route::delete('/models/{user}', [AdminModelProgressController::class, 'destroy'])
+        ->middleware('throttle:admin-actions')
+        ->name('models.destroy');
     Route::get('/onboarding', [AdminOnboardingController::class, 'index'])->name('onboarding.index');
     Route::get('/onboarding/{profile}', [AdminOnboardingController::class, 'show'])->name('onboarding.show');
     Route::get('/onboarding/{profile}/details', [AdminOnboardingController::class, 'details'])->name('onboarding.details');
