@@ -415,6 +415,22 @@
                             <p class="py-2 text-center text-sm text-green-300/70">{{ __('Fully onboarded ✓') }}</p>
                         @endif
                     </div>
+                    <form
+                        action="{{ route('admin.models.destroy', $user) }}"
+                        method="POST"
+                        class="mt-5 border-t border-red-300/10 pt-4"
+                        onsubmit="return confirm('{{ __('Delete this member account? This permanently removes their login, onboarding profile, uploaded files, course progress, and linked application.') }}');"
+                    >
+                        @csrf
+                        @method('DELETE')
+                        <input type="hidden" name="confirm_member_delete" value="1">
+                        <button type="submit" class="w-full rounded-xl border border-red-300/15 bg-red-400/10 px-4 py-2.5 text-sm font-semibold text-red-200 transition hover:border-red-300/35 hover:bg-red-400/15">
+                            {{ __('Delete member account') }}
+                        </button>
+                        <p class="mt-2 text-center text-[0.68rem] leading-relaxed text-boss-ivory/28">
+                            {{ __('Permanent removal for this model account and its onboarding records.') }}
+                        </p>
+                    </form>
                 </section>
 
                 {{-- Verification status --}}

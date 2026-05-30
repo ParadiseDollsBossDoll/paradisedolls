@@ -1,8 +1,43 @@
 ﻿<x-admin-layout>
     <div
         class="mx-auto max-w-7xl space-y-6 text-boss-ivory"
-        x-data="{ open: false, selected: null }"
-        @keydown.escape.window="open = false"
+        x-data="{
+            open: false,
+            selected: null,
+            deleteDialog: {
+                open: false,
+                form: null,
+                name: '',
+                email: '',
+                submitting: false,
+            },
+            openApplicationDeleteDialog(event) {
+                this.deleteDialog.open = true;
+                this.deleteDialog.form = event.target.closest('form');
+                this.deleteDialog.name = this.selected?.name || '';
+                this.deleteDialog.email = this.selected?.email || '';
+                this.deleteDialog.submitting = false;
+            },
+            closeApplicationDeleteDialog() {
+                if (this.deleteDialog.submitting) {
+                    return;
+                }
+
+                this.deleteDialog.open = false;
+                this.deleteDialog.form = null;
+                this.deleteDialog.name = '';
+                this.deleteDialog.email = '';
+            },
+            confirmApplicationDelete() {
+                if (! this.deleteDialog.form) {
+                    return;
+                }
+
+                this.deleteDialog.submitting = true;
+                HTMLFormElement.prototype.submit.call(this.deleteDialog.form);
+            },
+        }"
+        @keydown.escape.window="deleteDialog.open ? closeApplicationDeleteDialog() : open = false"
     >
 
         {{-- Backdrop --}}
@@ -208,12 +243,83 @@
                                         </button>
                                     </form>
                                 </template>
+                                <template x-if="selected.delete_url">
+                                    <form
+                                        :action="selected.delete_url"
+                                        method="POST"
+                                        @submit.prevent="openApplicationDeleteDialog($event)"
+                                    >
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="w-full rounded-xl border border-red-400/25 bg-red-400/10 px-4 py-2.5 text-sm font-semibold text-red-300 transition hover:bg-red-400/20">
+                                            Delete Rejected Application
+                                        </button>
+                                    </form>
+                                </template>
                             </div>
                         </template>
                     </div>
 
                 </div>
             </template>
+        </div>
+
+        <div
+            x-show="deleteDialog.open"
+            x-cloak
+            x-transition.opacity.duration.150ms
+            class="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 px-4 py-6 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-application-dialog-title"
+            @click.self="closeApplicationDeleteDialog()"
+        >
+            <section
+                x-show="deleteDialog.open"
+                x-transition:enter="transition duration-180 ease-out"
+                x-transition:enter-start="translate-y-4 scale-[0.98] opacity-0"
+                x-transition:enter-end="translate-y-0 scale-100 opacity-100"
+                class="w-full max-w-lg overflow-hidden rounded-2xl border border-red-300/15 bg-[linear-gradient(135deg,rgba(28,19,24,0.98),rgba(12,9,12,0.98))] text-boss-ivory shadow-[0_28px_90px_rgba(0,0,0,0.65)]"
+            >
+                <div class="border-b border-white/[0.06] p-5">
+                    <p class="text-[0.64rem] uppercase tracking-[0.18em] text-red-200/70">{{ __('Permanent Action') }}</p>
+                    <h2 id="delete-application-dialog-title" class="mt-2 font-display text-2xl text-boss-ivory">{{ __('Delete rejected application?') }}</h2>
+                    <p class="mt-2 text-sm leading-6 text-boss-ivory/50">
+                        {{ __('This will permanently remove the application, referral link, and uploaded application photos.') }}
+                    </p>
+                </div>
+
+                <div class="space-y-4 p-5">
+                    <div class="rounded-xl border border-red-300/15 bg-red-400/10 px-4 py-3">
+                        <p class="text-[0.65rem] uppercase tracking-[0.16em] text-red-200/60">{{ __('Application') }}</p>
+                        <p class="mt-1 font-semibold text-red-100" x-text="deleteDialog.name || '{{ __('Selected application') }}'"></p>
+                        <p class="mt-0.5 break-all text-xs text-red-100/50" x-text="deleteDialog.email"></p>
+                    </div>
+
+                    <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                        <button
+                            type="button"
+                            class="pd-btn-secondary h-11 justify-center"
+                            :disabled="deleteDialog.submitting"
+                            @click="closeApplicationDeleteDialog()"
+                        >
+                            {{ __('Cancel') }}
+                        </button>
+                        <button
+                            type="button"
+                            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-red-300/20 bg-red-400/15 px-5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-red-100 transition hover:border-red-300/35 hover:bg-red-400/25 disabled:cursor-wait disabled:opacity-60"
+                            :disabled="deleteDialog.submitting"
+                            @click="confirmApplicationDelete()"
+                        >
+                            <svg x-show="deleteDialog.submitting" x-cloak class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle class="opacity-25" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M21 12a9 9 0 0 1-9 9v-3a6 6 0 0 0 6-6h3Z"></path>
+                            </svg>
+                            <span x-text="deleteDialog.submitting ? '{{ __('Deleting') }}' : '{{ __('Delete application') }}'"></span>
+                        </button>
+                    </div>
+                </div>
+            </section>
         </div>
 
         {{-- Page header --}}
@@ -367,6 +473,9 @@
                                         ->all(),
                                     'approve_url'          => route('admin.applications.approve', $application),
                                     'reject_url'           => route('admin.applications.reject', $application),
+                                    'delete_url'           => $application->status === \App\Models\ModelApplication::STATUS_REJECTED
+                                        ? route('admin.applications.destroy', $application)
+                                        : null,
                                     'reviewed_by'          => $application->reviewer?->name,
                                     'reviewed_at'          => $application->reviewed_at?->toFormattedDateString(),
                                     'created_at'           => $application->created_at->toFormattedDateString(),
@@ -445,6 +554,3 @@
 
     </div>
 </x-admin-layout>
-
-
-

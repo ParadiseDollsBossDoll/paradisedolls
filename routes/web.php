@@ -195,6 +195,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/applications/{application}/reject', [AdminApplicationController::class, 'reject'])
         ->middleware('throttle:admin-actions')
         ->name('applications.reject');
+    Route::delete('/applications/{application}', [AdminApplicationController::class, 'destroy'])
+        ->middleware('throttle:admin-actions')
+        ->name('applications.destroy');
 
     Route::get('/referrals', [AdminReferralController::class, 'index'])->name('referrals.index');
 

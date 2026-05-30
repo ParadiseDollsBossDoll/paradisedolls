@@ -224,6 +224,33 @@ class AdminApplicationController extends Controller
         return redirect()->back()->with('status', __('Application rejected.'));
     }
 
+    public function destroy(ModelApplication $application): RedirectResponse
+    {
+        if ($application->status !== ModelApplication::STATUS_REJECTED) {
+            return redirect()->back()->withErrors(['application' => __('Only rejected applications can be deleted.')]);
+        }
+
+        $application->loadMissing('referral');
+
+        DB::transaction(function () use ($application): void {
+            $photoPaths = collect($application->photo_paths ?? [])
+                ->merge($application->referral?->photo_paths ?? [])
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+
+            if ($photoPaths !== []) {
+                Storage::disk('local')->delete($photoPaths);
+            }
+
+            $application->referral?->delete();
+            $application->delete();
+        });
+
+        return redirect()->back()->with('status', __('Rejected application deleted.'));
+    }
+
     public function convertReferral(ModelReferral $referral): RedirectResponse
     {
         if ($referral->model_application_id) {

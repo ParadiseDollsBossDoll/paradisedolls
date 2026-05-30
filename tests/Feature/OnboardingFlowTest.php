@@ -14,6 +14,7 @@ use App\Models\Course;
 use App\Models\CourseAccessRequest;
 use App\Models\ModelApplication;
 use App\Models\ModelProfile;
+use App\Models\ModelReferral;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -181,6 +182,91 @@ class OnboardingFlowTest extends TestCase
             ->assertSessionHas('approval_fallback_password');
 
         Mail::assertNothingSent();
+    }
+
+    public function test_admin_can_delete_rejected_application_and_uploaded_photos(): void
+    {
+        Storage::fake('local');
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $referrer = User::factory()->create(['role' => 'model']);
+
+        $application = ModelApplication::create([
+            'name' => 'Rejected Model',
+            'email' => 'rejected@example.com',
+            'experience_level' => 'beginner',
+            'age_confirmed' => true,
+            'photo_paths' => ['applications/photos/rejected.jpg'],
+        ]);
+        $application->forceFill(['status' => ModelApplication::STATUS_REJECTED])->save();
+
+        $referral = ModelReferral::create([
+            'referrer_id' => $referrer->id,
+            'model_application_id' => $application->id,
+            'candidate_name' => 'Rejected Model',
+            'candidate_email' => 'rejected@example.com',
+            'experience_level' => 'beginner',
+            'photo_paths' => ['applications/photos/rejected.jpg'],
+            'consent_confirmed' => true,
+            'source' => ModelReferral::SOURCE_APPLY_LINK,
+            'status' => ModelReferral::STATUS_REJECTED,
+            'reward_status' => ModelReferral::REWARD_NOT_ELIGIBLE,
+        ]);
+
+        Storage::disk('local')->put('applications/photos/rejected.jpg', 'photo');
+
+        $this->actingAs($admin)
+            ->get(route('admin.applications.index'))
+            ->assertOk()
+            ->assertSee('Delete Rejected Application')
+            ->assertSee('Delete rejected application?')
+            ->assertDontSee('return confirm', false);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.applications.destroy', $application))
+            ->assertRedirect()
+            ->assertSessionHas('status', 'Rejected application deleted.');
+
+        $this->assertDatabaseMissing('model_applications', ['id' => $application->id]);
+        $this->assertDatabaseMissing('model_referrals', ['id' => $referral->id]);
+        Storage::disk('local')->assertMissing('applications/photos/rejected.jpg');
+    }
+
+    public function test_admin_cannot_delete_pending_application(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $application = ModelApplication::create([
+            'name' => 'Pending Model',
+            'email' => 'pending@example.com',
+            'experience_level' => 'beginner',
+            'age_confirmed' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.applications.destroy', $application))
+            ->assertRedirect()
+            ->assertSessionHasErrors('application');
+
+        $this->assertDatabaseHas('model_applications', ['id' => $application->id]);
+    }
+
+    public function test_admin_can_see_member_delete_action_on_onboarding_profile(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create([
+            'name' => 'Onboarding Model',
+            'email' => 'onboarding-model@example.com',
+            'role' => 'model',
+        ]);
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.show', $profile))
+            ->assertOk()
+            ->assertSee('Delete member account')
+            ->assertSee(route('admin.models.destroy', $member), false);
     }
 
     public function test_member_can_submit_information_and_verification_documents(): void
