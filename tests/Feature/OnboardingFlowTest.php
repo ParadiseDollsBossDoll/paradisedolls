@@ -18,6 +18,7 @@ use App\Models\ModelReferral;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -182,6 +183,211 @@ class OnboardingFlowTest extends TestCase
             ->assertSessionHas('approval_fallback_password');
 
         Mail::assertNothingSent();
+    }
+
+    public function test_admin_can_resend_application_approval_email_with_fresh_temporary_password(): void
+    {
+        Mail::fake();
+        config([
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp.host' => 'smtp.gmail.com',
+            'mail.mailers.smtp.port' => 465,
+            'mail.mailers.smtp.username' => 'sender@example.com',
+            'mail.mailers.smtp.password' => 'test-password',
+            'mail.from.address' => 'sender@example.com',
+        ]);
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create([
+            'name' => 'Approved Model',
+            'email' => 'approved@example.com',
+            'role' => 'model',
+            'password' => Hash::make('old-password'),
+            'email_verified_at' => null,
+        ]);
+        $application = ModelApplication::create([
+            'name' => 'Approved Model',
+            'email' => 'approved@example.com',
+            'experience_level' => 'none',
+            'age_confirmed' => true,
+        ]);
+        $application->forceFill([
+            'status' => ModelApplication::STATUS_APPROVED,
+            'reviewed_by' => $admin->id,
+            'reviewed_at' => now(),
+            'user_id' => $member->id,
+        ])->save();
+        ModelProfile::create([
+            'user_id' => $member->id,
+            'model_application_id' => $application->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.applications.resend-approval-email', $application))
+            ->assertRedirect()
+            ->assertSessionHas('status', 'Approval email resent to approved@example.com. A fresh temporary password was created for the member.');
+
+        Mail::assertSent(MemberApplicationApprovedMail::class, function (MemberApplicationApprovedMail $mail) use ($member) {
+            return $mail->memberName === 'Approved Model'
+                && $mail->loginUrl === route('login')
+                && $mail->onboardingUrl === route('member.onboarding.edit')
+                && Hash::check($mail->temporaryPassword, $member->fresh()->password);
+        });
+
+        $member->refresh();
+
+        $this->assertNotNull($member->email_verified_at);
+        $this->assertFalse(Hash::check('old-password', $member->password));
+        $this->assertSame('application_approval_resent', $member->notifications()->first()?->data['category']);
+    }
+
+    public function test_admin_cannot_resend_application_approval_email_after_member_has_logged_in(): void
+    {
+        Mail::fake();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create([
+            'email' => 'logged-in@example.com',
+            'role' => 'model',
+            'last_login_at' => now(),
+        ]);
+        $application = ModelApplication::create([
+            'name' => 'Logged In Model',
+            'email' => 'logged-in@example.com',
+            'experience_level' => 'none',
+            'age_confirmed' => true,
+        ]);
+        $application->forceFill([
+            'status' => ModelApplication::STATUS_APPROVED,
+            'user_id' => $member->id,
+        ])->save();
+        ModelProfile::create([
+            'user_id' => $member->id,
+            'model_application_id' => $application->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.applications.resend-approval-email', $application))
+            ->assertRedirect()
+            ->assertSessionHasErrors('application');
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_admin_cannot_resend_application_approval_email_after_onboarding_is_submitted(): void
+    {
+        Mail::fake();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create([
+            'email' => 'submitted@example.com',
+            'role' => 'model',
+            'last_login_at' => null,
+        ]);
+        $application = ModelApplication::create([
+            'name' => 'Submitted Model',
+            'email' => 'submitted@example.com',
+            'experience_level' => 'none',
+            'age_confirmed' => true,
+        ]);
+        $application->forceFill([
+            'status' => ModelApplication::STATUS_APPROVED,
+            'user_id' => $member->id,
+        ])->save();
+        ModelProfile::create([
+            'user_id' => $member->id,
+            'model_application_id' => $application->id,
+            'information_submitted_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.applications.resend-approval-email', $application))
+            ->assertRedirect()
+            ->assertSessionHasErrors('application');
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_admin_cannot_resend_application_approval_email_for_pending_application(): void
+    {
+        Mail::fake();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $application = ModelApplication::create([
+            'name' => 'Pending Model',
+            'email' => 'pending-resend@example.com',
+            'experience_level' => 'beginner',
+            'age_confirmed' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.applications.resend-approval-email', $application))
+            ->assertRedirect()
+            ->assertSessionHasErrors('application');
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_admin_can_see_resend_application_approval_email_action_on_onboarding_profile(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create([
+            'name' => 'Onboarding Model',
+            'email' => 'onboarding-approved@example.com',
+            'role' => 'model',
+        ]);
+        $application = ModelApplication::create([
+            'name' => 'Onboarding Model',
+            'email' => 'onboarding-approved@example.com',
+            'experience_level' => 'beginner',
+            'age_confirmed' => true,
+        ]);
+        $application->forceFill([
+            'status' => ModelApplication::STATUS_APPROVED,
+            'user_id' => $member->id,
+        ])->save();
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'model_application_id' => $application->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.show', $profile))
+            ->assertOk()
+            ->assertSee('Resend Application Approval Email')
+            ->assertSee(route('admin.applications.resend-approval-email', $application), false);
+    }
+
+    public function test_admin_does_not_see_resend_application_approval_email_action_after_onboarding_is_submitted(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create([
+            'name' => 'Submitted Model',
+            'email' => 'onboarding-submitted@example.com',
+            'role' => 'model',
+            'last_login_at' => null,
+        ]);
+        $application = ModelApplication::create([
+            'name' => 'Submitted Model',
+            'email' => 'onboarding-submitted@example.com',
+            'experience_level' => 'beginner',
+            'age_confirmed' => true,
+        ]);
+        $application->forceFill([
+            'status' => ModelApplication::STATUS_APPROVED,
+            'user_id' => $member->id,
+        ])->save();
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'model_application_id' => $application->id,
+            'information_submitted_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.show', $profile))
+            ->assertOk()
+            ->assertDontSee('Resend Application Approval Email')
+            ->assertDontSee(route('admin.applications.resend-approval-email', $application), false);
     }
 
     public function test_admin_can_delete_rejected_application_and_uploaded_photos(): void

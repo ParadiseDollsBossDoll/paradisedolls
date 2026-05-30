@@ -22,6 +22,9 @@
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('admin.onboarding.export-profile', $profile) }}" class="rounded-xl border border-boss-gold/20 bg-boss-gold/[0.07] px-3 py-1.5 text-[0.72rem] font-semibold text-boss-gold transition hover:bg-boss-gold/[0.13]">
+                    {{ __('Download CRM CSV') }}
+                </a>
                 <span class="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-[0.72rem] text-boss-ivory/60">
                     {{ $profile->onboardingStageLabel() }}
                 </span>
@@ -35,6 +38,18 @@
         {{-- ── Flash messages ──────────────────────────────────────── --}}
         @if (session('status'))
             <div class="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm text-green-200">{{ session('status') }}</div>
+        @endif
+        @if (session('warning'))
+            <div class="space-y-3 rounded-xl border border-amber-300/20 bg-amber-300/10 p-4 text-sm text-amber-100">
+                <p>{{ session('warning') }}</p>
+                @if (session('approval_fallback_password'))
+                    <div class="rounded-xl border border-amber-300/25 bg-boss-ink px-4 py-3 text-boss-ivory">
+                        <p class="text-[0.65rem] uppercase tracking-[0.14em] text-amber-200/60">{{ __('Temporary password (email failed)') }}</p>
+                        <p class="mt-1 text-xs text-boss-ivory/40">{{ session('approval_fallback_email') }}</p>
+                        <p class="mt-2 select-all break-all font-mono text-base font-semibold tracking-wide">{{ session('approval_fallback_password') }}</p>
+                    </div>
+                @endif
+            </div>
         @endif
         @if ($errors->any())
             <div class="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">
@@ -356,6 +371,18 @@
                     </form>
 
                     <div class="space-y-2">
+                        @if ($profile->application?->canResendApprovalEmail())
+                            <form action="{{ route('admin.applications.resend-approval-email', $profile->application) }}" method="POST" class="rounded-xl border border-green-300/15 bg-green-400/[0.06] p-3">
+                                @csrf
+                                <button type="submit" class="w-full rounded-xl border border-green-300/20 bg-green-400/10 px-4 py-2.5 text-sm font-semibold text-green-200 transition hover:bg-green-400/20">
+                                    {{ __('Resend Application Approval Email') }}
+                                </button>
+                                <p class="mt-2 text-center text-[0.68rem] leading-relaxed text-green-100/45">
+                                    {{ __('Creates a fresh temporary password and emails the login plus Model Information Form instructions again.') }}
+                                </p>
+                            </form>
+                        @endif
+
                         {{-- Request verification --}}
                         @if ($profile->hasInformationForm() && ! $profile->isVerified() && $profile->verification_status !== \App\Models\ModelProfile::VERIFICATION_SUBMITTED)
                             <form action="{{ route('admin.onboarding.request-verification', $profile) }}" method="POST">

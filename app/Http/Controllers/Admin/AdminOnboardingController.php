@@ -53,7 +53,7 @@ class AdminOnboardingController extends Controller
 
     public function show(ModelProfile $profile): View
     {
-        $profile->loadMissing('user.courseAccessRequests.course', 'user.courseAccessRequests.proofFiles', 'user.courseEnrollments', 'verificationReviewer');
+        $profile->loadMissing('application.user', 'user.courseAccessRequests.course', 'user.courseAccessRequests.proofFiles', 'user.courseEnrollments', 'verificationReviewer');
 
         $unlockedCourseIds = $profile->user->courseEnrollments
             ->pluck('course_id')

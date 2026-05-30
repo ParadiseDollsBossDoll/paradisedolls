@@ -53,4 +53,25 @@ class ModelApplication extends Model
     {
         return $this->hasOne(ModelReferral::class, 'model_application_id');
     }
+
+    public function canResendApprovalEmail(): bool
+    {
+        if ($this->status !== self::STATUS_APPROVED) {
+            return false;
+        }
+
+        $user = $this->relationLoaded('user')
+            ? $this->user
+            : $this->user()->select(['id', 'last_login_at'])->first();
+
+        if (! $user || $user->last_login_at) {
+            return false;
+        }
+
+        $profile = $this->relationLoaded('profile')
+            ? $this->profile
+            : $this->profile()->select(['id', 'model_application_id', 'information_submitted_at'])->first();
+
+        return ! $profile?->hasInformationForm();
+    }
 }

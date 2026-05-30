@@ -243,6 +243,17 @@
                                         </button>
                                     </form>
                                 </template>
+                                <template x-if="selected.resend_approval_url">
+                                    <form :action="selected.resend_approval_url" method="POST" class="rounded-xl border border-green-300/15 bg-green-400/[0.06] p-3">
+                                        @csrf
+                                        <button type="submit" class="w-full rounded-xl border border-green-300/20 bg-green-400/10 px-4 py-2.5 text-sm font-semibold text-green-200 transition hover:bg-green-400/20">
+                                            Resend Approval Email
+                                        </button>
+                                        <p class="mt-2 text-center text-[0.68rem] leading-relaxed text-green-100/45">
+                                            Sends the login and Model Information Form email again with a fresh temporary password.
+                                        </p>
+                                    </form>
+                                </template>
                                 <template x-if="selected.delete_url">
                                     <form
                                         :action="selected.delete_url"
@@ -323,9 +334,18 @@
         </div>
 
         {{-- Page header --}}
-        <header>
-            <p class="pd-kicker">{{ __('Recruitment') }}</p>
-            <h1 class="pd-heading mt-2 text-[clamp(2rem,4vw,2.6rem)]">{{ __('Applications') }}</h1>
+        <header class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+                <p class="pd-kicker">{{ __('Recruitment') }}</p>
+                <h1 class="pd-heading mt-2 text-[clamp(2rem,4vw,2.6rem)]">{{ __('Applications') }}</h1>
+            </div>
+            <a href="{{ route('admin.applications.export') }}" class="pd-btn-secondary h-11 w-fit gap-2">
+                <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7">
+                    <path d="M8 2v8m0 0 3-3m-3 3L5 7"/>
+                    <path d="M3 12.5h10"/>
+                </svg>
+                {{ __('Download CRM CSV') }}
+            </a>
         </header>
 
         {{-- Flash messages --}}
@@ -473,6 +493,9 @@
                                         ->all(),
                                     'approve_url'          => route('admin.applications.approve', $application),
                                     'reject_url'           => route('admin.applications.reject', $application),
+                                    'resend_approval_url'  => $application->canResendApprovalEmail()
+                                        ? route('admin.applications.resend-approval-email', $application)
+                                        : null,
                                     'delete_url'           => $application->status === \App\Models\ModelApplication::STATUS_REJECTED
                                         ? route('admin.applications.destroy', $application)
                                         : null,

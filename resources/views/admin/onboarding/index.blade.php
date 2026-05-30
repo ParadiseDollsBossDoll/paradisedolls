@@ -784,6 +784,13 @@
                 <p class="pd-kicker">{{ __('Onboarding') }}</p>
                 <h1 class="pd-heading mt-2 text-[clamp(2rem,4vw,2.6rem)]">{{ __('Model Onboarding') }}</h1>
             </div>
+            <a href="{{ route('admin.onboarding.export') }}" class="pd-btn-secondary h-11 w-fit gap-2">
+                <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7">
+                    <path d="M8 2v8m0 0 3-3m-3 3L5 7"/>
+                    <path d="M3 12.5h10"/>
+                </svg>
+                {{ __('Download CRM CSV') }}
+            </a>
         </header>
 
         {{-- ── Flash messages ────────────────────────────────────── --}}

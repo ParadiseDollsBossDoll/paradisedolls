@@ -29,6 +29,7 @@ class AdminApplicationController extends Controller
                 'reviewer:id,name',
                 'profile:id,model_application_id,information_submitted_at,verification_status',
                 'referral.referrer:id,name,email',
+                'user:id,last_login_at',
             ])
             ->paginate(20);
 
@@ -115,6 +116,69 @@ class AdminApplicationController extends Controller
         return redirect()->back()->with('status', __('Application approved. The member received the Application Approval Email with login and Model Information Form instructions.'));
     }
 
+    public function resendApprovalEmail(ModelApplication $application): RedirectResponse
+    {
+        if ($application->status !== ModelApplication::STATUS_APPROVED) {
+            return redirect()->back()->withErrors(['application' => __('Approval emails can only be resent for approved applications.')]);
+        }
+
+        $application->loadMissing('profile:id,model_application_id,information_submitted_at', 'user:id,name,email,email_verified_at,last_login_at');
+        $member = $application->user;
+
+        if (! $member) {
+            return redirect()->back()->withErrors(['application' => __('This approved application does not have a linked member account to email.')]);
+        }
+
+        if ($member->last_login_at) {
+            return redirect()->back()->withErrors(['application' => __('This member has already logged in, so the approval email and temporary password should not be resent.')]);
+        }
+
+        if ($application->profile?->hasInformationForm()) {
+            return redirect()->back()->withErrors(['application' => __('This member already submitted the onboarding form, so the approval email and temporary password should not be resent.')]);
+        }
+
+        if ($configurationHint = $this->approvalMailConfigurationHint()) {
+            return redirect()->back()
+                ->with('warning', __('Approval email was not resent. :hint', ['hint' => $configurationHint]));
+        }
+
+        $temporaryPassword = Str::password(14, letters: true, numbers: true, symbols: false);
+        $recipientEmail = $member->email ?: $application->email;
+
+        $member->forceFill([
+            'password' => Hash::make($temporaryPassword),
+            'email_verified_at' => $member->email_verified_at ?: now(),
+        ])->save();
+
+        try {
+            Mail::to($recipientEmail)->sendNow(new MemberApplicationApprovedMail(
+                memberName: $member->name ?: $application->name,
+                temporaryPassword: $temporaryPassword,
+                loginUrl: route('login'),
+                onboardingUrl: route('member.onboarding.edit'),
+            ));
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->redirectWithApprovalResendFailure(
+                $recipientEmail,
+                $temporaryPassword,
+                $this->approvalMailFailureHint($e)
+            );
+        }
+
+        $member->notify(new SystemNotification(
+            title: __('Application approval email resent'),
+            body: __('A new temporary password was sent to your email so you can complete your Model Information Form.'),
+            actionUrl: route('member.onboarding.edit', absolute: false),
+            category: 'application_approval_resent',
+        ));
+
+        return redirect()->back()->with('status', __('Approval email resent to :email. A fresh temporary password was created for the member.', [
+            'email' => $recipientEmail,
+        ]));
+    }
+
     private function redirectWithApprovalMailFailure(
         ModelApplication $application,
         string $temporaryPassword,
@@ -126,6 +190,20 @@ class AdminApplicationController extends Controller
                 __('Application approved and the member account was created, but the welcome email could not be sent. :hint Until mail works, use the temporary password below.', ['hint' => $hint])
             )
             ->with('approval_fallback_email', $application->email)
+            ->with('approval_fallback_password', $temporaryPassword);
+    }
+
+    private function redirectWithApprovalResendFailure(
+        string $recipientEmail,
+        string $temporaryPassword,
+        string $hint
+    ): RedirectResponse {
+        return redirect()->back()
+            ->with(
+                'warning',
+                __('Approval email could not be resent. :hint The member password was reset before the send failed; use the temporary password below if you need to contact them manually.', ['hint' => $hint])
+            )
+            ->with('approval_fallback_email', $recipientEmail)
             ->with('approval_fallback_password', $temporaryPassword);
     }
 
