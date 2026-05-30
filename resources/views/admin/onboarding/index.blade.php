@@ -200,12 +200,6 @@
                                             <p class="mt-0.5 text-sm text-boss-ivory/80" x-text="[selected.profile.city, selected.profile.country].filter(Boolean).join(', ')"></p>
                                         </div>
                                     </template>
-                                    <template x-if="selected.profile.timezone">
-                                        <div>
-                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Timezone</p>
-                                            <p class="mt-0.5 text-sm text-boss-ivory/80" x-text="selected.profile.timezone"></p>
-                                        </div>
-                                    </template>
                                     <template x-if="selected.profile.nationality">
                                         <div>
                                             <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Nationality</p>
@@ -250,10 +244,10 @@
                                     </div>
                                 </template>
 
-                                {{-- Current platforms they're already on --}}
+                                {{-- Current platforms and usernames --}}
                                 <template x-if="selected.profile.current_platforms">
                                     <div>
-                                        <p class="mb-1.5 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">{{ __('Currently active on') }}</p>
+                                        <p class="mb-1.5 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">{{ __('Current platforms and usernames') }}</p>
                                         <p class="text-[0.82rem] leading-relaxed text-boss-ivory/70" x-text="selected.profile.current_platforms"></p>
                                     </div>
                                 </template>
@@ -425,14 +419,6 @@
                                         <p class="whitespace-pre-line text-sm leading-relaxed text-boss-ivory/65" x-text="selected.profile.anything_else"></p>
                                     </div>
                                 </template>
-
-                                {{-- Emergency contact --}}
-                                <template x-if="selected.profile.emergency_contact_name || selected.profile.emergency_contact_phone">
-                                    <div class="border-t border-white/[0.04] pt-3">
-                                        <p class="mb-2 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Emergency Contact</p>
-                                        <p class="text-sm text-boss-ivory/65" x-text="[selected.profile.emergency_contact_name, selected.profile.emergency_contact_phone].filter(Boolean).join(' · ')"></p>
-                                    </div>
-                                </template>
                             </div>
                         </template>
 
@@ -537,7 +523,7 @@
                         </template>
 
                         {{-- Discord Community --}}
-                        <template x-if="selected.profile && (selected.profile.community_invited_at || selected.profile.discord_username || selected.profile.discord_user_id)">
+                        <template x-if="selected.profile && (selected.profile.community_invited_at || selected.profile.discord_username || selected.profile.discord_user_id || selected.profile.community_invite_sent_url)">
                             <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-5 space-y-3">
                                 <p class="text-[0.68rem] uppercase tracking-[0.14em] text-boss-ivory/35">Discord Community</p>
                                 <div class="grid grid-cols-2 gap-3">
@@ -557,6 +543,12 @@
                                         <div>
                                             <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Discord Invited</p>
                                             <p class="mt-0.5 text-sm text-green-300" x-text="selected.profile.community_invited_at"></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="selected.profile.community_invite_sent_url">
+                                        <div class="col-span-2">
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Last Invite Link</p>
+                                            <p class="mt-0.5 break-all text-sm text-boss-ivory/70" x-text="selected.profile.community_invite_sent_url"></p>
                                         </div>
                                     </template>
                                     <template x-if="selected.profile.community_role_assigned_at">
@@ -744,10 +736,20 @@
 
                             {{-- Discord Community invite --}}
                             <template x-if="selected.profile.can_community_invite">
-                                <form :action="selected.profile.community_invite_url" method="POST">
+                                <form :action="selected.profile.community_invite_url" method="POST" class="space-y-2">
                                     @csrf
+                                    <label class="block text-[0.62rem] uppercase tracking-[0.14em] text-boss-ivory/35">Discord invite link</label>
+                                    <input
+                                        type="url"
+                                        name="community_url"
+                                        :value="selected.profile.community_invite_sent_url || selected.profile.default_community_url || ''"
+                                        placeholder="https://discord.gg/example"
+                                        class="pd-input w-full text-sm"
+                                        required
+                                    >
+                                    <p class="text-[0.72rem] leading-relaxed text-boss-ivory/35">Paste the current Discord invite link before sending. If an old invite expires, paste a fresh one and resend it here.</p>
                                     <button type="submit" class="pd-btn-primary w-full">
-                                        Send Discord Community Access Email
+                                        <span x-text="selected.profile.community_invited_at ? 'Resend Discord Community Access Email' : 'Send Discord Community Access Email'"></span>
                                     </button>
                                 </form>
                             </template>
@@ -899,6 +901,8 @@
                                         'doc_codes_view'    => $profile->platform_codes_path    ? route('admin.onboarding.documents.view', [$profile, 'codes'])  : null,
                                         'doc_codes_download'=> $profile->platform_codes_path    ? route('admin.onboarding.documents.show', [$profile, 'codes'])  : null,
                                         'community_invited_at'        => $profile->community_invited_at?->toFormattedDateString(),
+                                        'community_invite_sent_url'   => $profile->community_invite_url,
+                                        'default_community_url'       => config('paradise.community_url'),
                                         'community_role_assigned_at'  => $profile->community_role_assigned_at?->toFormattedDateString(),
                                         'onboarding_percent'          => $profile->onboardingPercent(),
                                         'course_access'               => [],
@@ -911,7 +915,7 @@
                                         'community_role_url'          => route('admin.onboarding.community-role-assigned', $profile),
                                         'can_request_verification'    => $profile->hasInformationForm() && ! $profile->isVerified() && $profile->verification_status !== \App\Models\ModelProfile::VERIFICATION_SUBMITTED,
                                         'can_verify'                  => $profile->verification_status === \App\Models\ModelProfile::VERIFICATION_SUBMITTED,
-                                        'can_community_invite'        => $profile->isVerified() && ! $profile->community_invited_at,
+                                        'can_community_invite'        => $profile->isVerified() && ! $profile->community_role_assigned_at,
                                         'can_role_assign'             => $profile->isVerified() && (bool) $profile->community_invited_at && ! $profile->community_role_assigned_at,
                                     ] : null,
                                 ];

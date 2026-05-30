@@ -10,7 +10,7 @@
         $blueprintOrder = marketing_items('home.blueprint.order_items');
         $groundedCards = marketing_items('home.grounded.cards');
         $countryCallingCodes = config('country_calling_codes', []);
-        $selectedPhoneCountry = old('phone_country', 'PH');
+        $selectedPhoneCountry = old('phone_country', 'GB');
         $phoneCountries = collect($countryCallingCodes)
             ->map(fn (array $country, string $countryCode) => [
                 'value'   => $countryCode,

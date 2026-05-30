@@ -90,7 +90,6 @@
                             ['Phone',             $profile->phone],
                             ['Country',           $profile->country],
                             ['City',              $profile->city],
-                            ['Timezone',          $profile->timezone],
                             ['Nationality',       $profile->nationality],
                             ['Spoken Languages',  $profile->spoken_languages],
                             ['Social Handles',    $profile->social_handles],
@@ -148,7 +147,7 @@
                             @endif
                             @if ($profile->current_platforms)
                                 <div>
-                                    <p class="mb-1 text-[0.7rem] text-boss-ivory/40">{{ __('Currently active on') }}</p>
+                                    <p class="mb-1 text-[0.7rem] text-boss-ivory/40">{{ __('Current platforms and usernames') }}</p>
                                     <p class="text-[0.82rem] leading-relaxed text-boss-ivory/70">{{ $profile->current_platforms }}</p>
                                 </div>
                             @endif
@@ -312,21 +311,20 @@
                     </section>
                 @endif
 
-                {{-- Emergency Contact & Discord --}}
-                @if ($profile->emergency_contact_name || $profile->emergency_contact_phone || $profile->discord_username || $profile->discord_user_id)
+                {{-- Discord --}}
+                @if ($profile->discord_username || $profile->discord_user_id || $profile->community_invite_url)
                     <section class="pd-panel-strong p-5">
-                        <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Emergency Contact & Discord') }}</p>
+                        <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Discord') }}</p>
                         <div class="grid grid-cols-2 gap-x-6 gap-y-3 text-[0.82rem]">
                             @foreach ([
-                                ['Contact Name',    $profile->emergency_contact_name],
-                                ['Contact Phone',   $profile->emergency_contact_phone],
                                 ['Discord Username',$profile->discord_username],
                                 ['Discord User ID', $profile->discord_user_id],
+                                ['Last Invite Link', $profile->community_invite_url],
                             ] as [$label, $value])
                                 @if ($value)
                                     <div>
                                         <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">{{ $label }}</p>
-                                        <p class="mt-0.5 text-boss-ivory/75">{{ $value }}</p>
+                                        <p class="mt-0.5 break-all text-boss-ivory/75">{{ $value }}</p>
                                     </div>
                                 @endif
                             @endforeach
@@ -385,10 +383,23 @@
                         @endif
 
                         {{-- Community invite --}}
-                        @if ($profile->isVerified() && ! $profile->community_invited_at)
-                            <form action="{{ route('admin.onboarding.community-invite', $profile) }}" method="POST">
+                        @if ($profile->isVerified() && ! $profile->community_role_assigned_at)
+                            <form action="{{ route('admin.onboarding.community-invite', $profile) }}" method="POST" class="space-y-2">
                                 @csrf
-                                <button type="submit" class="pd-btn-primary w-full text-sm">{{ __('Send Discord Community Access Email') }}</button>
+                                <label for="community_url" class="pd-label">{{ __('Discord invite link') }}</label>
+                                <input
+                                    id="community_url"
+                                    name="community_url"
+                                    type="url"
+                                    value="{{ old('community_url', $profile->community_invite_url ?: config('paradise.community_url')) }}"
+                                    placeholder="https://discord.gg/example"
+                                    class="pd-input w-full text-sm"
+                                    required
+                                >
+                                <p class="text-[0.72rem] leading-relaxed text-boss-ivory/35">{{ __('Paste the current Discord invite link before sending. If an old invite expires, paste a fresh one and resend it here.') }}</p>
+                                <button type="submit" class="pd-btn-primary w-full text-sm">
+                                    {{ $profile->community_invited_at ? __('Resend Discord Community Access Email') : __('Send Discord Community Access Email') }}
+                                </button>
                             </form>
                         @endif
 

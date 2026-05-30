@@ -76,15 +76,6 @@
                             <p class="mt-2 text-[0.72rem] text-boss-ivory/28">{{ __('Existing file on record. Leave blank to keep it.') }}</p>
                         @endif
                     </div>
-
-                    <div>
-                        <label for="platform_codes" class="pd-label">{{ __('Platform codes') }}</label>
-                        <input id="platform_codes" type="file" name="platform_codes" accept=".jpg,.jpeg,.png,.pdf" class="pd-input mt-2">
-                        <p class="mt-2 text-[0.72rem] leading-relaxed text-boss-ivory/35">{{ __('Use this for QR/code screenshots or platform verification proof Kayla requests for course access.') }}</p>
-                        @if ($profile->platform_codes_path)
-                            <p class="mt-2 text-[0.72rem] text-boss-ivory/28">{{ __('Existing file on record') }}</p>
-                        @endif
-                    </div>
                 </div>
 
                 <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
@@ -95,4 +86,3 @@
         @endif
     </div>
 </x-member-layout>
-

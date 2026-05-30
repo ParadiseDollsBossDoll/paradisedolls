@@ -6,10 +6,7 @@
         $selectedEquipment = is_array($selectedEquipment) ? $selectedEquipment : [];
         $selectedPhoneCountry = old('phone_country', $selectedPhoneCountry);
         $phoneNumber = old('phone_number', $phoneNumber);
-        $selectedEmergencyContactPhoneCountry = old('emergency_contact_phone_country', $selectedEmergencyContactPhoneCountry);
-        $emergencyContactPhoneNumber = old('emergency_contact_phone_number', $emergencyContactPhoneNumber);
         $currentCountry = old('country', $profile->country);
-        $currentTimezone = old('timezone', $profile->timezone);
     @endphp
 
     <div class="mx-auto max-w-4xl space-y-6">
@@ -187,29 +184,15 @@
                         <input id="city" name="city" value="{{ old('city', $profile->city) }}" autocomplete="address-level2" placeholder="{{ __('City') }}" class="pd-input mt-2">
                         <x-input-error class="mt-1.5" :messages="$errors->get('city')" />
                     </div>
-                    <div class="md:col-span-2">
-                        <label for="timezone" class="pd-label">{{ __('Timezone') }}</label>
-                        <select id="timezone" name="timezone" class="pd-input mt-2" autocomplete="off">
-                            <option value="">{{ __('Select timezone') }}</option>
-                            @if ($currentTimezone && ! in_array($currentTimezone, $timezoneOptions, true))
-                                <option value="{{ $currentTimezone }}" selected>{{ $currentTimezone }}</option>
-                            @endif
-                            @foreach ($timezoneOptions as $timezoneOption)
-                                <option value="{{ $timezoneOption }}" @selected($currentTimezone === $timezoneOption)>{{ $timezoneOption }}</option>
-                            @endforeach
-                        </select>
-                        <x-input-error class="mt-1.5" :messages="$errors->get('timezone')" />
-                    </div>
-
                     {{-- Basic Info extras --}}
                     <div>
                         <label for="nationality" class="pd-label">{{ __('Nationality') }}</label>
-                        <input id="nationality" name="nationality" value="{{ old('nationality', $profile->nationality) }}" class="pd-input mt-2" placeholder="{{ __('e.g. Filipino') }}">
+                        <input id="nationality" name="nationality" value="{{ old('nationality', $profile->nationality) }}" class="pd-input mt-2" placeholder="{{ __('e.g. British') }}">
                         <x-input-error class="mt-1.5" :messages="$errors->get('nationality')" />
                     </div>
                     <div>
                         <label for="spoken_languages" class="pd-label">{{ __('Spoken languages') }}</label>
-                        <input id="spoken_languages" name="spoken_languages" value="{{ old('spoken_languages', $profile->spoken_languages) }}" class="pd-input mt-2" placeholder="{{ __('e.g. English, Tagalog') }}">
+                        <input id="spoken_languages" name="spoken_languages" value="{{ old('spoken_languages', $profile->spoken_languages) }}" class="pd-input mt-2" placeholder="{{ __('e.g. English') }}">
                         <x-input-error class="mt-1.5" :messages="$errors->get('spoken_languages')" />
                     </div>
                     <div class="md:col-span-2">
@@ -282,14 +265,14 @@
                     </div>
 
                     <div>
-                        <label for="current_platforms" class="pd-label">{{ __('Current platforms') }}</label>
-                        <p class="mt-1 text-[0.72rem] text-boss-ivory/38">{{ __('Please write any platforms you are currently active on, even if not listed above.') }}</p>
+                        <label for="current_platforms" class="pd-label">{{ __('Current platforms and usernames') }}</label>
+                        <p class="mt-1 text-[0.72rem] text-boss-ivory/38">{{ __('List each website you are currently active on and the username you use there.') }}</p>
                         <textarea
                             id="current_platforms"
                             name="current_platforms"
                             rows="3"
                             class="pd-input mt-2"
-                            placeholder="{{ __('e.g. I am currently on Chaturbate and OnlyFans…') }}"
+                            placeholder="{{ __('e.g. Chaturbate: @username; OnlyFans: @username') }}"
                         >{{ old('current_platforms', $profile->current_platforms) }}</textarea>
                         <x-input-error class="mt-1.5" :messages="$errors->get('current_platforms')" />
                     </div>
@@ -393,7 +376,7 @@
                             <p class="text-[0.72rem] uppercase tracking-[0.14em] text-boss-ivory/40">{{ __('Comfort levels') }}</p>
                             <p class="text-[0.7rem] text-boss-ivory/38">{{ __('What are you comfortable performing?') }}</p>
                             @php
-                                $comfortLevelOptions = ['Tease / Lingerie', 'Topless', 'Nude', 'Toys (Solo)', 'Girl/Girl', 'Fetish', 'Anal (Solo)', 'Domination / Roleplay'];
+                                $comfortLevelOptions = ['Lingerie', 'Topless', 'Nude', 'Toys (Solo)', 'Girl/Girl', 'Fetish', 'Anal (Solo)', 'Domination / Roleplay'];
                                 $selectedComfortLevels = old('comfort_levels', $profile->comfort_levels ?? []);
                                 $selectedComfortLevels = is_array($selectedComfortLevels) ? $selectedComfortLevels : [];
                             @endphp
@@ -545,7 +528,7 @@
                 </div>
 
                 @php
-                    $payoutMethodOptions = ['Wise', 'Bank Transfer', 'Crypto', 'Other'];
+                    $payoutMethodOptions = ['Revolut', 'Bank Transfer', 'Crypto', 'Other'];
                     $selectedPayoutMethods = old('payout_methods', $profile->payout_methods ?? []);
                     $selectedPayoutMethods = is_array($selectedPayoutMethods) ? $selectedPayoutMethods : [];
                 @endphp
@@ -620,129 +603,14 @@
                 </div>
             </section>
 
-            {{-- ── Step 6: Emergency Contact & Discord ─────────────────────── --}}
+            {{-- ── Step 6: Discord ─────────────────────────────────────────── --}}
             <section class="pd-panel-strong p-5 md:p-6">
                 <div class="mb-5">
                     <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Step 6') }}</p>
-                    <h2 class="pd-heading mt-1 text-[1.35rem] text-boss-ivory">{{ __('Emergency Contact & Discord') }}</h2>
+                    <h2 class="pd-heading mt-1 text-[1.35rem] text-boss-ivory">{{ __('Discord') }}</h2>
                 </div>
 
                 <div class="grid gap-4 md:grid-cols-2">
-                    <div>
-                        <label for="emergency_contact_name" class="pd-label">{{ __('Contact name') }}</label>
-                        <input id="emergency_contact_name" name="emergency_contact_name" value="{{ old('emergency_contact_name', $profile->emergency_contact_name) }}" class="pd-input mt-2">
-                    </div>
-                    <fieldset data-phone-field>
-                        <legend class="sr-only">{{ __('Contact phone') }}</legend>
-                        <div class="grid grid-cols-[8rem_minmax(0,1fr)] gap-2">
-                            <div
-                                class="relative"
-                                x-data="{
-                                    open: false,
-                                    search: '',
-                                    selected: @js($selectedEmergencyContactPhoneCountry),
-                                    countries: @js($phoneCountries),
-                                    get current() {
-                                        return this.countries.find((c) => c.value === this.selected) || this.countries[0];
-                                    },
-                                    get filtered() {
-                                        const q = this.search.trim().toLowerCase();
-                                        if (!q) return this.countries;
-                                        return this.countries.filter(c =>
-                                            c.code.replace('+','').startsWith(q) ||
-                                            c.code.includes(q) ||
-                                            c.name.toLowerCase().includes(q)
-                                        );
-                                    },
-                                    openDropdown() {
-                                        this.open = true;
-                                        this.$nextTick(() => this.$refs.emergencySearch?.focus());
-                                    },
-                                    selectCountry(value) {
-                                        this.selected = value;
-                                        this.search = '';
-                                        this.open = false;
-                                    },
-                                }"
-                                @keydown.escape.window="open = false; search = ''"
-                                @click.outside="open = false; search = ''"
-                            >
-                                <label id="emergency-contact-phone-country-label" class="pd-label normal-case tracking-normal leading-[1.5]">{{ __('Country code') }}</label>
-                                <input type="hidden" name="emergency_contact_phone_country" x-model="selected" data-phone-country>
-                                <button
-                                    type="button"
-                                    class="pd-input mt-2 flex h-[2.8rem] items-center gap-2 px-3 py-0 text-left"
-                                    aria-labelledby="emergency-contact-phone-country-label"
-                                    aria-haspopup="listbox"
-                                    :aria-expanded="open.toString()"
-                                    @click="openDropdown()"
-                                >
-                                    <img :src="current.flag" :alt="current.name" class="h-3.5 w-5 rounded-[2px] object-cover shadow-sm">
-                                    <span class="min-w-0 flex-1 text-[0.82rem]" x-text="current.code"></span>
-                                    <svg class="h-3 w-3 shrink-0 text-boss-ivory/35 transition-transform" :class="open ? 'rotate-180' : ''" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
-                                </button>
-
-                                <div
-                                    x-cloak
-                                    x-show="open"
-                                    x-transition
-                                    class="absolute left-0 top-full z-50 mt-1 w-56 overflow-hidden rounded-md border border-white/[0.08] bg-[#161114] shadow-luxe"
-                                    role="listbox"
-                                    aria-labelledby="emergency-contact-phone-country-label"
-                                >
-                                    <div class="border-b border-white/[0.06] p-2">
-                                        <input
-                                            x-ref="emergencySearch"
-                                            type="text"
-                                            x-model="search"
-                                            placeholder="{{ __('Type code or country…') }}"
-                                            class="w-full rounded-md border border-white/[0.08] bg-white/[0.05] px-2.5 py-1.5 text-[0.78rem] text-boss-ivory placeholder-boss-ivory/30 outline-none focus:border-boss-gold/40 focus:ring-1 focus:ring-boss-gold/20"
-                                            @keydown.escape.stop="open = false; search = ''"
-                                            autocomplete="off"
-                                        >
-                                    </div>
-                                    <div class="max-h-56 overflow-y-auto py-1">
-                                        <template x-if="filtered.length === 0">
-                                            <p class="px-3 py-3 text-center text-[0.75rem] text-boss-ivory/30">{{ __('No results') }}</p>
-                                        </template>
-                                        <template x-for="country in filtered" :key="country.value">
-                                            <button
-                                                type="button"
-                                                class="flex w-full items-center gap-2 px-3 py-2 text-left text-[0.82rem] text-boss-ivory/68 transition-colors hover:bg-white/[0.05] hover:text-boss-ivory"
-                                                :class="selected === country.value ? 'bg-boss-gold/12 text-boss-gold font-medium' : ''"
-                                                role="option"
-                                                :aria-selected="(selected === country.value).toString()"
-                                                :title="country.name"
-                                                @click="selectCountry(country.value)"
-                                            >
-                                                <img :src="country.flag" :alt="country.name" class="h-3.5 w-5 shrink-0 rounded-[2px] object-cover shadow-sm">
-                                                <span class="shrink-0 font-medium" x-text="country.code"></span>
-                                                <span class="min-w-0 truncate text-[0.7rem] text-boss-ivory/40" x-text="country.name"></span>
-                                            </button>
-                                        </template>
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <label for="emergency-contact-phone-number" class="pd-label normal-case tracking-normal leading-[1.5]">{{ __('Contact phone') }}</label>
-                                <input
-                                    id="emergency-contact-phone-number"
-                                    type="tel"
-                                    name="emergency_contact_phone_number"
-                                    value="{{ $emergencyContactPhoneNumber }}"
-                                    inputmode="tel"
-                                    autocomplete="tel"
-                                    placeholder="201-555-5555"
-                                    pattern="[0-9\s().-]{6,24}"
-                                    title="{{ __('Use 6 to 15 digits after the country code.') }}"
-                                    class="pd-input mt-2 h-[2.8rem]"
-                                    data-phone-number
-                                >
-                            </div>
-                        </div>
-                        <x-input-error class="mt-1.5" :messages="$errors->get('emergency_contact_phone_country')" />
-                        <x-input-error class="mt-1.5" :messages="$errors->get('emergency_contact_phone_number')" />
-                    </fieldset>
                     <div>
                         <label for="discord_username" class="pd-label">{{ __('Discord username') }}</label>
                         <input id="discord_username" name="discord_username" value="{{ old('discord_username', $profile->discord_username) }}" placeholder="username or username#0000" class="pd-input mt-2">

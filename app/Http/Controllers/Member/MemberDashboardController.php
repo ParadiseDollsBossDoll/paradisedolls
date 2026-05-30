@@ -101,7 +101,7 @@ class MemberDashboardController extends Controller
 
     private function onboardingAction(ModelProfile $profile): ?array
     {
-        $discordInviteUrl = config('paradise.community_url');
+        $discordInviteUrl = $profile->community_invite_url ?: config('paradise.community_url');
 
         if (! $profile->hasInformationForm()) {
             return [

@@ -83,6 +83,7 @@ class ModelProfile extends Model
         'verification_notes',
         'verification_request_instructions',
         'community_invited_at',
+        'community_invite_url',
         'community_role_assigned_at',
     ];
 

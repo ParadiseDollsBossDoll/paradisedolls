@@ -330,20 +330,34 @@ class AdminOnboardingController extends Controller
         return redirect()->back()->with('status', __('Resubmission instructions saved and sent to the member.'));
     }
 
-    public function communityInvite(ModelProfile $profile): RedirectResponse
+    public function communityInvite(Request $request, ModelProfile $profile): RedirectResponse
     {
         if (! $profile->isVerified()) {
             return redirect()->back()->withErrors(['profile' => __('The member must be verified before Discord Community access is sent.')]);
         }
 
+        if ($profile->isCommunityRoleAssigned()) {
+            return redirect()->back()->withErrors(['profile' => __('This member already has assigned community chat access.')]);
+        }
+
+        $communityUrl = $this->validatedCommunityInviteUrl($request);
+
         $profile->forceFill([
             'community_invited_at' => now(),
+            'community_invite_url' => $communityUrl,
         ])->save();
+        Cache::forget('broadcast_community_access_'.$profile->user_id);
 
         $profile->load('user');
+        $profile->user?->notify(new SystemNotification(
+            title: __('Discord invite sent'),
+            body: __('Kayla sent your Discord community invite. Open your dashboard for the latest link.'),
+            actionUrl: route('member.dashboard', absolute: false),
+            category: 'community_invite_sent',
+        ));
         $this->sendMail($profile, new CommunityAccessMail(
             profile: $profile,
-            communityUrl: config('paradise.community_url'),
+            communityUrl: $communityUrl,
             roleName: config('paradise.community_role_name'),
         ));
 
@@ -467,5 +481,64 @@ class AdminOnboardingController extends Controller
         } catch (Throwable $e) {
             report($e);
         }
+    }
+
+    private function validatedCommunityInviteUrl(Request $request): string
+    {
+        $request->merge([
+            'community_url' => $this->normalizeDiscordInviteUrl((string) $request->input('community_url', '')),
+        ]);
+
+        $validated = $request->validate([
+            'community_url' => [
+                'required',
+                'string',
+                'max:2048',
+                'url',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (! $this->isDiscordInviteUrl((string) $value)) {
+                        $fail(__('Enter a valid Discord invite link, such as https://discord.gg/example.'));
+                    }
+                },
+            ],
+        ], [
+            'community_url.required' => __('Paste the current Discord invite link before sending access.'),
+        ]);
+
+        return $validated['community_url'];
+    }
+
+    private function normalizeDiscordInviteUrl(string $url): string
+    {
+        $url = trim($url);
+
+        if ($url !== '' && ! preg_match('#^https?://#i', $url)) {
+            $url = 'https://'.$url;
+        }
+
+        return $url;
+    }
+
+    private function isDiscordInviteUrl(string $url): bool
+    {
+        $parts = parse_url($url);
+
+        if ($parts === false) {
+            return false;
+        }
+
+        if (strtolower($parts['scheme'] ?? '') !== 'https') {
+            return false;
+        }
+
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        $host = preg_replace('/^www\./', '', $host);
+        $path = '/'.ltrim((string) ($parts['path'] ?? ''), '/');
+
+        return match ($host) {
+            'discord.gg' => trim($path, '/') !== '',
+            'discord.com', 'discordapp.com' => str_starts_with($path, '/invite/') && strlen(trim($path, '/')) > strlen('invite/'),
+            default => false,
+        };
     }
 }

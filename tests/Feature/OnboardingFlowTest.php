@@ -321,7 +321,7 @@ class OnboardingFlowTest extends TestCase
             ->assertDontSeeText('Submit Verification');
     }
 
-    public function test_verified_member_can_upload_platform_code_proof_without_reuploading_id_documents(): void
+    public function test_member_verification_no_longer_accepts_platform_code_proof(): void
     {
         Mail::fake();
         Storage::fake('local');
@@ -343,21 +343,22 @@ class OnboardingFlowTest extends TestCase
             ->get(route('member.verification.edit'))
             ->assertOk()
             ->assertSeeText('Existing file on record. Leave blank to keep it.')
-            ->assertSeeText('Use this for QR/code screenshots or platform verification proof Kayla requests for course access.');
+            ->assertDontSeeText('Platform codes')
+            ->assertDontSee('name="platform_codes"', false);
 
         $this->actingAs($member)
             ->post(route('member.verification.store'), [
                 'platform_codes' => $this->fakePng('stripchat-qr.png'),
             ])
-            ->assertRedirect(route('member.dashboard'));
+            ->assertSessionHasErrors('id_document');
 
         $profile->refresh();
 
         $this->assertSame(ModelProfile::VERIFICATION_VERIFIED, $profile->verification_status);
         $this->assertSame('verifications/1/id.jpg', $profile->id_document_path);
         $this->assertSame('verifications/1/selfie.jpg', $profile->selfie_with_id_path);
-        Storage::disk('local')->assertExists($profile->platform_codes_path);
-        Mail::assertQueued(VerificationSubmissionReceivedMail::class);
+        $this->assertNull($profile->platform_codes_path);
+        Mail::assertNothingQueued();
     }
 
     public function test_admin_resubmission_requires_note_and_emails_member(): void
@@ -438,17 +439,57 @@ class OnboardingFlowTest extends TestCase
         Mail::assertQueued(AccountApprovalMail::class);
 
         $this->actingAs($admin)
-            ->post(route('admin.onboarding.community-invite', $profile))
+            ->post(route('admin.onboarding.community-invite', $profile), [
+                'community_url' => 'https://discord.gg/freshInvite',
+            ])
             ->assertRedirect();
 
-        $this->assertNotNull($profile->fresh()->community_invited_at);
-        Mail::assertQueued(CommunityAccessMail::class);
+        $profile->refresh();
+        $this->assertNotNull($profile->community_invited_at);
+        $this->assertSame('https://discord.gg/freshInvite', $profile->community_invite_url);
+        Mail::assertQueued(
+            CommunityAccessMail::class,
+            fn (CommunityAccessMail $mail) => $mail->communityUrl === 'https://discord.gg/freshInvite'
+        );
+
+        $this->actingAs($member)
+            ->get(route('member.dashboard'))
+            ->assertOk()
+            ->assertSee('https://discord.gg/freshInvite', false)
+            ->assertSeeText('Open Discord invite');
 
         $this->actingAs($admin)
             ->post(route('admin.onboarding.community-role-assigned', $profile))
             ->assertRedirect();
 
         $this->assertNotNull($profile->fresh()->community_role_assigned_at);
+    }
+
+    public function test_admin_must_enter_valid_discord_invite_before_sending_community_access(): void
+    {
+        Mail::fake();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+            'verification_submitted_at' => now(),
+            'verification_reviewed_by' => $admin->id,
+            'verification_reviewed_at' => now(),
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.community-invite', $profile), [
+                'community_url' => 'https://example.com/not-discord',
+            ])
+            ->assertSessionHasErrors('community_url');
+
+        $this->assertNull($profile->fresh()->community_invited_at);
+        Mail::assertNotQueued(CommunityAccessMail::class);
     }
 
     public function test_admin_cannot_assign_community_chat_before_verification(): void

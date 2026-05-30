@@ -20,7 +20,6 @@ class MemberOnboardingController extends Controller
         $profile = $this->profile();
         $callingCodes = config('country_calling_codes', []);
         $phoneInput = $this->splitPhone($profile->phone, $profile->country, $callingCodes);
-        $emergencyContactPhoneInput = $this->splitPhone($profile->emergency_contact_phone, $profile->country, $callingCodes);
 
         return view('member.onboarding.edit', [
             'profile' => $profile,
@@ -32,10 +31,7 @@ class MemberOnboardingController extends Controller
             'phoneCountries' => $this->phoneCountries($callingCodes),
             'selectedPhoneCountry' => $phoneInput['country'],
             'phoneNumber' => $phoneInput['number'],
-            'selectedEmergencyContactPhoneCountry' => $emergencyContactPhoneInput['country'],
-            'emergencyContactPhoneNumber' => $emergencyContactPhoneInput['number'],
             'countryOptions' => $this->countryOptions($callingCodes),
-            'timezoneOptions' => timezone_identifiers_list(),
         ]);
     }
 
@@ -59,7 +55,7 @@ class MemberOnboardingController extends Controller
             'country' => ['required', 'string', 'max:120'],
             'city' => ['nullable', 'string', 'max:120'],
             'timezone' => ['nullable', 'string', 'max:120'],
-            'platforms' => ['nullable', 'array', 'max:12'],
+            'platforms' => ['nullable', 'array', 'max:24'],
             'platforms.*' => ['string', 'max:80', Rule::in($platformOptions)],
             // Basic Info extras
             'nationality'              => ['nullable', 'string', 'max:255'],
@@ -113,8 +109,8 @@ class MemberOnboardingController extends Controller
             'phone_country.required_with' => __('Please choose a country code for your phone number.'),
             'phone_country.in' => __('Please choose a valid country code.'),
             'phone_number.required_without' => __('Please enter your phone number.'),
-            'emergency_contact_phone_country.required_with' => __('Please choose a country code for your emergency contact phone number.'),
-            'emergency_contact_phone_country.in' => __('Please choose a valid country code for your emergency contact phone number.'),
+            'emergency_contact_phone_country.required_with' => __('Please choose a country code for the contact phone number.'),
+            'emergency_contact_phone_country.in' => __('Please choose a valid country code for the contact phone number.'),
         ]);
 
         $this->validatePhoneInput($validated);
@@ -197,7 +193,7 @@ class MemberOnboardingController extends Controller
 
     private function splitPhone(?string $phone, ?string $countryName, array $callingCodes): array
     {
-        $defaultCountry = $this->countryCodeForName($countryName, $callingCodes) ?? 'PH';
+        $defaultCountry = $this->countryCodeForName($countryName, $callingCodes) ?? 'GB';
         $phone = trim((string) $phone);
 
         if ($phone === '') {
@@ -316,7 +312,7 @@ class MemberOnboardingController extends Controller
             return $legacyPhone === '' ? null : $legacyPhone;
         }
 
-        $country = $validated[$countryKey] ?? 'PH';
+        $country = $validated[$countryKey] ?? 'GB';
         $countryCode = $callingCodes[$country]['code'] ?? '';
 
         return $countryCode.preg_replace('/\D+/', '', $phoneNumber);
@@ -341,6 +337,7 @@ class MemberOnboardingController extends Controller
         return [
             'Chaturbate',
             'Babestation',
+            'AdultWork',
             'Camsoda',
             'Stripchat',
             'LiveJasmin',
@@ -382,6 +379,7 @@ class MemberOnboardingController extends Controller
             [
                 'title' => 'Lingerie / Tease Shows',
                 'items' => [
+                    'Lingerie',
                     'Topless',
                     'Fully Nude',
                     'Pussy Play / Fingering',
@@ -498,6 +496,7 @@ class MemberOnboardingController extends Controller
     private function comfortLevelOptions(): array
     {
         return [
+            'Lingerie',
             'Tease / Lingerie',
             'Topless',
             'Nude',
@@ -512,6 +511,7 @@ class MemberOnboardingController extends Controller
     private function payoutMethodOptions(): array
     {
         return [
+            'Revolut',
             'Wise',
             'Bank Transfer',
             'Crypto',

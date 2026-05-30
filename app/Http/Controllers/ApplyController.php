@@ -110,7 +110,7 @@ class ApplyController extends Controller
             return null;
         }
 
-        $country = $validated['phone_country'] ?? 'PH';
+        $country = $validated['phone_country'] ?? 'GB';
         $countryCode = $callingCodes[$country]['code'] ?? null;
 
         if (! $countryCode) {
