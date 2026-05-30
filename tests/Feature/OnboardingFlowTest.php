@@ -50,7 +50,7 @@ class OnboardingFlowTest extends TestCase
         $this->assertSame('+639123456789', $application->phone);
         $this->assertCount(1, $application->photo_paths);
         Storage::disk('local')->assertExists($application->photo_paths[0]);
-        Mail::assertQueued(ApplicationSubmittedMail::class);
+        Mail::assertSent(ApplicationSubmittedMail::class);
     }
 
     public function test_application_submission_rejects_invalid_phone_numbers(): void
@@ -123,7 +123,7 @@ class OnboardingFlowTest extends TestCase
         $this->assertNotNull($notification);
         $this->assertSame('application_approved', $notification->data['category']);
         $this->assertSame('Application approved', $notification->data['title']);
-        Mail::assertQueued(MemberApplicationApprovedMail::class);
+        Mail::assertSent(MemberApplicationApprovedMail::class);
     }
 
     public function test_admin_approval_shows_temporary_password_when_mailer_cannot_deliver(): void

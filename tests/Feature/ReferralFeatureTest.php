@@ -125,7 +125,7 @@ class ReferralFeatureTest extends TestCase
         $this->assertSame($member->id, $referral->referrer_id);
         $this->assertSame($application->id, $referral->model_application_id);
         $this->assertSame(ModelReferral::STATUS_PENDING, $referral->status);
-        Mail::assertQueued(ApplicationSubmittedMail::class);
+        Mail::assertSent(ApplicationSubmittedMail::class);
     }
 
     public function test_public_application_with_invalid_referral_code_submits_without_referral(): void
@@ -202,7 +202,7 @@ class ReferralFeatureTest extends TestCase
 
         $this->assertSame(ModelReferral::STATUS_JOINED, $referral->status);
         $this->assertSame(ModelReferral::REWARD_ELIGIBLE, $referral->reward_status);
-        Mail::assertQueued(MemberApplicationApprovedMail::class);
+        Mail::assertSent(MemberApplicationApprovedMail::class);
 
         $this->actingAs($admin)
             ->post(route('admin.applications.referrals.reward-paid', $referral))

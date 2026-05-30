@@ -129,7 +129,7 @@ class ApplyController extends Controller
         }
 
         try {
-            Mail::to($email)->queue(new ApplicationSubmittedMail(
+            Mail::to($email)->sendNow(new ApplicationSubmittedMail(
                 application: $application,
                 adminUrl: route('admin.applications.index'),
             ));
