@@ -789,7 +789,7 @@
                     <path d="M8 2v8m0 0 3-3m-3 3L5 7"/>
                     <path d="M3 12.5h10"/>
                 </svg>
-                {{ __('Download CRM CSV') }}
+                {{ __('Download CRM Excel') }}
             </a>
         </header>
 

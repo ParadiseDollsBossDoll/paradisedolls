@@ -23,7 +23,7 @@
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('admin.onboarding.export-profile', $profile) }}" class="rounded-xl border border-boss-gold/20 bg-boss-gold/[0.07] px-3 py-1.5 text-[0.72rem] font-semibold text-boss-gold transition hover:bg-boss-gold/[0.13]">
-                    {{ __('Download CRM CSV') }}
+                    {{ __('Download CRM Excel') }}
                 </a>
                 <span class="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-[0.72rem] text-boss-ivory/60">
                     {{ $profile->onboardingStageLabel() }}

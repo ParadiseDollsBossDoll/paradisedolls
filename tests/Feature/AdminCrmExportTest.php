@@ -8,6 +8,7 @@ use App\Models\ModelReferral;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use ZipArchive;
 
 class AdminCrmExportTest extends TestCase
 {
@@ -67,7 +68,7 @@ class AdminCrmExportTest extends TestCase
         $this->assertStringContainsString('/admin/applications/'.$application->id.'/photos/0/view', $csv);
     }
 
-    public function test_admin_can_download_onboarding_forms_csv_for_crm_import(): void
+    public function test_admin_can_download_designed_onboarding_workbook_for_crm_import(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $reviewer = User::factory()->create(['role' => 'admin', 'name' => 'Verifier Admin']);
@@ -117,19 +118,20 @@ class AdminCrmExportTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertDownload('paradise-onboarding-forms-'.now()->format('Y-m-d').'.csv');
+            ->assertDownload('paradise-onboarding-all-models-'.now()->format('Y-m-d').'.xlsx');
 
-        $csv = $response->streamedContent();
+        $text = $this->xlsxText($response->streamedContent());
 
-        $this->assertStringContainsString('"User ID","Profile ID",Name,Email', $csv);
-        $this->assertStringContainsString('CRM Model', $csv);
-        $this->assertStringContainsString('Legal CRM', $csv);
-        $this->assertStringContainsString('Stripchat; OnlyFans', $csv);
-        $this->assertStringContainsString('Latex: Yes; Feet: Maybe', $csv);
-        $this->assertStringContainsString('Verifier Admin', $csv);
+        $this->assertStringContainsString('Model Directory', $text);
+        $this->assertStringContainsString('Verification Tracker', $text);
+        $this->assertStringContainsString('Work Preferences', $text);
+        $this->assertStringContainsString('Onboarding Status', $text);
+        $this->assertStringContainsString('CRM Model', $text);
+        $this->assertStringContainsString('Stripchat; OnlyFans', $text);
+        $this->assertStringContainsString('Verifier Admin', $text);
     }
 
-    public function test_admin_can_download_single_onboarding_profile_csv_for_crm_import(): void
+    public function test_admin_can_download_single_designed_onboarding_profile_workbook_for_crm_import(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $selectedMember = User::factory()->create([
@@ -166,13 +168,49 @@ class AdminCrmExportTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertDownload('paradise-onboarding-selected-crm-model-'.now()->format('Y-m-d').'.csv');
+            ->assertDownload('paradise-onboarding-selected-crm-model-designed.xlsx');
 
-        $csv = $response->streamedContent();
+        $text = $this->xlsxText($response->streamedContent());
 
-        $this->assertStringContainsString('Selected CRM Model', $csv);
-        $this->assertStringContainsString('Selected Legal', $csv);
-        $this->assertStringNotContainsString('Other CRM Model', $csv);
-        $this->assertStringNotContainsString('Other Legal', $csv);
+        $this->assertStringContainsString('Profile Overview', $text);
+        $this->assertStringContainsString('Verification', $text);
+        $this->assertStringContainsString('Content Checklist', $text);
+        $this->assertStringContainsString('Summary Dashboard', $text);
+        $this->assertStringContainsString('Selected CRM Model', $text);
+        $this->assertStringContainsString('Selected Legal', $text);
+        $this->assertStringNotContainsString('Other CRM Model', $text);
+        $this->assertStringNotContainsString('Other Legal', $text);
+    }
+
+    private function xlsxText(string $contents): string
+    {
+        $path = tempnam(sys_get_temp_dir(), 'pd-xlsx-test-');
+        $this->assertNotFalse($path);
+
+        file_put_contents($path, $contents);
+
+        $zip = new ZipArchive();
+        $this->assertTrue($zip->open($path));
+
+        $text = '';
+
+        for ($index = 0; $index < $zip->numFiles; $index++) {
+            $name = $zip->getNameIndex($index);
+
+            if (! str_ends_with($name, '.xml')) {
+                continue;
+            }
+
+            $entry = $zip->getFromIndex($index);
+
+            if ($entry !== false) {
+                $text .= html_entity_decode($entry, ENT_QUOTES | ENT_XML1, 'UTF-8');
+            }
+        }
+
+        $zip->close();
+        @unlink($path);
+
+        return $text;
     }
 }
