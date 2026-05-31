@@ -68,6 +68,30 @@ class AdminCrmExportTest extends TestCase
         $this->assertStringContainsString('/admin/applications/'.$application->id.'/photos/0/view', $csv);
     }
 
+    public function test_applications_csv_neutralizes_spreadsheet_formulas(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        ModelApplication::create([
+            'name' => '=2+2',
+            'email' => 'formula-applicant@example.com',
+            'phone' => '+15550101',
+            'message' => '+SUM(1,1)',
+            'experience_level' => 'beginner',
+            'social_handle' => '@cmd',
+            'age_confirmed' => true,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->get(route('admin.applications.export'));
+
+        $csv = $response->streamedContent();
+
+        $this->assertStringContainsString("'=2+2", $csv);
+        $this->assertStringContainsString("'+SUM(1,1)", $csv);
+        $this->assertStringContainsString("'@cmd", $csv);
+    }
+
     public function test_admin_can_download_designed_onboarding_workbook_for_crm_import(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

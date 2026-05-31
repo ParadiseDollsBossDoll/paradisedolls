@@ -873,6 +873,9 @@ class AdminCrmExportController extends Controller
             echo $contents;
         }, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'private, no-store, max-age=0',
+            'Pragma' => 'no-cache',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 
@@ -1052,7 +1055,7 @@ class AdminCrmExportController extends Controller
             $stream = fopen('php://output', 'w');
 
             fwrite($stream, "\xEF\xBB\xBF");
-            fputcsv($stream, $headers);
+            fputcsv($stream, array_map(fn (mixed $value): string => $this->csvValue($value), $headers));
 
             foreach ($rows as $row) {
                 fputcsv($stream, array_map(fn (mixed $value): string => $this->csvValue($value), $row));
@@ -1061,6 +1064,9 @@ class AdminCrmExportController extends Controller
             fclose($stream);
         }, $filename, [
             'Content-Type' => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'private, no-store, max-age=0',
+            'Pragma' => 'no-cache',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 
@@ -1101,7 +1107,12 @@ class AdminCrmExportController extends Controller
             return $this->yesNo($value);
         }
 
-        return trim((string) $value);
+        return $this->spreadsheetSafeValue(trim((string) $value));
+    }
+
+    private function spreadsheetSafeValue(string $value): string
+    {
+        return preg_match('/^\s*[=+\-@]/u', $value) === 1 ? "'".$value : $value;
     }
 
     private function dateTime(mixed $value): string

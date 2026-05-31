@@ -933,6 +933,67 @@ class CourseEnrollmentFlowTest extends TestCase
             ->assertDontSee('Legacy overview should not render when blocks exist.');
     }
 
+    public function test_unpublished_lesson_media_is_not_accessible_to_enrolled_members(): void
+    {
+        Storage::fake('local');
+
+        $member = User::factory()->create(['role' => 'model']);
+        $course = Course::create([
+            'title' => 'Private Asset Guide',
+            'slug' => 'private-asset-guide',
+            'platform_label' => 'General',
+            'description' => 'A course with unpublished media.',
+            'is_published' => true,
+        ]);
+        $lesson = $course->lessons()->create([
+            'title' => 'Draft Media Lesson',
+            'lesson_banner_image' => 'academy/lesson-content/images/draft-banner.webp',
+            'is_published' => false,
+            'sort_order' => 1,
+        ]);
+
+        Storage::disk('local')->put('academy/lesson-content/images/draft-banner.webp', 'draft');
+
+        $this->unlockCourseFor($member, $course);
+
+        $this->actingAs($member)
+            ->get(route('member.courses.lessons.media', [$course->slug, $lesson, 'banner']))
+            ->assertNotFound();
+    }
+
+    public function test_unpublished_lesson_content_block_media_is_not_accessible_to_enrolled_members(): void
+    {
+        Storage::fake('local');
+
+        $member = User::factory()->create(['role' => 'model']);
+        $course = Course::create([
+            'title' => 'Private Block Guide',
+            'slug' => 'private-block-guide',
+            'platform_label' => 'General',
+            'description' => 'A course with unpublished block media.',
+            'is_published' => true,
+        ]);
+        $lesson = $course->lessons()->create([
+            'title' => 'Draft Block Lesson',
+            'is_published' => false,
+            'sort_order' => 1,
+        ]);
+        $block = $lesson->contentBlocks()->create([
+            'block_type' => 'image',
+            'title' => 'Draft Screenshot',
+            'image_path' => 'academy/lesson-content/images/draft-block.webp',
+            'sort_order' => 1,
+        ]);
+
+        Storage::disk('local')->put('academy/lesson-content/images/draft-block.webp', 'draft');
+
+        $this->unlockCourseFor($member, $course);
+
+        $this->actingAs($member)
+            ->get(route('member.courses.content-blocks.media', [$course->slug, $block, 'image']))
+            ->assertNotFound();
+    }
+
     public function test_empty_draft_content_blocks_still_suppress_legacy_member_layout(): void
     {
         $member = User::factory()->create(['role' => 'model']);

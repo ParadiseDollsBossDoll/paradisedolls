@@ -33,6 +33,7 @@ class CourseAssetController extends Controller
             ->firstOrFail();
 
         abort_unless((int) $lesson->course_id === (int) $course->id, 404);
+        abort_unless($lesson->is_published, 404);
 
         $path = match ($kind) {
             'banner' => $lesson->lesson_banner_image,
@@ -51,7 +52,12 @@ class CourseAssetController extends Controller
     {
         $block->loadMissing('lesson.course');
 
-        abort_unless($block->lesson?->course?->slug === $slug && $block->lesson->course->is_published, 404);
+        abort_unless(
+            $block->lesson?->course?->slug === $slug
+            && $block->lesson->course->is_published
+            && $block->lesson->is_published,
+            404
+        );
 
         $path = match ($field) {
             'image' => $block->image_path,
