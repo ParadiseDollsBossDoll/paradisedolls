@@ -1,12 +1,37 @@
 # Paradise Dolls Project Handover And Technical Overview
 
-Last updated: 2026-05-24
+Last updated: 2026-05-30
 
 ## Purpose
 
 This document is the main handover reference for the Paradise Dolls web application. It explains what the project is, how it is hosted, what services it depends on, what admins can edit, how course content is managed, and what a new developer or project owner needs before taking over maintenance.
 
 Do not store passwords, API keys, private SSH keys, database dumps, or production `.env` values in this document or in Git.
+
+## Handover Package Summary
+
+This handover should be delivered together with a separate secure credentials package.
+
+Documentation included:
+
+- Technical overview and system architecture.
+- Hosting, deployment, and maintenance notes.
+- Third-party service inventory.
+- Environment variable checklist.
+- Ownership transfer checklist.
+- Course materials checklist.
+- Final review checklist.
+
+Credentials and assets to provide separately:
+
+- Hosting, VPS, SSH, and deployment credentials.
+- Domain, DNS, and billing access.
+- GitHub repository/admin access.
+- Production `.env` values.
+- Database and storage backups.
+- Bunny, Resend, and other service credentials.
+- Website admin accounts.
+- Source assets, course files, videos, PDFs, and brand files.
 
 ## Project Summary
 
@@ -104,6 +129,39 @@ The domain should point to the VPS IP with DNS records similar to:
 
 Email provider DNS records are also required for Resend or any future email provider.
 
+### GitHub / GitHub Actions
+
+GitHub stores the source code and runs the production deployment workflow.
+
+The repository includes `.github/workflows/deploy.yml`, which builds the Laravel/Vite app and deploys it to the Hostinger VPS over SSH.
+
+Required GitHub access:
+
+- Repository owner/admin access.
+- GitHub Actions access.
+- GitHub Actions deployment secrets.
+- Branch/deployment workflow ownership.
+
+Required GitHub Actions secrets:
+
+```env
+VPS_HOST=
+VPS_PORT=
+VPS_USER=
+VPS_SSH_PRIVATE_KEY=
+DEPLOY_PATH=
+VITE_REVERB_APP_KEY=
+VITE_REVERB_HOST=
+VITE_REVERB_PORT=
+VITE_REVERB_SCHEME=
+```
+
+Important notes:
+
+- The deployment key should be rotated after handover.
+- The client should own the repository or be added as an owner/admin.
+- If the VPS user or deploy path changes, update GitHub Actions secrets before deploying again.
+
 ### Bunny Stream / Bunny CDN
 
 Bunny is used for course video hosting and playback.
@@ -152,6 +210,30 @@ Test command:
 php artisan mail:test recipient@example.com
 ```
 
+### Gmail / Google Workspace SMTP
+
+The local environment is configured to send mail through Gmail SMTP. This appears to be an alternate or fallback email setup to Resend.
+
+Environment keys:
+
+```env
+MAIL_MAILER=smtp
+MAIL_SCHEME=smtps
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=465
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_FROM_ADDRESS=
+MAIL_FROM_NAME=
+```
+
+Important notes:
+
+- `MAIL_PASSWORD` should be a Google App Password, not the normal mailbox password.
+- The sending mailbox should be transferred to the client or replaced with a client-owned mailbox.
+- After handover, rotate the Google App Password and update the production `.env` if SMTP is used.
+- Production documentation currently recommends Resend; use only one live mail provider unless failover is intentionally configured.
+
 ### Laravel Reverb
 
 Laravel Reverb powers real-time community chat events.
@@ -179,6 +261,7 @@ VITE_REVERB_SCHEME=https
 Important notes:
 
 - Reverb is supervised by Supervisor.
+- The frontend uses `laravel-echo` and `pusher-js` to connect to the Reverb-compatible WebSocket endpoint.
 - If community broadcasts fail, check `php artisan queue:failed`, Supervisor logs, and Reverb `.env` values.
 
 ### Redis
@@ -224,6 +307,25 @@ PARADISE_COMMUNITY_ROLE_NAME=
 ```
 
 The public/community flow now mainly uses the internal community chat and course community access. If Discord is no longer part of the business process, keep this value updated or remove the workflow in a future cleanup.
+
+### Google Drive / Google Docs Embeds
+
+Lesson content supports embedded Google Drive and Google Docs presentation/PDF links. These are content links, not an API integration.
+
+Handover requirement:
+
+- Client must own or have editor access to any Google Drive files linked inside course lessons.
+- Shared files should have the correct visibility for student viewing.
+- If files remain in the developer's Google Drive, transfer ownership or replace the links before final handover.
+
+### FlagCDN
+
+The onboarding country selector loads flag images from `flagcdn.com`.
+
+Handover requirement:
+
+- No account or API key is required.
+- The site depends on this public CDN for country flag images unless the assets are later self-hosted.
 
 ## Main Application Features
 

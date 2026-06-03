@@ -36,13 +36,16 @@ class ApplyController extends Controller
             'instagram_handle' => ['nullable', 'string', 'max:255'],
             'tiktok_handle' => ['nullable', 'string', 'max:255'],
             'photos' => ['nullable', 'array', 'max:6'],
-            'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'age_confirmed' => ['accepted'],
             'referral_code' => ['nullable', 'string', 'max:32'],
         ], [
             'email.email' => __('Please enter a valid email address, like name@example.com.'),
             'phone_country.required_with' => __('Please choose a country code for your phone number.'),
             'phone_country.in' => __('Please choose a valid country code.'),
+            'photos.max' => __('Please upload up to 6 photos only.'),
+            'photos.*.max' => __('Each photo must be 10 MB or smaller.'),
+            'photos.*.mimes' => __('Photos must be JPG, PNG, or WEBP files.'),
         ]);
 
         $validator->after(function ($validator) use ($request): void {

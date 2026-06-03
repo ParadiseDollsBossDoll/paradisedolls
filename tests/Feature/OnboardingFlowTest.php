@@ -55,6 +55,27 @@ class OnboardingFlowTest extends TestCase
         Mail::assertSent(ApplicationSubmittedMail::class);
     }
 
+    public function test_application_submission_rejects_photos_larger_than_ten_megabytes(): void
+    {
+        Mail::fake();
+        Storage::fake('local');
+
+        $this->post(route('apply.store'), [
+            'name' => 'Kayla Test',
+            'email' => 'kayla@example.com',
+            'phone_country' => 'PH',
+            'phone_number' => '912 345 6789',
+            'experience_level' => 'beginner',
+            'age_confirmed' => '1',
+            'photos' => [
+                $this->fakeLargePng('large-photo.png'),
+            ],
+        ])->assertSessionHasErrors('photos.0');
+
+        $this->assertDatabaseCount('model_applications', 0);
+        Mail::assertNothingSent();
+    }
+
     public function test_application_submission_rejects_invalid_phone_numbers(): void
     {
         Mail::fake();
@@ -1059,5 +1080,12 @@ class OnboardingFlowTest extends TestCase
         $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=');
 
         return UploadedFile::fake()->createWithContent($name, $png);
+    }
+
+    private function fakeLargePng(string $name): UploadedFile
+    {
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=');
+
+        return UploadedFile::fake()->createWithContent($name, str_pad($png, (10 * 1024 * 1024) + 1, '0'));
     }
 }

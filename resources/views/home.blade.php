@@ -496,7 +496,7 @@
                             <p class="mt-2 hidden text-[0.76rem] leading-relaxed text-red-600" data-photo-error></p>
                             <div class="mt-3 grid gap-3 sm:grid-cols-2" data-photo-preview></div>
                         </div>
-                        <p class="mt-2 text-[0.72rem] text-boss-dark/38">{{ __('Upload up to 6 clear photos. JPG, PNG, or WEBP.') }}</p>
+                        <p class="mt-2 text-[0.72rem] text-boss-dark/38">{{ __('Upload up to 6 clear photos. JPG, PNG, or WEBP. Max 10MB each.') }}</p>
                         <x-input-error class="mt-1.5" :messages="$errors->get('photos')" />
                         <x-input-error class="mt-1.5" :messages="$errors->get('photos.*')" />
                     </div>
@@ -513,7 +513,11 @@
                     </div>
                     <x-input-error class="-mt-2" :messages="$errors->get('age_confirmed')" />
 
-                    <button type="submit" class="w-full rounded-md bg-[#EEB4C3] py-4 text-[0.75rem] uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Submit Application') }}</button>
+                    <button type="submit" data-application-submit class="flex w-full items-center justify-center gap-3 rounded-md bg-[#EEB4C3] py-4 text-[0.75rem] uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#e0a0b5] disabled:cursor-not-allowed disabled:opacity-70">
+                        <span data-submit-spinner class="hidden h-4 w-4 rounded-full border-2 border-white/40 border-t-white motion-safe:animate-spin" aria-hidden="true"></span>
+                        <span data-submit-label>{{ __('Submit Application') }}</span>
+                        <span data-submit-loading-label class="hidden">{{ __('Submitting...') }}</span>
+                    </button>
                     <p class="text-center text-[0.75rem] text-boss-dark/40">{{ marketing_content('home.apply.footer_note') }}</p>
                 </form>
                 <script>

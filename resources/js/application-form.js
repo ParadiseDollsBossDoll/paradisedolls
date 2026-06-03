@@ -1,5 +1,6 @@
 const phoneDigitCount = (value) => value.replace(/\D/g, '').length;
 const maxPhotoCount = 6;
+const maxPhotoSize = 10 * 1024 * 1024;
 const photoTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 const photoKey = (file) => `${file.name}-${file.size}-${file.lastModified}`;
@@ -35,6 +36,10 @@ document.querySelectorAll('[data-application-form], [data-phone-form]').forEach(
     const photoInput = form.querySelector('[data-photo-input]');
     const photoPreview = form.querySelector('[data-photo-preview]');
     const photoSummary = form.querySelector('[data-photo-summary]');
+    const submitButton = form.querySelector('[data-application-submit]');
+    const submitLabel = submitButton?.querySelector('[data-submit-label]');
+    const submitLoadingLabel = submitButton?.querySelector('[data-submit-loading-label]');
+    const submitSpinner = submitButton?.querySelector('[data-submit-spinner]');
     let selectedPhotos = [];
     let previewUrls = [];
 
@@ -203,6 +208,11 @@ document.querySelectorAll('[data-application-form], [data-phone-form]').forEach(
                 continue;
             }
 
+            if (file.size > maxPhotoSize) {
+                showPhotoError(`"${file.name}" is too large. Each photo must be 10 MB or smaller.`);
+                continue;
+            }
+
             const key = photoKey(file);
 
             if (existingKeys.has(key)) {
@@ -268,6 +278,16 @@ document.querySelectorAll('[data-application-form], [data-phone-form]').forEach(
         if (!emailIsValid || !phonesAreValid) {
             event.preventDefault();
             form.reportValidity();
+            return;
+        }
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitSpinner?.classList.remove('hidden');
+
+            if (submitLabel && submitLoadingLabel) {
+                submitLabel.textContent = submitLoadingLabel.textContent;
+            }
         }
     });
 });
