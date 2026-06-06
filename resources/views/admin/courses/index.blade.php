@@ -64,19 +64,22 @@
                         $image = $course->overviewImageUrl();
                     @endphp
 
-                    <article class="group flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-boss-ink transition-all duration-300 hover:border-white/[0.10] hover:shadow-glow">
+                    <article
+                        class="pd-admin-course-card group flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-boss-ink transition-all duration-300 hover:border-white/[0.10] hover:shadow-glow"
+                        style="--pd-admin-course-accent: {{ $color }};"
+                    >
 
                         {{-- ── Image area ─────────────────────────────────── --}}
-                        <div class="relative h-[210px] shrink-0 overflow-hidden">
+                        <div class="pd-admin-course-card-media relative h-[210px] shrink-0 overflow-hidden">
                             @if ($image)
                                 <img
                                     src="{{ $image }}"
                                     alt="{{ $course->title }}"
-                                    class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+                                    class="pd-admin-course-card-image absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
                                 >
-                                <div class="absolute inset-0 bg-gradient-to-t from-boss-ink via-boss-ink/15 to-transparent"></div>
+                                <div class="pd-admin-course-card-image-overlay absolute inset-0 bg-gradient-to-t from-boss-ink via-boss-ink/15 to-transparent"></div>
                             @else
-                                <div class="absolute inset-0" style="background: linear-gradient(135deg, {{ $course->displayColorBackground(0.45) }}, rgba(8,8,15,0.95) 70%);"></div>
+                                <div class="pd-admin-course-card-fallback absolute inset-0" style="background: linear-gradient(135deg, {{ $course->displayColorBackground(0.45) }}, rgba(8,8,15,0.95) 70%);"></div>
                                 <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,rgba(238,180,195,0.10),transparent_55%)]"></div>
                                 <div class="absolute inset-0 flex items-center justify-center overflow-hidden px-6">
                                     <p class="select-none text-center font-display text-[2rem] font-bold leading-tight text-white opacity-[0.04]">{{ $course->title }}</p>
@@ -85,17 +88,17 @@
 
                             {{-- Top-left: platform + publish status --}}
                             <div class="absolute left-4 top-4 flex items-center gap-2">
-                                <span class="rounded-full border px-2.5 py-0.5 text-[0.6rem] font-medium backdrop-blur-sm"
+                                <span class="pd-admin-course-card-platform-badge rounded-full border px-2.5 py-0.5 text-[0.6rem] font-medium backdrop-blur-sm"
                                       style="background: {{ $bg }}; color: {{ $color }}; border-color: {{ $color }}22;">
                                     {{ $course->displayPlatform() }}
                                 </span>
                                 @if ($course->is_published)
-                                    <span class="flex items-center gap-1 rounded-full border border-emerald-400/25 bg-black/40 px-2.5 py-0.5 text-[0.6rem] text-emerald-400 backdrop-blur-sm">
+                                    <span class="pd-admin-course-card-state-badge pd-admin-course-card-state-badge-live flex items-center gap-1 rounded-full border border-emerald-400/25 bg-black/40 px-2.5 py-0.5 text-[0.6rem] text-emerald-400 backdrop-blur-sm">
                                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
                                         {{ __('Live') }}
                                     </span>
                                 @else
-                                    <span class="flex items-center gap-1 rounded-full border border-white/[0.10] bg-black/40 px-2.5 py-0.5 text-[0.6rem] text-boss-ivory/45 backdrop-blur-sm">
+                                    <span class="pd-admin-course-card-state-badge pd-admin-course-card-state-badge-draft flex items-center gap-1 rounded-full border border-white/[0.10] bg-black/40 px-2.5 py-0.5 text-[0.6rem] text-boss-ivory/45 backdrop-blur-sm">
                                         <span class="h-1.5 w-1.5 rounded-full bg-boss-ivory/30"></span>
                                         {{ __('Draft') }}
                                     </span>
@@ -104,7 +107,7 @@
 
                             {{-- Top-right: lesson count --}}
                             <div class="absolute right-4 top-4">
-                                <span class="rounded-full border border-white/[0.08] bg-black/40 px-2.5 py-0.5 text-[0.6rem] text-boss-ivory/45 backdrop-blur-sm">
+                                <span class="pd-admin-course-card-lesson-badge rounded-full border border-white/[0.08] bg-black/40 px-2.5 py-0.5 text-[0.6rem] text-boss-ivory/45 backdrop-blur-sm">
                                     {{ trans_choice(':count lesson|:count lessons', $course->lessons_count, ['count' => $course->lessons_count]) }}
                                 </span>
                             </div>
@@ -119,10 +122,10 @@
 
                             {{-- Title + description --}}
                             <div class="flex-1">
-                                <h2 class="pd-heading line-clamp-2 text-[1.05rem] leading-snug text-boss-ivory transition-colors duration-300 group-hover:text-boss-gold-light">
+                                <h2 class="pd-admin-course-card-title pd-heading line-clamp-2 text-[1.05rem] leading-snug text-boss-ivory transition-colors duration-300 group-hover:text-boss-gold-light">
                                     {{ $course->title }}
                                 </h2>
-                                <p class="mt-2 line-clamp-2 text-[0.74rem] leading-relaxed text-boss-ivory/30">
+                                <p class="pd-admin-course-card-description mt-2 line-clamp-2 text-[0.74rem] leading-relaxed text-boss-ivory/30">
                                     {{ $course->description ?: __('No description provided.') }}
                                 </p>
                             </div>
@@ -262,5 +265,3 @@
 
     </div>
 </x-admin-layout>
-
-

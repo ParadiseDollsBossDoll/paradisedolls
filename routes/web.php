@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\Admin\AdminApplicationController;
 use App\Http\Controllers\Admin\AdminAcademyFileController;
+use App\Http\Controllers\Admin\AdminApplicationController;
 use App\Http\Controllers\Admin\AdminCourseController;
 use App\Http\Controllers\Admin\AdminCrmExportController;
 use App\Http\Controllers\Admin\AdminDashboardController;
@@ -21,8 +21,8 @@ use App\Http\Controllers\Community\CommunityModerationController;
 use App\Http\Controllers\Community\CommunityPresenceController;
 use App\Http\Controllers\Community\MessageReactionController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\Member\CourseChatController;
 use App\Http\Controllers\Member\CourseAssetController;
+use App\Http\Controllers\Member\CourseChatController;
 use App\Http\Controllers\Member\LessonProgressController;
 use App\Http\Controllers\Member\MemberCourseController;
 use App\Http\Controllers\Member\MemberDashboardController;
@@ -33,6 +33,7 @@ use App\Http\Controllers\Member\MemberVerificationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TestimonialController;
+use App\Http\Controllers\TranslationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -45,6 +46,11 @@ Route::view('/work-from-paradise', 'marketing.work-from-paradise')->name('work-f
 Route::view('/perks', 'marketing.perks')->name('perks');
 Route::view('/multistreaming', 'marketing.multistreaming')->name('multistreaming');
 Route::get('/success-stories', TestimonialController::class)->name('success-stories');
+
+Route::middleware('throttle:translation')->prefix('translation')->name('translation.')->group(function () {
+    Route::get('/languages', [TranslationController::class, 'languages'])->name('languages');
+    Route::post('/translate', [TranslationController::class, 'translate'])->name('translate');
+});
 
 Route::get('/apply', [ApplyController::class, 'create'])->name('apply');
 Route::post('/apply', [ApplyController::class, 'store'])
