@@ -6,6 +6,7 @@ use App\Mail\ApplicationSubmittedMail;
 use App\Models\ModelApplication;
 use App\Models\ModelReferral;
 use App\Models\User;
+use App\Support\CountryCallingCodes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -25,11 +26,12 @@ class ApplyController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $callingCodes = config('country_calling_codes', []);
+        $phonePrefixLookup = CountryCallingCodes::phonePrefixLookup($callingCodes);
 
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
-            'phone_country' => ['nullable', 'required_with:phone_number', 'string', Rule::in(array_keys($callingCodes))],
+            'phone_country' => ['nullable', 'required_with:phone_number', 'string', Rule::in(array_keys($phonePrefixLookup))],
             'phone_number' => ['nullable', 'string', 'max:32'],
             'message' => ['nullable', 'string', 'max:5000'],
             'experience_level' => ['required', 'string', 'max:64'],
@@ -76,7 +78,7 @@ class ApplyController extends Controller
         });
 
         $validated = $validator->validate();
-        $phone = $this->normalizePhone($validated, $callingCodes);
+        $phone = $this->normalizePhone($validated, $phonePrefixLookup);
 
         $socialHandle = implode(' / ', array_filter([
             trim((string) ($validated['instagram_handle'] ?? '')),
@@ -105,7 +107,7 @@ class ApplyController extends Controller
         return redirect()->route('home')->withFragment('apply')->with('application_sent', true);
     }
 
-    private function normalizePhone(array $validated, array $callingCodes): ?string
+    private function normalizePhone(array $validated, array $phonePrefixLookup): ?string
     {
         $phoneNumber = trim((string) ($validated['phone_number'] ?? ''));
 
@@ -114,7 +116,7 @@ class ApplyController extends Controller
         }
 
         $country = $validated['phone_country'] ?? 'GB';
-        $countryCode = $callingCodes[$country]['code'] ?? null;
+        $countryCode = $phonePrefixLookup[$country]['prefix'] ?? null;
 
         if (! $countryCode) {
             return null;

@@ -93,6 +93,22 @@ class OnboardingFlowTest extends TestCase
         Mail::assertNothingSent();
     }
 
+    public function test_application_submission_accepts_expanded_country_phone_prefixes(): void
+    {
+        Mail::fake();
+
+        $this->post(route('apply.store'), [
+            'name' => 'Island Applicant',
+            'email' => 'island@example.com',
+            'phone_country' => 'DO-829',
+            'phone_number' => '555 1234',
+            'experience_level' => 'beginner',
+            'age_confirmed' => '1',
+        ])->assertRedirect(route('home').'#apply');
+
+        $this->assertSame('+18295551234', ModelApplication::first()?->phone);
+    }
+
     public function test_application_submission_rejects_invalid_email_addresses(): void
     {
         Mail::fake();

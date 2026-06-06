@@ -67,10 +67,10 @@
                                     get filtered() {
                                         const q = this.search.trim().toLowerCase();
                                         if (!q) return this.countries;
+                                        const qDigits = q.replace(/\D/g, '');
                                         return this.countries.filter(c =>
-                                            c.code.replace('+','').startsWith(q) ||
-                                            c.code.includes(q) ||
-                                            c.name.toLowerCase().includes(q)
+                                            `${c.search || ''} ${c.code} ${c.name}`.toLowerCase().includes(q) ||
+                                            (qDigits && `${c.search || ''} ${c.code}`.replace(/\D/g, '').includes(qDigits))
                                         );
                                     },
                                     openDropdown() {

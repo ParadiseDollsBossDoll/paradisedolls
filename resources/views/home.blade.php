@@ -10,17 +10,8 @@
         $blueprintOrder = marketing_items('home.blueprint.order_items');
         $groundedCards = marketing_items('home.grounded.cards');
         $countryCallingCodes = config('country_calling_codes', []);
-        $selectedPhoneCountry = old('phone_country', 'GB');
-        $phoneCountries = collect($countryCallingCodes)
-            ->map(fn (array $country, string $countryCode) => [
-                'value'   => $countryCode,
-                'name'    => $country['name'],
-                'code'    => $country['code'],
-                'dialNum' => (int) ltrim($country['code'], '+'),
-                'flag'    => 'https://flagcdn.com/w40/'.strtolower($countryCode).'.png',
-            ])
-            ->sortBy('dialNum')
-            ->values();
+        $phoneCountries = \App\Support\CountryCallingCodes::phoneOptions($countryCallingCodes);
+        $selectedPhoneCountry = \App\Support\CountryCallingCodes::normalizeSelection(old('phone_country', 'GB'), $phoneCountries);
     @endphp
 
     <section class="relative flex min-h-screen items-center overflow-hidden">
@@ -346,10 +337,10 @@
                                         get filtered() {
                                             const q = this.search.trim().toLowerCase();
                                             if (!q) return this.countries;
+                                            const qDigits = q.replace(/\D/g, '');
                                             return this.countries.filter(c =>
-                                                c.code.replace('+','').startsWith(q) ||
-                                                c.code.includes(q) ||
-                                                c.name.toLowerCase().includes(q)
+                                                `${c.search || ''} ${c.code} ${c.name}`.toLowerCase().includes(q) ||
+                                                (qDigits && `${c.search || ''} ${c.code}`.replace(/\D/g, '').includes(qDigits))
                                             );
                                         },
                                         openDropdown() {
