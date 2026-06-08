@@ -21,15 +21,16 @@
 @endphp
 
 <nav
+    data-pd-marketing-navbar
     class="fixed left-0 right-0 top-0 z-50 transition-all duration-300"
     x-bind:class="transparent && !scrolled && !navOpen ? 'bg-transparent' : 'bg-white/[0.97] backdrop-blur-md border-b border-boss-rose/15 shadow-sm'"
     {{ $attributes }}
 >
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="flex h-16 items-center justify-between md:h-20">
+        <div class="pd-marketing-navbar-row flex h-16 items-center justify-between md:h-20">
             <a
                 href="{{ route('home') }}"
-                class="inline-flex items-center transition-opacity duration-300 hover:opacity-85"
+                class="pd-marketing-navbar-logo inline-flex items-center transition-opacity duration-300 hover:opacity-85"
                 aria-label="{{ config('app.name') }}"
             >
                 <img
@@ -39,7 +40,7 @@
                 >
             </a>
 
-            <div class="hidden items-center gap-7 lg:flex">
+            <div class="pd-marketing-navbar-links hidden items-center xl:flex">
                 @foreach ($links as $link)
                     @if (($link['auth'] ?? false) && ! $isAuthenticated)
                         @continue
@@ -47,7 +48,8 @@
 
                     <a
                         href="{{ route($link['route']) }}"
-                        class="text-[0.65rem] uppercase tracking-[0.14em] transition-colors duration-200 hover:text-boss-gold {{ request()->routeIs($link['route']) ? 'text-boss-gold' : '' }}"
+                        title="{{ $link['label'] }}"
+                        class="pd-marketing-navbar-link text-[0.65rem] uppercase tracking-[0.14em] transition-colors duration-200 hover:text-boss-gold {{ request()->routeIs($link['route']) ? 'text-boss-gold' : '' }}"
                         x-bind:class="transparent && !scrolled && !navOpen ? 'text-white/90' : 'text-boss-dark'"
                     >
                         {{ $link['label'] }}
@@ -55,11 +57,18 @@
                 @endforeach
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="pd-marketing-navbar-actions flex items-center gap-3">
+                <x-language-selector
+                    tone="plain"
+                    class="hidden md:inline-flex shrink-0"
+                    x-bind:class="transparent && !scrolled && !navOpen ? 'border-white/35 bg-black/10 text-white hover:border-white/60' : 'border-boss-rose/25 bg-white/80 text-boss-dark hover:border-boss-rose/45'"
+                />
+
                 @unless ($isAuthenticated)
                     <a
                         href="{{ route('login') }}"
-                        class="hidden rounded-md border border-current px-6 py-2.5 text-[0.65rem] uppercase tracking-[0.14em] transition-all duration-300 hover:border-[#EEB4C3] hover:bg-[#EEB4C3] hover:text-white md:inline-flex"
+                        title="{{ marketing_content('shared.nav.login_label') }}"
+                        class="pd-marketing-navbar-action pd-marketing-navbar-login hidden rounded-md border border-current px-6 py-2.5 text-[0.65rem] uppercase tracking-[0.14em] transition-all duration-300 hover:border-[#EEB4C3] hover:bg-[#EEB4C3] hover:text-white md:inline-flex"
                         x-bind:class="transparent && !scrolled && !navOpen ? 'text-white' : 'text-boss-dark'"
                     >
                         {{ marketing_content('shared.nav.login_label') }}
@@ -68,14 +77,15 @@
 
                 <a
                     href="{{ $applyUrl }}"
-                    class="hidden rounded-md bg-[#EEB4C3] px-4 py-2 text-[0.65rem] uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#e0a0b5] md:inline-flex"
+                    title="{{ marketing_content('shared.nav.apply_label') }}"
+                    class="pd-marketing-navbar-action pd-marketing-navbar-apply hidden rounded-md bg-[#EEB4C3] px-4 py-2 text-[0.65rem] uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#e0a0b5] md:inline-flex"
                 >
                     {{ marketing_content('shared.nav.apply_label') }}
                 </a>
 
                 <button
                     type="button"
-                    class="rounded-sm p-2 lg:hidden"
+                    class="rounded-sm p-2 xl:hidden"
                     @click="navOpen = !navOpen"
                     aria-label="{{ __('Menu') }}"
                 >
@@ -92,7 +102,11 @@
             </div>
         </div>
 
-        <div x-cloak x-show="navOpen" x-transition class="border-t border-boss-pink bg-white py-4 lg:hidden">
+        <div x-cloak x-show="navOpen" x-transition class="border-t border-boss-pink bg-white py-4 xl:hidden">
+            <div class="px-4 pb-3">
+                <x-language-selector class="w-full justify-center" />
+            </div>
+
             @foreach ($links as $link)
                 @if (($link['auth'] ?? false) && ! $isAuthenticated)
                     @continue

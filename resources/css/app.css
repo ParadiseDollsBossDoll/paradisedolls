@@ -1840,6 +1840,125 @@ html.light-mode .border-emerald-400\/25   { border-color: rgba(52,211,153,0.4) !
 html.light-mode .bg-red-400\/10           { background-color: rgba(248,113,113,0.12) !important; }
 html.light-mode .border-red-400\/20       { border-color: rgba(248,113,113,0.35) !important; }
 
+/* Public image heroes: keep copy readable over photos in light mode. */
+.pd-marketing-image-hero,
+html.light-mode .pd-marketing-image-hero {
+    color: #FFF8F6 !important;
+}
+
+.pd-marketing-image-hero-title,
+html.light-mode .pd-marketing-image-hero-title {
+    color: #FFF8F6 !important;
+    text-shadow:
+        0 2px 16px rgba(0, 0, 0, 0.68),
+        0 0 34px rgba(0, 0, 0, 0.42);
+}
+
+.pd-marketing-image-hero-body,
+html.light-mode .pd-marketing-image-hero-body {
+    color: rgba(255, 248, 246, 0.86) !important;
+    text-shadow:
+        0 1px 10px rgba(0, 0, 0, 0.78),
+        0 0 24px rgba(0, 0, 0, 0.52);
+}
+
+.pd-marketing-image-hero-eyebrow,
+html.light-mode .pd-marketing-image-hero-eyebrow {
+    color: #F2C7D2 !important;
+    text-shadow:
+        0 1px 10px rgba(0, 0, 0, 0.72),
+        0 0 18px rgba(0, 0, 0, 0.45);
+}
+
+/* Public navbar: translated labels can be much longer than English. */
+.pd-marketing-navbar-row {
+    min-width: 0;
+    gap: clamp(0.75rem, 1.35vw, 1.75rem);
+}
+
+.pd-marketing-navbar-logo {
+    flex: 0 0 auto;
+}
+
+.pd-marketing-navbar-links {
+    min-width: 0;
+    flex: 1 1 auto;
+    justify-content: center;
+    gap: clamp(0.8rem, 1.45vw, 1.75rem);
+}
+
+.pd-marketing-navbar-link {
+    display: inline-block;
+    max-width: 8.75rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pd-marketing-navbar-actions {
+    min-width: 0;
+    flex: 0 1 auto;
+    gap: clamp(0.5rem, 0.8vw, 0.75rem);
+}
+
+.pd-marketing-navbar-action {
+    align-items: center;
+    justify-content: center;
+    min-height: 2.25rem;
+    overflow: hidden;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pd-marketing-navbar-login {
+    max-width: 7.5rem;
+}
+
+.pd-marketing-navbar-apply {
+    max-width: 12rem;
+}
+
+html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-links {
+    gap: clamp(0.55rem, 1vw, 1.05rem);
+}
+
+html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-link {
+    max-width: 7.5rem;
+    font-size: 0.56rem !important;
+    letter-spacing: 0.075em !important;
+}
+
+html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-action {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    font-size: 0.56rem !important;
+    letter-spacing: 0.075em !important;
+}
+
+html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-login {
+    max-width: 6.75rem;
+}
+
+html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-apply {
+    max-width: 10.25rem;
+}
+
+@media (min-width: 1280px) and (max-width: 1380px) {
+    .pd-marketing-navbar-link {
+        max-width: 7.5rem;
+    }
+
+    html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-link {
+        max-width: 6.4rem;
+    }
+
+    html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-apply {
+        max-width: 9rem;
+    }
+}
+
 /* Course library cards: keep the course accent visible on titles. */
 .pd-course-card-title {
     color: var(--pd-course-card-accent, #FFF8F6) !important;
@@ -2006,4 +2125,117 @@ html.light-mode .pd-admin-course-card-title {
 
 html.light-mode .pd-admin-course-card-description {
     color: rgba(26, 14, 20, 0.78) !important;
+}
+
+/* Admin onboarding: keep profile details and walkthrough cards readable in light mode. */
+html.light-mode .pd-admin-onboarding {
+    color: #1A0E14 !important;
+}
+
+html.light-mode .pd-admin-onboarding .text-boss-ivory {
+    color: #1A0E14 !important;
+}
+
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/90,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/85,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/80,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/75,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/72,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/70,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/65,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/60 {
+    color: rgba(26, 14, 20, 0.84) !important;
+}
+
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/55,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/50,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/45,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/42,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/40,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/38,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/35 {
+    color: rgba(26, 14, 20, 0.68) !important;
+}
+
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/33,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/30,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/28,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/25,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/24,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/22,
+html.light-mode .pd-admin-onboarding .text-boss-ivory\/20 {
+    color: rgba(26, 14, 20, 0.58) !important;
+}
+
+html.light-mode .pd-admin-onboarding [class*="text-boss-ivory/["],
+html.light-mode .pd-admin-onboarding [class*="text-white/["],
+html.light-mode .pd-admin-onboarding [class*="text-white/"] {
+    color: rgba(26, 14, 20, 0.72) !important;
+}
+
+html.light-mode .pd-admin-onboarding .pd-panel-strong,
+html.light-mode .pd-admin-onboarding .pd-stat,
+html.light-mode .pd-admin-onboarding .pd-onboarding-access-panel {
+    background: #FFF8FB !important;
+    border-color: rgba(238, 180, 195, 0.48) !important;
+    box-shadow: 0 16px 42px rgba(26, 14, 20, 0.07);
+}
+
+html.light-mode .pd-admin-onboarding .pd-onboarding-access-row,
+html.light-mode .pd-admin-onboarding .pd-onboarding-access-card {
+    background: #FFF1F6 !important;
+    border-color: rgba(238, 180, 195, 0.52) !important;
+    box-shadow: 0 10px 26px rgba(26, 14, 20, 0.045);
+}
+
+html.light-mode .pd-admin-onboarding .pd-onboarding-access-row [class*="bg-white/"],
+html.light-mode .pd-admin-onboarding .pd-onboarding-access-card [class*="bg-white/"],
+html.light-mode .pd-admin-onboarding .pd-onboarding-access-panel [class*="bg-white/"] {
+    background-color: rgba(255, 255, 255, 0.62) !important;
+}
+
+html.light-mode .pd-admin-onboarding .pd-onboarding-access-row [class*="bg-black/"],
+html.light-mode .pd-admin-onboarding .pd-onboarding-access-card [class*="bg-black/"] {
+    background-color: rgba(26, 14, 20, 0.055) !important;
+}
+
+html.light-mode .pd-admin-onboarding .pd-onboarding-access-row [class*="border-white/"],
+html.light-mode .pd-admin-onboarding .pd-onboarding-access-card [class*="border-white/"],
+html.light-mode .pd-admin-onboarding .pd-onboarding-access-panel [class*="border-white/"] {
+    border-color: rgba(181, 82, 122, 0.22) !important;
+}
+
+html.light-mode .pd-admin-onboarding .pd-onboarding-access-row p,
+html.light-mode .pd-admin-onboarding .pd-onboarding-access-card p,
+html.light-mode .pd-admin-onboarding .pd-onboarding-access-panel p {
+    text-shadow: none !important;
+}
+
+html.light-mode .pd-admin-onboarding .disabled\:text-boss-ivory\/24:disabled {
+    color: rgba(26, 14, 20, 0.52) !important;
+}
+
+/* Final public hero safety net: never let light-mode text utilities darken photo hero copy. */
+.pd-marketing-image-hero .pd-marketing-image-hero-title,
+html.light-mode .pd-marketing-image-hero .pd-marketing-image-hero-title {
+    color: #FFF8F6 !important;
+    text-shadow:
+        0 2px 18px rgba(0, 0, 0, 0.74),
+        0 0 36px rgba(0, 0, 0, 0.46) !important;
+}
+
+.pd-marketing-image-hero .pd-marketing-image-hero-body,
+html.light-mode .pd-marketing-image-hero .pd-marketing-image-hero-body {
+    color: rgba(255, 248, 246, 0.92) !important;
+    text-shadow:
+        0 1px 12px rgba(0, 0, 0, 0.84),
+        0 0 26px rgba(0, 0, 0, 0.58) !important;
+}
+
+.pd-marketing-image-hero .pd-marketing-image-hero-eyebrow,
+html.light-mode .pd-marketing-image-hero .pd-marketing-image-hero-eyebrow {
+    color: #F2C7D2 !important;
+    text-shadow:
+        0 1px 10px rgba(0, 0, 0, 0.76),
+        0 0 20px rgba(0, 0, 0, 0.5) !important;
 }

@@ -44,4 +44,23 @@ return [
         'timeout' => (int) env('BUNNY_TIMEOUT', 30),
     ],
 
+    'translation' => [
+        'enabled' => env('TRANSLATION_ENABLED', false),
+        'provider' => env('TRANSLATION_PROVIDER', 'google'),
+        'cache_ttl' => (int) env('TRANSLATION_CACHE_TTL', 604800),
+        'timeout' => (int) env('TRANSLATION_TIMEOUT', env('GOOGLE_TRANSLATE_TIMEOUT', 10)),
+    ],
+
+    'azure_translator' => [
+        'key' => env('AZURE_TRANSLATOR_KEY'),
+        'region' => env('AZURE_TRANSLATOR_REGION'),
+        'endpoint' => env('AZURE_TRANSLATOR_ENDPOINT', 'https://api.cognitive.microsofttranslator.com'),
+    ],
+
+    'google_translate' => [
+        'api_key' => env('GOOGLE_TRANSLATE_API_KEY'),
+        'cache_ttl' => (int) env('TRANSLATION_CACHE_TTL', 604800),
+        'timeout' => (int) env('GOOGLE_TRANSLATE_TIMEOUT', 10),
+    ],
+
 ];

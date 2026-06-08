@@ -24,6 +24,7 @@
     </head>
     <body
         class="font-sans antialiased text-boss-dark bg-white overflow-x-hidden"
+        data-pd-translation-root
         x-data="{ scrolled: false, navOpen: false, transparent: {{ $transparentNav ? 'true' : 'false' }} }"
         @scroll.window="scrolled = (window.pageYOffset || document.documentElement.scrollTop) > 60"
     >
