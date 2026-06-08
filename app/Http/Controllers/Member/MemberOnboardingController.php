@@ -24,9 +24,9 @@ class MemberOnboardingController extends Controller
 
         return view('member.onboarding.edit', [
             'profile' => $profile,
-            'platformOptions' => $this->streamingPlatformOptions(),
+            'platformOptions' => $this->camSiteOptions(),
             'fanSiteOptions' => $this->fanSiteOptions(),
-            'socialMediaOptions' => $this->socialMediaOptions(),
+            'aiPlatformOptions' => $this->aiPlatformOptions(),
             'fetishSections' => $this->fetishSections(),
             'equipmentOptions' => $this->equipmentOptions(),
             'phoneCountries' => CountryCallingCodes::phoneOptions($callingCodes),
@@ -225,56 +225,45 @@ class MemberOnboardingController extends Controller
 
     private function platformOptions(): array
     {
-        return $this->streamingPlatformOptions();
+        return $this->camSiteOptions();
     }
 
     private function allPlatformOptions(): array
     {
         return array_values(array_unique([
-            ...$this->streamingPlatformOptions(),
+            ...$this->camSiteOptions(),
             ...$this->fanSiteOptions(),
-            ...$this->socialMediaOptions(),
+            ...$this->aiPlatformOptions(),
         ]));
     }
 
-    private function streamingPlatformOptions(): array
+    private function camSiteOptions(): array
     {
         return [
-            'Chaturbate',
-            'Babestation',
-            'AdultWork',
-            'Camsoda',
-            'Stripchat',
-            'LiveJasmin',
-            'MyFreeCams',
-            'BongaCams',
+            'CAM4',
             'Flirt4Free',
-            'Streamate',
-            'Cam4',
+            'Susi.live',
             'XLoveCam',
-            'XXXPanded',
         ];
     }
 
     private function fanSiteOptions(): array
     {
         return [
+            'FanCentro',
+            'Fanzi',
             'OnlyFans',
-            'Fansly',
             'LoyalFans',
-            'Playboy',
-            'ChatAI',
+            'Supermodels.fans',
+            'Playboy Fans',
+            'OnlyPPV',
         ];
     }
 
-    private function socialMediaOptions(): array
+    private function aiPlatformOptions(): array
     {
         return [
-            'Instagram',
-            'TikTok',
-            'Twitter',
-            'Telegram',
-            'Snapchat',
+            'OhChatAI',
         ];
     }
 

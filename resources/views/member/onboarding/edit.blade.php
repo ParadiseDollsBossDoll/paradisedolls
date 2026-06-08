@@ -9,7 +9,7 @@
         $currentCountry = old('country', $profile->country);
     @endphp
 
-    <div class="mx-auto max-w-4xl space-y-6">
+    <div class="pd-member-onboarding mx-auto max-w-4xl space-y-6">
         <header>
             <p class="pd-kicker">{{ __('Onboarding') }}</p>
             <h1 class="pd-heading pd-text-gradient mt-2 text-[clamp(2rem,4vw,2.6rem)]">{{ __('Model Information Form') }}</h1>
@@ -224,9 +224,9 @@
                         <p class="pd-label">{{ __('Platforms you\'d like to be on') }}</p>
                         <p class="-mt-3 text-[0.72rem] text-boss-ivory/38">{{ __('Tick all that apply.') }}</p>
 
-                        {{-- Streaming platforms --}}
+                        {{-- Cam sites --}}
                         <div>
-                            <p class="mb-2 text-[0.62rem] uppercase tracking-[0.16em] text-boss-ivory/40">{{ __('Streaming Platforms') }}</p>
+                            <p class="mb-2 text-[0.62rem] uppercase tracking-[0.16em] text-boss-ivory/40">{{ __('Cam Sites') }}</p>
                             <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                                 @foreach ($platformOptions as $option)
                                     <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2.5 text-[0.78rem] text-boss-ivory/58 transition-colors hover:border-boss-gold/25 hover:bg-boss-gold/[0.06] hover:text-boss-ivory has-[:checked]:border-boss-gold/35 has-[:checked]:bg-boss-gold/[0.09] has-[:checked]:text-boss-ivory">
@@ -250,11 +250,11 @@
                             </div>
                         </div>
 
-                        {{-- Social media --}}
+                        {{-- AI --}}
                         <div>
-                            <p class="mb-2 text-[0.62rem] uppercase tracking-[0.16em] text-boss-ivory/40">{{ __('Social Media Platforms') }}</p>
+                            <p class="mb-2 text-[0.62rem] uppercase tracking-[0.16em] text-boss-ivory/40">{{ __('AI') }}</p>
                             <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-                                @foreach ($socialMediaOptions as $option)
+                                @foreach ($aiPlatformOptions as $option)
                                     <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2.5 text-[0.78rem] text-boss-ivory/58 transition-colors hover:border-boss-gold/25 hover:bg-boss-gold/[0.06] hover:text-boss-ivory has-[:checked]:border-boss-gold/35 has-[:checked]:bg-boss-gold/[0.09] has-[:checked]:text-boss-ivory">
                                         <input type="checkbox" name="platforms[]" value="{{ $option }}" class="h-4 w-4 rounded border-white/20 bg-boss-ink text-boss-gold focus:ring-boss-gold focus:ring-offset-0" @checked(in_array($option, $selectedPlatforms, true))>
                                         <span>{{ $option }}</span>
@@ -272,7 +272,7 @@
                             name="current_platforms"
                             rows="3"
                             class="pd-input mt-2"
-                            placeholder="{{ __('e.g. Chaturbate: @username; OnlyFans: @username') }}"
+                            placeholder="{{ __('e.g. CAM4: @username; OnlyFans: @username') }}"
                         >{{ old('current_platforms', $profile->current_platforms) }}</textarea>
                         <x-input-error class="mt-1.5" :messages="$errors->get('current_platforms')" />
                     </div>

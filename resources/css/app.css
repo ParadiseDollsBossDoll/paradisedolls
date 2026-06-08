@@ -2215,6 +2215,27 @@ html.light-mode .pd-admin-onboarding .disabled\:text-boss-ivory\/24:disabled {
     color: rgba(26, 14, 20, 0.52) !important;
 }
 
+/* Member onboarding: selected checklist cards must stay readable in light mode. */
+html.light-mode .pd-member-onboarding label:has(input[type="checkbox"]:checked),
+html.light-mode .pd-member-onboarding label:has(input[type="radio"]:checked) {
+    background-color: rgba(255, 255, 255, 0.82) !important;
+    border-color: rgba(181, 82, 122, 0.50) !important;
+    color: #1A0E14 !important;
+    box-shadow:
+        inset 0 0 0 1px rgba(181, 82, 122, 0.18),
+        0 10px 24px rgba(181, 82, 122, 0.08);
+}
+
+html.light-mode .pd-member-onboarding label:has(input[type="checkbox"]:checked) span,
+html.light-mode .pd-member-onboarding label:has(input[type="radio"]:checked) span {
+    color: inherit !important;
+}
+
+html.light-mode .pd-member-onboarding input[type="checkbox"],
+html.light-mode .pd-member-onboarding input[type="radio"] {
+    accent-color: #B5527A;
+}
+
 /* Final public hero safety net: never let light-mode text utilities darken photo hero copy. */
 .pd-marketing-image-hero .pd-marketing-image-hero-title,
 html.light-mode .pd-marketing-image-hero .pd-marketing-image-hero-title {
