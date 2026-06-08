@@ -1,6 +1,6 @@
 ﻿<x-admin-layout>
     <div
-        class="mx-auto max-w-full space-y-6 text-boss-ivory"
+        class="pd-admin-onboarding pd-admin-onboarding-index mx-auto max-w-full space-y-6 text-boss-ivory"
         x-data="{
             open: false,
             selected: null,
@@ -569,14 +569,14 @@
                         </template>
 
                         <template x-if="selected.profile && selected.profile.course_access && selected.profile.course_access.length">
-                            <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-5">
+                            <div class="pd-onboarding-access-panel rounded-xl border border-white/[0.06] bg-white/[0.025] p-5">
                                 <div class="mb-4">
                                     <p class="text-[0.68rem] uppercase tracking-[0.14em] text-boss-ivory/35">Website Walkthrough Access</p>
                                     <p class="mt-1 text-[0.72rem] leading-relaxed text-boss-ivory/35">Unlock only the website walkthroughs this model is cleared to access.</p>
                                 </div>
                                 <div class="space-y-2">
                                     <template x-for="course in selected.profile.course_access" :key="course.id">
-                                        <div class="rounded-xl border border-white/[0.05] bg-white/[0.02] px-3 py-3">
+                                        <div class="pd-onboarding-access-row rounded-xl border border-white/[0.05] bg-white/[0.02] px-3 py-3">
                                             <div class="flex items-center justify-between gap-3">
                                                 <div class="min-w-0">
                                                     <p class="truncate text-sm font-medium text-boss-ivory/75" x-text="course.title"></p>

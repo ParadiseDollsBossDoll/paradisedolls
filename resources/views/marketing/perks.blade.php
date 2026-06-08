@@ -4,13 +4,13 @@
     $supportCards = marketing_items('perks.support.cards');
 @endphp
 <x-layouts.marketing :transparentNav="true" :title="marketing_content('perks.hero.title')">
-    <section class="relative flex min-h-[62vh] items-center justify-center overflow-hidden pt-24">
+    <section class="pd-marketing-image-hero relative flex min-h-[62vh] items-center justify-center overflow-hidden pt-24">
         <img src="{{ $heroImg }}" alt="" class="absolute inset-0 h-full w-full object-cover" aria-hidden="true">
         <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-boss-dark/90"></div>
         <div class="relative z-10 mx-auto max-w-4xl px-4 text-center text-white">
-            <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ marketing_content('perks.hero.eyebrow') }}</p>
-            <h1 class="font-display text-[clamp(2.7rem,6vw,5rem)] leading-tight">{{ marketing_content('perks.hero.title') }}</h1>
-            <p class="mx-auto mt-6 max-w-2xl text-[1rem] leading-relaxed text-white/80">{{ marketing_content('perks.hero.body') }}</p>
+            <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-[#F2C7D2]">{{ marketing_content('perks.hero.eyebrow') }}</p>
+            <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.7rem,6vw,5rem)] leading-tight text-[#FFF8F6]">{{ marketing_content('perks.hero.title') }}</h1>
+            <p class="pd-marketing-image-hero-body mx-auto mt-6 max-w-2xl text-[1rem] leading-relaxed text-[#FFF8F6]/90">{{ marketing_content('perks.hero.body') }}</p>
         </div>
     </section>
 

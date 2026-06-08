@@ -8,13 +8,13 @@
     $securityCards = marketing_items('work_from_paradise.security.cards');
 @endphp
 <x-layouts.marketing :transparentNav="true" :title="marketing_content('work_from_paradise.hero.title')">
-    <section class="relative flex min-h-[72vh] items-center justify-center overflow-hidden pt-24">
+    <section class="pd-marketing-image-hero relative flex min-h-[72vh] items-center justify-center overflow-hidden pt-24">
         <img src="{{ $heroImg }}" alt="" class="absolute inset-0 h-full w-full object-cover" aria-hidden="true">
         <div class="absolute inset-0 bg-gradient-to-b from-black/25 via-black/45 to-boss-dark/90"></div>
         <div class="relative z-10 mx-auto max-w-3xl px-4 text-center text-white">
-            <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ marketing_content('work_from_paradise.hero.eyebrow') }}</p>
-            <h1 class="font-display text-[clamp(2.8rem,7vw,5.5rem)] leading-tight">{{ marketing_content('work_from_paradise.hero.title') }}</h1>
-            <p class="mx-auto mt-6 max-w-2xl text-[1.05rem] leading-relaxed text-white/80">{{ marketing_content('work_from_paradise.hero.body') }}</p>
+            <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-[#F2C7D2]">{{ marketing_content('work_from_paradise.hero.eyebrow') }}</p>
+            <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.8rem,7vw,5.5rem)] leading-tight text-[#FFF8F6]">{{ marketing_content('work_from_paradise.hero.title') }}</h1>
+            <p class="pd-marketing-image-hero-body mx-auto mt-6 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFF8F6]/90">{{ marketing_content('work_from_paradise.hero.body') }}</p>
             <div class="mt-10 flex flex-wrap justify-center gap-3">
                 <a href="{{ marketing_link('work_from_paradise.hero.primary_url', route('home').'#apply') }}" class="rounded-md bg-[#EEB4C3] px-10 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#e0a0b5]">{{ marketing_content('work_from_paradise.hero.primary_label') }}</a>
                 <a href="{{ marketing_link('work_from_paradise.hero.secondary_url', route('our-story')) }}" class="rounded-md border border-white/40 px-10 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white/10">{{ marketing_content('work_from_paradise.hero.secondary_label') }}</a>

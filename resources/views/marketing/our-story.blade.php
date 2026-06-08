@@ -6,13 +6,13 @@
     $timelineCards = marketing_items('our_story.timeline.cards');
 @endphp
 <x-layouts.marketing :transparentNav="true" :title="marketing_content('our_story.hero.title')">
-    <section class="relative flex min-h-[72vh] items-end overflow-hidden pt-24">
+    <section class="pd-marketing-image-hero relative flex min-h-[72vh] items-end overflow-hidden pt-24">
         <img src="{{ $heroImg }}" alt="" class="absolute inset-0 h-full w-full object-cover object-top" aria-hidden="true">
         <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent"></div>
         <div class="relative z-10 mx-auto w-full max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-            <p class="mb-4 text-[0.7rem] uppercase tracking-[0.38em] text-boss-gold">{{ marketing_content('our_story.hero.eyebrow') }}</p>
-            <h1 class="font-display text-[clamp(3rem,7vw,5.5rem)] leading-tight text-white">{{ marketing_content('our_story.hero.title') }}</h1>
-            <p class="mt-5 max-w-xl text-[1rem] leading-relaxed text-white/72">{{ marketing_content('our_story.hero.body') }}</p>
+            <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.38em] text-[#F2C7D2]">{{ marketing_content('our_story.hero.eyebrow') }}</p>
+            <h1 class="pd-marketing-image-hero-title font-display text-[clamp(3rem,7vw,5.5rem)] leading-tight text-[#FFF8F6]">{{ marketing_content('our_story.hero.title') }}</h1>
+            <p class="pd-marketing-image-hero-body mt-5 max-w-xl text-[1rem] leading-relaxed text-[#FFF8F6]/90">{{ marketing_content('our_story.hero.body') }}</p>
         </div>
     </section>
 

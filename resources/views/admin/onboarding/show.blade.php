@@ -1,5 +1,5 @@
 <x-admin-layout>
-    <div class="mx-auto max-w-6xl space-y-6 text-boss-ivory">
+    <div class="pd-admin-onboarding pd-admin-onboarding-profile mx-auto max-w-6xl space-y-6 text-boss-ivory">
 
         {{-- ── Header ──────────────────────────────────────────────── --}}
         <div class="flex flex-wrap items-start justify-between gap-4">
@@ -541,7 +541,7 @@
             @php
                 $reviewCourseRequestId = (int) request()->query('course_request', 0);
             @endphp
-            <section class="pd-panel-strong p-5">
+            <section class="pd-onboarding-access-panel pd-panel-strong p-5">
                 <div class="mb-5 flex items-center justify-between">
                     <div>
                         <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Website Walkthrough Access') }}</p>
@@ -555,7 +555,7 @@
                             $accessRequest = $accessRequestsByCourse->get($course->id);
                         @endphp
                         <div
-                            class="flex min-h-[13rem] flex-col overflow-hidden rounded-xl border transition
+                            class="pd-onboarding-access-card flex min-h-[13rem] flex-col overflow-hidden rounded-xl border transition
                                 {{ $isUnlocked ? 'border-green-400/20 bg-green-400/[0.04]' : 'border-white/[0.06] bg-white/[0.02]' }}"
                             x-data="{ requestOpen: @js($accessRequest && (int) $accessRequest->id === $reviewCourseRequestId), showResubmit: false }"
                             @keydown.escape.window="requestOpen = false"

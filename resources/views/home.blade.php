@@ -14,16 +14,16 @@
         $selectedPhoneCountry = \App\Support\CountryCallingCodes::normalizeSelection(old('phone_country', 'GB'), $phoneCountries);
     @endphp
 
-    <section class="relative flex min-h-screen items-center overflow-hidden">
+    <section class="pd-marketing-image-hero relative flex min-h-screen items-center overflow-hidden">
         <img src="{{ $heroImg }}" alt="" class="absolute inset-0 h-full w-full object-cover" aria-hidden="true">
         <div class="absolute inset-0 bg-gradient-to-b from-black/45 via-black/40 to-boss-dark/95"></div>
 
         <div class="relative z-10 mx-auto w-full max-w-7xl px-4 pt-24 sm:px-6 lg:px-8">
             <div class="max-w-4xl text-white">
-                <h1 class="font-display text-[clamp(3.1rem,8vw,7rem)] leading-[0.96] text-white">
+                <h1 class="pd-marketing-image-hero-title font-display text-[clamp(3.1rem,8vw,7rem)] leading-[0.96] text-[#FFF8F6]">
                     {{ marketing_content('home.hero.title') }}
                 </h1>
-                <p class="mt-7 max-w-2xl text-[1.05rem] leading-relaxed text-white/78">
+                <p class="pd-marketing-image-hero-body mt-7 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFF8F6]/90">
                     @foreach ($heroParagraphs as $paragraph)
                         {{ $paragraph }}@if (! $loop->last)<br><br>@endif
                     @endforeach
