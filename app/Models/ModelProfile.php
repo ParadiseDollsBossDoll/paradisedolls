@@ -137,6 +137,11 @@ class ModelProfile extends Model
         return $this->verification_status === self::VERIFICATION_VERIFIED;
     }
 
+    public function canApproveVerification(): bool
+    {
+        return ! $this->isVerified() && $this->hasVerificationSubmission();
+    }
+
     public function isCommunityInvited(): bool
     {
         return $this->community_invited_at !== null;

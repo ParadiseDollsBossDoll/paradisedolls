@@ -529,7 +529,7 @@ class OnboardingFlowTest extends TestCase
                 'country' => 'United Kingdom',
                 'city' => 'London',
                 'timezone' => 'Europe/London',
-                'platforms' => ['Stripchat', 'OnlyFans'],
+                'platforms' => ['CAM4', 'OnlyFans'],
                 'equipment' => ['Phone', 'Ring light'],
                 'availability' => 'Evenings and weekends.',
                 'goals' => 'Build a consistent online income.',
@@ -546,7 +546,7 @@ class OnboardingFlowTest extends TestCase
         $this->assertNotNull($profile->information_submitted_at);
         $this->assertSame('+447700900555', $profile->phone);
         $this->assertSame('+639854747065', $profile->emergency_contact_phone);
-        $this->assertSame(['Stripchat', 'OnlyFans'], $profile->platforms);
+        $this->assertSame(['CAM4', 'OnlyFans'], $profile->platforms);
         $this->assertSame('stage-name', $profile->discord_username);
         Mail::assertQueued(ModelInformationSubmittedMail::class);
 
@@ -739,6 +739,58 @@ class OnboardingFlowTest extends TestCase
             ->get(route('admin.onboarding.index'))
             ->assertOk()
             ->assertSeeText('Discord Invites');
+    }
+
+    public function test_admin_can_approve_existing_documents_after_a_reverification_request(): void
+    {
+        Mail::fake();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        $submittedAt = now()->subDay()->startOfSecond();
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'information_submitted_at' => now(),
+            'verification_status' => ModelProfile::VERIFICATION_SUBMITTED,
+            'id_document_path' => 'verifications/1/id.jpg',
+            'selfie_with_id_path' => 'verifications/1/selfie.jpg',
+            'verification_submitted_at' => $submittedAt,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.reject-verification', $profile), [
+                'verification_notes' => 'Please submit verification again.',
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.request-verification', $profile))
+            ->assertRedirect();
+
+        $profile->refresh();
+
+        $this->assertSame(ModelProfile::VERIFICATION_REQUESTED, $profile->verification_status);
+        $this->assertTrue($profile->canApproveVerification());
+        $this->assertTrue($profile->verification_submitted_at->equalTo($submittedAt));
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.show', $profile))
+            ->assertOk()
+            ->assertSeeText('Approve & Send Approval Email')
+            ->assertSeeText('The member does not need to submit them again.');
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.verify', $profile))
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $profile->refresh();
+
+        $this->assertSame(ModelProfile::VERIFICATION_VERIFIED, $profile->verification_status);
+        $this->assertTrue($profile->verification_submitted_at->equalTo($submittedAt));
+        Mail::assertQueued(VerificationResubmissionMail::class);
+        Mail::assertQueued(VerificationRequestMail::class);
+        Mail::assertQueued(AccountApprovalMail::class);
     }
 
     public function test_admin_can_approve_verification_and_send_community_access(): void

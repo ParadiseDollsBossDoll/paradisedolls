@@ -276,6 +276,10 @@ class AdminOnboardingController extends Controller
 
     public function verify(Request $request, ModelProfile $profile): RedirectResponse
     {
+        if ($profile->isVerified()) {
+            return redirect()->back()->withErrors(['profile' => __('This member is already verified.')]);
+        }
+
         if (! $profile->hasVerificationSubmission()) {
             return redirect()->back()->withErrors(['profile' => __('This member has not submitted verification documents yet.')]);
         }

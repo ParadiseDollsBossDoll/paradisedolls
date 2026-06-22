@@ -392,11 +392,14 @@
                         @endif
 
                         {{-- Verify --}}
-                        @if ($profile->verification_status === \App\Models\ModelProfile::VERIFICATION_SUBMITTED)
+                        @if ($profile->canApproveVerification())
                             <form action="{{ route('admin.onboarding.verify', $profile) }}" method="POST" class="space-y-2">
                                 @csrf
                                 <textarea name="verification_notes" rows="2" class="pd-input w-full text-sm" placeholder="{{ __('Optional approval notes…') }}">{{ old('verification_notes', $profile->verification_notes) }}</textarea>
                                 <button type="submit" class="w-full rounded-xl bg-green-500/20 px-4 py-2.5 text-sm font-medium text-green-300 transition hover:bg-green-500/30">{{ __('✓ Approve & Send Approval Email') }}</button>
+                                <p class="text-center text-[0.68rem] leading-relaxed text-green-100/45">
+                                    {{ __('Uses the existing verification documents. The member does not need to submit them again.') }}
+                                </p>
                             </form>
                         @endif
 

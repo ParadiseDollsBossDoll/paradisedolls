@@ -699,6 +699,9 @@
                                         <button type="submit" class="pd-btn-primary w-full">
                                             Approve Account &amp; Send Approval Email
                                         </button>
+                                        <p class="mt-2 text-center text-[0.68rem] leading-relaxed text-boss-ivory/35">
+                                            Uses the existing verification documents. No new submission is required.
+                                        </p>
                                     </form>
 
                                     {{-- Reject toggle --}}
@@ -921,7 +924,7 @@
                                         'community_invite_url'        => route('admin.onboarding.community-invite', $profile),
                                         'community_role_url'          => route('admin.onboarding.community-role-assigned', $profile),
                                         'can_request_verification'    => $profile->hasInformationForm() && ! $profile->isVerified() && $profile->verification_status !== \App\Models\ModelProfile::VERIFICATION_SUBMITTED,
-                                        'can_verify'                  => $profile->verification_status === \App\Models\ModelProfile::VERIFICATION_SUBMITTED,
+                                        'can_verify'                  => $profile->canApproveVerification(),
                                         'can_community_invite'        => $profile->isVerified() && ! $profile->community_role_assigned_at,
                                         'can_role_assign'             => $profile->isVerified() && (bool) $profile->community_invited_at && ! $profile->community_role_assigned_at,
                                     ] : null,
