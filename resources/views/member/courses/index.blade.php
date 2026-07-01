@@ -231,6 +231,12 @@
                     >
                         {{-- Course image / banner --}}
                         <div class="pd-course-card-media relative h-[210px] shrink-0 overflow-hidden">
+                            <a
+                                href="{{ $primaryUrl }}"
+                                class="absolute inset-0 z-10"
+                                aria-label="{{ __('Open :course', ['course' => $course->title]) }}"
+                            ></a>
+
                             @if ($image)
                                 <img
                                     src="{{ $image }}"
@@ -247,7 +253,7 @@
                             @endif
 
                             {{-- Status badge overlay --}}
-                            <div class="absolute left-4 top-4 flex items-center gap-2">
+                            <div class="pointer-events-none absolute left-4 top-4 z-20 flex items-center gap-2">
                                 <span class="pd-course-card-platform-badge rounded-full border px-2.5 py-0.5 text-[0.6rem] font-medium backdrop-blur-sm" style="background: {{ $bg }}; color: {{ $color }}; border-color: {{ $color }}22;">
                                     {{ $course->displayPlatform() }}
                                 </span>
@@ -263,7 +269,7 @@
                             </div>
 
                             {{-- Lesson count badge --}}
-                            <div class="absolute right-4 top-4">
+                            <div class="pointer-events-none absolute right-4 top-4 z-20">
                                 <span class="pd-course-card-lesson-badge rounded-full border border-white/[0.08] bg-black/40 px-2.5 py-0.5 text-[0.6rem] text-boss-ivory/45 backdrop-blur-sm">
                                     {{ $course->lessons_count }} {{ __('lessons') }}
                                 </span>
@@ -338,18 +344,18 @@
                         </div>
 
                         {{-- Footer CTA --}}
-                        <div class="shrink-0 border-t border-white/[0.04] px-5 py-3.5 transition-colors duration-300 group-hover:bg-boss-gold/[0.04]">
+                        <div class="shrink-0 border-t border-white/[0.04] p-5 pt-4 transition-colors duration-300 group-hover:bg-boss-gold/[0.04]">
                             @if ($isEnrolled)
-                                <a href="{{ $primaryUrl }}" class="flex items-center justify-between gap-2 text-[0.73rem]">
-                                    <span class="font-medium transition-colors group-hover:text-boss-gold"
-                                          style="color: {{ $color }}; opacity: .78;">{{ $ctaLabel }}</span>
+                                <a href="{{ $primaryUrl }}" class="flex h-11 items-center justify-between gap-3 rounded-xl border px-4 text-[0.72rem] font-semibold uppercase tracking-[0.12em] transition hover:-translate-y-0.5"
+                                   style="border-color: {{ $color }}55; background: {{ $course->displayColorBackground(0.14) }}; color: {{ $color }};">
+                                    <span>{{ $ctaLabel }}</span>
                                     <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[2] transition-transform duration-300 group-hover:translate-x-1"
-                                         style="color: {{ $color }}; opacity: .5;"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+                                         style="color: {{ $color }};"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
                                 </a>
                             @else
-                                <a href="{{ route('member.courses.show', $course->slug) }}" class="flex items-center justify-between gap-2 text-[0.73rem]">
-                                    <span class="font-semibold text-boss-gold transition-colors group-hover:text-boss-gold-light">{{ $ctaLabel }}</span>
-                                    <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[2] text-boss-gold/50 transition-transform duration-300 group-hover:translate-x-1"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+                                <a href="{{ route('member.courses.show', $course->slug) }}" class="flex h-11 items-center justify-between gap-3 rounded-xl border border-boss-gold/35 bg-boss-gold/15 px-4 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-boss-gold transition hover:-translate-y-0.5 hover:bg-boss-gold/22 hover:text-boss-gold-light">
+                                    <span>{{ $ctaLabel }}</span>
+                                    <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[2] transition-transform duration-300 group-hover:translate-x-1"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
                                 </a>
                             @endif
                         </div>
@@ -377,4 +383,3 @@
 
     </div>
 </x-member-layout>
-

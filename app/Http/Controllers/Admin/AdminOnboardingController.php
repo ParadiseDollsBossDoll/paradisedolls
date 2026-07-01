@@ -13,6 +13,7 @@ use App\Models\CourseAccessRequestFile;
 use App\Models\ModelProfile;
 use App\Models\User;
 use App\Notifications\SystemNotification;
+use App\Services\AdminActivityNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,11 +35,6 @@ class AdminOnboardingController extends Controller
             ->orderBy('name')
             ->paginate(20);
 
-        $stageOptions = collect(ModelProfile::onboardingStageOptions())
-            ->map(fn (string $label, string $value) => ['value' => $value, 'label' => $label])
-            ->values()
-            ->all();
-
         $stats = [
             'members' => User::where('role', 'model')->count(),
             'information_submitted' => ModelProfile::whereNotNull('information_submitted_at')->count(),
@@ -48,7 +44,7 @@ class AdminOnboardingController extends Controller
             'role_assigned' => ModelProfile::whereNotNull('community_role_assigned_at')->count(),
         ];
 
-        return view('admin.onboarding.index', compact('models', 'stageOptions', 'stats'));
+        return view('admin.onboarding.index', compact('models', 'stats'));
     }
 
     public function show(ModelProfile $profile): View
@@ -74,7 +70,6 @@ class AdminOnboardingController extends Controller
             'courses'               => $courses,
             'unlockedCourseIds'     => $unlockedCourseIds,
             'accessRequestsByCourse' => $accessRequestsByCourse,
-            'stageOptions'          => ModelProfile::onboardingStageOptions(),
         ]);
     }
 
@@ -307,6 +302,7 @@ class AdminOnboardingController extends Controller
             profile: $profile,
             dashboardUrl: route('member.dashboard'),
         ));
+        $this->notifyAdminOfVerificationApproval($profile);
 
         return redirect()->back()->with('status', __('Account Approval Email sent and member marked verified.'));
     }
@@ -485,6 +481,24 @@ class AdminOnboardingController extends Controller
         } catch (Throwable $e) {
             report($e);
         }
+    }
+
+    private function notifyAdminOfVerificationApproval(ModelProfile $profile): void
+    {
+        app(AdminActivityNotifier::class)->notify(
+            title: __('Account verified'),
+            body: __(':name has been verified and is ready for course/community access review.', ['name' => $profile->user->name]),
+            actionUrl: route('admin.onboarding.show', ['profile' => $profile], false),
+            category: 'account_verified',
+            emailSubject: __('Account verified: :name', ['name' => $profile->user->name]),
+            details: [
+                __('Member') => $profile->user->name,
+                __('Email') => $profile->user->email,
+                __('Reviewed by') => auth()->user()?->name,
+                __('Reviewed at') => $profile->verification_reviewed_at?->toDayDateTimeString(),
+            ],
+            actionLabel: __('Open verified profile'),
+        );
     }
 
     private function validatedCommunityInviteUrl(Request $request): string

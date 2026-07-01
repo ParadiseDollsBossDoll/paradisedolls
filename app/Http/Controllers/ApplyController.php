@@ -6,6 +6,7 @@ use App\Mail\ApplicationSubmittedMail;
 use App\Models\ModelApplication;
 use App\Models\ModelReferral;
 use App\Models\User;
+use App\Services\AdminActivityNotifier;
 use App\Support\CountryCallingCodes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -127,6 +128,14 @@ class ApplyController extends Controller
 
     private function notifyOnboardingTeam(ModelApplication $application): void
     {
+        app(AdminActivityNotifier::class)->notify(
+            title: __('New application submitted'),
+            body: __(':name submitted a new Paradise Dolls application.', ['name' => $application->name]),
+            actionUrl: route('admin.applications.index', absolute: false),
+            category: 'application_submitted',
+            sendEmail: false,
+        );
+
         $email = config('paradise.onboarding_email');
 
         if (! filled($email)) {

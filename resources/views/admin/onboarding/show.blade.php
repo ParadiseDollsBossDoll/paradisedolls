@@ -25,9 +25,6 @@
                 <a href="{{ route('admin.onboarding.export-profile', $profile) }}" class="rounded-xl border border-boss-gold/20 bg-boss-gold/[0.07] px-3 py-1.5 text-[0.72rem] font-semibold text-boss-gold transition hover:bg-boss-gold/[0.13]">
                     {{ __('Download CRM Excel') }}
                 </a>
-                <span class="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-[0.72rem] text-boss-ivory/60">
-                    {{ $profile->onboardingStageLabel() }}
-                </span>
                 <span class="rounded-full bg-boss-gold/10 px-3 py-1 text-[0.72rem] font-semibold text-boss-gold">
                     {{ $profile->onboardingPercent() }}% complete
                 </span>
@@ -47,6 +44,13 @@
                         <p class="text-[0.65rem] uppercase tracking-[0.14em] text-amber-200/60">{{ __('Temporary password (email failed)') }}</p>
                         <p class="mt-1 text-xs text-boss-ivory/40">{{ session('approval_fallback_email') }}</p>
                         <p class="mt-2 select-all break-all font-mono text-base font-semibold tracking-wide">{{ session('approval_fallback_password') }}</p>
+                    </div>
+                @endif
+                @if (session('manual_login_password'))
+                    <div class="rounded-xl border border-amber-300/25 bg-boss-ink px-4 py-3 text-boss-ivory">
+                        <p class="text-[0.65rem] uppercase tracking-[0.14em] text-amber-200/60">{{ __('Manual temporary password') }}</p>
+                        <p class="mt-1 text-xs text-boss-ivory/40">{{ session('manual_login_email') }}</p>
+                        <p class="mt-2 select-all break-all font-mono text-base font-semibold tracking-wide">{{ session('manual_login_password') }}</p>
                     </div>
                 @endif
             </div>
@@ -356,20 +360,6 @@
                 <section class="pd-panel-strong p-5">
                     <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Admin Actions') }}</p>
 
-                    {{-- Onboarding stage --}}
-                    <form action="{{ route('admin.onboarding.stage', $profile) }}" method="POST" class="mb-4">
-                        @csrf
-                        <label class="mb-1 block text-[0.7rem] text-boss-ivory/40">{{ __('Onboarding stage') }}</label>
-                        <div class="flex gap-2">
-                            <select name="onboarding_stage" class="pd-input flex-1 text-sm">
-                                @foreach ($stageOptions as $value => $label)
-                                    <option value="{{ $value }}" @selected($profile->onboarding_stage === $value || (! $profile->onboarding_stage && $value === \App\Models\ModelProfile::STAGE_REGISTRATION))>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            <button type="submit" class="shrink-0 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-[0.75rem] font-medium text-boss-ivory/70 transition hover:bg-white/[0.07] hover:text-boss-ivory">Save</button>
-                        </div>
-                    </form>
-
                     <div class="space-y-2">
                         @if ($profile->application?->canResendApprovalEmail())
                             <form action="{{ route('admin.applications.resend-approval-email', $profile->application) }}" method="POST" class="rounded-xl border border-green-300/15 bg-green-400/[0.06] p-3">
@@ -460,6 +450,50 @@
                         <p class="mt-2 text-center text-[0.68rem] leading-relaxed text-boss-ivory/28">
                             {{ __('Permanent removal for this model account and its onboarding records.') }}
                         </p>
+                    </form>
+                </section>
+
+                {{-- Login Access --}}
+                <section class="pd-panel-strong p-5">
+                    <p class="mb-3 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Login Access') }}</p>
+                    <form action="{{ route('admin.models.login.update', $user) }}" method="POST" class="space-y-3">
+                        @csrf
+                        @method('PATCH')
+
+                        <div>
+                            <label for="admin_member_name" class="pd-label">{{ __('Name') }}</label>
+                            <input id="admin_member_name" name="name" type="text" value="{{ old('name', $user->name) }}" class="pd-input mt-1 w-full text-sm" required autocomplete="off">
+                        </div>
+
+                        <div>
+                            <label for="admin_member_email" class="pd-label">{{ __('Login email') }}</label>
+                            <input id="admin_member_email" name="email" type="email" value="{{ old('email', $user->email) }}" class="pd-input mt-1 w-full text-sm" required autocomplete="off">
+                        </div>
+
+                        <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                            <div>
+                                <label for="admin_member_password" class="pd-label">{{ __('New password') }}</label>
+                                <input id="admin_member_password" name="password" type="password" class="pd-input mt-1 w-full text-sm" minlength="10" autocomplete="new-password" placeholder="{{ __('Leave blank to keep current') }}">
+                            </div>
+                            <div>
+                                <label for="admin_member_password_confirmation" class="pd-label">{{ __('Confirm password') }}</label>
+                                <input id="admin_member_password_confirmation" name="password_confirmation" type="password" class="pd-input mt-1 w-full text-sm" minlength="10" autocomplete="new-password">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full rounded-xl border border-boss-gold/20 bg-boss-gold/[0.08] px-4 py-2.5 text-sm font-semibold text-boss-gold transition hover:bg-boss-gold/[0.14]">
+                            {{ __('Save login details') }}
+                        </button>
+                        <p class="text-center text-[0.68rem] leading-relaxed text-boss-ivory/30">
+                            {{ __('Use this if the member cannot receive password reset emails. Changing email or password signs out old sessions.') }}
+                        </p>
+                    </form>
+
+                    <form action="{{ route('admin.models.password.generate', $user) }}" method="POST" class="mt-3 border-t border-white/[0.06] pt-3">
+                        @csrf
+                        <button type="submit" class="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-boss-ivory/70 transition hover:bg-white/[0.07] hover:text-boss-ivory">
+                            {{ __('Generate temporary password') }}
+                        </button>
                     </form>
                 </section>
 

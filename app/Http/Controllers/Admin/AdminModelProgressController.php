@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class AdminModelProgressController extends Controller
@@ -151,6 +153,62 @@ class AdminModelProgressController extends Controller
         return redirect()
             ->route('admin.models.progress', $redirectQuery)
             ->with('status', __(':name has been deleted from the system.', ['name' => $memberName]));
+    }
+
+    public function updateLogin(Request $request, User $user): RedirectResponse
+    {
+        abort_unless($user->isModel(), 403, 'Only model login details can be managed here.');
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'password' => ['nullable', 'string', 'min:10', 'max:255', 'confirmed'],
+        ]);
+
+        $passwordChanged = filled($validated['password'] ?? null);
+        $emailChanged = $validated['email'] !== $user->email;
+
+        $payload = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ];
+
+        if ($emailChanged && ! $user->email_verified_at) {
+            $payload['email_verified_at'] = now();
+        }
+
+        if ($passwordChanged) {
+            $payload['password'] = $validated['password'];
+        }
+
+        $user->forceFill($payload)->save();
+
+        if ($passwordChanged || $emailChanged) {
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+        }
+
+        CommunityPresence::forgetMemberDirectory();
+
+        return redirect()->back()->with('status', __('Login details updated for :name.', ['name' => $user->fresh()->name]));
+    }
+
+    public function generatePassword(Request $request, User $user): RedirectResponse
+    {
+        abort_unless($user->isModel(), 403, 'Only model passwords can be managed here.');
+
+        $temporaryPassword = Str::password(14, letters: true, numbers: true, symbols: false);
+
+        $user->forceFill([
+            'password' => $temporaryPassword,
+            'email_verified_at' => $user->email_verified_at ?: now(),
+        ])->save();
+
+        DB::table('sessions')->where('user_id', $user->id)->delete();
+
+        return redirect()->back()
+            ->with('warning', __('A temporary password was created for :name. Share it manually and ask them to log in with it.', ['name' => $user->name]))
+            ->with('manual_login_email', $user->email)
+            ->with('manual_login_password', $temporaryPassword);
     }
 
     /**

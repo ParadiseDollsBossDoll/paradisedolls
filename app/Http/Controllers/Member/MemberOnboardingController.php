@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Mail\ModelInformationSubmittedMail;
 use App\Models\ModelProfile;
+use App\Services\AdminActivityNotifier;
 use App\Support\CountryCallingCodes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,8 @@ class MemberOnboardingController extends Controller
     public function edit(): View
     {
         $profile = $this->profile();
+        $this->markOnboardingStarted($profile);
+
         $callingCodes = config('country_calling_codes', []);
         $phoneInput = CountryCallingCodes::splitPhone($profile->phone, $profile->country, $callingCodes);
 
@@ -150,6 +153,8 @@ class MemberOnboardingController extends Controller
         }
 
         $profile = $this->profile();
+        $wasSubmitted = $profile->hasInformationForm();
+
         $profile->forceFill([
             ...$validated,
             'information_submitted_at' => $profile->information_submitted_at ?? now(),
@@ -157,6 +162,9 @@ class MemberOnboardingController extends Controller
 
         $profile->refresh()->load('user');
         $this->sendConfirmation($profile);
+        if (! $wasSubmitted) {
+            $this->notifyAdminOfInformationSubmitted($profile);
+        }
 
         return redirect()
             ->route('member.verification.edit')
@@ -455,5 +463,51 @@ class MemberOnboardingController extends Controller
         } catch (Throwable $e) {
             report($e);
         }
+    }
+
+    private function markOnboardingStarted(ModelProfile $profile): void
+    {
+        if ($profile->onboarding_started_at) {
+            return;
+        }
+
+        $profile->forceFill([
+            'onboarding_started_at' => now(),
+        ])->save();
+
+        $profile->refresh()->load('user');
+
+        app(AdminActivityNotifier::class)->notify(
+            title: __('Onboarding started'),
+            body: __(':name opened the model onboarding form.', ['name' => $profile->user->name]),
+            actionUrl: route('admin.onboarding.show', ['profile' => $profile], false),
+            category: 'onboarding_started',
+            emailSubject: __('Onboarding started: :name', ['name' => $profile->user->name]),
+            details: [
+                __('Member') => $profile->user->name,
+                __('Email') => $profile->user->email,
+                __('Stage name') => $profile->stage_name,
+            ],
+            actionLabel: __('View onboarding profile'),
+        );
+    }
+
+    private function notifyAdminOfInformationSubmitted(ModelProfile $profile): void
+    {
+        app(AdminActivityNotifier::class)->notify(
+            title: __('Onboarding form completed'),
+            body: __(':name completed the Model Information Form.', ['name' => $profile->user->name]),
+            actionUrl: route('admin.onboarding.show', ['profile' => $profile], false),
+            category: 'onboarding_form_completed',
+            emailSubject: __('Onboarding form completed: :name', ['name' => $profile->user->name]),
+            details: [
+                __('Member') => $profile->user->name,
+                __('Email') => $profile->user->email,
+                __('Stage name') => $profile->stage_name,
+                __('Country') => $profile->country,
+                __('Platforms') => implode(', ', $profile->platforms ?? []),
+            ],
+            actionLabel: __('Review onboarding form'),
+        );
     }
 }

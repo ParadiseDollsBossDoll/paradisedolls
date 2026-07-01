@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Mail\VerificationSubmissionReceivedMail;
 use App\Models\ModelProfile;
+use App\Services\AdminActivityNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -42,6 +43,7 @@ class MemberVerificationController extends Controller
                 ->withInput();
         }
 
+        $idUploaded = $request->hasFile('id_document');
         $directory = 'verifications/'.$profile->user_id;
 
         $paths = [
@@ -64,6 +66,9 @@ class MemberVerificationController extends Controller
 
         $profile->refresh()->load('user');
         $this->sendConfirmation($profile);
+        if ($idUploaded) {
+            $this->notifyAdminOfIdUpload($profile);
+        }
 
         return redirect()
             ->route('member.dashboard')
@@ -82,5 +87,22 @@ class MemberVerificationController extends Controller
         } catch (Throwable $e) {
             report($e);
         }
+    }
+
+    private function notifyAdminOfIdUpload(ModelProfile $profile): void
+    {
+        app(AdminActivityNotifier::class)->notify(
+            title: __('Verification ID uploaded'),
+            body: __(':name uploaded an ID document for verification.', ['name' => $profile->user->name]),
+            actionUrl: route('admin.onboarding.show', ['profile' => $profile], false),
+            category: 'verification_id_uploaded',
+            emailSubject: __('Verification ID uploaded: :name', ['name' => $profile->user->name]),
+            details: [
+                __('Member') => $profile->user->name,
+                __('Email') => $profile->user->email,
+                __('Submitted') => $profile->verification_submitted_at?->toDayDateTimeString(),
+            ],
+            actionLabel: __('Review verification documents'),
+        );
     }
 }

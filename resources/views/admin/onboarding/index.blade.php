@@ -5,7 +5,6 @@
             open: false,
             selected: null,
             showReject: false,
-            stageOptions: @js($stageOptions),
             async selectModel(model) {
                 this.selected = model;
                 this.open = true;
@@ -127,29 +126,6 @@
                                         <span x-text="selected.profile.community_role_assigned_at ? '✓' : '○'"></span> Discord Role Assigned
                                     </span>
                                 </div>
-                            </div>
-                        </template>
-
-                        {{-- Manual onboarding controls --}}
-                        <template x-if="selected.profile">
-                            <div class="space-y-4 rounded-xl border border-white/[0.06] bg-white/[0.025] p-5">
-                                <div>
-                                    <p class="text-[0.68rem] uppercase tracking-[0.14em] text-boss-ivory/35">Manual Access Controls</p>
-                                    <p class="mt-1 text-[0.72rem] leading-relaxed text-boss-ivory/35">Move this model through Kayla's manual onboarding phases. Course-specific verification requirements are managed from each course.</p>
-                                </div>
-
-                                <form :action="selected.profile.stage_url" method="POST" class="space-y-2">
-                                    @csrf
-                                    <label class="block text-[0.62rem] uppercase tracking-[0.14em] text-boss-ivory/35">Current phase</label>
-                                    <select name="onboarding_stage" x-model="selected.profile.onboarding_stage" class="pd-input w-full text-sm">
-                                        <template x-for="option in stageOptions" :key="option.value">
-                                            <option :value="option.value" x-text="option.label"></option>
-                                        </template>
-                                    </select>
-                                    <button type="submit" class="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-boss-ivory/70 transition hover:bg-white/[0.07] hover:text-boss-ivory">
-                                        Save Phase
-                                    </button>
-                                </form>
                             </div>
                         </template>
 
@@ -890,9 +866,6 @@
                                         'emergency_contact_phone'     => $profile->emergency_contact_phone,
                                         'discord_username'            => $profile->discord_username,
                                         'discord_user_id'             => $profile->discord_user_id,
-                                        'onboarding_stage'            => $profile->onboarding_stage ?: \App\Models\ModelProfile::STAGE_REGISTRATION,
-                                        'onboarding_stage_label'      => $profile->onboardingStageLabel(),
-                                        'stage_url'                   => route('admin.onboarding.stage', $profile),
                                         'verification_request_instructions' => $profile->verification_request_instructions,
                                         'verification_instructions_url' => route('admin.onboarding.verification-instructions', $profile),
                                         'details_url'                  => route('admin.onboarding.details', $profile),

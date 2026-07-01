@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Mail\CourseAccessRequestedMail;
+use App\Mail\AdminActivityAlertMail;
 use App\Models\Course;
 use App\Models\CourseAccessRequest;
 use App\Models\CourseAccessRequestFile;
@@ -696,6 +697,54 @@ class CourseEnrollmentFlowTest extends TestCase
                 'body' => 'Should not post.',
             ])
             ->assertForbidden();
+    }
+
+    public function test_admin_is_notified_when_member_completes_dos_and_donts_lesson(): void
+    {
+        Mail::fake();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create([
+            'name' => 'Progress Model',
+            'email' => 'progress@example.com',
+            'role' => 'model',
+        ]);
+        $course = Course::create([
+            'title' => 'Platform Safety Course',
+            'slug' => 'platform-safety-course',
+            'platform_label' => 'General',
+            'description' => 'Safety basics.',
+            'is_published' => true,
+        ]);
+        $lesson = $course->lessons()->create([
+            'title' => 'Do\'s & Don\'ts',
+            'is_published' => true,
+            'sort_order' => 1,
+        ]);
+
+        $this->unlockCourseFor($member, $course);
+
+        $this->actingAs($member)
+            ->patch(route('member.lessons.progress', $lesson), [
+                'completed' => '1',
+            ])
+            ->assertRedirect();
+
+        $notification = $admin->notifications()->first();
+
+        $this->assertNotNull($notification);
+        $this->assertSame('dos_donts_completed', $notification->data['category']);
+        $this->assertSame('Do\'s & Don\'ts completed', $notification->data['title']);
+        Mail::assertQueued(AdminActivityAlertMail::class, fn (AdminActivityAlertMail $mail) => $mail->subjectLine === 'Do\'s & Don\'ts completed: Progress Model');
+
+        $this->actingAs($member)
+            ->patch(route('member.lessons.progress', $lesson), [
+                'completed' => '1',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(1, $admin->notifications()->count());
+        Mail::assertQueued(AdminActivityAlertMail::class, 1);
     }
 
     public function test_lesson_resources_render_without_pdf_or_video_placeholder(): void

@@ -213,6 +213,12 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/referrals', [AdminReferralController::class, 'index'])->name('referrals.index');
 
     Route::get('/models/progress', [AdminModelProgressController::class, 'index'])->name('models.progress');
+    Route::patch('/models/{user}/login', [AdminModelProgressController::class, 'updateLogin'])
+        ->middleware('throttle:admin-actions')
+        ->name('models.login.update');
+    Route::post('/models/{user}/password/generate', [AdminModelProgressController::class, 'generatePassword'])
+        ->middleware('throttle:admin-actions')
+        ->name('models.password.generate');
     Route::delete('/models/{user}', [AdminModelProgressController::class, 'destroy'])
         ->middleware('throttle:admin-actions')
         ->name('models.destroy');

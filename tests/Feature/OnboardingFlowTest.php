@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Mail\AccountApprovalMail;
+use App\Mail\AdminActivityAlertMail;
 use App\Mail\ApplicationSubmittedMail;
 use App\Mail\CommunityAccessMail;
 use App\Mail\MemberApplicationApprovedMail;
@@ -32,6 +33,8 @@ class OnboardingFlowTest extends TestCase
         Mail::fake();
         Storage::fake('local');
 
+        $admin = User::factory()->create(['role' => 'admin']);
+
         $this->post(route('apply.store'), [
             'name' => 'Kayla Test',
             'email' => 'kayla@example.com',
@@ -52,7 +55,37 @@ class OnboardingFlowTest extends TestCase
         $this->assertSame('+639123456789', $application->phone);
         $this->assertCount(1, $application->photo_paths);
         Storage::disk('local')->assertExists($application->photo_paths[0]);
+        $this->assertSame('application_submitted', $admin->notifications()->first()?->data['category']);
         Mail::assertSent(ApplicationSubmittedMail::class);
+    }
+
+    public function test_admin_is_notified_when_member_begins_onboarding(): void
+    {
+        Mail::fake();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create([
+            'name' => 'Starter Model',
+            'email' => 'starter@example.com',
+            'role' => 'model',
+        ]);
+
+        $this->actingAs($member)
+            ->get(route('member.onboarding.edit'))
+            ->assertOk();
+
+        $profile = $member->modelProfile()->first();
+
+        $this->assertNotNull($profile?->onboarding_started_at);
+        $this->assertSame('onboarding_started', $admin->notifications()->first()?->data['category']);
+        Mail::assertQueued(AdminActivityAlertMail::class, fn (AdminActivityAlertMail $mail) => $mail->subjectLine === 'Onboarding started: Starter Model');
+
+        $this->actingAs($member)
+            ->get(route('member.onboarding.edit'))
+            ->assertOk();
+
+        $this->assertSame(1, $admin->notifications()->count());
+        Mail::assertQueued(AdminActivityAlertMail::class, 1);
     }
 
     public function test_application_submission_rejects_photos_larger_than_ten_megabytes(): void
@@ -509,6 +542,7 @@ class OnboardingFlowTest extends TestCase
             ->get(route('admin.onboarding.show', $profile))
             ->assertOk()
             ->assertSee('Delete member account')
+            ->assertDontSee('Onboarding stage')
             ->assertSee(route('admin.models.destroy', $member), false);
     }
 
@@ -549,6 +583,7 @@ class OnboardingFlowTest extends TestCase
         $this->assertSame(['CAM4', 'OnlyFans'], $profile->platforms);
         $this->assertSame('stage-name', $profile->discord_username);
         Mail::assertQueued(ModelInformationSubmittedMail::class);
+        Mail::assertQueued(AdminActivityAlertMail::class, fn (AdminActivityAlertMail $mail) => $mail->subjectLine === 'Onboarding form completed: '.$member->name);
 
         $this->actingAs($member)
             ->post(route('member.verification.store'), [
@@ -563,6 +598,7 @@ class OnboardingFlowTest extends TestCase
         Storage::disk('local')->assertExists($profile->id_document_path);
         Storage::disk('local')->assertExists($profile->selfie_with_id_path);
         Mail::assertQueued(VerificationSubmissionReceivedMail::class);
+        Mail::assertQueued(AdminActivityAlertMail::class, fn (AdminActivityAlertMail $mail) => $mail->subjectLine === 'Verification ID uploaded: '.$member->name);
 
         $this->actingAs($member)
             ->get(route('member.dashboard'))
@@ -738,7 +774,9 @@ class OnboardingFlowTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.onboarding.index'))
             ->assertOk()
-            ->assertSeeText('Discord Invites');
+            ->assertSeeText('Discord Invites')
+            ->assertDontSee('Manual Access Controls')
+            ->assertDontSee('Current phase');
     }
 
     public function test_admin_can_approve_existing_documents_after_a_reverification_request(): void

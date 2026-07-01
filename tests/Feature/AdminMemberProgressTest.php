@@ -9,6 +9,7 @@ use App\Models\ModelApplication;
 use App\Models\ModelProfile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -179,6 +180,54 @@ class AdminMemberProgressTest extends TestCase
         Storage::disk('local')->assertMissing('verifications/'.$member->id.'/selfie.jpg');
         Storage::disk('local')->assertMissing('verifications/'.$member->id.'/codes.jpg');
         Storage::disk('local')->assertMissing($proofPath);
+    }
+
+    public function test_admin_can_update_member_login_and_generate_temporary_password(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create([
+            'name' => 'Old Model Name',
+            'email' => 'old-login@example.com',
+            'role' => 'model',
+            'password' => Hash::make('old-password'),
+            'email_verified_at' => null,
+        ]);
+        $profile = ModelProfile::create(['user_id' => $member->id]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.show', $profile))
+            ->assertOk()
+            ->assertSee('Login Access')
+            ->assertSee(route('admin.models.login.update', $member), false)
+            ->assertSee(route('admin.models.password.generate', $member), false);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.models.login.update', $member), [
+                'name' => 'New Model Name',
+                'email' => 'new-login@example.com',
+                'password' => 'manual-password-123',
+                'password_confirmation' => 'manual-password-123',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('status', 'Login details updated for New Model Name.');
+
+        $member->refresh();
+
+        $this->assertSame('New Model Name', $member->name);
+        $this->assertSame('new-login@example.com', $member->email);
+        $this->assertNotNull($member->email_verified_at);
+        $this->assertTrue(Hash::check('manual-password-123', $member->password));
+
+        $response = $this->actingAs($admin)
+            ->post(route('admin.models.password.generate', $member))
+            ->assertRedirect()
+            ->assertSessionHas('manual_login_email', 'new-login@example.com')
+            ->assertSessionHas('manual_login_password');
+
+        $temporaryPassword = $response->baseResponse->getSession()->get('manual_login_password');
+
+        $this->assertIsString($temporaryPassword);
+        $this->assertTrue(Hash::check($temporaryPassword, $member->fresh()->password));
     }
 
     public function test_admin_cannot_delete_non_model_accounts_from_member_directory(): void
