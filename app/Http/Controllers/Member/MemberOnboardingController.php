@@ -248,8 +248,17 @@ class MemberOnboardingController extends Controller
     private function camSiteOptions(): array
     {
         return [
+            'AdultWork',
+            'Babestation',
+            'BongaCams',
             'CAM4',
+            'CamSoda',
+            'Chaturbate',
             'Flirt4Free',
+            'LiveJasmin',
+            'MyFreeCams',
+            'Streamate',
+            'Stripchat',
             'Susi.live',
             'XLoveCam',
         ];
@@ -258,13 +267,16 @@ class MemberOnboardingController extends Controller
     private function fanSiteOptions(): array
     {
         return [
+            'Clips4Sale',
             'FanCentro',
+            'Fansly',
             'Fanzi',
-            'OnlyFans',
             'LoyalFans',
-            'Supermodels.fans',
-            'Playboy Fans',
+            'ManyVids',
+            'OnlyFans',
             'OnlyPPV',
+            'Playboy Fans',
+            'Supermodels.fans',
         ];
     }
 

@@ -582,6 +582,27 @@ class OnboardingFlowTest extends TestCase
             ->assertSee(route('admin.models.destroy', $member), false);
     }
 
+    public function test_member_onboarding_shows_expanded_platform_website_options(): void
+    {
+        $member = User::factory()->create(['role' => 'model']);
+
+        $this->actingAs($member)
+            ->get(route('member.onboarding.edit'))
+            ->assertOk()
+            ->assertSee('AdultWork')
+            ->assertSee('Stripchat')
+            ->assertSee('Chaturbate')
+            ->assertSee('Babestation')
+            ->assertSee('LiveJasmin')
+            ->assertSee('BongaCams')
+            ->assertSee('CamSoda')
+            ->assertSee('MyFreeCams')
+            ->assertSee('Streamate')
+            ->assertSee('Fansly')
+            ->assertSee('ManyVids')
+            ->assertSee('Clips4Sale');
+    }
+
     public function test_member_can_submit_information_and_verification_documents(): void
     {
         Mail::fake();
@@ -599,7 +620,7 @@ class OnboardingFlowTest extends TestCase
                 'country' => 'United Kingdom',
                 'city' => 'London',
                 'timezone' => 'Europe/London',
-                'platforms' => ['CAM4', 'OnlyFans'],
+                'platforms' => ['AdultWork', 'CAM4', 'OnlyFans', 'Stripchat', 'Fansly'],
                 'equipment' => ['Phone', 'Ring light'],
                 'availability' => 'Evenings and weekends.',
                 'goals' => 'Build a consistent online income.',
@@ -616,7 +637,7 @@ class OnboardingFlowTest extends TestCase
         $this->assertNotNull($profile->information_submitted_at);
         $this->assertSame('+447700900555', $profile->phone);
         $this->assertSame('+639854747065', $profile->emergency_contact_phone);
-        $this->assertSame(['CAM4', 'OnlyFans'], $profile->platforms);
+        $this->assertSame(['AdultWork', 'CAM4', 'OnlyFans', 'Stripchat', 'Fansly'], $profile->platforms);
         $this->assertSame('stage-name', $profile->discord_username);
         Mail::assertQueued(ModelInformationSubmittedMail::class);
         Mail::assertQueued(AdminActivityAlertMail::class, fn (AdminActivityAlertMail $mail) => $mail->subjectLine === 'Onboarding form completed: '.$member->name);
