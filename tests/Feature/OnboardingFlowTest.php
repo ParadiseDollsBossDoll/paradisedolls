@@ -428,6 +428,42 @@ class OnboardingFlowTest extends TestCase
             ->assertSee(route('admin.applications.resend-approval-email', $application), false);
     }
 
+    public function test_admin_can_see_application_photos_on_onboarding_profile(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create([
+            'name' => 'Photo Model',
+            'email' => 'photo-model@example.com',
+            'role' => 'model',
+        ]);
+        $application = ModelApplication::create([
+            'name' => 'Photo Model',
+            'email' => 'photo-model@example.com',
+            'experience_level' => 'beginner',
+            'age_confirmed' => true,
+            'photo_paths' => [
+                'applications/photos/photo-one.jpg',
+                'applications/photos/photo-two.jpg',
+            ],
+        ]);
+        $application->forceFill([
+            'status' => ModelApplication::STATUS_APPROVED,
+            'user_id' => $member->id,
+        ])->save();
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'model_application_id' => $application->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.show', $profile))
+            ->assertOk()
+            ->assertSeeText('Application Photos')
+            ->assertSeeText('2 photos')
+            ->assertSee(route('admin.applications.photos.view', [$application, 0]), false)
+            ->assertSee(route('admin.applications.photos.show', [$application, 1]), false);
+    }
+
     public function test_admin_does_not_see_resend_application_approval_email_action_after_onboarding_is_submitted(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

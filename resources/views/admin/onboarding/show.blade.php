@@ -62,6 +62,12 @@
         @endif
 
         {{-- ── Onboarding progress timeline ────────────────────────── --}}
+        @php
+            $applicationPhotos = $profile->application
+                ? collect($profile->application->photo_paths ?? [])->filter()->values()
+                : collect();
+        @endphp
+
         <section class="pd-panel-strong p-5">
             <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Onboarding Progress') }}</p>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -124,6 +130,43 @@
                         @endforeach
                     </div>
                 </section>
+
+                {{-- Application Photos --}}
+                @if ($profile->application && $applicationPhotos->isNotEmpty())
+                    <section class="pd-panel-strong p-5">
+                        <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+                            <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Application Photos') }}</p>
+                            <span class="rounded-full bg-white/[0.04] px-2.5 py-0.5 text-[0.68rem] text-boss-ivory/42">
+                                {{ $applicationPhotos->count() }} {{ $applicationPhotos->count() === 1 ? __('photo') : __('photos') }}
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                            @foreach ($applicationPhotos as $index => $path)
+                                <div class="overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.025]">
+                                    <a href="{{ route('admin.applications.photos.view', [$profile->application, $index]) }}" target="_blank" rel="noopener" class="block aspect-[4/5] bg-white/[0.03]">
+                                        <img
+                                            src="{{ route('admin.applications.photos.view', [$profile->application, $index]) }}"
+                                            alt="{{ __('Application photo :number', ['number' => $index + 1]) }}"
+                                            class="h-full w-full object-cover"
+                                            loading="lazy"
+                                        >
+                                    </a>
+                                    <div class="flex items-center justify-between gap-2 border-t border-white/[0.06] px-3 py-2">
+                                        <span class="text-[0.68rem] text-boss-ivory/38">{{ __('Photo :number', ['number' => $index + 1]) }}</span>
+                                        <div class="flex shrink-0 gap-2">
+                                            <a href="{{ route('admin.applications.photos.view', [$profile->application, $index]) }}" target="_blank" rel="noopener" class="text-[0.68rem] font-medium text-boss-gold transition hover:text-boss-gold-light">
+                                                {{ __('View') }}
+                                            </a>
+                                            <a href="{{ route('admin.applications.photos.show', [$profile->application, $index]) }}" class="text-[0.68rem] text-boss-ivory/35 transition hover:text-boss-ivory/65">
+                                                {{ __('Download') }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
 
                 {{-- Appearance & Style --}}
                 @if ($profile->height || $profile->weight || $profile->hair_color || $profile->eye_color || $profile->body_type || $profile->has_tattoos_piercings)
