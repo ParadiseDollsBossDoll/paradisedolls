@@ -499,10 +499,18 @@
                     </div>
 
                     <div class="flex items-start gap-3 bg-boss-cream p-4">
-                        <input type="checkbox" name="age_confirmed" id="age-check" value="1" class="mt-1 h-4 w-4 shrink-0 accent-boss-rose" @checked(old('age_confirmed'))>
+                        <input type="checkbox" name="age_confirmed" id="age-check" value="1" required class="mt-1 h-4 w-4 shrink-0 accent-boss-rose" @checked(old('age_confirmed'))>
                         <label for="age-check" class="text-[0.8rem] leading-relaxed text-boss-dark/70">{{ __('I confirm that I am 18 years of age or older and agree to be contacted about my application and onboarding.') }}</label>
                     </div>
                     <x-input-error class="-mt-2" :messages="$errors->get('age_confirmed')" />
+
+                    <x-application-terms />
+
+                    <div class="flex items-start gap-3 bg-boss-cream p-4">
+                        <input type="checkbox" name="terms_accepted" id="terms-accepted" value="1" required class="mt-1 h-4 w-4 shrink-0 accent-boss-rose" @checked(old('terms_accepted'))>
+                        <label for="terms-accepted" class="text-[0.8rem] leading-relaxed text-boss-dark/70">{{ __('I confirm that I have read, understood and agree to the Paradise Dolls Terms & Conditions, Privacy Policy and Training Programme Terms.') }}</label>
+                    </div>
+                    <x-input-error class="-mt-2" :messages="$errors->get('terms_accepted')" />
 
                     <button type="submit" data-application-submit class="flex w-full items-center justify-center gap-3 rounded-md bg-[#EEB4C3] py-4 text-[0.75rem] uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#e0a0b5] disabled:cursor-not-allowed disabled:opacity-70">
                         <span data-submit-spinner class="hidden h-4 w-4 rounded-full border-2 border-white/40 border-t-white motion-safe:animate-spin" aria-hidden="true"></span>

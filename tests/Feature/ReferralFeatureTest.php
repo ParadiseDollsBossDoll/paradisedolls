@@ -114,6 +114,7 @@ class ReferralFeatureTest extends TestCase
             'phone_number' => '912 345 6789',
             'experience_level' => 'beginner',
             'age_confirmed' => '1',
+            'terms_accepted' => '1',
             'referral_code' => $referralCode,
         ])->assertRedirect(route('home').'#apply');
 
@@ -139,6 +140,7 @@ class ReferralFeatureTest extends TestCase
             'phone_number' => '912 345 6789',
             'experience_level' => 'beginner',
             'age_confirmed' => '1',
+            'terms_accepted' => '1',
             'referral_code' => 'NOTREAL',
         ])->assertRedirect(route('home').'#apply');
 

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ModelApplication extends Model
 {
+    public const TERMS_VERSION = '2026-07-03';
+
     public const STATUS_PENDING = 'pending';
 
     public const STATUS_APPROVED = 'approved';
@@ -22,6 +24,8 @@ class ModelApplication extends Model
         'experience_level',
         'social_handle',
         'age_confirmed',
+        'terms_accepted_at',
+        'terms_version',
         'photo_paths',
     ];
 
@@ -30,6 +34,7 @@ class ModelApplication extends Model
         return [
             'reviewed_at' => 'datetime',
             'age_confirmed' => 'boolean',
+            'terms_accepted_at' => 'datetime',
             'photo_paths' => 'array',
         ];
     }

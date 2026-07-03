@@ -159,6 +159,19 @@
                                     <span class="text-xs text-boss-gold/80">18+ age confirmed</span>
                                 </div>
                             </template>
+                            <template x-if="selected.terms_accepted_at">
+                                <div class="mt-3 flex items-start gap-2">
+                                    <svg class="mt-0.5 h-3.5 w-3.5 text-green-300" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span class="text-xs leading-5 text-green-200/75">
+                                        Terms accepted <span x-text="selected.terms_accepted_at"></span>
+                                        <template x-if="selected.terms_version">
+                                            <span> &middot; Version <span x-text="selected.terms_version"></span></span>
+                                        </template>
+                                    </span>
+                                </div>
+                            </template>
                         </div>
 
                         {{-- Message / motivation --}}
@@ -473,6 +486,8 @@
                                     'experience_level'     => $application->experience_level,
                                     'social_handle'        => $application->social_handle,
                                     'age_confirmed'        => $application->age_confirmed,
+                                    'terms_accepted_at'    => $application->terms_accepted_at?->toDayDateTimeString(),
+                                    'terms_version'        => $application->terms_version,
                                     'status'               => $application->status,
                                     'referrer_name'        => $application->referral?->referrer?->name,
                                     'referral_status'      => $application->referral?->status,
@@ -525,6 +540,9 @@
                                                 @endif
                                                 @if ($application->age_confirmed)
                                                     <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.62rem] text-boss-gold">18+</span>
+                                                @endif
+                                                @if ($application->terms_accepted_at)
+                                                    <span class="rounded-full bg-green-400/10 px-2 py-0.5 text-[0.62rem] text-green-300">{{ __('Terms accepted') }}</span>
                                                 @endif
                                                 @if ($application->photo_paths)
                                                     <span class="rounded-full bg-white/[0.04] px-2 py-0.5 text-[0.62rem] text-boss-ivory/35">

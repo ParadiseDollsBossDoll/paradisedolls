@@ -44,6 +44,7 @@ class OnboardingFlowTest extends TestCase
             'social_handle' => '@kayla',
             'message' => 'I want to build remote income.',
             'age_confirmed' => '1',
+            'terms_accepted' => '1',
             'photos' => [
                 $this->fakePng('photo-one.png'),
             ],
@@ -53,6 +54,8 @@ class OnboardingFlowTest extends TestCase
 
         $this->assertNotNull($application);
         $this->assertSame('+639123456789', $application->phone);
+        $this->assertNotNull($application->terms_accepted_at);
+        $this->assertSame(ModelApplication::TERMS_VERSION, $application->terms_version);
         $this->assertCount(1, $application->photo_paths);
         Storage::disk('local')->assertExists($application->photo_paths[0]);
         $this->assertSame('application_submitted', $admin->notifications()->first()?->data['category']);
@@ -100,6 +103,7 @@ class OnboardingFlowTest extends TestCase
             'phone_number' => '912 345 6789',
             'experience_level' => 'beginner',
             'age_confirmed' => '1',
+            'terms_accepted' => '1',
             'photos' => [
                 $this->fakeLargePng('large-photo.png'),
             ],
@@ -120,7 +124,25 @@ class OnboardingFlowTest extends TestCase
             'phone_number' => 'call me maybe',
             'experience_level' => 'beginner',
             'age_confirmed' => '1',
+            'terms_accepted' => '1',
         ])->assertSessionHasErrors('phone_number');
+
+        $this->assertDatabaseCount('model_applications', 0);
+        Mail::assertNothingSent();
+    }
+
+    public function test_application_submission_requires_terms_acceptance(): void
+    {
+        Mail::fake();
+
+        $this->post(route('apply.store'), [
+            'name' => 'Kayla Test',
+            'email' => 'kayla@example.com',
+            'phone_country' => 'PH',
+            'phone_number' => '912 345 6789',
+            'experience_level' => 'beginner',
+            'age_confirmed' => '1',
+        ])->assertSessionHasErrors('terms_accepted');
 
         $this->assertDatabaseCount('model_applications', 0);
         Mail::assertNothingSent();
@@ -137,6 +159,7 @@ class OnboardingFlowTest extends TestCase
             'phone_number' => '555 1234',
             'experience_level' => 'beginner',
             'age_confirmed' => '1',
+            'terms_accepted' => '1',
         ])->assertRedirect(route('home').'#apply');
 
         $this->assertSame('+18295551234', ModelApplication::first()?->phone);
@@ -153,6 +176,7 @@ class OnboardingFlowTest extends TestCase
             'phone_number' => '912 345 6789',
             'experience_level' => 'beginner',
             'age_confirmed' => '1',
+            'terms_accepted' => '1',
         ])->assertSessionHasErrors('email');
 
         $this->assertDatabaseCount('model_applications', 0);
