@@ -77,10 +77,19 @@
                             >
                         </div>
 
+                        <div>
+                            <label for="referrals-per-page" class="sr-only">{{ __('Rows per page') }}</label>
+                            <select id="referrals-per-page" name="per_page" class="pd-input h-12 w-auto min-w-28" onchange="this.form.submit()">
+                                @foreach ([10, 20, 50] as $size)
+                                    <option value="{{ $size }}" @selected($perPage === $size)>{{ $size }} {{ __('rows') }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <button type="submit" class="pd-btn-secondary h-12 whitespace-nowrap">{{ __('Search') }}</button>
 
                         @if ($search !== '' || $onlyWithReferrals)
-                            <a href="{{ route('admin.referrals.index') }}" class="pd-btn-secondary h-12 whitespace-nowrap">{{ __('Clear') }}</a>
+                            <a href="{{ route('admin.referrals.index', ['per_page' => $perPage]) }}" class="pd-btn-secondary h-12 whitespace-nowrap">{{ __('Clear') }}</a>
                         @endif
                     </div>
 
@@ -192,6 +201,13 @@
                 <div>
                     <p class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-ivory/[0.35]">{{ __('Activity') }}</p>
                     <h2 class="mt-1 font-display text-2xl text-boss-ivory">{{ __('Recent Referrals') }}</h2>
+                    <p class="mt-1 text-xs text-boss-ivory/[0.35]">
+                        @if ($recentReferrals->total() > 0)
+                            {{ __('Showing') }} {{ $recentReferrals->firstItem() }}-{{ $recentReferrals->lastItem() }} {{ __('of') }} {{ number_format($recentReferrals->total()) }}
+                        @else
+                            {{ __('No referral activity') }}
+                        @endif
+                    </p>
                 </div>
                 <p class="text-xs text-boss-ivory/[0.36]">{{ __('Convert and reward actions still use the same Applications workflow.') }}</p>
             </div>
@@ -264,10 +280,9 @@
             </div>
 
             @if ($recentReferrals->hasPages())
-                <div class="mt-5">{{ $recentReferrals->links() }}</div>
+                <div class="mt-5 border-t border-white/[0.06] pt-4">{{ $recentReferrals->links() }}</div>
             @endif
         </section>
     </div>
 </x-admin-layout>
-
 

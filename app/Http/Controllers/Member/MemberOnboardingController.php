@@ -7,6 +7,7 @@ use App\Mail\ModelInformationSubmittedMail;
 use App\Models\ModelProfile;
 use App\Services\AdminActivityNotifier;
 use App\Support\CountryCallingCodes;
+use App\Support\OnboardingFormDefinition;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -21,17 +22,24 @@ class MemberOnboardingController extends Controller
     {
         $profile = $this->profile();
         $this->markOnboardingStarted($profile);
+        $onboardingForm = OnboardingFormDefinition::get();
 
         $callingCodes = config('country_calling_codes', []);
         $phoneInput = CountryCallingCodes::splitPhone($profile->phone, $profile->country, $callingCodes);
 
         return view('member.onboarding.edit', [
             'profile' => $profile,
-            'platformOptions' => $this->camSiteOptions(),
-            'fanSiteOptions' => $this->fanSiteOptions(),
-            'aiPlatformOptions' => $this->aiPlatformOptions(),
-            'fetishSections' => $this->fetishSections(),
-            'equipmentOptions' => $this->equipmentOptions(),
+            'onboardingForm' => $onboardingForm,
+            'platformOptions' => OnboardingFormDefinition::memberOptions($onboardingForm, 'platforms_cam', $profile->platforms ?? []),
+            'fanSiteOptions' => OnboardingFormDefinition::memberOptions($onboardingForm, 'platforms_fan', $profile->platforms ?? []),
+            'aiPlatformOptions' => OnboardingFormDefinition::memberOptions($onboardingForm, 'platforms_ai', $profile->platforms ?? []),
+            'fetishSections' => OnboardingFormDefinition::fetishSectionsForMember($onboardingForm),
+            'equipmentOptions' => OnboardingFormDefinition::memberOptions($onboardingForm, 'equipment', $profile->equipment ?? []),
+            'workInterestOptions' => OnboardingFormDefinition::memberOptions($onboardingForm, 'work_interests', $profile->work_interests ?? []),
+            'comfortLevelOptions' => OnboardingFormDefinition::memberOptions($onboardingForm, 'comfort_levels', $profile->comfort_levels ?? []),
+            'payoutMethodOptions' => OnboardingFormDefinition::memberOptions($onboardingForm, 'payout_methods', $profile->payout_methods ?? []),
+            'customFields' => OnboardingFormDefinition::activeCustomFields($onboardingForm),
+            'customAnswers' => $profile->custom_onboarding_answers ?? [],
             'phoneCountries' => CountryCallingCodes::phoneOptions($callingCodes),
             'selectedPhoneCountry' => $phoneInput['country'],
             'phoneNumber' => $phoneInput['number'],
@@ -41,14 +49,16 @@ class MemberOnboardingController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
+        $profile = $this->profile();
+        $onboardingForm = OnboardingFormDefinition::get();
         $callingCodes = config('country_calling_codes', []);
         $phonePrefixLookup = CountryCallingCodes::phonePrefixLookup($callingCodes);
-        $platformOptions = $this->allPlatformOptions();
-        $equipmentOptions = $this->equipmentOptions();
-        $workInterestOptions = $this->workInterestOptions();
-        $comfortLevelOptions = $this->comfortLevelOptions();
-        $payoutMethodOptions = $this->payoutMethodOptions();
-        $fetishItems = $this->fetishItems();
+        $platformOptions = OnboardingFormDefinition::allPlatformOptions($onboardingForm, $profile->platforms ?? []);
+        $equipmentOptions = OnboardingFormDefinition::validationOptions($onboardingForm, 'equipment', $profile->equipment ?? []);
+        $workInterestOptions = OnboardingFormDefinition::validationOptions($onboardingForm, 'work_interests', $profile->work_interests ?? []);
+        $comfortLevelOptions = OnboardingFormDefinition::validationOptions($onboardingForm, 'comfort_levels', $profile->comfort_levels ?? []);
+        $payoutMethodOptions = OnboardingFormDefinition::validationOptions($onboardingForm, 'payout_methods', $profile->payout_methods ?? []);
+        $fetishItems = OnboardingFormDefinition::allFetishItems($onboardingForm, $profile->fetishes_checklist ?? []);
 
         $validated = $request->validate([
             'legal_name' => ['required', 'string', 'max:255'],
@@ -110,6 +120,7 @@ class MemberOnboardingController extends Controller
             'emergency_contact_phone' => ['nullable', 'string', 'max:50'],
             'discord_username' => ['nullable', 'string', 'max:255'],
             'discord_user_id' => ['nullable', 'string', 'max:255'],
+            'custom_onboarding' => ['nullable', 'array'],
         ], [
             'phone_country.required_with' => __('Please choose a country code for your phone number.'),
             'phone_country.in' => __('Please choose a valid country code.'),
@@ -146,13 +157,21 @@ class MemberOnboardingController extends Controller
         $validated['work_interests'] = $this->valuesFromOptions($validated['work_interests'] ?? [], $workInterestOptions);
         $validated['comfort_levels'] = $this->valuesFromOptions($validated['comfort_levels'] ?? [], $comfortLevelOptions);
         $validated['payout_methods'] = $this->valuesFromOptions($validated['payout_methods'] ?? [], $payoutMethodOptions);
-        $validated['fetishes_checklist'] = $this->filterFetishChecklist($validated['fetishes_checklist'] ?? []);
+        $validated['fetishes_checklist'] = $this->filterFetishChecklist($validated['fetishes_checklist'] ?? [], $fetishItems);
 
         if (! in_array('Other', $validated['payout_methods'], true)) {
             $validated['payout_method_other'] = null;
         }
 
-        $profile = $this->profile();
+        $this->validateCustomOnboarding($request, $onboardingForm);
+        $validated['custom_onboarding_answers'] = OnboardingFormDefinition::customAnswersFromRequest(
+            $request,
+            $onboardingForm,
+            $profile->custom_onboarding_answers ?? []
+        );
+        $validated['onboarding_form_version'] = $onboardingForm['version'];
+        unset($validated['custom_onboarding']);
+
         $wasSubmitted = $profile->hasInformationForm();
 
         $profile->forceFill([
@@ -454,18 +473,65 @@ class MemberOnboardingController extends Controller
             ->all();
     }
 
-    private function filterFetishChecklist(mixed $values): array
+    private function filterFetishChecklist(mixed $values, array $fetishItems): array
     {
         if (! is_array($values)) {
             return [];
         }
 
-        $allowedItems = array_fill_keys($this->fetishItems(), true);
+        $allowedItems = array_fill_keys($fetishItems, true);
         $allowedAnswers = ['Yes', 'No', 'Sometimes'];
 
         return collect($values)
             ->filter(fn ($answer, $item) => isset($allowedItems[$item]) && in_array($answer, $allowedAnswers, true))
             ->all();
+    }
+
+    private function validateCustomOnboarding(Request $request, array $onboardingForm): void
+    {
+        $input = $request->input('custom_onboarding', []);
+        $input = is_array($input) ? $input : [];
+        $errors = [];
+
+        foreach (OnboardingFormDefinition::activeCustomFields($onboardingForm) as $field) {
+            if (($field['type'] ?? 'text') === 'section') {
+                continue;
+            }
+
+            $id = $field['id'];
+            $value = $input[$id] ?? null;
+
+            if (($field['required'] ?? false) && ($value === null || $value === '' || $value === [])) {
+                $errors["custom_onboarding.{$id}"] = __('Please answer :field.', ['field' => $field['label']]);
+                continue;
+            }
+
+            if (is_string($value) && mb_strlen($value) > 5000) {
+                $errors["custom_onboarding.{$id}"] = __(':field is too long.', ['field' => $field['label']]);
+            }
+
+            if (is_array($value) && count($value) > 30) {
+                $errors["custom_onboarding.{$id}"] = __('Please select fewer options for :field.', ['field' => $field['label']]);
+            }
+
+            $allowedOptions = $field['options'] ?? [];
+            if (in_array($field['type'], ['select', 'radio', 'yes_no_maybe'], true) && filled($value) && ! in_array($value, $allowedOptions, true)) {
+                $errors["custom_onboarding.{$id}"] = __('Please choose a valid option for :field.', ['field' => $field['label']]);
+            }
+
+            if (($field['type'] ?? '') === 'checkbox' && is_array($value)) {
+                foreach ($value as $selected) {
+                    if (! in_array($selected, $allowedOptions, true)) {
+                        $errors["custom_onboarding.{$id}"] = __('Please choose valid options for :field.', ['field' => $field['label']]);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
     }
 
     private function sendConfirmation(ModelProfile $profile): void

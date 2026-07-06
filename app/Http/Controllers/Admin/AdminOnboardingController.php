@@ -14,6 +14,7 @@ use App\Models\ModelProfile;
 use App\Models\User;
 use App\Notifications\SystemNotification;
 use App\Services\AdminActivityNotifier;
+use App\Support\OnboardingFormDefinition;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,13 +28,16 @@ use Throwable;
 
 class AdminOnboardingController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $perPage = $this->perPage($request);
+
         $models = User::query()
             ->where('role', 'model')
             ->with('modelProfile')
             ->orderBy('name')
-            ->paginate(20);
+            ->paginate($perPage)
+            ->withQueryString();
 
         $stats = [
             'members' => User::where('role', 'model')->count(),
@@ -44,7 +48,28 @@ class AdminOnboardingController extends Controller
             'role_assigned' => ModelProfile::whereNotNull('community_role_assigned_at')->count(),
         ];
 
-        return view('admin.onboarding.index', compact('models', 'stats'));
+        return view('admin.onboarding.index', [
+            'models' => $models,
+            'perPage' => $perPage,
+            'stats' => $stats,
+            'onboardingForm' => OnboardingFormDefinition::get(),
+            'customFieldTypes' => [
+                'text' => __('Text input'),
+                'textarea' => __('Long text'),
+                'select' => __('Dropdown'),
+                'radio' => __('Single choice'),
+                'checkbox' => __('Checkbox group'),
+                'yes_no_maybe' => __('Yes / No / Maybe'),
+                'section' => __('Help text only'),
+            ],
+        ]);
+    }
+
+    private function perPage(Request $request): int
+    {
+        $perPage = (int) $request->query('per_page', 20);
+
+        return in_array($perPage, [10, 20, 50], true) ? $perPage : 20;
     }
 
     public function show(ModelProfile $profile): View
@@ -70,6 +95,10 @@ class AdminOnboardingController extends Controller
             'courses'               => $courses,
             'unlockedCourseIds'     => $unlockedCourseIds,
             'accessRequestsByCourse' => $accessRequestsByCourse,
+            'customOnboardingAnswers' => OnboardingFormDefinition::customAnswersForDisplay(
+                OnboardingFormDefinition::get(),
+                $profile->custom_onboarding_answers ?? []
+            ),
         ]);
     }
 
@@ -151,6 +180,19 @@ class AdminOnboardingController extends Controller
         ])->save();
 
         return redirect()->back()->with('status', __('Verification instructions saved.'));
+    }
+
+    public function updateOnboardingForm(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'form' => ['nullable', 'array'],
+        ]);
+
+        OnboardingFormDefinition::saveFromRequest($request);
+
+        return redirect()
+            ->route('admin.onboarding.index')
+            ->with('status', __('Onboarding form saved. Future model onboarding forms will use the updated version.'));
     }
 
     public function unlockCourse(ModelProfile $profile, Course $course): RedirectResponse

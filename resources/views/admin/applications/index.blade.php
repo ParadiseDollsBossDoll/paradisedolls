@@ -352,13 +352,23 @@
                 <p class="pd-kicker">{{ __('Recruitment') }}</p>
                 <h1 class="pd-heading mt-2 text-[clamp(2rem,4vw,2.6rem)]">{{ __('Applications') }}</h1>
             </div>
-            <a href="{{ route('admin.applications.export') }}" class="pd-btn-secondary h-11 w-fit gap-2">
-                <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7">
-                    <path d="M8 2v8m0 0 3-3m-3 3L5 7"/>
-                    <path d="M3 12.5h10"/>
-                </svg>
-                {{ __('Download CRM CSV') }}
-            </a>
+            <div class="flex flex-wrap items-center gap-2">
+                <form method="GET" action="{{ route('admin.applications.index') }}">
+                    <label for="applications-per-page" class="sr-only">{{ __('Rows per page') }}</label>
+                    <select id="applications-per-page" name="per_page" class="pd-input h-11 w-auto min-w-28" onchange="this.form.submit()">
+                        @foreach ([10, 20, 50] as $size)
+                            <option value="{{ $size }}" @selected($perPage === $size)>{{ $size }} {{ __('rows') }}</option>
+                        @endforeach
+                    </select>
+                </form>
+                <a href="{{ route('admin.applications.export') }}" class="pd-btn-secondary h-11 w-fit gap-2">
+                    <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7">
+                        <path d="M8 2v8m0 0 3-3m-3 3L5 7"/>
+                        <path d="M3 12.5h10"/>
+                    </svg>
+                    {{ __('Download CRM CSV') }}
+                </a>
+            </div>
         </header>
 
         {{-- Flash messages --}}
@@ -399,7 +409,7 @@
                         <p class="mt-2 text-sm text-boss-ivory/42">{{ __('Member-submitted referrals waiting to become applications.') }}</p>
                     </div>
                     <span class="rounded-full border border-boss-gold/15 bg-boss-gold/[0.07] px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.14em] text-boss-gold">
-                        {{ $referralLeads->count() }} {{ __('leads') }}
+                        {{ number_format($referralLeads->total()) }} {{ __('leads') }}
                     </span>
                 </div>
 
@@ -460,6 +470,10 @@
                         </article>
                     @endforeach
                 </div>
+
+                @if ($referralLeads->hasPages())
+                    <div class="mt-5 border-t border-white/[0.06] pt-4">{{ $referralLeads->links() }}</div>
+                @endif
             </section>
         @endif
 
@@ -591,7 +605,18 @@
             </div>
         </div>
 
-        <div class="px-2">{{ $applications->links() }}</div>
+        <div class="flex flex-col gap-3 px-2 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-xs text-boss-ivory/35">
+                @if ($applications->total() > 0)
+                    {{ __('Showing') }} {{ $applications->firstItem() }}-{{ $applications->lastItem() }} {{ __('of') }} {{ number_format($applications->total()) }} {{ __('applications') }}
+                @else
+                    {{ __('No applications') }}
+                @endif
+            </p>
+            @if ($applications->hasPages())
+                {{ $applications->links() }}
+            @endif
+        </div>
 
     </div>
 </x-admin-layout>

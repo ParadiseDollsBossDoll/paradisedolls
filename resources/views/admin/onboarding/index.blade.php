@@ -3,6 +3,7 @@
         class="pd-admin-onboarding pd-admin-onboarding-index mx-auto max-w-full space-y-6 text-boss-ivory"
         x-data="{
             open: false,
+            formOpen: false,
             selected: null,
             showReject: false,
             async selectModel(model) {
@@ -27,7 +28,7 @@
                 }
             }
         }"
-        @keydown.escape.window="open = false"
+        @keydown.escape.window="open = false; formOpen = false"
     >
 
         {{-- ── Backdrop ──────────────────────────────────────────── --}}
@@ -395,6 +396,22 @@
                                         <p class="whitespace-pre-line text-sm leading-relaxed text-boss-ivory/65" x-text="selected.profile.anything_else"></p>
                                     </div>
                                 </template>
+                                <template x-if="selected.profile.custom_onboarding_answers && selected.profile.custom_onboarding_answers.length > 0">
+                                    <div class="border-t border-white/[0.04] pt-3">
+                                        <p class="mb-2 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Custom Onboarding Answers</p>
+                                        <div class="space-y-2">
+                                            <template x-for="answer in selected.profile.custom_onboarding_answers" :key="answer.id">
+                                                <div class="rounded-lg border border-white/[0.05] bg-white/[0.025] px-3 py-2">
+                                                    <div class="flex items-center gap-2">
+                                                        <p class="text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-boss-ivory/38" x-text="answer.label"></p>
+                                                        <span x-show="answer.archived" class="rounded-full bg-white/[0.05] px-1.5 py-0.5 text-[0.56rem] text-boss-ivory/28">Archived</span>
+                                                    </div>
+                                                    <p class="mt-1 whitespace-pre-line text-[0.82rem] leading-relaxed text-boss-ivory/68" x-text="answer.answer"></p>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
                         </template>
 
@@ -757,19 +774,233 @@
             </template>
         </div>
 
+        {{-- Inline onboarding form editor --}}
+        <div
+            x-show="formOpen"
+            x-cloak
+            x-transition:enter="transition-opacity ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-[70] bg-black/75 backdrop-blur-sm"
+            @click="formOpen = false"
+        ></div>
+
+        <form
+            method="POST"
+            action="{{ route('admin.onboarding.form.update') }}"
+            x-show="formOpen"
+            x-cloak
+            x-data="adminOnboardingFormBuilder(@js($onboardingForm), @js($customFieldTypes))"
+            x-transition:enter="transition ease-out duration-300 transform"
+            x-transition:enter-start="translate-x-full"
+            x-transition:enter-end="translate-x-0"
+            x-transition:leave="transition ease-in duration-200 transform"
+            x-transition:leave-start="translate-x-0"
+            x-transition:leave-end="translate-x-full"
+            class="fixed inset-y-0 right-0 z-[80] flex w-full flex-col border-l border-white/[0.06] bg-[#0d0e14] text-boss-ivory shadow-2xl lg:max-w-4xl"
+        >
+            @csrf
+            @method('PUT')
+
+            <div class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-4 md:px-6">
+                <div>
+                    <p class="pd-kicker">{{ __('Form Builder') }}</p>
+                    <h2 class="pd-heading mt-1 text-[1.45rem] text-boss-ivory">{{ __('Edit Onboarding Form') }}</h2>
+                    <p class="mt-1 text-[0.76rem] text-boss-ivory/38">{{ __('Core identity, contact, and verification fields stay fixed. Archived fields are hidden from future forms but old answers stay visible.') }}</p>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" class="pd-btn-secondary h-10" @click="formOpen = false">{{ __('Cancel') }}</button>
+                    <button type="submit" class="pd-btn-primary h-10">{{ __('Save') }}</button>
+                </div>
+            </div>
+
+            <div class="flex-1 space-y-5 overflow-y-auto px-5 py-5 md:px-6">
+                <section class="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
+                    <div class="mb-4">
+                        <p class="text-[0.68rem] uppercase tracking-[0.16em] text-boss-ivory/35">{{ __('Section Copy') }}</p>
+                        <p class="mt-1 text-[0.72rem] text-boss-ivory/32">{{ __('Edit headings and helper text shown on the member onboarding form.') }}</p>
+                    </div>
+                    <div class="space-y-3">
+                        <template x-for="entry in Object.entries(form.sections)" :key="entry[0]">
+                            <div class="grid gap-2 rounded-xl border border-white/[0.05] bg-black/10 p-3 md:grid-cols-[10rem_1fr]">
+                                <div>
+                                    <p class="text-[0.64rem] uppercase tracking-[0.14em] text-boss-gold/60" x-text="labelize(entry[0])"></p>
+                                </div>
+                                <div class="grid gap-2 md:grid-cols-[8rem_1fr]">
+                                    <input class="pd-input text-sm" :name="`form[sections][${entry[0]}][eyebrow]`" x-model="entry[1].eyebrow" placeholder="Step label">
+                                    <input class="pd-input text-sm" :name="`form[sections][${entry[0]}][title]`" x-model="entry[1].title" placeholder="Section title">
+                                    <textarea class="pd-input md:col-span-2 min-h-[74px] text-sm" :name="`form[sections][${entry[0]}][help]`" x-model="entry[1].help" placeholder="Optional helper text"></textarea>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </section>
+
+                <section class="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
+                    <div class="mb-4">
+                        <p class="text-[0.68rem] uppercase tracking-[0.16em] text-boss-ivory/35">{{ __('Checkbox Lists') }}</p>
+                        <p class="mt-1 text-[0.72rem] text-boss-ivory/32">{{ __('One option per line. Removing an option archives it so old model answers still display.') }}</p>
+                    </div>
+                    <div class="grid gap-3 lg:grid-cols-2">
+                        <template x-for="entry in Object.entries(form.option_groups)" :key="entry[0]">
+                            <div class="rounded-xl border border-white/[0.05] bg-black/10 p-3">
+                                <div class="grid gap-2 md:grid-cols-[1fr_1.3fr]">
+                                    <div>
+                                        <label class="pd-label">{{ __('Label') }}</label>
+                                        <input class="pd-input mt-1 text-sm" :name="`form[option_groups][${entry[0]}][label]`" x-model="entry[1].label">
+                                    </div>
+                                    <div>
+                                        <label class="pd-label">{{ __('Help text') }}</label>
+                                        <input class="pd-input mt-1 text-sm" :name="`form[option_groups][${entry[0]}][help]`" x-model="entry[1].help">
+                                    </div>
+                                </div>
+                                <label class="pd-label mt-3 block">{{ __('Options') }}</label>
+                                <textarea class="pd-input mt-1 min-h-[160px] text-sm" :name="`form[option_groups][${entry[0]}][options]`" x-model="entry[1].optionsText"></textarea>
+                                <textarea class="hidden" :name="`form[option_groups][${entry[0]}][archived]`" x-model="entry[1].archivedText"></textarea>
+                            </div>
+                        </template>
+                    </div>
+                </section>
+
+                <section class="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
+                    <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <p class="text-[0.68rem] uppercase tracking-[0.16em] text-boss-ivory/35">{{ __('Fetishes & Kinks Checklist') }}</p>
+                            <p class="mt-1 text-[0.72rem] text-boss-ivory/32">{{ __('Edit sections and items. Archive a section to hide it from future model forms.') }}</p>
+                        </div>
+                        <button type="button" class="rounded-xl border border-boss-gold/20 bg-boss-gold/[0.07] px-3 py-2 text-[0.72rem] font-semibold text-boss-gold transition hover:bg-boss-gold/[0.13]" @click="addFetishSection()">
+                            {{ __('Add Section') }}
+                        </button>
+                    </div>
+                    <div class="space-y-3">
+                        <template x-for="(section, index) in form.fetish_sections" :key="section.uid">
+                            <div class="rounded-xl border border-white/[0.05] bg-black/10 p-3" :class="section.archived ? 'opacity-55' : ''">
+                                <input type="hidden" :name="`form[fetish_sections][${index}][id]`" x-model="section.id">
+                                <div class="grid gap-2 md:grid-cols-[1fr_1fr_auto] md:items-end">
+                                    <div>
+                                        <label class="pd-label">{{ __('Title') }}</label>
+                                        <input class="pd-input mt-1 text-sm" :name="`form[fetish_sections][${index}][title]`" x-model="section.title">
+                                    </div>
+                                    <div>
+                                        <label class="pd-label">{{ __('Note') }}</label>
+                                        <input class="pd-input mt-1 text-sm" :name="`form[fetish_sections][${index}][note]`" x-model="section.note">
+                                    </div>
+                                    <button type="button" class="h-10 rounded-xl border px-3 text-[0.72rem] font-semibold transition" :class="section.archived ? 'border-green-400/20 bg-green-400/10 text-green-300' : 'border-red-400/20 bg-red-400/10 text-red-300'" @click="section.archived = !section.archived" x-text="section.archived ? 'Restore' : 'Archive'"></button>
+                                </div>
+                                <label class="pd-label mt-3 block">{{ __('Items') }}</label>
+                                <textarea class="pd-input mt-1 min-h-[170px] text-sm" :name="`form[fetish_sections][${index}][items]`" x-model="section.itemsText"></textarea>
+                                <textarea class="hidden" :name="`form[fetish_sections][${index}][archived_items]`" x-model="section.archivedItemsText"></textarea>
+                                <input type="hidden" :name="`form[fetish_sections][${index}][archived]`" value="0">
+                                <input type="checkbox" class="hidden" :name="`form[fetish_sections][${index}][archived]`" value="1" x-model="section.archived">
+                            </div>
+                        </template>
+                    </div>
+                </section>
+
+                <section class="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
+                    <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <p class="text-[0.68rem] uppercase tracking-[0.16em] text-boss-ivory/35">{{ __('Custom Questions') }}</p>
+                            <p class="mt-1 text-[0.72rem] text-boss-ivory/32">{{ __('Add extra questions for future models. Archive fields instead of deleting them.') }}</p>
+                        </div>
+                        <button type="button" class="rounded-xl border border-boss-gold/20 bg-boss-gold/[0.07] px-3 py-2 text-[0.72rem] font-semibold text-boss-gold transition hover:bg-boss-gold/[0.13]" @click="addCustomField()">
+                            {{ __('Add Field') }}
+                        </button>
+                    </div>
+
+                    <div class="space-y-3">
+                        <template x-if="form.custom_fields.length === 0">
+                            <div class="rounded-xl border border-white/[0.05] bg-black/10 p-4 text-center text-sm text-boss-ivory/35">
+                                {{ __('No custom questions yet.') }}
+                            </div>
+                        </template>
+                        <template x-for="(field, index) in form.custom_fields" :key="field.uid">
+                            <div class="rounded-xl border border-white/[0.05] bg-black/10 p-3" :class="field.archived ? 'opacity-55' : ''">
+                                <input type="hidden" :name="`form[custom_fields][${index}][id]`" x-model="field.id">
+                                <div class="grid gap-2 md:grid-cols-[1fr_11rem_auto] md:items-end">
+                                    <div>
+                                        <label class="pd-label">{{ __('Label') }}</label>
+                                        <input class="pd-input mt-1 text-sm" :name="`form[custom_fields][${index}][label]`" x-model="field.label" placeholder="Question label">
+                                    </div>
+                                    <div>
+                                        <label class="pd-label">{{ __('Type') }}</label>
+                                        <select class="pd-input mt-1 text-sm" :name="`form[custom_fields][${index}][type]`" x-model="field.type">
+                                            <template x-for="typeEntry in Object.entries(fieldTypes)" :key="typeEntry[0]">
+                                                <option :value="typeEntry[0]" x-text="typeEntry[1]"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <button type="button" class="h-10 rounded-xl border px-3 text-[0.72rem] font-semibold transition" :class="field.archived ? 'border-green-400/20 bg-green-400/10 text-green-300' : 'border-red-400/20 bg-red-400/10 text-red-300'" @click="field.archived = !field.archived" x-text="field.archived ? 'Restore' : 'Archive'"></button>
+                                </div>
+
+                                <div class="mt-2 grid gap-2 md:grid-cols-[1fr_auto] md:items-end">
+                                    <div>
+                                        <label class="pd-label">{{ __('Help text') }}</label>
+                                        <input class="pd-input mt-1 text-sm" :name="`form[custom_fields][${index}][help]`" x-model="field.help" placeholder="Optional helper text">
+                                    </div>
+                                    <label class="flex h-10 items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 text-[0.76rem] text-boss-ivory/60">
+                                        <input type="hidden" :name="`form[custom_fields][${index}][required]`" value="0">
+                                        <input type="checkbox" :name="`form[custom_fields][${index}][required]`" value="1" x-model="field.required" class="h-4 w-4 rounded border-white/20 bg-boss-ink text-boss-gold focus:ring-boss-gold focus:ring-offset-0">
+                                        <span>{{ __('Required') }}</span>
+                                    </label>
+                                </div>
+
+                                <div class="mt-2" x-show="['select', 'radio', 'checkbox'].includes(field.type)">
+                                    <label class="pd-label">{{ __('Options') }}</label>
+                                    <textarea class="pd-input mt-1 min-h-[96px] text-sm" :name="`form[custom_fields][${index}][options]`" x-model="field.optionsText" placeholder="One option per line"></textarea>
+                                </div>
+                                <input type="hidden" :name="`form[custom_fields][${index}][archived]`" value="0">
+                                <input type="checkbox" class="hidden" :name="`form[custom_fields][${index}][archived]`" value="1" x-model="field.archived">
+                            </div>
+                        </template>
+                    </div>
+                </section>
+            </div>
+
+            <div class="shrink-0 border-t border-white/[0.06] px-5 py-4 md:px-6">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <p class="text-[0.72rem] text-boss-ivory/32">{{ __('Changes affect future model submissions. Existing answers are preserved.') }}</p>
+                    <div class="flex gap-2">
+                        <button type="button" class="pd-btn-secondary h-10" @click="formOpen = false">{{ __('Cancel') }}</button>
+                        <button type="submit" class="pd-btn-primary h-10">{{ __('Save Onboarding Form') }}</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
         {{-- ── Page header ───────────────────────────────────────── --}}
         <header class="flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
             <div>
                 <p class="pd-kicker">{{ __('Onboarding') }}</p>
                 <h1 class="pd-heading mt-2 text-[clamp(2rem,4vw,2.6rem)]">{{ __('Model Onboarding') }}</h1>
             </div>
-            <a href="{{ route('admin.onboarding.export') }}" class="pd-btn-secondary h-11 w-fit gap-2">
-                <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7">
-                    <path d="M8 2v8m0 0 3-3m-3 3L5 7"/>
-                    <path d="M3 12.5h10"/>
-                </svg>
-                {{ __('Download CRM Excel') }}
-            </a>
+            <div class="flex flex-wrap gap-2">
+                <form method="GET" action="{{ route('admin.onboarding.index') }}">
+                    <label for="onboarding-per-page" class="sr-only">{{ __('Rows per page') }}</label>
+                    <select id="onboarding-per-page" name="per_page" class="pd-input h-11 w-auto min-w-28" onchange="this.form.submit()">
+                        @foreach ([10, 20, 50] as $size)
+                            <option value="{{ $size }}" @selected($perPage === $size)>{{ $size }} {{ __('rows') }}</option>
+                        @endforeach
+                    </select>
+                </form>
+                <button type="button" class="pd-btn-primary h-11 w-fit gap-2" @click="formOpen = true">
+                    <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7">
+                        <path d="M3 3h10v10H3z"/>
+                        <path d="M5.5 6h5M5.5 8.5h3"/>
+                    </svg>
+                    {{ __('Edit Onboarding Form') }}
+                </button>
+                <a href="{{ route('admin.onboarding.export') }}" class="pd-btn-secondary h-11 w-fit gap-2">
+                    <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7">
+                        <path d="M8 2v8m0 0 3-3m-3 3L5 7"/>
+                        <path d="M3 12.5h10"/>
+                    </svg>
+                    {{ __('Download CRM Excel') }}
+                </a>
+            </div>
         </header>
 
         {{-- ── Flash messages ────────────────────────────────────── --}}
@@ -858,6 +1089,7 @@
                                         'payout_country'              => $profile->payout_country,
                                         'model_vibe'                  => $profile->model_vibe,
                                         'anything_else'               => $profile->anything_else,
+                                        'custom_onboarding_answers'   => \App\Support\OnboardingFormDefinition::customAnswersForDisplay($onboardingForm, $profile->custom_onboarding_answers ?? []),
                                         'equipment'                   => $profile->equipment ?? [],
                                         'availability'                => $profile->availability,
                                         'goals'                       => $profile->goals,
@@ -984,7 +1216,89 @@
             </div>
         </div>
 
-        <div class="px-2">{{ $models->links() }}</div>
+        <div class="flex flex-col gap-3 px-2 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-xs text-boss-ivory/35">
+                @if ($models->total() > 0)
+                    {{ __('Showing') }} {{ $models->firstItem() }}-{{ $models->lastItem() }} {{ __('of') }} {{ number_format($models->total()) }} {{ __('members') }}
+                @else
+                    {{ __('No members') }}
+                @endif
+            </p>
+            @if ($models->hasPages())
+                {{ $models->links() }}
+            @endif
+        </div>
 
     </div>
+
+    <script>
+        window.adminOnboardingFormBuilder = function (definition, fieldTypes) {
+            let uid = 0;
+            const nextUid = () => `builder_${Date.now()}_${uid++}`;
+            const textLines = (value) => Array.isArray(value) ? value.join('\n') : (value || '');
+            const groups = {};
+
+            Object.entries(definition.option_groups || {}).forEach(([key, group]) => {
+                groups[key] = {
+                    label: group.label || '',
+                    help: group.help || '',
+                    optionsText: textLines(group.options || []),
+                    archivedText: textLines(group.archived || []),
+                };
+            });
+
+            return {
+                fieldTypes: fieldTypes || {},
+                form: {
+                    sections: definition.sections || {},
+                    option_groups: groups,
+                    fetish_sections: (definition.fetish_sections || []).map((section) => ({
+                        uid: nextUid(),
+                        id: section.id || '',
+                        title: section.title || '',
+                        note: section.note || '',
+                        itemsText: textLines(section.items || []),
+                        archivedItemsText: textLines(section.archived_items || []),
+                        archived: Boolean(section.archived),
+                    })),
+                    custom_fields: (definition.custom_fields || []).map((field) => ({
+                        uid: nextUid(),
+                        id: field.id || '',
+                        label: field.label || '',
+                        type: field.type || 'text',
+                        help: field.help || '',
+                        required: Boolean(field.required),
+                        optionsText: textLines(field.options || []),
+                        archived: Boolean(field.archived),
+                    })),
+                },
+                labelize(value) {
+                    return String(value || '').replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+                },
+                addFetishSection() {
+                    this.form.fetish_sections.push({
+                        uid: nextUid(),
+                        id: '',
+                        title: '',
+                        note: '',
+                        itemsText: '',
+                        archivedItemsText: '',
+                        archived: false,
+                    });
+                },
+                addCustomField() {
+                    this.form.custom_fields.push({
+                        uid: nextUid(),
+                        id: '',
+                        label: '',
+                        type: 'text',
+                        help: '',
+                        required: false,
+                        optionsText: '',
+                        archived: false,
+                    });
+                },
+            };
+        };
+    </script>
 </x-admin-layout>

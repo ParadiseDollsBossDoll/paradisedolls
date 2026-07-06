@@ -351,6 +351,25 @@
                     </section>
                 @endif
 
+                @if (! empty($customOnboardingAnswers))
+                    <section class="pd-panel-strong p-5">
+                        <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Custom Onboarding Answers') }}</p>
+                        <div class="space-y-3">
+                            @foreach ($customOnboardingAnswers as $answer)
+                                <div class="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">{{ $answer['label'] }}</p>
+                                        @if ($answer['archived'])
+                                            <span class="rounded-full bg-white/[0.05] px-2 py-0.5 text-[0.58rem] text-boss-ivory/30">{{ __('Archived') }}</span>
+                                        @endif
+                                    </div>
+                                    <p class="mt-1 whitespace-pre-line text-[0.82rem] leading-relaxed text-boss-ivory/72">{{ $answer['answer'] }}</p>
+                                </div>
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
+
                 {{-- Fetishes & Kinks Checklist --}}
                 @if ($profile->fetishes_checklist && count($profile->fetishes_checklist) > 0)
                     <section class="pd-panel-strong p-5" x-data="{ open: false }">

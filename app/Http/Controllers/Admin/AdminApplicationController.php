@@ -10,6 +10,7 @@ use App\Models\ModelReferral;
 use App\Models\User;
 use App\Notifications\SystemNotification;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -21,8 +22,10 @@ use Throwable;
 
 class AdminApplicationController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $perPage = $this->perPage($request);
+
         $applications = ModelApplication::query()
             ->latest()
             ->with([
@@ -31,16 +34,24 @@ class AdminApplicationController extends Controller
                 'referral.referrer:id,name,email',
                 'user:id,last_login_at',
             ])
-            ->paginate(20);
+            ->paginate($perPage)
+            ->withQueryString();
 
         $referralLeads = ModelReferral::query()
             ->whereNull('model_application_id')
             ->with('referrer:id,name,email')
             ->latest()
-            ->take(12)
-            ->get();
+            ->paginate($perPage, ['*'], 'leads_page')
+            ->withQueryString();
 
-        return view('admin.applications.index', compact('applications', 'referralLeads'));
+        return view('admin.applications.index', compact('applications', 'referralLeads', 'perPage'));
+    }
+
+    private function perPage(Request $request): int
+    {
+        $perPage = (int) $request->query('per_page', 20);
+
+        return in_array($perPage, [10, 20, 50], true) ? $perPage : 20;
     }
 
     public function approve(ModelApplication $application): RedirectResponse

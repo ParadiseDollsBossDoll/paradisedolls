@@ -12,6 +12,7 @@ class AdminReferralController extends Controller
 {
     public function index(Request $request): View
     {
+        $perPage = $this->perPage($request);
         $search = trim((string) $request->query('search', ''));
         $onlyWithReferrals = $request->boolean('with_referrals');
 
@@ -44,7 +45,7 @@ class AdminReferralController extends Controller
         $referrers = $modelsQuery
             ->orderByDesc('referrals_count')
             ->orderBy('name')
-            ->paginate(15, ['*'], 'models_page')
+            ->paginate($perPage, ['*'], 'models_page')
             ->withQueryString();
 
         $recentReferrals = ModelReferral::query()
@@ -53,7 +54,7 @@ class AdminReferralController extends Controller
                 'application:id,name,email,status,created_at',
             ])
             ->latest()
-            ->paginate(10, ['*'], 'referrals_page')
+            ->paginate($perPage, ['*'], 'referrals_page')
             ->withQueryString();
 
         $summary = [
@@ -68,10 +69,18 @@ class AdminReferralController extends Controller
 
         return view('admin.referrals.index', [
             'onlyWithReferrals' => $onlyWithReferrals,
+            'perPage' => $perPage,
             'recentReferrals' => $recentReferrals,
             'referrers' => $referrers,
             'search' => $search,
             'summary' => $summary,
         ]);
+    }
+
+    private function perPage(Request $request): int
+    {
+        $perPage = (int) $request->query('per_page', 20);
+
+        return in_array($perPage, [10, 20, 50], true) ? $perPage : 20;
     }
 }

@@ -223,6 +223,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         ->middleware('throttle:admin-actions')
         ->name('models.destroy');
     Route::get('/onboarding', [AdminOnboardingController::class, 'index'])->name('onboarding.index');
+    Route::put('/onboarding/form', [AdminOnboardingController::class, 'updateOnboardingForm'])
+        ->middleware('throttle:admin-actions')
+        ->name('onboarding.form.update');
     Route::get('/onboarding/export', [AdminCrmExportController::class, 'onboarding'])->name('onboarding.export');
     Route::get('/onboarding/{profile}/export', [AdminCrmExportController::class, 'onboardingProfile'])->name('onboarding.export-profile');
     Route::get('/onboarding/{profile}', [AdminOnboardingController::class, 'show'])->name('onboarding.show');

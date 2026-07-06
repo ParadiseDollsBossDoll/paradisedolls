@@ -7,6 +7,10 @@
         $selectedPhoneCountry = old('phone_country', $selectedPhoneCountry);
         $phoneNumber = old('phone_number', $phoneNumber);
         $currentCountry = old('country', $profile->country);
+        $sections = $onboardingForm['sections'] ?? [];
+        $optionGroups = $onboardingForm['option_groups'] ?? [];
+        $sectionText = fn (string $key, string $field, string $fallback = '') => $sections[$key][$field] ?? $fallback;
+        $groupText = fn (string $key, string $field, string $fallback = '') => $optionGroups[$key][$field] ?? $fallback;
     @endphp
 
     <div class="pd-member-onboarding mx-auto max-w-4xl space-y-6">
@@ -215,8 +219,11 @@
 
             <section class="pd-panel-strong p-5 md:p-6">
                 <div class="mb-5">
-                    <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Step 2') }}</p>
-                    <h2 class="pd-heading mt-1 text-[1.35rem] text-boss-ivory">{{ __('Platforms & Setup') }}</h2>
+                    <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __($sectionText('platforms', 'eyebrow', 'Step 2')) }}</p>
+                    <h2 class="pd-heading mt-1 text-[1.35rem] text-boss-ivory">{{ __($sectionText('platforms', 'title', 'Platforms & Setup')) }}</h2>
+                    @if ($sectionText('platforms', 'help'))
+                        <p class="mt-1 text-[0.72rem] leading-relaxed text-boss-ivory/38">{{ $sectionText('platforms', 'help') }}</p>
+                    @endif
                 </div>
 
                 <div class="space-y-5">
@@ -226,7 +233,10 @@
 
                         {{-- Cam sites --}}
                         <div>
-                            <p class="mb-2 text-[0.62rem] uppercase tracking-[0.16em] text-boss-ivory/40">{{ __('Cam Sites') }}</p>
+                            <p class="mb-2 text-[0.62rem] uppercase tracking-[0.16em] text-boss-ivory/40">{{ __($groupText('platforms_cam', 'label', 'Cam Sites')) }}</p>
+                            @if ($groupText('platforms_cam', 'help'))
+                                <p class="-mt-1 mb-2 text-[0.68rem] text-boss-ivory/35">{{ $groupText('platforms_cam', 'help') }}</p>
+                            @endif
                             <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                                 @foreach ($platformOptions as $option)
                                     <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2.5 text-[0.78rem] text-boss-ivory/58 transition-colors hover:border-boss-gold/25 hover:bg-boss-gold/[0.06] hover:text-boss-ivory has-[:checked]:border-boss-gold/35 has-[:checked]:bg-boss-gold/[0.09] has-[:checked]:text-boss-ivory">
@@ -239,7 +249,10 @@
 
                         {{-- Fan sites --}}
                         <div>
-                            <p class="mb-2 text-[0.62rem] uppercase tracking-[0.16em] text-boss-ivory/40">{{ __('Fan Sites') }}</p>
+                            <p class="mb-2 text-[0.62rem] uppercase tracking-[0.16em] text-boss-ivory/40">{{ __($groupText('platforms_fan', 'label', 'Fan Sites')) }}</p>
+                            @if ($groupText('platforms_fan', 'help'))
+                                <p class="-mt-1 mb-2 text-[0.68rem] text-boss-ivory/35">{{ $groupText('platforms_fan', 'help') }}</p>
+                            @endif
                             <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                                 @foreach ($fanSiteOptions as $option)
                                     <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2.5 text-[0.78rem] text-boss-ivory/58 transition-colors hover:border-boss-gold/25 hover:bg-boss-gold/[0.06] hover:text-boss-ivory has-[:checked]:border-boss-gold/35 has-[:checked]:bg-boss-gold/[0.09] has-[:checked]:text-boss-ivory">
@@ -252,7 +265,10 @@
 
                         {{-- AI --}}
                         <div>
-                            <p class="mb-2 text-[0.62rem] uppercase tracking-[0.16em] text-boss-ivory/40">{{ __('AI') }}</p>
+                            <p class="mb-2 text-[0.62rem] uppercase tracking-[0.16em] text-boss-ivory/40">{{ __($groupText('platforms_ai', 'label', 'AI')) }}</p>
+                            @if ($groupText('platforms_ai', 'help'))
+                                <p class="-mt-1 mb-2 text-[0.68rem] text-boss-ivory/35">{{ $groupText('platforms_ai', 'help') }}</p>
+                            @endif
                             <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                                 @foreach ($aiPlatformOptions as $option)
                                     <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2.5 text-[0.78rem] text-boss-ivory/58 transition-colors hover:border-boss-gold/25 hover:bg-boss-gold/[0.06] hover:text-boss-ivory has-[:checked]:border-boss-gold/35 has-[:checked]:bg-boss-gold/[0.09] has-[:checked]:text-boss-ivory">
@@ -287,8 +303,8 @@
                             @click="open = !open"
                             class="flex w-full items-center justify-between rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3 text-left transition hover:border-boss-gold/20 hover:bg-boss-gold/[0.04]">
                             <div>
-                                <p class="pd-label mb-0">{{ __('General Fetishes & Kinks Checklist') }}</p>
-                                <p class="mt-0.5 text-[0.7rem] text-boss-ivory/38">{{ __('Please answer Yes / No / Sometimes for each item.') }}</p>
+                                <p class="pd-label mb-0">{{ __($sectionText('fetishes', 'title', 'General Fetishes & Kinks Checklist')) }}</p>
+                                <p class="mt-0.5 text-[0.7rem] text-boss-ivory/38">{{ $sectionText('fetishes', 'help', 'Please answer Yes / No / Sometimes for each item.') }}</p>
                             </div>
                             <svg class="h-4 w-4 shrink-0 text-boss-ivory/40 transition-transform" :class="open ? 'rotate-180' : ''" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
                         </button>
@@ -351,13 +367,19 @@
 
                     {{-- ── Work Preferences ──────────────────────────────────────── --}}
                     <div class="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4 space-y-5">
-                        <p class="pd-label">{{ __('Work Preferences') }}</p>
+                        <div>
+                            <p class="pd-label">{{ __($sectionText('work_preferences', 'title', 'Work Preferences')) }}</p>
+                            @if ($sectionText('work_preferences', 'help'))
+                                <p class="mt-1 text-[0.72rem] leading-relaxed text-boss-ivory/38">{{ $sectionText('work_preferences', 'help') }}</p>
+                            @endif
+                        </div>
 
                         <div class="space-y-3">
-                            <p class="text-[0.72rem] uppercase tracking-[0.14em] text-boss-ivory/40">{{ __('Work interests') }}</p>
-                            <p class="text-[0.7rem] text-boss-ivory/38">{{ __('What type of content are you interested in?') }}</p>
+                            <p class="text-[0.72rem] uppercase tracking-[0.14em] text-boss-ivory/40">{{ __($groupText('work_interests', 'label', 'Work interests')) }}</p>
+                            @if ($groupText('work_interests', 'help'))
+                                <p class="text-[0.7rem] text-boss-ivory/38">{{ $groupText('work_interests', 'help') }}</p>
+                            @endif
                             @php
-                                $workInterestOptions = ['OnlyFans Content', 'Webcam Premium Shows', 'Freemium Webcam', 'All Types'];
                                 $selectedWorkInterests = old('work_interests', $profile->work_interests ?? []);
                                 $selectedWorkInterests = is_array($selectedWorkInterests) ? $selectedWorkInterests : [];
                             @endphp
@@ -373,10 +395,11 @@
                         </div>
 
                         <div class="space-y-3">
-                            <p class="text-[0.72rem] uppercase tracking-[0.14em] text-boss-ivory/40">{{ __('Comfort levels') }}</p>
-                            <p class="text-[0.7rem] text-boss-ivory/38">{{ __('What are you comfortable performing?') }}</p>
+                            <p class="text-[0.72rem] uppercase tracking-[0.14em] text-boss-ivory/40">{{ __($groupText('comfort_levels', 'label', 'Comfort levels')) }}</p>
+                            @if ($groupText('comfort_levels', 'help'))
+                                <p class="text-[0.7rem] text-boss-ivory/38">{{ $groupText('comfort_levels', 'help') }}</p>
+                            @endif
                             @php
-                                $comfortLevelOptions = ['Lingerie', 'Topless', 'Nude', 'Toys (Solo)', 'Girl/Girl', 'Fetish', 'Anal (Solo)', 'Domination / Roleplay'];
                                 $selectedComfortLevels = old('comfort_levels', $profile->comfort_levels ?? []);
                                 $selectedComfortLevels = is_array($selectedComfortLevels) ? $selectedComfortLevels : [];
                             @endphp
@@ -422,7 +445,10 @@
                     </div>
 
                     <div>
-                        <p class="pd-label">{{ __('Available equipment') }}</p>
+                        <p class="pd-label">{{ __($groupText('equipment', 'label', 'Available equipment')) }}</p>
+                        @if ($groupText('equipment', 'help'))
+                            <p class="mt-1 text-[0.72rem] leading-relaxed text-boss-ivory/38">{{ $groupText('equipment', 'help') }}</p>
+                        @endif
                         <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                             @foreach ($equipmentOptions as $option)
                                 <label class="flex items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2 text-[0.78rem] text-boss-ivory/58">
@@ -450,7 +476,12 @@
 
                     {{-- ── Schedule & Availability extras ────────────────────────── --}}
                     <div class="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4 space-y-4">
-                        <p class="pd-label">{{ __('Schedule Details') }}</p>
+                        <div>
+                            <p class="pd-label">{{ __($sectionText('schedule', 'title', 'Schedule Details')) }}</p>
+                            @if ($sectionText('schedule', 'help'))
+                                <p class="mt-1 text-[0.72rem] leading-relaxed text-boss-ivory/38">{{ $sectionText('schedule', 'help') }}</p>
+                            @endif
+                        </div>
                         <div class="grid gap-4 md:grid-cols-2">
                             <div>
                                 <label for="weekly_availability" class="pd-label">{{ __('Weekly availability') }}</label>
@@ -523,12 +554,14 @@
             {{-- ── Step 4: Payout Information ──────────────────────────────── --}}
             <section class="pd-panel-strong p-5 md:p-6">
                 <div class="mb-5">
-                    <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Step 4') }}</p>
-                    <h2 class="pd-heading mt-1 text-[1.35rem] text-boss-ivory">{{ __('Payout Information') }}</h2>
+                    <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __($sectionText('payout', 'eyebrow', 'Step 4')) }}</p>
+                    <h2 class="pd-heading mt-1 text-[1.35rem] text-boss-ivory">{{ __($sectionText('payout', 'title', 'Payout Information')) }}</h2>
+                    @if ($sectionText('payout', 'help'))
+                        <p class="mt-1 text-[0.72rem] leading-relaxed text-boss-ivory/38">{{ $sectionText('payout', 'help') }}</p>
+                    @endif
                 </div>
 
                 @php
-                    $payoutMethodOptions = ['Revolut', 'Bank Transfer', 'Crypto', 'Other'];
                     $selectedPayoutMethods = old('payout_methods', $profile->payout_methods ?? []);
                     $selectedPayoutMethods = is_array($selectedPayoutMethods) ? $selectedPayoutMethods : [];
                 @endphp
@@ -537,8 +570,10 @@
                     x-data="{ otherPayout: @js(in_array('Other', $selectedPayoutMethods)) }"
                 >
                     <div class="space-y-3">
-                        <p class="pd-label">{{ __('Preferred payout methods') }}</p>
-                        <p class="text-[0.72rem] text-boss-ivory/38">{{ __('Tick all methods you are able to receive payment via.') }}</p>
+                        <p class="pd-label">{{ __($groupText('payout_methods', 'label', 'Preferred payout methods')) }}</p>
+                        @if ($groupText('payout_methods', 'help'))
+                            <p class="text-[0.72rem] text-boss-ivory/38">{{ $groupText('payout_methods', 'help') }}</p>
+                        @endif
                         <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
                             @foreach ($payoutMethodOptions as $option)
                                 <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2.5 text-[0.78rem] text-boss-ivory/58 transition-colors hover:border-boss-gold/25 hover:bg-boss-gold/[0.06] hover:text-boss-ivory has-[:checked]:border-boss-gold/35 has-[:checked]:bg-boss-gold/[0.09] has-[:checked]:text-boss-ivory">
@@ -583,8 +618,11 @@
             {{-- ── Step 5: Extra Details ────────────────────────────────────── --}}
             <section class="pd-panel-strong p-5 md:p-6">
                 <div class="mb-5">
-                    <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Step 5') }}</p>
-                    <h2 class="pd-heading mt-1 text-[1.35rem] text-boss-ivory">{{ __('Extra Details') }}</h2>
+                    <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __($sectionText('extra', 'eyebrow', 'Step 5')) }}</p>
+                    <h2 class="pd-heading mt-1 text-[1.35rem] text-boss-ivory">{{ __($sectionText('extra', 'title', 'Extra Details')) }}</h2>
+                    @if ($sectionText('extra', 'help'))
+                        <p class="mt-1 text-[0.72rem] leading-relaxed text-boss-ivory/38">{{ $sectionText('extra', 'help') }}</p>
+                    @endif
                 </div>
 
                 <div class="space-y-5">
@@ -603,11 +641,138 @@
                 </div>
             </section>
 
+            @if (count($customFields) > 0)
+                <section class="pd-panel-strong p-5 md:p-6">
+                    <div class="mb-5">
+                        <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __($sectionText('custom', 'eyebrow', 'Step 6')) }}</p>
+                        <h2 class="pd-heading mt-1 text-[1.35rem] text-boss-ivory">{{ __($sectionText('custom', 'title', 'Additional Questions')) }}</h2>
+                        @if ($sectionText('custom', 'help'))
+                            <p class="mt-1 text-[0.72rem] leading-relaxed text-boss-ivory/38">{{ $sectionText('custom', 'help') }}</p>
+                        @endif
+                    </div>
+
+                    <div class="space-y-5">
+                        @foreach ($customFields as $field)
+                            @php
+                                $fieldId = $field['id'];
+                                $fieldType = $field['type'] ?? 'text';
+                                $fieldOptions = $field['options'] ?? [];
+                                $fieldValue = old('custom_onboarding.'.$fieldId, $customAnswers[$fieldId] ?? ($fieldType === 'checkbox' ? [] : ''));
+                                $fieldValue = $fieldType === 'checkbox' && ! is_array($fieldValue) ? [] : $fieldValue;
+                            @endphp
+
+                            @if ($fieldType === 'section')
+                                <div class="rounded-xl border border-white/[0.07] bg-white/[0.025] p-4">
+                                    <p class="pd-label">{{ $field['label'] }}</p>
+                                    @if (! empty($field['help']))
+                                        <p class="mt-1 text-[0.76rem] leading-relaxed text-boss-ivory/45">{{ $field['help'] }}</p>
+                                    @endif
+                                </div>
+                            @elseif ($fieldType === 'textarea')
+                                <div>
+                                    <label for="custom_onboarding_{{ $fieldId }}" class="pd-label">
+                                        {{ $field['label'] }}
+                                        @if ($field['required'] ?? false)<span class="text-red-300">*</span>@endif
+                                    </label>
+                                    @if (! empty($field['help']))
+                                        <p class="mt-1 text-[0.72rem] text-boss-ivory/38">{{ $field['help'] }}</p>
+                                    @endif
+                                    <textarea
+                                        id="custom_onboarding_{{ $fieldId }}"
+                                        name="custom_onboarding[{{ $fieldId }}]"
+                                        rows="4"
+                                        class="pd-input mt-2"
+                                        @required($field['required'] ?? false)
+                                    >{{ $fieldValue }}</textarea>
+                                    <x-input-error class="mt-1.5" :messages="$errors->get('custom_onboarding.'.$fieldId)" />
+                                </div>
+                            @elseif ($fieldType === 'select')
+                                <div>
+                                    <label for="custom_onboarding_{{ $fieldId }}" class="pd-label">
+                                        {{ $field['label'] }}
+                                        @if ($field['required'] ?? false)<span class="text-red-300">*</span>@endif
+                                    </label>
+                                    @if (! empty($field['help']))
+                                        <p class="mt-1 text-[0.72rem] text-boss-ivory/38">{{ $field['help'] }}</p>
+                                    @endif
+                                    <select id="custom_onboarding_{{ $fieldId }}" name="custom_onboarding[{{ $fieldId }}]" class="pd-input mt-2" @required($field['required'] ?? false)>
+                                        <option value="">{{ __('Choose an option') }}</option>
+                                        @foreach ($fieldOptions as $option)
+                                            <option value="{{ $option }}" @selected($fieldValue === $option)>{{ $option }}</option>
+                                        @endforeach
+                                    </select>
+                                    <x-input-error class="mt-1.5" :messages="$errors->get('custom_onboarding.'.$fieldId)" />
+                                </div>
+                            @elseif (in_array($fieldType, ['radio', 'yes_no_maybe'], true))
+                                <div class="space-y-2">
+                                    <p class="pd-label">
+                                        {{ $field['label'] }}
+                                        @if ($field['required'] ?? false)<span class="text-red-300">*</span>@endif
+                                    </p>
+                                    @if (! empty($field['help']))
+                                        <p class="text-[0.72rem] text-boss-ivory/38">{{ $field['help'] }}</p>
+                                    @endif
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach ($fieldOptions as $option)
+                                            <label class="flex cursor-pointer items-center justify-center rounded-xl border px-4 py-2 text-[0.78rem] transition border-white/[0.07] bg-white/[0.035] text-boss-ivory/58 hover:border-boss-gold/25 hover:bg-boss-gold/[0.06] hover:text-boss-ivory has-[:checked]:border-boss-gold/35 has-[:checked]:bg-boss-gold/[0.09] has-[:checked]:text-boss-ivory">
+                                                <input type="radio" name="custom_onboarding[{{ $fieldId }}]" value="{{ $option }}" class="sr-only" @checked($fieldValue === $option) @required($field['required'] ?? false)>
+                                                <span>{{ $option }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    <x-input-error class="mt-1.5" :messages="$errors->get('custom_onboarding.'.$fieldId)" />
+                                </div>
+                            @elseif ($fieldType === 'checkbox')
+                                <div class="space-y-2">
+                                    <p class="pd-label">
+                                        {{ $field['label'] }}
+                                        @if ($field['required'] ?? false)<span class="text-red-300">*</span>@endif
+                                    </p>
+                                    @if (! empty($field['help']))
+                                        <p class="text-[0.72rem] text-boss-ivory/38">{{ $field['help'] }}</p>
+                                    @endif
+                                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                        @foreach ($fieldOptions as $option)
+                                            <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2.5 text-[0.78rem] text-boss-ivory/58 transition-colors hover:border-boss-gold/25 hover:bg-boss-gold/[0.06] hover:text-boss-ivory has-[:checked]:border-boss-gold/35 has-[:checked]:bg-boss-gold/[0.09] has-[:checked]:text-boss-ivory">
+                                                <input type="checkbox" name="custom_onboarding[{{ $fieldId }}][]" value="{{ $option }}" class="h-4 w-4 rounded border-white/20 bg-boss-ink text-boss-gold focus:ring-boss-gold focus:ring-offset-0" @checked(in_array($option, $fieldValue, true))>
+                                                <span>{{ $option }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    <x-input-error class="mt-1.5" :messages="$errors->get('custom_onboarding.'.$fieldId)" />
+                                </div>
+                            @else
+                                <div>
+                                    <label for="custom_onboarding_{{ $fieldId }}" class="pd-label">
+                                        {{ $field['label'] }}
+                                        @if ($field['required'] ?? false)<span class="text-red-300">*</span>@endif
+                                    </label>
+                                    @if (! empty($field['help']))
+                                        <p class="mt-1 text-[0.72rem] text-boss-ivory/38">{{ $field['help'] }}</p>
+                                    @endif
+                                    <input
+                                        id="custom_onboarding_{{ $fieldId }}"
+                                        name="custom_onboarding[{{ $fieldId }}]"
+                                        value="{{ $fieldValue }}"
+                                        class="pd-input mt-2"
+                                        @required($field['required'] ?? false)
+                                    >
+                                    <x-input-error class="mt-1.5" :messages="$errors->get('custom_onboarding.'.$fieldId)" />
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
             {{-- ── Step 6: Discord ─────────────────────────────────────────── --}}
             <section class="pd-panel-strong p-5 md:p-6">
                 <div class="mb-5">
-                    <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Step 6') }}</p>
-                    <h2 class="pd-heading mt-1 text-[1.35rem] text-boss-ivory">{{ __('Discord') }}</h2>
+                    <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __($sectionText('discord', 'eyebrow', count($customFields) > 0 ? 'Step 7' : 'Step 6')) }}</p>
+                    <h2 class="pd-heading mt-1 text-[1.35rem] text-boss-ivory">{{ __($sectionText('discord', 'title', 'Discord')) }}</h2>
+                    @if ($sectionText('discord', 'help'))
+                        <p class="mt-1 text-[0.72rem] leading-relaxed text-boss-ivory/38">{{ $sectionText('discord', 'help') }}</p>
+                    @endif
                 </div>
 
                 <div class="grid gap-4 md:grid-cols-2">
