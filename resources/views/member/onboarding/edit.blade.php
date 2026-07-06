@@ -382,12 +382,23 @@
                             @php
                                 $selectedWorkInterests = old('work_interests', $profile->work_interests ?? []);
                                 $selectedWorkInterests = is_array($selectedWorkInterests) ? $selectedWorkInterests : [];
+                                $workInterestDescriptions = [
+                                    'Freemium Streaming' => __('Free public cam platforms with optional tipping, private shows, and pay-per-minute sessions.'),
+                                    'Premium Streaming' => __('Private, pay-per-minute, or exclusive live streaming platforms.'),
+                                    'Fan Subscription Platforms' => __('Subscription-based platforms where fans pay recurring memberships for exclusive content.'),
+                                    'All Types' => __('I am interested in all of the options above.'),
+                                ];
                             @endphp
-                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            <div class="grid gap-2 sm:grid-cols-2">
                                 @foreach ($workInterestOptions as $option)
-                                    <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2.5 text-[0.78rem] text-boss-ivory/58 transition-colors hover:border-boss-gold/25 hover:bg-boss-gold/[0.06] hover:text-boss-ivory has-[:checked]:border-boss-gold/35 has-[:checked]:bg-boss-gold/[0.09] has-[:checked]:text-boss-ivory">
+                                    <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3.5 py-3 text-boss-ivory/58 transition-colors hover:border-boss-gold/25 hover:bg-boss-gold/[0.06] hover:text-boss-ivory has-[:checked]:border-boss-gold/35 has-[:checked]:bg-boss-gold/[0.09] has-[:checked]:text-boss-ivory">
                                         <input type="checkbox" name="work_interests[]" value="{{ $option }}" class="h-4 w-4 rounded border-white/20 bg-boss-ink text-boss-gold focus:ring-boss-gold focus:ring-offset-0" @checked(in_array($option, $selectedWorkInterests, true))>
-                                        <span>{{ $option }}</span>
+                                        <span class="min-w-0">
+                                            <span class="block text-[0.8rem] font-semibold text-boss-ivory/78">{{ $option }}</span>
+                                            @if (isset($workInterestDescriptions[$option]))
+                                                <span class="mt-1 block text-[0.68rem] leading-relaxed text-boss-ivory/38">{{ $workInterestDescriptions[$option] }}</span>
+                                            @endif
+                                        </span>
                                     </label>
                                 @endforeach
                             </div>
@@ -610,6 +621,40 @@
                             <label for="payout_country" class="pd-label">{{ __('Payout country / region') }}</label>
                             <input id="payout_country" name="payout_country" value="{{ old('payout_country', $profile->payout_country) }}" class="pd-input mt-2" placeholder="{{ __('Country where you receive payments') }}">
                             <x-input-error class="mt-1.5" :messages="$errors->get('payout_country')" />
+                        </div>
+                    </div>
+
+                    <div class="rounded-xl border border-white/[0.07] bg-white/[0.025] p-4">
+                        <div class="mb-4">
+                            <p class="pd-label">{{ __('Bank account details') }}</p>
+                            <p class="mt-1 text-[0.7rem] leading-relaxed text-boss-ivory/38">{{ __('These details are stored securely and are only visible to authorised Paradise Dolls administrators.') }}</p>
+                        </div>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label for="payout_account_name" class="pd-label">{{ __('Name on account') }}</label>
+                                <input id="payout_account_name" name="payout_account_name" value="{{ old('payout_account_name', $profile->payout_account_name) }}" class="pd-input mt-2" autocomplete="name">
+                                <x-input-error class="mt-1.5" :messages="$errors->get('payout_account_name')" />
+                            </div>
+                            <div>
+                                <label for="payout_bank_name" class="pd-label">{{ __('Name of bank') }}</label>
+                                <input id="payout_bank_name" name="payout_bank_name" value="{{ old('payout_bank_name', $profile->payout_bank_name) }}" class="pd-input mt-2" autocomplete="organization">
+                                <x-input-error class="mt-1.5" :messages="$errors->get('payout_bank_name')" />
+                            </div>
+                            <div>
+                                <label for="payout_sort_code" class="pd-label">{{ __('Sort code') }}</label>
+                                <input id="payout_sort_code" name="payout_sort_code" value="{{ old('payout_sort_code', $profile->payout_sort_code) }}" class="pd-input mt-2" inputmode="numeric" autocomplete="off">
+                                <x-input-error class="mt-1.5" :messages="$errors->get('payout_sort_code')" />
+                            </div>
+                            <div>
+                                <label for="payout_account_number" class="pd-label">{{ __('Account number') }}</label>
+                                <input id="payout_account_number" name="payout_account_number" value="{{ old('payout_account_number', $profile->payout_account_number) }}" class="pd-input mt-2" inputmode="numeric" autocomplete="off">
+                                <x-input-error class="mt-1.5" :messages="$errors->get('payout_account_number')" />
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="payout_iban" class="pd-label">{{ __('IBAN (if international)') }}</label>
+                                <input id="payout_iban" name="payout_iban" value="{{ old('payout_iban', $profile->payout_iban) }}" class="pd-input mt-2 uppercase" autocomplete="off">
+                                <x-input-error class="mt-1.5" :messages="$errors->get('payout_iban')" />
+                            </div>
                         </div>
                     </div>
                 </div>

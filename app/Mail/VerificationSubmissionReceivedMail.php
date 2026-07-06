@@ -21,7 +21,7 @@ class VerificationSubmissionReceivedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('Verification submission received'),
+            subject: __('We received your verification documents'),
         );
     }
 

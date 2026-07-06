@@ -106,6 +106,11 @@ class MemberOnboardingController extends Controller
             'payout_methods.*' => ['string', 'max:100', Rule::in($payoutMethodOptions)],
             'payout_method_other' => ['nullable', 'string', 'max:255'],
             'payout_country' => ['nullable', 'string', 'max:255'],
+            'payout_account_name' => ['nullable', 'string', 'max:255'],
+            'payout_bank_name' => ['nullable', 'string', 'max:255'],
+            'payout_sort_code' => ['nullable', 'string', 'max:32'],
+            'payout_account_number' => ['nullable', 'string', 'max:64'],
+            'payout_iban' => ['nullable', 'string', 'max:64'],
             // Extra details
             'model_vibe' => ['nullable', 'string', 'max:1000'],
             'anything_else' => ['nullable', 'string', 'max:2000'],

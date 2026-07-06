@@ -306,7 +306,7 @@
                 @endif
 
                 {{-- Payout Information --}}
-                @if ($profile->payout_methods || $profile->payout_method_other || $profile->payout_country)
+                @if ($profile->payout_methods || $profile->payout_method_other || $profile->payout_country || $profile->payout_account_name || $profile->payout_bank_name || $profile->payout_sort_code || $profile->payout_account_number || $profile->payout_iban)
                     <section class="pd-panel-strong p-5">
                         <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Payout Information') }}</p>
                         <div class="space-y-3">
@@ -324,6 +324,24 @@
                                 <div class="text-[0.82rem]">
                                     <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Country / Region</p>
                                     <p class="mt-0.5 text-boss-ivory/75">{{ $profile->payout_country }}</p>
+                                </div>
+                            @endif
+                            @if ($profile->payout_account_name || $profile->payout_bank_name || $profile->payout_sort_code || $profile->payout_account_number || $profile->payout_iban)
+                                <div class="grid gap-3 border-t border-white/[0.06] pt-3 sm:grid-cols-2">
+                                    @foreach ([
+                                        ['Name on account', $profile->payout_account_name],
+                                        ['Name of bank', $profile->payout_bank_name],
+                                        ['Sort code', $profile->payout_sort_code],
+                                        ['Account number', $profile->payout_account_number],
+                                        ['IBAN', $profile->payout_iban],
+                                    ] as [$label, $value])
+                                        @if (filled($value))
+                                            <div class="text-[0.82rem] {{ $label === 'IBAN' ? 'sm:col-span-2' : '' }}">
+                                                <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">{{ __($label) }}</p>
+                                                <p class="mt-0.5 break-all text-boss-ivory/75">{{ $value }}</p>
+                                            </div>
+                                        @endif
+                                    @endforeach
                                 </div>
                             @endif
                         </div>

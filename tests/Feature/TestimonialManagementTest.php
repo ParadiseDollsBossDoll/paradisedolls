@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Mail\AdminActivityAlertMail;
 use App\Models\Testimonial;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -41,6 +43,7 @@ class TestimonialManagementTest extends TestCase
 
     public function test_model_submitted_testimonial_needs_admin_approval_before_public_display(): void
     {
+        Mail::fake();
         Storage::fake('public');
         Storage::disk('public')->put('profile-photos/model.jpg', 'avatar');
 
@@ -71,6 +74,14 @@ class TestimonialManagementTest extends TestCase
         $this->assertNull($testimonial->approved_by);
         $this->assertNull($testimonial->approved_at);
         $this->assertNull($testimonial->image_path);
+
+        $notification = $admin->notifications()->first();
+        $this->assertNotNull($notification);
+        $this->assertSame('testimonial_submitted', $notification->data['category']);
+        Mail::assertQueued(AdminActivityAlertMail::class, fn (AdminActivityAlertMail $mail) =>
+            $mail->subjectLine === 'New testimonial awaiting review from '.$model->name
+            && $mail->actionLabel === 'Review testimonial'
+        );
 
         $this->get(route('home'))
             ->assertOk()

@@ -10,7 +10,7 @@ class OnboardingFormDefinition
 {
     public const SETTINGS_KEY = 'member_onboarding_form';
 
-    private const DEFAULT_VERSION = 'default-2026-07-05';
+    private const DEFAULT_VERSION = 'default-2026-07-07';
 
     public static function get(): array
     {
@@ -253,7 +253,7 @@ class OnboardingFormDefinition
                 'platforms_cam' => [
                     'label' => 'Cam Sites',
                     'help' => '',
-                    'options' => ['AdultWork', 'Babestation', 'BongaCams', 'CAM4', 'CamSoda', 'Chaturbate', 'Flirt4Free', 'LiveJasmin', 'MyFreeCams', 'Streamate', 'Stripchat', 'Susi.live', 'XLoveCam'],
+                    'options' => ['AdultWork', 'Babestation', 'BongaCams', 'CAM4', 'CamSoda', 'Chaturbate', 'Flirt4Free', 'LiveJasmin', 'MyFreeCams', 'Streamate', 'Stripchat', 'Susi.live', 'XLoveCam', 'XXPANDER'],
                     'archived' => [],
                 ],
                 'platforms_fan' => [
@@ -271,7 +271,7 @@ class OnboardingFormDefinition
                 'work_interests' => [
                     'label' => 'Work interests',
                     'help' => 'What type of content are you interested in?',
-                    'options' => ['OnlyFans Content', 'Webcam Premium Shows', 'Freemium Webcam', 'All Types'],
+                    'options' => ['Freemium Streaming', 'Premium Streaming', 'Fan Subscription Platforms', 'All Types'],
                     'archived' => [],
                 ],
                 'comfort_levels' => [
@@ -303,7 +303,7 @@ class OnboardingFormDefinition
         return [
             ['id' => 'lingerie_tease', 'title' => 'Lingerie / Tease Shows', 'note' => '', 'items' => ['Lingerie', 'Topless', 'Fully Nude', 'Pussy Play / Fingering', 'Toys (Solo)', 'Anal (Solo)', 'Squirting', 'Girl/Girl (G/G)', 'Boy/Girl (B/G) - must be verified', 'Couples Shows', 'Group Shows', 'Shower/Bath Shows', 'Oil Shows', 'Outdoor Shows', 'Public Shows (must be safe/legal)'], 'archived_items' => [], 'archived' => false],
             ['id' => 'fetish_kink', 'title' => 'Fetish / Kink', 'note' => '', 'items' => ['Foot Fetish (showing soles, toes, heels)', 'JOI (Jerk Off Instruction)', 'SPH (Small Penis Humiliation)', 'CEI (Cum Eating Instruction)', 'Domination (light)', 'Domination (hardcore)', 'Submissive (obedient, brat, etc.)', 'Findom (Financial Domination)', 'Roleplay (student/teacher, nurse, etc.)', 'Cosplay (costumes, fantasy characters)', 'Dirty Talk / Verbal Tease', 'Humiliation (light)', 'Humiliation (extreme)', 'Cuckold / Cuckquean Play', 'Giantess / Shrinking Fetish', 'Sissy Training', 'Chastity / Keyholding', 'Fetish Outfit Requests (latex, leather, socks, heels, etc.)'], 'archived_items' => [], 'archived' => false],
-            ['id' => 'bodily_sensation', 'title' => 'Bodily / Sensation Fetishes', 'note' => '', 'items' => ['Oil / Lotion Play', 'Shower / Bath Shows', 'Wet & Messy (e.g. food play, cream, etc.)', 'Squirting', 'Spitting (on self or POV)', 'Sweaty / Gym Content', 'Twerking / Ass Play', 'Nipple Play', 'Pussy Play / Fingering', 'Anal Play (solo)', 'Gaping'], 'archived_items' => [], 'archived' => false],
+            ['id' => 'bodily_sensation', 'title' => 'Bodily / Sensation Fetishes', 'note' => '', 'items' => ['Oil / Lotion Play', 'Shower / Bath Shows', 'Wet & Messy (e.g. food play, cream, etc.)', 'Squirting', 'Spitting (on self or POV)', 'Sweaty / Gym Content', 'Twerking', 'Nipple Play', 'Pussy Play / Fingering', 'Anal Play (solo)', 'Gaping'], 'archived_items' => [], 'archived' => false],
             ['id' => 'feet_legs_stockings', 'title' => 'Feet, Legs, & Stockings', 'note' => '', 'items' => ['Foot Close-Ups', 'Shoeplay / Heels', 'Socks / Dirty Socks', 'Stockings / Pantyhose', 'Toe Curling / Wrinkled Soles'], 'archived_items' => [], 'archived' => false],
             ['id' => 'dom_sub_taboo', 'title' => 'Dom/Sub Kinks & Taboo Play', 'note' => 'Only if legal and site-approved', 'items' => ['Pet Play (Kitten, Puppy)', 'Age Play (18+ only)', 'Degradation', 'Collar / Leash Content', 'Role Reversal / Power Swap', 'Impact Play (light spanking)'], 'archived_items' => [], 'archived' => false],
             ['id' => 'clean_fetish_extras', 'title' => 'Clean Fetish Extras', 'note' => '', 'items' => ['Shaving (legs, pussy, etc.)', 'Hair Brushing / Hair Play', 'Nail Fetish (polish, filing, close-ups)'], 'archived_items' => [], 'archived' => false],

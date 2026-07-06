@@ -17,12 +17,13 @@ class AccountApprovalMail extends Mailable implements ShouldQueue
     public function __construct(
         public ModelProfile $profile,
         public string $dashboardUrl,
+        public string $whatsappCommunityUrl = 'https://chat.whatsapp.com/JEdgajsEUnuL1v4Hei9xn9?mode=gi_t',
     ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('Your Paradise Dolls account is approved'),
+            subject: __('Welcome to the Paradise Dolls Team!'),
         );
     }
 

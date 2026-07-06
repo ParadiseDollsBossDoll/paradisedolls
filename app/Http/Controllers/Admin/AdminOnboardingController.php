@@ -343,6 +343,7 @@ class AdminOnboardingController extends Controller
         $this->sendMail($profile, new AccountApprovalMail(
             profile: $profile,
             dashboardUrl: route('member.dashboard'),
+            whatsappCommunityUrl: config('paradise.whatsapp_community_url'),
         ));
         $this->notifyAdminOfVerificationApproval($profile);
 
@@ -400,6 +401,7 @@ class AdminOnboardingController extends Controller
         $this->sendMail($profile, new CommunityAccessMail(
             profile: $profile,
             communityUrl: $communityUrl,
+            whatsappCommunityUrl: config('paradise.whatsapp_community_url'),
             roleName: config('paradise.community_role_name'),
         ));
 

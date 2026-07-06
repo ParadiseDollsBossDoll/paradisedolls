@@ -18,12 +18,13 @@ class CommunityAccessMail extends Mailable implements ShouldQueue
         public ModelProfile $profile,
         public string $communityUrl,
         public string $roleName,
+        public string $whatsappCommunityUrl = 'https://chat.whatsapp.com/JEdgajsEUnuL1v4Hei9xn9?mode=gi_t',
     ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('Discord Community access'),
+            subject: __('Welcome to the Paradise Dolls Community!'),
         );
     }
 

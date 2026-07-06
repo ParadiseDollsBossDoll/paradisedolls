@@ -362,7 +362,7 @@
                                 </template>
 
                                 {{-- Payout --}}
-                                <template x-if="(selected.profile.payout_methods && selected.profile.payout_methods.length > 0) || selected.profile.payout_country">
+                                <template x-if="(selected.profile.payout_methods && selected.profile.payout_methods.length > 0) || selected.profile.payout_country || selected.profile.payout_account_name || selected.profile.payout_bank_name || selected.profile.payout_sort_code || selected.profile.payout_account_number || selected.profile.payout_iban">
                                     <div>
                                         <p class="mb-2 text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Payout Information</p>
                                         <div class="space-y-1.5">
@@ -379,6 +379,13 @@
                                             <template x-if="selected.profile.payout_country">
                                                 <div class="flex gap-2 text-[0.78rem]"><span class="text-boss-ivory/38">Country</span><span class="text-boss-ivory/70" x-text="selected.profile.payout_country"></span></div>
                                             </template>
+                                            <div x-show="selected.profile.payout_account_name || selected.profile.payout_bank_name || selected.profile.payout_sort_code || selected.profile.payout_account_number || selected.profile.payout_iban" class="grid gap-1.5 border-t border-white/[0.04] pt-2 text-[0.78rem] sm:grid-cols-2">
+                                                <template x-if="selected.profile.payout_account_name"><div><span class="text-boss-ivory/38">Name on account</span><p class="break-all text-boss-ivory/70" x-text="selected.profile.payout_account_name"></p></div></template>
+                                                <template x-if="selected.profile.payout_bank_name"><div><span class="text-boss-ivory/38">Bank</span><p class="break-all text-boss-ivory/70" x-text="selected.profile.payout_bank_name"></p></div></template>
+                                                <template x-if="selected.profile.payout_sort_code"><div><span class="text-boss-ivory/38">Sort code</span><p class="break-all text-boss-ivory/70" x-text="selected.profile.payout_sort_code"></p></div></template>
+                                                <template x-if="selected.profile.payout_account_number"><div><span class="text-boss-ivory/38">Account number</span><p class="break-all text-boss-ivory/70" x-text="selected.profile.payout_account_number"></p></div></template>
+                                                <template x-if="selected.profile.payout_iban"><div class="sm:col-span-2"><span class="text-boss-ivory/38">IBAN</span><p class="break-all text-boss-ivory/70" x-text="selected.profile.payout_iban"></p></div></template>
+                                            </div>
                                         </div>
                                     </div>
                                 </template>
@@ -1087,6 +1094,11 @@
                                         'payout_methods'              => $profile->payout_methods ?? [],
                                         'payout_method_other'         => $profile->payout_method_other,
                                         'payout_country'              => $profile->payout_country,
+                                        'payout_account_name'         => $profile->payout_account_name,
+                                        'payout_bank_name'            => $profile->payout_bank_name,
+                                        'payout_sort_code'            => $profile->payout_sort_code,
+                                        'payout_account_number'       => $profile->payout_account_number,
+                                        'payout_iban'                 => $profile->payout_iban,
                                         'model_vibe'                  => $profile->model_vibe,
                                         'anything_else'               => $profile->anything_else,
                                         'custom_onboarding_answers'   => \App\Support\OnboardingFormDefinition::customAnswersForDisplay($onboardingForm, $profile->custom_onboarding_answers ?? []),

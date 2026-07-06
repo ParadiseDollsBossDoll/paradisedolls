@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\Testimonial;
+use App\Services\AdminActivityNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -34,13 +35,29 @@ class MemberTestimonialController extends Controller
 
         $validated['display_handle'] = $this->normalizeHandle($validated['display_handle']);
 
-        Testimonial::create([
+        $testimonial = Testimonial::create([
             ...$validated,
             'headline' => $this->headlineFor($validated),
             'submitted_by' => $request->user()->id,
             'is_published' => false,
             'sort_order' => 0,
         ]);
+
+        app(AdminActivityNotifier::class)->notify(
+            title: __('New testimonial awaiting review'),
+            body: __(':name submitted a new testimonial for approval.', ['name' => $request->user()->name]),
+            actionUrl: route('admin.testimonials.index', absolute: false),
+            category: 'testimonial_submitted',
+            emailSubject: __('New testimonial awaiting review from :name', ['name' => $request->user()->name]),
+            details: [
+                __('Submitted by') => $request->user()->name,
+                __('Display name') => $testimonial->name,
+                __('Handle') => $testimonial->displayHandle(),
+                __('Result') => $testimonial->result_label,
+                __('Review') => $testimonial->quote,
+            ],
+            actionLabel: __('Review testimonial'),
+        );
 
         return redirect()
             ->route('member.testimonials.create')

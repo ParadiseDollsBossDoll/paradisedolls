@@ -21,7 +21,7 @@ class ModelInformationSubmittedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('Model information received'),
+            subject: __('We received your Model Onboarding Information Form'),
         );
     }
 

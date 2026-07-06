@@ -517,6 +517,11 @@ class AdminCrmExportController extends Controller
         foreach ([
             ['Payout Methods', $this->payoutSummary($profile)],
             ['Payout Country', $profile->payout_country],
+            ['Name on Account', $profile->payout_account_name],
+            ['Name of Bank', $profile->payout_bank_name],
+            ['Sort Code', $profile->payout_sort_code],
+            ['Account Number', $profile->payout_account_number],
+            ['IBAN', $profile->payout_iban],
         ] as $field) {
             $this->addProfileField($rows, $merges, $row, $field[0], $field[1]);
         }
@@ -775,6 +780,11 @@ class AdminCrmExportController extends Controller
             'Payout Methods',
             'Payout Method Other',
             'Payout Country',
+            'Name on Account',
+            'Name of Bank',
+            'Sort Code',
+            'Account Number',
+            'IBAN',
             'Model Vibe',
             'Anything Else',
             'Custom Onboarding Answers',
@@ -851,6 +861,11 @@ class AdminCrmExportController extends Controller
             $this->listValue($profile?->payout_methods),
             $profile?->payout_method_other,
             $profile?->payout_country,
+            $profile?->payout_account_name,
+            $profile?->payout_bank_name,
+            $profile?->payout_sort_code,
+            $profile?->payout_account_number,
+            $profile?->payout_iban,
             $profile?->model_vibe,
             $profile?->anything_else,
             $this->customAnswersSummary($profile),
