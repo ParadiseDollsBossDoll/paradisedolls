@@ -282,17 +282,26 @@ async function loadLanguages() {
 function fallbackLanguages() {
     return [
         { code: 'en', name: 'English', priority: true, flagCountry: 'gb' },
-        { code: 'th', name: 'Thai', priority: true, flagCountry: 'th' },
+        { code: 'es', name: 'Spanish', priority: true, flagCountry: 'es' },
         { code: 'pt', name: 'Portuguese', priority: true, flagCountry: 'br' },
+        { code: 'fr', name: 'French', priority: true, flagCountry: 'fr' },
+        { code: 'de', name: 'German', priority: true, flagCountry: 'de' },
+        { code: 'ru', name: 'Russian', priority: true, flagCountry: 'ru' },
+        { code: 'th', name: 'Thai', priority: true, flagCountry: 'th' },
     ];
 }
 
 function bindLanguageSelectors(selectors) {
     selectors.forEach((selector) => {
         const button = selector.querySelector('[data-pd-language-button]');
+        const search = selector.querySelector('[data-pd-language-search]');
 
         button?.addEventListener('click', () => {
             toggleLanguageMenu(selector);
+        });
+
+        search?.addEventListener('input', () => {
+            filterLanguageOptions(selector, search.value);
         });
 
         selector.addEventListener('click', (event) => {
@@ -335,6 +344,7 @@ function toggleLanguageMenu(selector) {
     if (willOpen) {
         menu.classList.remove('hidden');
         button.setAttribute('aria-expanded', 'true');
+        window.requestAnimationFrame(() => selector.querySelector('[data-pd-language-search]')?.focus());
     }
 }
 
@@ -342,17 +352,23 @@ function closeLanguageMenus() {
     getLanguageSelectors().forEach((selector) => {
         selector.querySelector('[data-pd-language-menu]')?.classList.add('hidden');
         selector.querySelector('[data-pd-language-button]')?.setAttribute('aria-expanded', 'false');
+
+        const search = selector.querySelector('[data-pd-language-search]');
+        if (search) {
+            search.value = '';
+            filterLanguageOptions(selector, '');
+        }
     });
 }
 
 function renderLanguageOptions(languages) {
-    const priorityCodes = new Set(translationConfig.priority || ['en', 'th', 'pt']);
+    const priorityCodes = new Set(translationConfig.priority || ['en', 'es', 'pt', 'fr', 'de', 'ru', 'th']);
     const enriched = languages.map(enrichLanguage);
     const priority = enriched.filter((language) => priorityCodes.has(language.code));
     const rest = enriched.filter((language) => !priorityCodes.has(language.code));
 
     getLanguageSelectors().forEach((selector) => {
-        const menu = selector.querySelector('[data-pd-language-menu]');
+        const menu = selector.querySelector('[data-pd-language-options]');
 
         if (!menu) {
             return;
@@ -363,13 +379,36 @@ function renderLanguageOptions(languages) {
 
         if (rest.length > 0) {
             const divider = document.createElement('div');
+            divider.dataset.pdLanguageDivider = '';
             divider.className = 'my-1 border-t border-boss-rose/15';
             menu.appendChild(divider);
             rest.forEach((language) => menu.appendChild(languageOption(language)));
         }
 
+        const empty = document.createElement('p');
+        empty.dataset.pdLanguageEmpty = '';
+        empty.className = 'hidden px-3 py-6 text-center text-[0.75rem] text-boss-dark/45';
+        empty.textContent = 'No languages found';
+        menu.appendChild(empty);
+
         updateSelectorDisplay(selector, activeLanguage);
     });
+}
+
+function filterLanguageOptions(selector, query) {
+    const normalizedQuery = String(query || '').trim().toLocaleLowerCase();
+    const options = Array.from(selector.querySelectorAll('[data-pd-language-option]'));
+    let visibleCount = 0;
+
+    options.forEach((option) => {
+        const searchableText = `${option.dataset.name || ''} ${option.dataset.value || ''}`.toLocaleLowerCase();
+        const visible = normalizedQuery === '' || searchableText.includes(normalizedQuery);
+        option.classList.toggle('hidden', !visible);
+        visibleCount += visible ? 1 : 0;
+    });
+
+    selector.querySelector('[data-pd-language-divider]')?.classList.toggle('hidden', normalizedQuery !== '');
+    selector.querySelector('[data-pd-language-empty]')?.classList.toggle('hidden', visibleCount !== 0);
 }
 
 function languageOption(language) {

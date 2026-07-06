@@ -9,7 +9,7 @@ class TranslationService
 {
     private const SOURCE_LANGUAGE = 'en';
 
-    private const PRIORITY_CODES = ['en', 'th', 'pt'];
+    private const PRIORITY_CODES = ['en', 'es', 'pt', 'fr', 'de', 'ru', 'th'];
 
     private const SUPPORTED_PROVIDERS = ['azure', 'google'];
 
@@ -156,7 +156,7 @@ class TranslationService
             return $fallback;
         }
 
-        $cacheKey = 'translation:'.$this->provider().':languages:v2';
+        $cacheKey = 'translation:'.$this->provider().':languages:v3';
         $cached = Cache::get($cacheKey);
 
         if (is_array($cached)) {

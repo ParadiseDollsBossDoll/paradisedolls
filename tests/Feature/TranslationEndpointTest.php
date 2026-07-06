@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -32,9 +33,20 @@ class TranslationEndpointTest extends TestCase
             ->assertOk()
             ->assertJsonPath('enabled', false);
 
-        $codes = collect($response->json('languages'))->pluck('code')->take(3)->all();
+        $codes = collect($response->json('languages'))->pluck('code')->take(7)->all();
 
-        $this->assertSame(['en', 'th', 'pt'], $codes);
+        $this->assertSame(['en', 'es', 'pt', 'fr', 'de', 'ru', 'th'], $codes);
+    }
+
+    public function test_language_selector_has_search_and_requested_priority_languages(): void
+    {
+        $selector = Blade::render('<x-language-selector />');
+
+        $this->assertStringContainsString('data-pd-language-search', $selector);
+
+        foreach (['Spanish', 'Portuguese', 'French', 'German', 'Russian'] as $language) {
+            $this->assertStringContainsString($language, $selector);
+        }
     }
 
     public function test_translate_endpoint_returns_original_text_without_credentials(): void
