@@ -226,7 +226,8 @@ class User extends Authenticatable
             return null;
         }
 
-        return Storage::disk('public')->url($this->profile_photo_path);
+        return route('profile-photos.show', $this, absolute: false)
+            .'?v='.substr(sha1($this->profile_photo_path), 0, 12);
     }
 
     public function toCommunityMemberArray(bool $online, bool $isSelf = false): array

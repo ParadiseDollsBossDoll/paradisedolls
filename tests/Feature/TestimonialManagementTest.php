@@ -106,7 +106,7 @@ class TestimonialManagementTest extends TestCase
             ->assertSee('Training and support helped me feel ready.')
             ->assertSee('#Confidence')
             ->assertSee('@neljhanredondo')
-            ->assertSee('profile-photos/model.jpg');
+            ->assertSee(route('profile-photos.show', $model, absolute: false), false);
     }
 
     public function test_homepage_only_shows_approved_success_stories(): void

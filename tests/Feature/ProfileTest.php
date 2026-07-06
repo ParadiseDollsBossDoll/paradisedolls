@@ -84,6 +84,20 @@ class ProfileTest extends TestCase
         $this->assertNotNull($photoPath);
         Storage::disk('public')->assertExists($photoPath);
 
+        $photoUrl = $user->profilePhotoUrl();
+        $this->assertNotNull($photoUrl);
+        $this->assertStringContainsString('/profile-photos/'.$user->id, $photoUrl);
+        $this->assertStringNotContainsString('/storage/', $photoUrl);
+
+        $photoResponse = $this->get($photoUrl)
+            ->assertOk()
+            ->assertHeader('x-content-type-options', 'nosniff');
+
+        $cacheControl = (string) $photoResponse->headers->get('cache-control');
+        $this->assertStringContainsString('public', $cacheControl);
+        $this->assertStringContainsString('max-age=31536000', $cacheControl);
+        $this->assertStringContainsString('immutable', $cacheControl);
+
         $this
             ->actingAs($user)
             ->patch('/profile', [

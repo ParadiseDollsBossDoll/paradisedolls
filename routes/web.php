@@ -32,6 +32,7 @@ use App\Http\Controllers\Member\MemberTestimonialController;
 use App\Http\Controllers\Member\MemberVerificationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProfilePhotoController;
 use App\Http\Controllers\TestimonialController;
 use App\Http\Controllers\TranslationController;
 use Illuminate\Support\Facades\Route;
@@ -46,6 +47,9 @@ Route::view('/work-from-paradise', 'marketing.work-from-paradise')->name('work-f
 Route::view('/perks', 'marketing.perks')->name('perks');
 Route::view('/multistreaming', 'marketing.multistreaming')->name('multistreaming');
 Route::get('/success-stories', TestimonialController::class)->name('success-stories');
+Route::get('/profile-photos/{user}', ProfilePhotoController::class)
+    ->whereNumber('user')
+    ->name('profile-photos.show');
 
 Route::middleware('throttle:translation')->prefix('translation')->name('translation.')->group(function () {
     Route::get('/languages', [TranslationController::class, 'languages'])->name('languages');

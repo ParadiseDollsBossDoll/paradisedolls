@@ -9,7 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Throwable;
 
 class ProfileController extends Controller
 {
@@ -37,15 +39,37 @@ class ProfileController extends Controller
             $user->email_verified_at = null;
         }
 
+        $previousPhotoPath = $user->profile_photo_path;
+        $newPhotoPath = null;
+
         if ($request->hasFile('profile_photo')) {
-            $this->deleteProfilePhoto($user->profile_photo_path);
-            $user->profile_photo_path = $request->file('profile_photo')->store('profile-photos', 'public');
+            $newPhotoPath = $request->file('profile_photo')->store('profile-photos', 'public');
+
+            if (! is_string($newPhotoPath) || ! Storage::disk('public')->exists($newPhotoPath)) {
+                throw ValidationException::withMessages([
+                    'profile_photo' => __('The photo could not be saved. Please try again.'),
+                ]);
+            }
+
+            $user->profile_photo_path = $newPhotoPath;
         } elseif ($request->boolean('remove_profile_photo')) {
-            $this->deleteProfilePhoto($user->profile_photo_path);
             $user->profile_photo_path = null;
         }
 
-        $user->save();
+        try {
+            $user->save();
+        } catch (Throwable $exception) {
+            if ($newPhotoPath) {
+                $this->deleteProfilePhoto($newPhotoPath);
+            }
+
+            throw $exception;
+        }
+
+        if ($previousPhotoPath !== $user->profile_photo_path) {
+            $this->deleteProfilePhoto($previousPhotoPath);
+        }
+
         CommunityPresence::forgetMemberDirectory();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
