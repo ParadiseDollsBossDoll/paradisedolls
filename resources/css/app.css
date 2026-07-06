@@ -1884,16 +1884,20 @@ html.light-mode .pd-marketing-image-hero-eyebrow {
     min-width: 0;
     flex: 1 1 auto;
     justify-content: center;
-    gap: clamp(0.8rem, 1.45vw, 1.75rem);
+    gap: clamp(0.65rem, 1.15vw, 1.4rem);
 }
 
 .pd-marketing-navbar-link {
-    display: inline-block;
-    max-width: 8.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: none;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow: visible;
+    line-height: 1.25;
+    text-align: center;
+    text-overflow: clip;
+    white-space: normal;
 }
 
 .pd-marketing-navbar-actions {
@@ -1906,14 +1910,16 @@ html.light-mode .pd-marketing-image-hero-eyebrow {
     align-items: center;
     justify-content: center;
     min-height: 2.25rem;
-    overflow: hidden;
+    overflow: visible;
+    line-height: 1.2;
     text-align: center;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    text-overflow: clip;
+    white-space: normal;
 }
 
 .pd-marketing-navbar-login {
-    max-width: 7.5rem;
+    max-width: none;
+    min-width: 5rem;
 }
 
 .pd-marketing-navbar-apply {
@@ -1925,7 +1931,7 @@ html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-links {
 }
 
 html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-link {
-    max-width: 7.5rem;
+    max-width: none;
     font-size: 0.56rem !important;
     letter-spacing: 0.075em !important;
 }
@@ -1938,7 +1944,7 @@ html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-action 
 }
 
 html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-login {
-    max-width: 6.75rem;
+    max-width: none;
 }
 
 html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-apply {
@@ -1946,16 +1952,35 @@ html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-apply {
 }
 
 @media (min-width: 1280px) and (max-width: 1380px) {
+    .pd-marketing-navbar-row {
+        gap: 0.55rem;
+    }
+
+    .pd-marketing-navbar-logo img {
+        width: 7.25rem;
+    }
+
+    .pd-marketing-navbar-links,
+    html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-links {
+        gap: 0.5rem;
+    }
+
     .pd-marketing-navbar-link {
-        max-width: 7.5rem;
+        font-size: 0.57rem !important;
+        letter-spacing: 0.08em !important;
     }
 
-    html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-link {
-        max-width: 6.4rem;
+    .pd-marketing-navbar-action,
+    html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-action {
+        padding-left: 0.65rem !important;
+        padding-right: 0.65rem !important;
+        font-size: 0.55rem !important;
+        letter-spacing: 0.07em !important;
     }
 
+    .pd-marketing-navbar-apply,
     html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-apply {
-        max-width: 9rem;
+        max-width: 8.75rem;
     }
 }
 

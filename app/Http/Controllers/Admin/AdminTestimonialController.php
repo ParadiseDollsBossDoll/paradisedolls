@@ -13,7 +13,7 @@ class AdminTestimonialController extends Controller
     public function index(): View
     {
         $testimonials = Testimonial::query()
-            ->with(['submitter:id,name,email', 'approver:id,name'])
+            ->with(['submitter:id,name,email,profile_photo_path', 'approver:id,name'])
             ->orderBy('sort_order')
             ->orderByDesc('created_at')
             ->paginate(20);

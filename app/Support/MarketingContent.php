@@ -138,7 +138,7 @@ class MarketingContent
                     ['key' => 'mission.eyebrow', 'label' => 'Mission eyebrow', 'type' => 'text', 'default' => 'The Mission'],
                     ['key' => 'mission.title', 'label' => 'Mission title', 'type' => 'text', 'default' => 'This is more than just an agency.'],
                     ['key' => 'mission.body', 'label' => 'Mission body', 'type' => 'paragraphs', 'default' => [
-                        "Because this industry can change your life when you're guided properly. With me guiding you, you'll learn how to handle everything this industry throws at you - from confidence, branding, mindset, and consistency, to the behind-the-scenes business strategies most girls never get taught.",
+                        "Because this industry can change your life when you're guided properly. With me and my team guiding you, you'll learn how to handle everything this industry throws at you - from confidence, branding, mindset, and consistency, to the behind-the-scenes business strategies most girls never get taught.",
                         "You won't be left alone trying to figure it out. You'll have support, structure, mentorship, and a team behind you that genuinely wants to see you win.",
                         'This is your chance to build the life you deserve.',
                     ]],
@@ -374,9 +374,9 @@ class MarketingContent
                 'Success Stories',
                 'success-stories',
                 'images/15.jpeg',
-                'Community Wins',
-                'Success Stories',
-                'Real stories, confidence shifts, and lifestyle wins from the Paradise Dolls community.',
+                'PARADISE DOLLS COMMUNITY',
+                'Real Stories from Our Paradise Dolls 💎',
+                "Behind every success is a woman who had the courage to take the first step. Discover the inspiring journeys of our Paradise Dolls as they share how they’ve built confidence, embraced new opportunities, formed lifelong friendships, and transformed their lives with the support of a community that truly believes in their success.\n\nEvery Paradise Doll’s journey is unique, but they all began with one decision to believe in themselves. Today, they’re inspiring others to do the same, proving that with the right support, mindset, and determination, incredible things are possible.\n\nAt Paradise Dolls, we believe success is about more than reaching your goals. It’s about becoming part of a sisterhood that celebrates every milestone, lifts each other up, and grows stronger together. Here, you’ll find encouragement, friendship, inspiration, and a community that’s genuinely invested in seeing every Doll succeed.\n\nYour story starts with a single step… and this could be the beginning of your own success story. 💖✨",
                 [
                     ['key' => 'testimonials.eyebrow', 'label' => 'Testimonials eyebrow', 'type' => 'text', 'default' => 'Community Testimonials'],
                     ['key' => 'testimonials.title', 'label' => 'Testimonials title', 'type' => 'text', 'default' => 'Real words from approved Paradise Dolls members'],

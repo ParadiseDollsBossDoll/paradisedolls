@@ -14,6 +14,14 @@ class AdminSiteEditorTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_our_story_mission_mentions_kayla_and_her_team_guiding_members(): void
+    {
+        $this->get(route('our-story'))
+            ->assertOk()
+            ->assertSeeText('With me and my team guiding you')
+            ->assertDontSeeText('With me guiding you');
+    }
+
     public function test_admin_can_open_main_site_editor(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

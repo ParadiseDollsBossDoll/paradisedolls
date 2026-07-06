@@ -190,6 +190,7 @@
         </div>
     </section>
 
+    @if ($testimonials->isNotEmpty())
     <section class="bg-[#f3f3f5] py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-12 flex flex-col justify-between gap-5 md:flex-row md:items-end">
@@ -201,44 +202,13 @@
             </div>
 
             @php
-                $testimonialSlides = $testimonials->isNotEmpty()
-                    ? $testimonials->map(fn ($testimonial) => [
-                        'name' => $testimonial->name,
-                        'handle' => $testimonial->displayHandle(),
-                        'quote' => $testimonial->quote,
-                        'tag' => $testimonial->displayHashtag(),
-                        'image' => $testimonial->displayAvatar(),
-                    ])
-                    : collect([
-                        [
-                            'name' => __('New Member'),
-                            'handle' => '@newmember',
-                            'quote' => __('I had no idea where to start, but the structure made everything feel possible instead of overwhelming.'),
-                            'tag' => '#BeginnerConfidence',
-                            'image' => 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=85&w=300',
-                        ],
-                        [
-                            'name' => __('Paradise Doll'),
-                            'handle' => '@paradisedoll',
-                            'quote' => __('The biggest change was feeling like I had support while building something flexible around my life.'),
-                            'tag' => '#RemoteFreedom',
-                            'image' => 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=85&w=300',
-                        ],
-                        [
-                            'name' => __('Blueprint Member'),
-                            'handle' => '@blueprintmember',
-                            'quote' => __('The walkthrough approach helped me understand the platforms instead of guessing my way through.'),
-                            'tag' => '#ProfessionalGuidance',
-                            'image' => 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=85&w=300',
-                        ],
-                        [
-                            'name' => __('Community Member'),
-                            'handle' => '@communitymember',
-                            'quote' => __('Having a private place to learn, ask questions, and grow made the whole process feel real.'),
-                            'tag' => '#SupportSystem',
-                            'image' => 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=85&w=300',
-                        ],
-                    ]);
+                $testimonialSlides = $testimonials->map(fn ($testimonial) => [
+                    'name' => $testimonial->name,
+                    'handle' => $testimonial->displayHandle(),
+                    'quote' => $testimonial->quote,
+                    'tag' => $testimonial->displayHashtag(),
+                    'image' => $testimonial->displayAvatar(),
+                ]);
 
                 $baseSlides = $testimonialSlides->values();
                 while ($testimonialSlides->count() < 4) {
@@ -271,6 +241,7 @@
             </div>
         </div>
     </section>
+    @endif
 
     <section id="apply" class="scroll-mt-24 bg-white py-24">
         <div class="mx-auto max-w-2xl px-4">

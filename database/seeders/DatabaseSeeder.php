@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Course;
-use App\Models\Testimonial;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -36,12 +35,6 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        foreach ($this->starterTestimonials() as $testimonialData) {
-            Testimonial::query()->updateOrCreate(
-                ['name' => $testimonialData['name'], 'headline' => $testimonialData['headline']],
-                $testimonialData
-            );
-        }
     }
 
     private function bossDollBlueprintCourses(): array
@@ -182,39 +175,4 @@ class DatabaseSeeder extends Seeder
         ];
     }
 
-    private function starterTestimonials(): array
-    {
-        return [
-            [
-                'name' => 'New Paradise Dolls member',
-                'headline' => 'From nervous beginner to confident online earner',
-                'quote' => 'I joined because I wanted more freedom but had no clue where to start. Having structure, support, and walkthroughs made the whole process feel achievable.',
-                'location' => 'Remote',
-                'result_label' => 'Beginner confidence',
-                'image_url' => 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=85&w=900',
-                'is_published' => true,
-                'sort_order' => 1,
-            ],
-            [
-                'name' => 'Boss Doll Blueprint student',
-                'headline' => 'The system made the platforms less overwhelming',
-                'quote' => 'The biggest difference was not feeling left alone. The platform walkthroughs helped me understand controls, customer flow, and what to focus on first.',
-                'location' => 'United Kingdom',
-                'result_label' => 'Platform clarity',
-                'image_url' => 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&q=85&w=900',
-                'is_published' => true,
-                'sort_order' => 2,
-            ],
-            [
-                'name' => 'Paradise Dolls community member',
-                'headline' => 'I finally felt like I had a team behind me',
-                'quote' => 'The community and onboarding gave me the confidence to take the opportunity seriously while still building around my own schedule.',
-                'location' => 'Travel / Remote',
-                'result_label' => 'Community support',
-                'image_url' => 'https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&q=85&w=900',
-                'is_published' => true,
-                'sort_order' => 3,
-            ],
-        ];
-    }
 }

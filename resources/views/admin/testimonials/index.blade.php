@@ -24,7 +24,7 @@
                     <div class="h-1 bg-gradient-to-r from-boss-gold to-boss-gold-light"></div>
                     <div class="grid gap-4 p-4 sm:grid-cols-[120px_1fr]">
                         <div class="aspect-square overflow-hidden rounded-sm bg-boss-panel">
-                            <img src="{{ $testimonial->displayImage() }}" alt="" class="h-full w-full object-cover">
+                            <img src="{{ $testimonial->displayAvatar() }}" alt="" class="h-full w-full object-cover">
                         </div>
                         <div class="min-w-0">
                             <div class="mb-2 flex flex-wrap items-center gap-2">
@@ -80,5 +80,4 @@
         <div class="px-2">{{ $testimonials->links() }}</div>
     </div>
 </x-admin-layout>
-
 
