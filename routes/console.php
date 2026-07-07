@@ -5,12 +5,14 @@ use App\Models\CourseModule;
 use App\Models\Lesson;
 use App\Models\LessonContentBlock;
 use App\Services\CourseCommunityService;
+use App\Services\EmailCampaignDispatcher;
 use App\Support\SqlDumpInsertParser;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Storage;
 
 Artisan::command('inspire', function () {
@@ -26,6 +28,16 @@ Artisan::command('mail:test {email? : Recipient address (defaults to MAIL_FROM_A
 
     $this->components->info('Sent via '.config('mail.default').' to '.$to);
 })->purpose('Send one test email using the configured mail driver');
+
+Artisan::command('email-campaigns:dispatch', function () {
+    $count = app(EmailCampaignDispatcher::class)->dispatchDue();
+
+    $this->components->info("Dispatched {$count} due email campaign(s).");
+})->purpose('Queue all due email campaigns');
+
+Schedule::command('email-campaigns:dispatch')
+    ->everyMinute()
+    ->withoutOverlapping();
 
 Artisan::command('courses:import-from-sql {path : SQL dump path} {--slug=boss-doll-blueprint-the-ultimate-multi-streaming-online-brand-mastery-course : Course slug to import} {--dry-run : Parse only; do not write to the database} {--force : Skip production confirmation}', function () {
     $resolvePath = function (string $path): ?string {

@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminApplicationController;
 use App\Http\Controllers\Admin\AdminCourseController;
 use App\Http\Controllers\Admin\AdminCrmExportController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminEmailCampaignController;
 use App\Http\Controllers\Admin\AdminLessonController;
 use App\Http\Controllers\Admin\AdminModelProgressController;
 use App\Http\Controllers\Admin\AdminModuleController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\Community\CommunityModerationController;
 use App\Http\Controllers\Community\CommunityPresenceController;
 use App\Http\Controllers\Community\MessageReactionController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MarketingPreferenceController;
 use App\Http\Controllers\Member\CourseAssetController;
 use App\Http\Controllers\Member\CourseChatController;
 use App\Http\Controllers\Member\LessonProgressController;
@@ -38,6 +40,13 @@ use App\Http\Controllers\TranslationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+
+Route::get('/email-preferences/unsubscribe/{user}', [MarketingPreferenceController::class, 'show'])
+    ->middleware('signed')
+    ->name('marketing.unsubscribe');
+Route::post('/email-preferences/unsubscribe/{user}', [MarketingPreferenceController::class, 'unsubscribe'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('marketing.unsubscribe.store');
 
 Route::redirect('/about', '/our-story');
 
@@ -215,6 +224,20 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         ->name('applications.destroy');
 
     Route::get('/referrals', [AdminReferralController::class, 'index'])->name('referrals.index');
+
+    Route::resource('email-campaigns', AdminEmailCampaignController::class)->except(['show']);
+    Route::post('/email-campaigns/{emailCampaign}/send', [AdminEmailCampaignController::class, 'sendNow'])
+        ->middleware('throttle:admin-actions')
+        ->name('email-campaigns.send');
+    Route::post('/email-campaigns/{emailCampaign}/schedule', [AdminEmailCampaignController::class, 'schedule'])
+        ->middleware('throttle:admin-actions')
+        ->name('email-campaigns.schedule');
+    Route::post('/email-campaigns/{emailCampaign}/pause', [AdminEmailCampaignController::class, 'pause'])
+        ->middleware('throttle:admin-actions')
+        ->name('email-campaigns.pause');
+    Route::post('/email-campaigns/{emailCampaign}/resume', [AdminEmailCampaignController::class, 'resume'])
+        ->middleware('throttle:admin-actions')
+        ->name('email-campaigns.resume');
 
     Route::get('/models/progress', [AdminModelProgressController::class, 'index'])->name('models.progress');
     Route::patch('/models/{user}/login', [AdminModelProgressController::class, 'updateLogin'])

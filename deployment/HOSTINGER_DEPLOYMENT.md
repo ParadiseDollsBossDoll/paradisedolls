@@ -124,11 +124,14 @@ Copy the Supervisor configs:
 
 ```bash
 cp /var/www/paradisedollz/deployment/supervisor/paradisedollz-queue.conf /etc/supervisor/conf.d/paradisedollz-queue.conf
+cp /var/www/paradisedollz/deployment/supervisor/paradisedollz-scheduler.conf /etc/supervisor/conf.d/paradisedollz-scheduler.conf
 cp /var/www/paradisedollz/deployment/supervisor/paradisedollz-reverb.conf /etc/supervisor/conf.d/paradisedollz-reverb.conf
 supervisorctl reread
 supervisorctl update
 supervisorctl status
 ```
+
+The queue worker sends queued emails. The scheduler checks once per minute for scheduled or recurring email campaigns. Both must show `RUNNING` for automated campaigns to work.
 
 ## 6. GitHub Secrets
 

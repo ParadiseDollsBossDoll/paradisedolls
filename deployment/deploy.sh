@@ -40,6 +40,7 @@ if command -v supervisorctl >/dev/null 2>&1; then
   supervisorctl reread || true
   supervisorctl update || true
   supervisorctl restart paradisedollz-queue:* || true
+  supervisorctl restart paradisedollz-scheduler:* || true
   supervisorctl restart paradisedollz-reverb:* || supervisorctl restart paradisedollz-reverb || true
 fi
 
