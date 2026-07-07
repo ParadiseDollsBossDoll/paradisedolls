@@ -604,7 +604,10 @@ class OnboardingFlowTest extends TestCase
             ->assertOk()
             ->assertSee('Delete member account')
             ->assertDontSee('Onboarding stage')
-            ->assertSee(route('admin.models.destroy', $member), false);
+            ->assertSee(route('admin.models.destroy', $member), false)
+            ->assertSee('confirm-onboarding-member-deletion')
+            ->assertSeeText('Delete member account?')
+            ->assertDontSee('return confirm(', false);
     }
 
     public function test_member_onboarding_shows_expanded_platform_website_options(): void

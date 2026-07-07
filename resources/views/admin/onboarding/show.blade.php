@@ -515,22 +515,19 @@
                             <p class="py-2 text-center text-sm text-green-300/70">{{ __('Fully onboarded ✓') }}</p>
                         @endif
                     </div>
-                    <form
-                        action="{{ route('admin.models.destroy', $user) }}"
-                        method="POST"
-                        class="mt-5 border-t border-red-300/10 pt-4"
-                        onsubmit="return confirm('{{ __('Delete this member account? This permanently removes their login, onboarding profile, uploaded files, course progress, and linked application.') }}');"
-                    >
-                        @csrf
-                        @method('DELETE')
-                        <input type="hidden" name="confirm_member_delete" value="1">
-                        <button type="submit" class="w-full rounded-xl border border-red-300/15 bg-red-400/10 px-4 py-2.5 text-sm font-semibold text-red-200 transition hover:border-red-300/35 hover:bg-red-400/15">
+                    <div class="mt-5 border-t border-red-300/10 pt-4">
+                        <button
+                            type="button"
+                            x-data=""
+                            @click.prevent="$dispatch('open-modal', 'confirm-onboarding-member-deletion')"
+                            class="w-full rounded-xl border border-red-300/15 bg-red-400/10 px-4 py-2.5 text-sm font-semibold text-red-200 transition hover:border-red-300/35 hover:bg-red-400/15"
+                        >
                             {{ __('Delete member account') }}
                         </button>
                         <p class="mt-2 text-center text-[0.68rem] leading-relaxed text-boss-ivory/28">
                             {{ __('Permanent removal for this model account and its onboarding records.') }}
                         </p>
-                    </form>
+                    </div>
                 </section>
 
                 {{-- Login Access --}}
@@ -878,5 +875,56 @@
             </section>
         @endif
 
+        <x-modal name="confirm-onboarding-member-deletion" maxWidth="lg" focusable>
+            <form
+                method="POST"
+                action="{{ route('admin.models.destroy', $user) }}"
+                class="overflow-hidden"
+                x-data="{ submitting: false }"
+                @submit="submitting = true"
+            >
+                @csrf
+                @method('DELETE')
+                <input type="hidden" name="confirm_member_delete" value="1">
+
+                <div class="border-b border-white/[0.06] p-5 sm:p-6">
+                    <p class="text-[0.64rem] uppercase tracking-[0.18em] text-red-200/70">{{ __('Permanent Action') }}</p>
+                    <h2 class="mt-2 font-display text-2xl text-boss-ivory">{{ __('Delete member account?') }}</h2>
+                    <p class="mt-2 text-sm leading-6 text-boss-ivory/50">
+                        {{ __('This will permanently remove the member login, profile, course progress, uploaded verification files, course proof files, and linked application.') }}
+                    </p>
+                </div>
+
+                <div class="space-y-4 p-5 sm:p-6">
+                    <div class="rounded-xl border border-red-300/15 bg-red-400/10 px-4 py-3">
+                        <p class="text-[0.65rem] uppercase tracking-[0.16em] text-red-200/60">{{ __('Member') }}</p>
+                        <p class="mt-1 font-semibold text-red-100">{{ $user->name }}</p>
+                        <p class="mt-0.5 text-xs text-red-100/55">{{ $user->email }}</p>
+                    </div>
+
+                    <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                        <button
+                            type="button"
+                            class="pd-btn-secondary h-11 justify-center"
+                            :disabled="submitting"
+                            @click="$dispatch('close')"
+                        >
+                            {{ __('Cancel') }}
+                        </button>
+                        <button
+                            type="submit"
+                            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-red-300/20 bg-red-400/15 px-5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-red-100 transition hover:border-red-300/35 hover:bg-red-400/25 disabled:cursor-wait disabled:opacity-60"
+                            :disabled="submitting"
+                        >
+                            <svg x-show="submitting" x-cloak class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle class="opacity-25" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M21 12a9 9 0 0 1-9 9v-3a6 6 0 0 0 6-6h3Z"></path>
+                            </svg>
+                            <span x-text="submitting ? '{{ __('Deleting') }}' : '{{ __('Delete member') }}'">{{ __('Delete member') }}</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </x-modal>
     </div>
 </x-admin-layout>
