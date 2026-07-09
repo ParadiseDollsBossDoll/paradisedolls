@@ -11,11 +11,15 @@
                 email: '',
                 submitting: false,
             },
-            openApplicationDeleteDialog(event) {
+            openApplicationDeleteDialog(event, application = null) {
+                if (application) {
+                    this.selected = application;
+                }
+
                 this.deleteDialog.open = true;
                 this.deleteDialog.form = event.target.closest('form');
-                this.deleteDialog.name = this.selected?.name || '';
-                this.deleteDialog.email = this.selected?.email || '';
+                this.deleteDialog.name = application?.name || this.selected?.name || '';
+                this.deleteDialog.email = application?.email || this.selected?.email || '';
                 this.deleteDialog.submitting = false;
             },
             closeApplicationDeleteDialog() {
@@ -276,7 +280,7 @@
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="w-full rounded-xl border border-red-400/25 bg-red-400/10 px-4 py-2.5 text-sm font-semibold text-red-300 transition hover:bg-red-400/20">
-                                            Delete Rejected Application
+                                            Delete Application
                                         </button>
                                     </form>
                                 </template>
@@ -303,21 +307,21 @@
                 x-transition:enter="transition duration-180 ease-out"
                 x-transition:enter-start="translate-y-4 scale-[0.98] opacity-0"
                 x-transition:enter-end="translate-y-0 scale-100 opacity-100"
-                class="w-full max-w-lg overflow-hidden rounded-2xl border border-red-300/15 bg-[linear-gradient(135deg,rgba(28,19,24,0.98),rgba(12,9,12,0.98))] text-boss-ivory shadow-[0_28px_90px_rgba(0,0,0,0.65)]"
+                class="w-full max-w-lg overflow-hidden rounded-2xl border border-[#f0b4c4] bg-[linear-gradient(135deg,#fff9fb,#ffedf3)] text-[#2a141d] shadow-[0_28px_90px_rgba(54,24,36,0.35)]"
             >
-                <div class="border-b border-white/[0.06] p-5">
-                    <p class="text-[0.64rem] uppercase tracking-[0.18em] text-red-200/70">{{ __('Permanent Action') }}</p>
-                    <h2 id="delete-application-dialog-title" class="mt-2 font-display text-2xl text-boss-ivory">{{ __('Delete rejected application?') }}</h2>
-                    <p class="mt-2 text-sm leading-6 text-boss-ivory/50">
+                <div class="border-b border-[#f0b4c4]/70 p-5">
+                    <p class="text-[0.64rem] font-semibold uppercase tracking-[0.18em] text-[#b42342]">{{ __('Permanent Action') }}</p>
+                    <h2 id="delete-application-dialog-title" class="mt-2 font-display text-2xl text-[#2a141d]">{{ __('Delete application?') }}</h2>
+                    <p class="mt-2 text-sm leading-6 text-[#60424d]">
                         {{ __('This will permanently remove the application, referral link, and uploaded application photos.') }}
                     </p>
                 </div>
 
                 <div class="space-y-4 p-5">
-                    <div class="rounded-xl border border-red-300/15 bg-red-400/10 px-4 py-3">
-                        <p class="text-[0.65rem] uppercase tracking-[0.16em] text-red-200/60">{{ __('Application') }}</p>
-                        <p class="mt-1 font-semibold text-red-100" x-text="deleteDialog.name || '{{ __('Selected application') }}'"></p>
-                        <p class="mt-0.5 break-all text-xs text-red-100/50" x-text="deleteDialog.email"></p>
+                    <div class="rounded-xl border border-[#f0aabd] bg-[#ffe1e9] px-4 py-3">
+                        <p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-[#b42342]">{{ __('Application') }}</p>
+                        <p class="mt-1 font-semibold text-[#2a141d]" x-text="deleteDialog.name || '{{ __('Selected application') }}'"></p>
+                        <p class="mt-0.5 break-all text-xs text-[#6f4e5a]" x-text="deleteDialog.email"></p>
                     </div>
 
                     <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -331,7 +335,7 @@
                         </button>
                         <button
                             type="button"
-                            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-red-300/20 bg-red-400/15 px-5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-red-100 transition hover:border-red-300/35 hover:bg-red-400/25 disabled:cursor-wait disabled:opacity-60"
+                            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#b42342] bg-[#d9254f] px-5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-white transition hover:border-[#8f1c35] hover:bg-[#b42342] disabled:cursor-wait disabled:opacity-60"
                             :disabled="deleteDialog.submitting"
                             @click="confirmApplicationDelete()"
                         >
@@ -485,12 +489,16 @@
                             <th class="text-left">{{ __('Applicant') }}</th>
                             <th class="text-left">{{ __('Status') }}</th>
                             <th class="text-left">{{ __('Submitted') }}</th>
-                            <th class="text-right text-boss-ivory/30">{{ __('Details') }}</th>
+                            <th class="text-right text-boss-ivory/30">{{ __('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($applications as $application)
                             @php
+                                $canDeleteApplication = in_array($application->status, [
+                                    \App\Models\ModelApplication::STATUS_PENDING,
+                                    \App\Models\ModelApplication::STATUS_REJECTED,
+                                ], true);
                                 $appData = [
                                     'id'                   => $application->id,
                                     'name'                 => $application->name,
@@ -525,7 +533,7 @@
                                     'resend_approval_url'  => $application->canResendApprovalEmail()
                                         ? route('admin.applications.resend-approval-email', $application)
                                         : null,
-                                    'delete_url'           => $application->status === \App\Models\ModelApplication::STATUS_REJECTED
+                                    'delete_url'           => $canDeleteApplication
                                         ? route('admin.applications.destroy', $application)
                                         : null,
                                     'reviewed_by'          => $application->reviewer?->name,
@@ -534,7 +542,7 @@
                                 ];
                             @endphp
                             <tr
-                                class="cursor-pointer transition hover:bg-white/[0.025]"
+                                class="group cursor-pointer transition hover:bg-white/[0.025]"
                                 @click="selected = {{ Js::from($appData) }}; open = true"
                             >
                                 <td class="align-middle">
@@ -587,12 +595,41 @@
                                     {{ $application->created_at->toFormattedDateString() }}
                                 </td>
                                 <td class="align-middle text-right">
-                                    <span class="inline-flex items-center gap-1 text-[0.72rem] text-boss-ivory/30 transition group-hover:text-boss-ivory/60">
-                                        View
-                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                        </svg>
-                                    </span>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <span class="inline-flex h-10 min-w-[4.75rem] items-center justify-center gap-1 rounded-lg border border-white/[0.07] bg-white/[0.035] px-3 text-[0.72rem] font-semibold text-boss-ivory/50 transition group-hover:border-white/[0.12] group-hover:bg-white/[0.055] group-hover:text-boss-ivory/70">
+                                            View
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                            </svg>
+                                        </span>
+                                        @if ($canDeleteApplication)
+                                            <form
+                                                method="POST"
+                                                action="{{ route('admin.applications.destroy', $application) }}"
+                                                class="inline-flex"
+                                                @click.stop
+                                                @submit.prevent.stop="openApplicationDeleteDialog($event, {{ Js::from($appData) }})"
+                                            >
+                                                @csrf
+                                                @method('DELETE')
+                                                <button
+                                                    type="submit"
+                                                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-red-400/35 bg-red-400/20 text-red-300 shadow-[0_8px_22px_rgba(239,68,68,0.13)] transition hover:border-red-400/55 hover:bg-red-400/30 hover:text-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300/55"
+                                                    title="{{ __('Delete application') }}"
+                                                    aria-label="{{ __('Delete application for :name', ['name' => $application->name]) }}"
+                                                >
+                                                    <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+                                                        <path d="M3 4h10"/>
+                                                        <path d="M6.5 2.5h3L10 4H6l.5-1.5Z"/>
+                                                        <path d="M5 6v6m3-6v6m3-6v6"/>
+                                                        <path d="M4.25 4.5 4.8 13a1.4 1.4 0 0 0 1.4 1.25h3.6A1.4 1.4 0 0 0 11.2 13l.55-8.5"/>
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="block h-10 w-10" aria-hidden="true"></span>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty

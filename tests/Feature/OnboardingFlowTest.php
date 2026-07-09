@@ -555,29 +555,69 @@ class OnboardingFlowTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.applications.index'))
             ->assertOk()
-            ->assertSee('Delete Rejected Application')
-            ->assertSee('Delete rejected application?')
+            ->assertSee(route('admin.applications.destroy', $application), false)
+            ->assertSee('Delete Application')
+            ->assertSee('Delete application?')
             ->assertDontSee('return confirm', false);
 
         $this->actingAs($admin)
             ->delete(route('admin.applications.destroy', $application))
             ->assertRedirect()
-            ->assertSessionHas('status', 'Rejected application deleted.');
+            ->assertSessionHas('status', 'Application deleted.');
 
         $this->assertDatabaseMissing('model_applications', ['id' => $application->id]);
         $this->assertDatabaseMissing('model_referrals', ['id' => $referral->id]);
         Storage::disk('local')->assertMissing('applications/photos/rejected.jpg');
     }
 
-    public function test_admin_cannot_delete_pending_application(): void
+    public function test_admin_can_delete_pending_application_and_uploaded_photos(): void
     {
+        Storage::fake('local');
+
         $admin = User::factory()->create(['role' => 'admin']);
         $application = ModelApplication::create([
             'name' => 'Pending Model',
             'email' => 'pending@example.com',
             'experience_level' => 'beginner',
             'age_confirmed' => true,
+            'photo_paths' => ['applications/photos/pending.jpg'],
         ]);
+
+        Storage::disk('local')->put('applications/photos/pending.jpg', 'photo');
+
+        $this->actingAs($admin)
+            ->get(route('admin.applications.index'))
+            ->assertOk()
+            ->assertSee(route('admin.applications.destroy', $application), false);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.applications.destroy', $application))
+            ->assertRedirect()
+            ->assertSessionHas('status', 'Application deleted.');
+
+        $this->assertDatabaseMissing('model_applications', ['id' => $application->id]);
+        Storage::disk('local')->assertMissing('applications/photos/pending.jpg');
+    }
+
+    public function test_admin_cannot_delete_approved_application(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        $application = ModelApplication::create([
+            'name' => 'Approved Model',
+            'email' => 'approved@example.com',
+            'experience_level' => 'beginner',
+            'age_confirmed' => true,
+        ]);
+        $application->forceFill([
+            'status' => ModelApplication::STATUS_APPROVED,
+            'user_id' => $member->id,
+        ])->save();
+
+        $this->actingAs($admin)
+            ->get(route('admin.applications.index'))
+            ->assertOk()
+            ->assertDontSee(route('admin.applications.destroy', $application), false);
 
         $this->actingAs($admin)
             ->delete(route('admin.applications.destroy', $application))

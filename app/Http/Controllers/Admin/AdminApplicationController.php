@@ -315,8 +315,8 @@ class AdminApplicationController extends Controller
 
     public function destroy(ModelApplication $application): RedirectResponse
     {
-        if ($application->status !== ModelApplication::STATUS_REJECTED) {
-            return redirect()->back()->withErrors(['application' => __('Only rejected applications can be deleted.')]);
+        if (! in_array($application->status, [ModelApplication::STATUS_PENDING, ModelApplication::STATUS_REJECTED], true)) {
+            return redirect()->back()->withErrors(['application' => __('Only pending or rejected applications can be deleted.')]);
         }
 
         $application->loadMissing('referral');
@@ -337,7 +337,7 @@ class AdminApplicationController extends Controller
             $application->delete();
         });
 
-        return redirect()->back()->with('status', __('Rejected application deleted.'));
+        return redirect()->back()->with('status', __('Application deleted.'));
     }
 
     public function convertReferral(ModelReferral $referral): RedirectResponse
