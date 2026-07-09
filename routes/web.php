@@ -216,6 +216,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/applications/{application}/resend-approval-email', [AdminApplicationController::class, 'resendApprovalEmail'])
         ->middleware('throttle:admin-actions')
         ->name('applications.resend-approval-email');
+    Route::patch('/applications/{application}/email', [AdminApplicationController::class, 'updateEmail'])
+        ->middleware('throttle:admin-actions')
+        ->name('applications.email.update');
     Route::post('/applications/{application}/reject', [AdminApplicationController::class, 'reject'])
         ->middleware('throttle:admin-actions')
         ->name('applications.reject');

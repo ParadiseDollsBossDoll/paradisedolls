@@ -13,13 +13,19 @@ use App\Mail\VerificationResubmissionMail;
 use App\Mail\VerificationSubmissionReceivedMail;
 use App\Models\Course;
 use App\Models\CourseAccessRequest;
+use App\Models\EmailCampaign;
+use App\Models\EmailCampaignDelivery;
+use App\Models\EmailCampaignRun;
+use App\Models\Lesson;
 use App\Models\ModelApplication;
 use App\Models\ModelProfile;
 use App\Models\ModelReferral;
+use App\Models\Testimonial;
 use App\Models\User;
 use App\Support\OnboardingFormDefinition;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -423,6 +429,184 @@ class OnboardingFlowTest extends TestCase
         Mail::assertNothingSent();
     }
 
+    public function test_admin_can_update_pending_application_email_before_approval(): void
+    {
+        Mail::fake();
+        $this->configureDeliverableMailer();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $referrer = User::factory()->create(['role' => 'model']);
+        $application = ModelApplication::create([
+            'name' => 'Email Fix Model',
+            'email' => 'wrong@example.com',
+            'experience_level' => 'beginner',
+            'age_confirmed' => true,
+        ]);
+        $referral = ModelReferral::create([
+            'referrer_id' => $referrer->id,
+            'model_application_id' => $application->id,
+            'candidate_name' => 'Email Fix Model',
+            'candidate_email' => 'wrong@example.com',
+            'experience_level' => 'beginner',
+            'consent_confirmed' => true,
+            'source' => ModelReferral::SOURCE_APPLY_LINK,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.applications.email.update', $application), [
+                'email' => 'Corrected@Example.COM',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('status', 'Application email updated to corrected@example.com.');
+
+        $this->assertSame('corrected@example.com', $application->fresh()->email);
+        $this->assertSame('corrected@example.com', $referral->fresh()->candidate_email);
+
+        $this->actingAs($admin)
+            ->post(route('admin.applications.approve', $application))
+            ->assertRedirect();
+
+        $member = User::where('email', 'corrected@example.com')->first();
+
+        $this->assertNotNull($member);
+        $this->assertSame($member->id, $application->fresh()->user_id);
+        Mail::assertSent(MemberApplicationApprovedMail::class, fn (MemberApplicationApprovedMail $mail) => $mail->hasTo('corrected@example.com'));
+    }
+
+    public function test_admin_can_update_approved_application_email_and_resend_when_member_has_not_started(): void
+    {
+        Mail::fake();
+        $this->configureDeliverableMailer();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create([
+            'name' => 'Approved Email Fix',
+            'email' => 'old-approved@example.com',
+            'role' => 'model',
+            'password' => Hash::make('old-password'),
+            'email_verified_at' => null,
+            'last_login_at' => null,
+        ]);
+        $application = ModelApplication::create([
+            'name' => 'Approved Email Fix',
+            'email' => 'old-approved@example.com',
+            'experience_level' => 'beginner',
+            'age_confirmed' => true,
+        ]);
+        $application->forceFill([
+            'status' => ModelApplication::STATUS_APPROVED,
+            'user_id' => $member->id,
+        ])->save();
+        $secondaryApplication = ModelApplication::create([
+            'name' => 'Approved Email Fix Follow-up',
+            'email' => 'old-approved@example.com',
+            'experience_level' => 'beginner',
+            'age_confirmed' => true,
+        ]);
+        $secondaryApplication->forceFill([
+            'status' => ModelApplication::STATUS_APPROVED,
+            'user_id' => $member->id,
+        ])->save();
+        ModelProfile::create([
+            'user_id' => $member->id,
+            'model_application_id' => $application->id,
+        ]);
+        DB::table('sessions')->insert([
+            'id' => 'approved-member-session',
+            'user_id' => $member->id,
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'Feature test',
+            'payload' => 'payload',
+            'last_activity' => now()->timestamp,
+        ]);
+        DB::table('password_reset_tokens')->insert([
+            'email' => 'old-approved@example.com',
+            'token' => 'token',
+            'created_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.applications.email.update', $application), [
+                'email' => 'new-approved@example.com',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('status', 'Application email updated to new-approved@example.com and the approval email was resent with a fresh temporary password.');
+
+        $member->refresh();
+
+        $this->assertSame('new-approved@example.com', $member->email);
+        $this->assertSame('new-approved@example.com', $application->fresh()->email);
+        $this->assertSame('new-approved@example.com', $secondaryApplication->fresh()->email);
+        $this->assertNotNull($member->email_verified_at);
+        $this->assertDatabaseMissing('sessions', ['id' => 'approved-member-session']);
+        $this->assertDatabaseMissing('password_reset_tokens', ['email' => 'old-approved@example.com']);
+        Mail::assertSent(MemberApplicationApprovedMail::class, function (MemberApplicationApprovedMail $mail) use ($member) {
+            return $mail->hasTo('new-approved@example.com')
+                && Hash::check($mail->temporaryPassword, $member->fresh()->password);
+        });
+    }
+
+    public function test_admin_updates_approved_application_email_without_resend_after_member_started(): void
+    {
+        Mail::fake();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create([
+            'name' => 'Started Model',
+            'email' => 'started-old@example.com',
+            'role' => 'model',
+            'last_login_at' => now(),
+        ]);
+        $application = ModelApplication::create([
+            'name' => 'Started Model',
+            'email' => 'started-old@example.com',
+            'experience_level' => 'beginner',
+            'age_confirmed' => true,
+        ]);
+        $application->forceFill([
+            'status' => ModelApplication::STATUS_APPROVED,
+            'user_id' => $member->id,
+        ])->save();
+        ModelProfile::create([
+            'user_id' => $member->id,
+            'model_application_id' => $application->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.applications.email.update', $application), [
+                'email' => 'started-new@example.com',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('warning');
+
+        $this->assertSame('started-new@example.com', $member->fresh()->email);
+        $this->assertSame('started-new@example.com', $application->fresh()->email);
+        Mail::assertNothingSent();
+    }
+
+    public function test_admin_cannot_update_application_email_to_duplicate(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        User::factory()->create([
+            'email' => 'taken@example.com',
+            'role' => 'model',
+        ]);
+        $application = ModelApplication::create([
+            'name' => 'Duplicate Email Model',
+            'email' => 'unique@example.com',
+            'experience_level' => 'beginner',
+            'age_confirmed' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.applications.email.update', $application), [
+                'email' => 'taken@example.com',
+            ])
+            ->assertSessionHasErrors('email');
+
+        $this->assertSame('unique@example.com', $application->fresh()->email);
+    }
+
     public function test_admin_can_see_resend_application_approval_email_action_on_onboarding_profile(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -599,32 +783,162 @@ class OnboardingFlowTest extends TestCase
         Storage::disk('local')->assertMissing('applications/photos/pending.jpg');
     }
 
-    public function test_admin_cannot_delete_approved_application(): void
+    public function test_admin_can_delete_approved_application_and_linked_member_records(): void
     {
+        Storage::fake('local');
+        Storage::fake('public');
+
         $admin = User::factory()->create(['role' => 'admin']);
-        $member = User::factory()->create(['role' => 'model']);
+        $member = User::factory()->create([
+            'name' => 'Approved Model',
+            'email' => 'approved-delete@example.com',
+            'role' => 'model',
+            'profile_photo_path' => 'profile-photos/approved-model.jpg',
+        ]);
+        $referrer = User::factory()->create(['role' => 'model']);
         $application = ModelApplication::create([
             'name' => 'Approved Model',
-            'email' => 'approved@example.com',
+            'email' => 'approved-delete@example.com',
             'experience_level' => 'beginner',
             'age_confirmed' => true,
+            'photo_paths' => ['applications/photos/approved.jpg'],
         ]);
         $application->forceFill([
             'status' => ModelApplication::STATUS_APPROVED,
             'user_id' => $member->id,
         ])->save();
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'model_application_id' => $application->id,
+            'id_document_path' => 'verifications/'.$member->id.'/id.jpg',
+            'selfie_with_id_path' => 'verifications/'.$member->id.'/selfie.jpg',
+        ]);
+        $referral = ModelReferral::create([
+            'referrer_id' => $referrer->id,
+            'model_application_id' => $application->id,
+            'candidate_name' => 'Approved Model',
+            'candidate_email' => 'approved-delete@example.com',
+            'experience_level' => 'beginner',
+            'photo_paths' => ['applications/photos/referral-approved.jpg'],
+            'consent_confirmed' => true,
+            'source' => ModelReferral::SOURCE_APPLY_LINK,
+            'status' => ModelReferral::STATUS_JOINED,
+            'reward_status' => ModelReferral::REWARD_ELIGIBLE,
+        ]);
+        $testimonial = Testimonial::create([
+            'submitted_by' => $member->id,
+            'name' => 'Approved Model',
+            'headline' => 'Real story',
+            'quote' => 'Paradise Dolls helped me build confidence.',
+            'image_path' => 'testimonials/approved-model.jpg',
+        ]);
+        $course = Course::create([
+            'title' => 'Approved Course',
+            'slug' => 'approved-course',
+            'is_published' => true,
+        ]);
+        $lesson = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'First Lesson',
+            'is_published' => true,
+        ]);
+        $accessRequest = CourseAccessRequest::create([
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+            'status' => CourseAccessRequest::STATUS_PENDING,
+        ]);
+        $accessRequest->proofFiles()->create([
+            'disk' => 'local',
+            'path' => 'course-access-proofs/'.$member->id.'/proof.jpg',
+            'original_name' => 'proof.jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 10,
+        ]);
+        $campaign = EmailCampaign::create([
+            'created_by' => $admin->id,
+            'name' => 'Welcome campaign',
+            'subject' => 'Welcome',
+            'body' => 'Hello',
+        ]);
+        $run = EmailCampaignRun::create([
+            'email_campaign_id' => $campaign->id,
+            'subject' => 'Welcome',
+            'body' => 'Hello',
+            'started_at' => now(),
+        ]);
+        $delivery = EmailCampaignDelivery::create([
+            'email_campaign_run_id' => $run->id,
+            'user_id' => $member->id,
+            'recipient_name' => $member->name,
+            'email' => $member->email,
+            'status' => EmailCampaignDelivery::STATUS_SENT,
+            'sent_at' => now(),
+        ]);
+        DB::table('lesson_progress')->insert([
+            'user_id' => $member->id,
+            'lesson_id' => $lesson->id,
+            'completed_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('course_enrollments')->insert([
+            'course_id' => $course->id,
+            'user_id' => $member->id,
+            'enrolled_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('sessions')->insert([
+            'id' => 'approved-delete-session',
+            'user_id' => $member->id,
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'Feature test',
+            'payload' => 'payload',
+            'last_activity' => now()->timestamp,
+        ]);
+        DB::table('password_reset_tokens')->insert([
+            'email' => 'approved-delete@example.com',
+            'token' => 'token',
+            'created_at' => now(),
+        ]);
+
+        Storage::disk('public')->put('profile-photos/approved-model.jpg', 'photo');
+        Storage::disk('public')->put('testimonials/approved-model.jpg', 'photo');
+        Storage::disk('local')->put('applications/photos/approved.jpg', 'photo');
+        Storage::disk('local')->put('applications/photos/referral-approved.jpg', 'photo');
+        Storage::disk('local')->put('verifications/'.$member->id.'/id.jpg', 'id');
+        Storage::disk('local')->put('verifications/'.$member->id.'/selfie.jpg', 'selfie');
+        Storage::disk('local')->put('course-access-proofs/'.$member->id.'/proof.jpg', 'proof');
 
         $this->actingAs($admin)
             ->get(route('admin.applications.index'))
             ->assertOk()
-            ->assertDontSee(route('admin.applications.destroy', $application), false);
+            ->assertSee(route('admin.applications.destroy', $application), false)
+            ->assertSee('linked member account');
 
         $this->actingAs($admin)
             ->delete(route('admin.applications.destroy', $application))
             ->assertRedirect()
-            ->assertSessionHasErrors('application');
+            ->assertSessionHas('status', 'Approved Model and all linked model records have been deleted.');
 
-        $this->assertDatabaseHas('model_applications', ['id' => $application->id]);
+        $this->assertDatabaseMissing('users', ['id' => $member->id]);
+        $this->assertDatabaseMissing('model_applications', ['id' => $application->id]);
+        $this->assertDatabaseMissing('model_profiles', ['id' => $profile->id]);
+        $this->assertDatabaseMissing('model_referrals', ['id' => $referral->id]);
+        $this->assertDatabaseMissing('testimonials', ['id' => $testimonial->id]);
+        $this->assertDatabaseMissing('course_access_requests', ['id' => $accessRequest->id]);
+        $this->assertDatabaseMissing('lesson_progress', ['user_id' => $member->id]);
+        $this->assertDatabaseMissing('course_enrollments', ['user_id' => $member->id]);
+        $this->assertDatabaseMissing('email_campaign_deliveries', ['id' => $delivery->id]);
+        $this->assertDatabaseMissing('sessions', ['id' => 'approved-delete-session']);
+        $this->assertDatabaseMissing('password_reset_tokens', ['email' => 'approved-delete@example.com']);
+        Storage::disk('public')->assertMissing('profile-photos/approved-model.jpg');
+        Storage::disk('public')->assertMissing('testimonials/approved-model.jpg');
+        Storage::disk('local')->assertMissing('applications/photos/approved.jpg');
+        Storage::disk('local')->assertMissing('applications/photos/referral-approved.jpg');
+        Storage::disk('local')->assertMissing('verifications/'.$member->id.'/id.jpg');
+        Storage::disk('local')->assertMissing('verifications/'.$member->id.'/selfie.jpg');
+        Storage::disk('local')->assertMissing('course-access-proofs/'.$member->id.'/proof.jpg');
     }
 
     public function test_admin_can_see_member_delete_action_on_onboarding_profile(): void
@@ -1443,6 +1757,18 @@ class OnboardingFlowTest extends TestCase
         $this->actingAs($member)
             ->get(route('community.show'))
             ->assertOk();
+    }
+
+    private function configureDeliverableMailer(): void
+    {
+        config([
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp.host' => 'smtp.gmail.com',
+            'mail.mailers.smtp.port' => 465,
+            'mail.mailers.smtp.username' => 'sender@example.com',
+            'mail.mailers.smtp.password' => 'test-password',
+            'mail.from.address' => 'sender@example.com',
+        ]);
     }
 
     private function validOnboardingPayload(array $overrides = []): array

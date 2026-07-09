@@ -7,6 +7,7 @@ use App\Models\CourseAccessRequest;
 use App\Models\LessonProgress;
 use App\Models\ModelApplication;
 use App\Models\ModelProfile;
+use App\Models\ModelReferral;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -192,7 +193,32 @@ class AdminMemberProgressTest extends TestCase
             'password' => Hash::make('old-password'),
             'email_verified_at' => null,
         ]);
-        $profile = ModelProfile::create(['user_id' => $member->id]);
+        $application = new ModelApplication([
+            'name' => $member->name,
+            'email' => $member->email,
+            'experience_level' => 'beginner',
+            'age_confirmed' => true,
+        ]);
+        $application->forceFill([
+            'status' => ModelApplication::STATUS_APPROVED,
+            'user_id' => $member->id,
+        ])->save();
+        $referrer = User::factory()->create(['role' => 'model']);
+        $referral = ModelReferral::create([
+            'referrer_id' => $referrer->id,
+            'model_application_id' => $application->id,
+            'candidate_name' => $member->name,
+            'candidate_email' => $member->email,
+            'experience_level' => 'beginner',
+            'consent_confirmed' => true,
+            'source' => ModelReferral::SOURCE_APPLY_LINK,
+            'status' => ModelReferral::STATUS_JOINED,
+            'reward_status' => ModelReferral::REWARD_ELIGIBLE,
+        ]);
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'model_application_id' => $application->id,
+        ]);
 
         $this->actingAs($admin)
             ->get(route('admin.onboarding.show', $profile))
@@ -217,6 +243,8 @@ class AdminMemberProgressTest extends TestCase
         $this->assertSame('new-login@example.com', $member->email);
         $this->assertNotNull($member->email_verified_at);
         $this->assertTrue(Hash::check('manual-password-123', $member->password));
+        $this->assertSame('new-login@example.com', $application->fresh()->email);
+        $this->assertSame('new-login@example.com', $referral->fresh()->candidate_email);
 
         $response = $this->actingAs($admin)
             ->post(route('admin.models.password.generate', $member))

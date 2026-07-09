@@ -9,6 +9,8 @@ use App\Models\ModelProfile;
 use App\Models\ModelReferral;
 use App\Models\User;
 use App\Notifications\SystemNotification;
+use App\Services\ModelEmailSyncService;
+use App\Services\ModelRecordDeletionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +18,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
@@ -32,7 +36,7 @@ class AdminApplicationController extends Controller
                 'reviewer:id,name',
                 'profile:id,model_application_id,information_submitted_at,verification_status',
                 'referral.referrer:id,name,email',
-                'user:id,last_login_at',
+                'user:id,name,email,role,last_login_at',
             ])
             ->paginate($perPage)
             ->withQueryString();
@@ -190,6 +194,139 @@ class AdminApplicationController extends Controller
         ]));
     }
 
+    public function updateEmail(
+        Request $request,
+        ModelApplication $application,
+        ModelEmailSyncService $emailSyncService
+    ): RedirectResponse
+    {
+        $application->loadMissing(['user', 'profile', 'referral']);
+        $member = $application->user;
+
+        abort_if($member && ! $member->isModel(), 403, 'Only model application emails can be managed here.');
+
+        $request->merge([
+            'email' => Str::lower(trim((string) $request->input('email'))),
+        ]);
+
+        $validated = $request->validate([
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($member?->id),
+            ],
+        ]);
+
+        $email = $validated['email'];
+
+        if ($member && $emailSyncService->emailIsUsedByAnotherApplication($member, $email)) {
+            throw ValidationException::withMessages([
+                'email' => __('This email is already used by another application.'),
+            ]);
+        }
+
+        if (! $member && $emailSyncService->emailIsUsedByAnotherStandaloneApplication($application, $email)) {
+            throw ValidationException::withMessages([
+                'email' => __('This email is already used by another application.'),
+            ]);
+        }
+
+        $oldMemberEmail = $member?->email;
+        $oldApplicationEmail = $application->email;
+        $memberId = $member?->id;
+        $emailChanged = $application->email !== $email || ($member && $member->email !== $email);
+
+        DB::transaction(function () use ($application, $email, $member, $memberId, $emailChanged, $oldMemberEmail, $oldApplicationEmail, $emailSyncService): void {
+            $application->forceFill(['email' => $email])->save();
+
+            if ($application->referral) {
+                $application->referral->forceFill(['candidate_email' => $email])->save();
+            }
+
+            if ($member) {
+                $member->forceFill([
+                    'email' => $email,
+                    'email_verified_at' => now(),
+                ])->save();
+
+                $emailSyncService->syncLinkedApplications($member, $email);
+
+                if ($emailChanged) {
+                    DB::table('sessions')->where('user_id', $memberId)->delete();
+                    DB::table('password_reset_tokens')
+                        ->whereIn('email', array_values(array_unique(array_filter([
+                            $oldMemberEmail,
+                            $oldApplicationEmail,
+                            $email,
+                        ]))))
+                        ->delete();
+                }
+            }
+        });
+
+        $application->refresh()->loadMissing(['user', 'profile']);
+        $member = $application->user;
+
+        if (! $member) {
+            return redirect()->back()->with('status', __('Application email updated to :email.', ['email' => $email]));
+        }
+
+        if (! $emailChanged) {
+            return redirect()->back()->with('status', __('Application email is already :email.', ['email' => $email]));
+        }
+
+        if (! $application->canResendApprovalEmail()) {
+            return redirect()->back()->with('warning', __('Application email updated to :email. The approval email was not resent because this member has already logged in or submitted onboarding.', [
+                'email' => $email,
+            ]));
+        }
+
+        if ($configurationHint = $this->approvalMailConfigurationHint()) {
+            return redirect()->back()->with('warning', __('Application email updated to :email, but the approval email was not resent. :hint', [
+                'email' => $email,
+                'hint' => $configurationHint,
+            ]));
+        }
+
+        $temporaryPassword = Str::password(14, letters: true, numbers: true, symbols: false);
+
+        $member->forceFill([
+            'password' => Hash::make($temporaryPassword),
+            'email_verified_at' => $member->email_verified_at ?: now(),
+        ])->save();
+
+        try {
+            Mail::to($email)->sendNow(new MemberApplicationApprovedMail(
+                memberName: $member->name ?: $application->name,
+                temporaryPassword: $temporaryPassword,
+                loginUrl: route('login'),
+                onboardingUrl: route('member.onboarding.edit'),
+            ));
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->redirectWithApprovalResendFailure(
+                $email,
+                $temporaryPassword,
+                $this->approvalMailFailureHint($e)
+            );
+        }
+
+        $member->notify(new SystemNotification(
+            title: __('Application approval email resent'),
+            body: __('A new temporary password was sent to your email so you can complete your Model Information Form.'),
+            actionUrl: route('member.onboarding.edit', absolute: false),
+            category: 'application_approval_resent',
+        ));
+
+        return redirect()->back()->with('status', __('Application email updated to :email and the approval email was resent with a fresh temporary password.', [
+            'email' => $email,
+        ]));
+    }
+
     private function redirectWithApprovalMailFailure(
         ModelApplication $application,
         string $temporaryPassword,
@@ -313,31 +450,13 @@ class AdminApplicationController extends Controller
         return redirect()->back()->with('status', __('Application rejected.'));
     }
 
-    public function destroy(ModelApplication $application): RedirectResponse
+    public function destroy(ModelApplication $application, ModelRecordDeletionService $deletionService): RedirectResponse
     {
-        if (! in_array($application->status, [ModelApplication::STATUS_PENDING, ModelApplication::STATUS_REJECTED], true)) {
-            return redirect()->back()->withErrors(['application' => __('Only pending or rejected applications can be deleted.')]);
-        }
+        $result = $deletionService->deleteApplication($application);
 
-        $application->loadMissing('referral');
-
-        DB::transaction(function () use ($application): void {
-            $photoPaths = collect($application->photo_paths ?? [])
-                ->merge($application->referral?->photo_paths ?? [])
-                ->filter()
-                ->unique()
-                ->values()
-                ->all();
-
-            if ($photoPaths !== []) {
-                Storage::disk('local')->delete($photoPaths);
-            }
-
-            $application->referral?->delete();
-            $application->delete();
-        });
-
-        return redirect()->back()->with('status', __('Application deleted.'));
+        return redirect()->back()->with('status', $result['deleted_member']
+            ? __(':name and all linked model records have been deleted.', ['name' => $result['name']])
+            : __('Application deleted.'));
     }
 
     public function convertReferral(ModelReferral $referral): RedirectResponse

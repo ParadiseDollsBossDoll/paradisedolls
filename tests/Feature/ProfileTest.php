@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\ModelApplication;
+use App\Models\ModelProfile;
+use App\Models\ModelReferral;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -43,6 +46,55 @@ class ProfileTest extends TestCase
         $this->assertSame('Test User', $user->name);
         $this->assertSame('test@example.com', $user->email);
         $this->assertNull($user->email_verified_at);
+    }
+
+    public function test_model_profile_email_update_syncs_linked_application_email(): void
+    {
+        $member = User::factory()->create([
+            'name' => 'Model Member',
+            'email' => 'old-model@example.com',
+            'role' => 'model',
+            'email_verified_at' => now(),
+        ]);
+        $application = new ModelApplication([
+            'name' => $member->name,
+            'email' => $member->email,
+            'experience_level' => 'beginner',
+            'age_confirmed' => true,
+        ]);
+        $application->forceFill([
+            'status' => ModelApplication::STATUS_APPROVED,
+            'user_id' => $member->id,
+        ])->save();
+        $referrer = User::factory()->create(['role' => 'model']);
+        $referral = ModelReferral::create([
+            'referrer_id' => $referrer->id,
+            'model_application_id' => $application->id,
+            'candidate_name' => $member->name,
+            'candidate_email' => $member->email,
+            'experience_level' => 'beginner',
+            'consent_confirmed' => true,
+            'source' => ModelReferral::SOURCE_APPLY_LINK,
+            'status' => ModelReferral::STATUS_JOINED,
+            'reward_status' => ModelReferral::REWARD_ELIGIBLE,
+        ]);
+        ModelProfile::create([
+            'user_id' => $member->id,
+            'model_application_id' => $application->id,
+        ]);
+
+        $this
+            ->actingAs($member)
+            ->patch('/profile', [
+                'name' => 'Model Member',
+                'email' => 'updated-model@example.com',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $this->assertSame('updated-model@example.com', $member->fresh()->email);
+        $this->assertSame('updated-model@example.com', $application->fresh()->email);
+        $this->assertSame('updated-model@example.com', $referral->fresh()->candidate_email);
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void

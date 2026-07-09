@@ -9,6 +9,7 @@
                 form: null,
                 name: '',
                 email: '',
+                message: '',
                 submitting: false,
             },
             openApplicationDeleteDialog(event, application = null) {
@@ -20,6 +21,7 @@
                 this.deleteDialog.form = event.target.closest('form');
                 this.deleteDialog.name = application?.name || this.selected?.name || '';
                 this.deleteDialog.email = application?.email || this.selected?.email || '';
+                this.deleteDialog.message = application?.delete_warning || this.selected?.delete_warning || '';
                 this.deleteDialog.submitting = false;
             },
             closeApplicationDeleteDialog() {
@@ -31,6 +33,7 @@
                 this.deleteDialog.form = null;
                 this.deleteDialog.name = '';
                 this.deleteDialog.email = '';
+                this.deleteDialog.message = '';
             },
             confirmApplicationDelete() {
                 if (! this.deleteDialog.form) {
@@ -176,6 +179,32 @@
                                     </span>
                                 </div>
                             </template>
+                            <template x-if="selected.email_update_url">
+                                <form :action="selected.email_update_url" method="POST" class="mt-5 border-t border-white/[0.04] pt-4">
+                                    @csrf
+                                    @method('PATCH')
+                                    <label for="application-email-editor" class="text-[0.65rem] uppercase tracking-[0.12em] text-boss-ivory/38">
+                                        {{ __('Edit applicant email') }}
+                                    </label>
+                                    <div class="mt-2 flex flex-col gap-2 sm:flex-row">
+                                        <input
+                                            id="application-email-editor"
+                                            name="email"
+                                            type="email"
+                                            :value="selected.email"
+                                            required
+                                            autocomplete="email"
+                                            class="pd-input min-h-11 flex-1"
+                                        >
+                                        <button type="submit" class="pd-btn-secondary h-11 justify-center whitespace-nowrap">
+                                            {{ __('Save Email') }}
+                                        </button>
+                                    </div>
+                                    <p class="mt-2 text-[0.68rem] leading-5 text-boss-ivory/38">
+                                        {{ __('For approved members, this updates their login email and resends the approval email only if they have not logged in or submitted onboarding yet.') }}
+                                    </p>
+                                </form>
+                            </template>
                         </div>
 
                         {{-- Message / motivation --}}
@@ -312,9 +341,10 @@
                 <div class="border-b border-[#f0b4c4]/70 p-5">
                     <p class="text-[0.64rem] font-semibold uppercase tracking-[0.18em] text-[#b42342]">{{ __('Permanent Action') }}</p>
                     <h2 id="delete-application-dialog-title" class="mt-2 font-display text-2xl text-[#2a141d]">{{ __('Delete application?') }}</h2>
-                    <p class="mt-2 text-sm leading-6 text-[#60424d]">
-                        {{ __('This will permanently remove the application, referral link, and uploaded application photos.') }}
-                    </p>
+                    <p
+                        class="mt-2 text-sm leading-6 text-[#60424d]"
+                        x-text="deleteDialog.message || '{{ __('This will permanently remove the application, referral link, and uploaded application photos.') }}'"
+                    ></p>
                 </div>
 
                 <div class="space-y-4 p-5">
@@ -495,14 +525,18 @@
                     <tbody>
                         @forelse ($applications as $application)
                             @php
-                                $canDeleteApplication = in_array($application->status, [
-                                    \App\Models\ModelApplication::STATUS_PENDING,
-                                    \App\Models\ModelApplication::STATUS_REJECTED,
-                                ], true);
+                                $linkedApplicationUser = $application->user;
+                                $deletesLinkedMember = (bool) $linkedApplicationUser?->isModel();
+                                $canManageApplicationEmail = ! $linkedApplicationUser || $linkedApplicationUser->isModel();
+                                $canDeleteApplication = ! $linkedApplicationUser || $deletesLinkedMember;
+                                $deleteWarning = $deletesLinkedMember
+                                    ? __('This will permanently remove the linked member account, onboarding profile, uploaded files, course progress, referrals, reviews, messages, email campaign history, and application records.')
+                                    : __('This will permanently remove the application, referral link, and uploaded application photos.');
                                 $appData = [
                                     'id'                   => $application->id,
                                     'name'                 => $application->name,
                                     'email'                => $application->email,
+                                    'linked_member_name'   => $linkedApplicationUser?->name,
                                     'phone'                => $application->phone,
                                     'message'              => $application->message,
                                     'experience_level'     => $application->experience_level,
@@ -533,6 +567,11 @@
                                     'resend_approval_url'  => $application->canResendApprovalEmail()
                                         ? route('admin.applications.resend-approval-email', $application)
                                         : null,
+                                    'email_update_url'     => $canManageApplicationEmail
+                                        ? route('admin.applications.email.update', $application)
+                                        : null,
+                                    'deletes_member'       => $deletesLinkedMember,
+                                    'delete_warning'       => $deleteWarning,
                                     'delete_url'           => $canDeleteApplication
                                         ? route('admin.applications.destroy', $application)
                                         : null,

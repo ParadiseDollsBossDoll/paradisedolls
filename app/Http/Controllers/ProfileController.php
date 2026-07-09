@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Services\ModelEmailSyncService;
 use App\Support\CommunityPresence;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -28,11 +30,17 @@ class ProfileController extends Controller
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(ProfileUpdateRequest $request, ModelEmailSyncService $emailSyncService): RedirectResponse
     {
         $user = $request->user();
         $validated = $request->safe()->except(['profile_photo', 'remove_profile_photo']);
         $previousEmail = $user->email;
+
+        if ($emailSyncService->emailIsUsedByAnotherApplication($user, $validated['email'])) {
+            throw ValidationException::withMessages([
+                'email' => __('This email is already used by another application.'),
+            ]);
+        }
 
         $user->fill($validated);
 
@@ -65,6 +73,17 @@ class ProfileController extends Controller
             }
 
             throw $exception;
+        }
+
+        if ($user->wasChanged('email')) {
+            DB::table('password_reset_tokens')
+                ->whereIn('email', array_values(array_unique(array_filter([
+                    $previousEmail,
+                    $user->email,
+                ]))))
+                ->delete();
+
+            $emailSyncService->syncLinkedApplications($user, $user->email);
         }
 
         if ($previousPhotoPath !== $user->profile_photo_path) {

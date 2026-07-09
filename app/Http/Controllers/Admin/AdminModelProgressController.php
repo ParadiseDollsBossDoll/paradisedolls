@@ -4,17 +4,18 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
-use App\Models\ModelApplication;
 use App\Models\LessonProgress;
 use App\Models\User;
+use App\Services\ModelEmailSyncService;
+use App\Services\ModelRecordDeletionService;
 use App\Support\CommunityPresence;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AdminModelProgressController extends Controller
@@ -119,7 +120,7 @@ class AdminModelProgressController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, User $user): RedirectResponse
+    public function destroy(Request $request, User $user, ModelRecordDeletionService $deletionService): RedirectResponse
     {
         abort_unless($user->isModel(), 403, 'Only model accounts can be deleted from the member directory.');
 
@@ -133,40 +134,36 @@ class AdminModelProgressController extends Controller
             'page' => filled($request->input('page')) ? (int) $request->input('page') : null,
         ]);
 
-        DB::transaction(function () use ($user): void {
-            $user->loadMissing([
-                'modelProfile.application',
-                'courseAccessRequests.proofFiles',
-            ]);
-
-            $this->deleteMemberStoredFiles($user);
-            $this->deleteLinkedApplications($user);
-
-            $user->notifications()->delete();
-            DB::table('sessions')->where('user_id', $user->id)->delete();
-
-            $user->delete();
-        });
-
-        CommunityPresence::forgetMemberDirectory();
+        $deletionService->deleteModel($user);
 
         return redirect()
             ->route('admin.models.progress', $redirectQuery)
             ->with('status', __(':name has been deleted from the system.', ['name' => $memberName]));
     }
 
-    public function updateLogin(Request $request, User $user): RedirectResponse
+    public function updateLogin(Request $request, User $user, ModelEmailSyncService $emailSyncService): RedirectResponse
     {
         abort_unless($user->isModel(), 403, 'Only model login details can be managed here.');
 
+        $request->merge([
+            'email' => Str::lower(trim((string) $request->input('email'))),
+        ]);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'email' => ['required', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:10', 'max:255', 'confirmed'],
         ]);
 
+        if ($emailSyncService->emailIsUsedByAnotherApplication($user, $validated['email'])) {
+            throw ValidationException::withMessages([
+                'email' => __('This email is already used by another application.'),
+            ]);
+        }
+
         $passwordChanged = filled($validated['password'] ?? null);
         $emailChanged = $validated['email'] !== $user->email;
+        $oldEmail = $user->email;
 
         $payload = [
             'name' => $validated['name'],
@@ -181,10 +178,25 @@ class AdminModelProgressController extends Controller
             $payload['password'] = $validated['password'];
         }
 
-        $user->forceFill($payload)->save();
+        DB::transaction(function () use ($user, $payload, $emailChanged, $validated, $emailSyncService): void {
+            $user->forceFill($payload)->save();
+
+            if ($emailChanged) {
+                $emailSyncService->syncLinkedApplications($user, $validated['email']);
+            }
+        });
 
         if ($passwordChanged || $emailChanged) {
             DB::table('sessions')->where('user_id', $user->id)->delete();
+        }
+
+        if ($emailChanged) {
+            DB::table('password_reset_tokens')
+                ->whereIn('email', array_values(array_unique(array_filter([
+                    $oldEmail,
+                    $validated['email'],
+                ]))))
+                ->delete();
         }
 
         CommunityPresence::forgetMemberDirectory();
@@ -246,56 +258,6 @@ class AdminModelProgressController extends Controller
                 ->filter(fn ($count): bool => (int) $count > 0)
                 ->count(),
         ];
-    }
-
-    private function deleteMemberStoredFiles(User $user): void
-    {
-        if (filled($user->profile_photo_path)) {
-            Storage::disk('public')->delete($user->profile_photo_path);
-        }
-
-        $profile = $user->modelProfile;
-        if ($profile) {
-            Storage::disk('local')->delete(array_filter([
-                $profile->id_document_path,
-                $profile->selfie_with_id_path,
-                $profile->platform_codes_path,
-            ]));
-        }
-
-        foreach ($user->courseAccessRequests as $accessRequest) {
-            foreach ($accessRequest->proofFiles as $proofFile) {
-                if (
-                    in_array($proofFile->disk, ['local', 'public'], true)
-                    && filled($proofFile->path)
-                ) {
-                    Storage::disk($proofFile->disk)->delete($proofFile->path);
-                }
-            }
-        }
-
-        Storage::disk('local')->deleteDirectory('course-access-proofs/'.$user->id);
-        Storage::disk('local')->deleteDirectory('verifications/'.$user->id);
-    }
-
-    private function deleteLinkedApplications(User $user): void
-    {
-        $applications = ModelApplication::query()
-            ->where('user_id', $user->id)
-            ->when($user->modelProfile?->model_application_id, function ($query, int $applicationId): void {
-                $query->orWhere('id', $applicationId);
-            })
-            ->get();
-
-        foreach ($applications as $application) {
-            foreach ($application->photo_paths ?? [] as $path) {
-                if (filled($path)) {
-                    Storage::disk('local')->delete($path);
-                }
-            }
-
-            $application->delete();
-        }
     }
 
     /**
