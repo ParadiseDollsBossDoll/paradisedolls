@@ -82,7 +82,7 @@ class MarketingContent
                         ['title' => 'All-girl energy', 'body' => 'A motivating community that feels aspirational, feminine, and achievable.'],
                     ]],
 
-                    ['key' => 'testimonials.eyebrow', 'label' => 'Testimonials eyebrow', 'type' => 'text', 'default' => 'Testimonials & Success Stories'],
+                    ['key' => 'testimonials.eyebrow', 'label' => 'Success stories eyebrow', 'type' => 'text', 'default' => 'Success Stories'],
                     ['key' => 'testimonials.title', 'label' => 'Testimonials title', 'type' => 'text', 'default' => 'Community wins make the opportunity feel real'],
                     ['key' => 'testimonials.link_label', 'label' => 'Testimonials link label', 'type' => 'text', 'default' => 'View stories'],
 
@@ -378,7 +378,7 @@ class MarketingContent
                 'Real Stories from Our Paradise Dolls 💎',
                 "Behind every success is a woman who had the courage to take the first step. Discover the inspiring journeys of our Paradise Dolls as they share how they’ve built confidence, embraced new opportunities, formed lifelong friendships, and transformed their lives with the support of a community that truly believes in their success.\n\nEvery Paradise Doll’s journey is unique, but they all began with one decision to believe in themselves. Today, they’re inspiring others to do the same, proving that with the right support, mindset, and determination, incredible things are possible.\n\nAt Paradise Dolls, we believe success is about more than reaching your goals. It’s about becoming part of a sisterhood that celebrates every milestone, lifts each other up, and grows stronger together. Here, you’ll find encouragement, friendship, inspiration, and a community that’s genuinely invested in seeing every Doll succeed.\n\nYour story starts with a single step… and this could be the beginning of your own success story. 💖✨",
                 [
-                    ['key' => 'testimonials.eyebrow', 'label' => 'Testimonials eyebrow', 'type' => 'text', 'default' => 'Community Testimonials'],
+                    ['key' => 'testimonials.eyebrow', 'label' => 'Success stories eyebrow', 'type' => 'text', 'default' => 'Success Stories'],
                     ['key' => 'testimonials.title', 'label' => 'Testimonials title', 'type' => 'text', 'default' => 'Real words from approved Paradise Dolls members'],
                     ['key' => 'empty.title', 'label' => 'Empty state title', 'type' => 'text', 'default' => 'Success stories are coming soon'],
                     ['key' => 'empty.body', 'label' => 'Empty state body', 'type' => 'textarea', 'default' => 'The team can add approved member testimonials from the admin dashboard as the community grows.'],

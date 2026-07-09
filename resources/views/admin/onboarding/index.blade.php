@@ -986,6 +986,9 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 <form method="GET" action="{{ route('admin.onboarding.index') }}">
+                    <input type="hidden" name="search" value="{{ $search }}">
+                    <input type="hidden" name="sort" value="{{ $sort }}">
+                    <input type="hidden" name="direction" value="{{ $direction }}">
                     <label for="onboarding-per-page" class="sr-only">{{ __('Rows per page') }}</label>
                     <select id="onboarding-per-page" name="per_page" class="pd-input h-11 w-auto min-w-28" onchange="this.form.submit()">
                         @foreach ([10, 20, 50] as $size)
@@ -1040,6 +1043,53 @@
             @endforeach
         </section>
 
+        {{-- Search and sorting --}}
+        <form method="GET" action="{{ route('admin.onboarding.index') }}" class="rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-4">
+            <input type="hidden" name="per_page" value="{{ $perPage }}">
+            <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_13rem_10rem_auto] lg:items-end">
+                <div>
+                    <label for="onboarding-search" class="pd-label">{{ __('Search members') }}</label>
+                    <div class="relative mt-2">
+                        <svg class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-boss-ivory/28" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="m11.5 11.5 2.5 2.5"/>
+                            <circle cx="7" cy="7" r="4.5"/>
+                        </svg>
+                        <input
+                            id="onboarding-search"
+                            type="search"
+                            name="search"
+                            value="{{ $search }}"
+                            class="pd-input h-12 pl-11"
+                            placeholder="{{ __('Search name, email, legal name, or stage name') }}"
+                        >
+                    </div>
+                </div>
+
+                <div>
+                    <label for="onboarding-sort" class="pd-label">{{ __('Sort by') }}</label>
+                    <select id="onboarding-sort" name="sort" class="pd-input mt-2 h-12">
+                        <option value="name" @selected($sort === 'name')>{{ __('Name') }}</option>
+                        <option value="application_date" @selected($sort === 'application_date')>{{ __('Date of application') }}</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="onboarding-direction" class="pd-label">{{ __('Order') }}</label>
+                    <select id="onboarding-direction" name="direction" class="pd-input mt-2 h-12">
+                        <option value="asc" @selected($direction === 'asc')>{{ __('Ascending') }}</option>
+                        <option value="desc" @selected($direction === 'desc')>{{ __('Descending') }}</option>
+                    </select>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                    <button type="submit" class="pd-btn-primary h-12 px-5">{{ __('Apply') }}</button>
+                    @if ($search !== '' || $sort !== 'name' || $direction !== 'asc')
+                        <a href="{{ route('admin.onboarding.index', ['per_page' => $perPage]) }}" class="pd-btn-secondary h-12 px-5">{{ __('Clear') }}</a>
+                    @endif
+                </div>
+            </div>
+        </form>
+
         {{-- ── Members table ─────────────────────────────────────── --}}
         <div class="overflow-hidden rounded-2xl border border-white/[0.06] bg-boss-panel-strong">
             <div class="overflow-x-auto">
@@ -1056,11 +1106,12 @@
                         @forelse ($models as $model)
                             @php
                                 $profile = $model->modelProfile;
+                                $applicationDate = $profile?->application?->created_at ?: $model->created_at;
                                 $modelData = [
                                     'id'      => $model->id,
                                     'name'    => $model->name,
                                     'email'   => $model->email,
-                                    'joined'  => $model->created_at->toFormattedDateString(),
+                                    'joined'  => $applicationDate->toFormattedDateString(),
                                     'profile' => $profile ? [
                                         'id'                          => $profile->id,
                                         'legal_name'                  => $profile->legal_name,
@@ -1159,6 +1210,7 @@
                                         <div>
                                             <div class="font-medium text-boss-ivory">{{ $model->name }}</div>
                                             <div class="text-[0.74rem] text-boss-ivory/35">{{ $model->email }}</div>
+                                            <div class="mt-0.5 text-[0.68rem] text-boss-ivory/26">{{ __('Applied') }} {{ $applicationDate->toFormattedDateString() }}</div>
                                             @if ($profile?->stage_name)
                                                 <div class="text-[0.72rem] text-boss-gold/70">{{ $profile->stage_name }}</div>
                                             @endif

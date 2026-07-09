@@ -195,7 +195,7 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-12 flex flex-col justify-between gap-5 md:flex-row md:items-end">
                 <div class="max-w-3xl">
-                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ marketing_content('home.testimonials.eyebrow') }}</p>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Success Stories') }}</p>
                     <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ marketing_content('home.testimonials.title') }}</h2>
                 </div>
                 <a href="{{ route('success-stories') }}" class="text-[0.72rem] uppercase tracking-[0.16em] text-boss-rose hover:text-boss-dark">{{ marketing_content('home.testimonials.link_label') }} -></a>

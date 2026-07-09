@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\ModelApplication;
+use App\Models\ModelProfile;
 use App\Models\ModelReferral;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,6 +25,80 @@ class AdminListPaginationTest extends TestCase
             ->assertViewHas('models', fn ($models) => $models->perPage() === 10
                 && $models->total() === 12
                 && $models->count() === 10);
+    }
+
+    public function test_admin_onboarding_list_can_search_and_sort_members(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $olderMember = User::factory()->create([
+            'name' => 'Zara Model',
+            'email' => 'zara@example.com',
+            'role' => 'model',
+            'created_at' => now()->subDays(10),
+        ]);
+        $newerMember = User::factory()->create([
+            'name' => 'Bella Model',
+            'email' => 'bella@example.com',
+            'role' => 'model',
+            'created_at' => now()->subDays(9),
+        ]);
+
+        $olderApplication = ModelApplication::create([
+            'name' => 'Zara Application',
+            'email' => 'zara@example.com',
+            'age_confirmed' => true,
+        ]);
+        $olderApplication->forceFill([
+            'status' => ModelApplication::STATUS_APPROVED,
+            'user_id' => $olderMember->id,
+            'created_at' => now()->subDays(8),
+        ])->save();
+
+        $newerApplication = ModelApplication::create([
+            'name' => 'Bella Application',
+            'email' => 'bella@example.com',
+            'age_confirmed' => true,
+        ]);
+        $newerApplication->forceFill([
+            'status' => ModelApplication::STATUS_APPROVED,
+            'user_id' => $newerMember->id,
+            'created_at' => now()->subDay(),
+        ])->save();
+
+        ModelProfile::create([
+            'user_id' => $olderMember->id,
+            'model_application_id' => $olderApplication->id,
+            'legal_name' => 'Amanda Legal',
+            'stage_name' => 'Velvet Spark',
+        ]);
+        ModelProfile::create([
+            'user_id' => $newerMember->id,
+            'model_application_id' => $newerApplication->id,
+            'legal_name' => 'Bella Legal',
+            'stage_name' => 'Breeze',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.index', ['search' => 'Velvet']))
+            ->assertOk()
+            ->assertSee('Search members')
+            ->assertSee('Applied')
+            ->assertViewHas('search', 'Velvet')
+            ->assertViewHas('models', fn ($models) => $models->total() === 1
+                && $models->first()->is($olderMember));
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.index', [
+                'sort' => 'application_date',
+                'direction' => 'desc',
+            ]))
+            ->assertOk()
+            ->assertViewHas('sort', 'application_date')
+            ->assertViewHas('direction', 'desc')
+            ->assertViewHas('models', fn ($models) => $models->getCollection()->pluck('id')->take(2)->all() === [
+                $newerMember->id,
+                $olderMember->id,
+            ]);
     }
 
     public function test_admin_applications_and_referral_leads_are_paginated(): void

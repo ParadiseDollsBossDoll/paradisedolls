@@ -17,14 +17,14 @@
     <section class="bg-[#f3f3f5] py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-12 max-w-3xl">
-                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ marketing_content('success_stories.testimonials.eyebrow') }}</p>
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Success Stories') }}</p>
                 <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ marketing_content('success_stories.testimonials.title') }}</h2>
             </div>
 
             <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 @forelse ($testimonials as $testimonial)
-                    <article class="min-h-[17.5rem] rounded-lg bg-white p-5 shadow-[0_18px_45px_rgba(15,15,20,0.08)]">
-                        <div class="flex items-center gap-3">
+                    <article class="flex h-[16rem] flex-col rounded-lg bg-white p-5 shadow-[0_18px_45px_rgba(15,15,20,0.08)] sm:h-[17rem]">
+                        <div class="flex shrink-0 items-center gap-3">
                             <img src="{{ $testimonial->displayAvatar() }}" alt="" class="h-11 w-11 shrink-0 rounded-full object-cover">
                             <div class="min-w-0 flex-1">
                                 <h3 class="truncate text-[0.86rem] font-semibold leading-tight text-[#06070b]">{{ $testimonial->name }}</h3>
@@ -32,10 +32,12 @@
                             </div>
                         </div>
 
-                        <p class="mt-6 text-[0.96rem] leading-[1.45] text-[#151821]">{{ $testimonial->quote }}</p>
+                        <div class="pd-success-story-scroll mt-6 min-h-0 flex-1 overflow-y-auto pr-2">
+                            <p class="text-[0.96rem] leading-[1.45] text-[#151821]">{{ $testimonial->quote }}</p>
+                        </div>
 
                         @if ($testimonial->displayHashtag())
-                            <p class="mt-3 truncate text-[0.9rem] leading-tight text-boss-rose">{{ $testimonial->displayHashtag() }}</p>
+                            <p class="mt-4 shrink-0 truncate text-[0.9rem] leading-tight text-boss-rose">{{ $testimonial->displayHashtag() }}</p>
                         @endif
                     </article>
                 @empty

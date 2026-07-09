@@ -128,8 +128,10 @@ class TestimonialManagementTest extends TestCase
 
         $this->get(route('home'))
             ->assertOk()
+            ->assertSeeText('Success Stories')
             ->assertSee('A published testimonial.')
-            ->assertDontSee('A draft testimonial.');
+            ->assertDontSee('A draft testimonial.')
+            ->assertDontSeeText('Testimonials & Success Stories');
     }
 
     public function test_homepage_does_not_show_placeholder_reviews_when_there_are_no_real_stories(): void
@@ -143,13 +145,23 @@ class TestimonialManagementTest extends TestCase
 
     public function test_success_stories_hero_uses_the_community_copy(): void
     {
+        Testimonial::create([
+            'name' => 'Long Story Member',
+            'headline' => 'Long win',
+            'quote' => str_repeat('This is a longer success story from a real member. ', 20),
+            'is_published' => true,
+        ]);
+
         $this->get(route('success-stories'))
             ->assertOk()
             ->assertSeeText('PARADISE DOLLS COMMUNITY')
+            ->assertSeeText('Success Stories')
             ->assertSeeText('Real Stories from Our Paradise Dolls')
             ->assertSeeText('Behind every success is a woman who had the courage to take the first step.')
             ->assertSeeText('Every Paradise Doll’s journey is unique')
             ->assertSeeText('success is about more than reaching your goals')
-            ->assertSeeText('Your story starts with a single step');
+            ->assertSeeText('Your story starts with a single step')
+            ->assertSee('pd-success-story-scroll', false)
+            ->assertDontSeeText('Community Testimonials');
     }
 }

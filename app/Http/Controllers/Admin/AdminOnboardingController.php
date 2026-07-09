@@ -31,11 +31,38 @@ class AdminOnboardingController extends Controller
     public function index(Request $request): View
     {
         $perPage = $this->perPage($request);
+        $search = trim((string) $request->query('search', ''));
+        $sort = $this->sort($request);
+        $direction = $this->sortDirection($request);
 
         $models = User::query()
+            ->select('users.*')
             ->where('role', 'model')
-            ->with('modelProfile')
-            ->orderBy('name')
+            ->with('modelProfile.application')
+            ->leftJoin('model_profiles', 'model_profiles.user_id', '=', 'users.id')
+            ->leftJoin('model_applications', 'model_applications.id', '=', 'model_profiles.model_application_id')
+            ->when($search !== '', function ($query) use ($search): void {
+                $like = '%'.$search.'%';
+
+                $query->where(function ($query) use ($like): void {
+                    $query
+                        ->where('users.name', 'like', $like)
+                        ->orWhere('users.email', 'like', $like)
+                        ->orWhere('model_profiles.legal_name', 'like', $like)
+                        ->orWhere('model_profiles.stage_name', 'like', $like)
+                        ->orWhere('model_applications.name', 'like', $like)
+                        ->orWhere('model_applications.email', 'like', $like);
+                });
+            })
+            ->when($sort === 'application_date', function ($query) use ($direction): void {
+                $query
+                    ->orderByRaw('COALESCE(model_applications.created_at, users.created_at) '.$direction)
+                    ->orderBy('users.name');
+            }, function ($query) use ($direction): void {
+                $query
+                    ->orderBy('users.name', $direction)
+                    ->orderByRaw('COALESCE(model_applications.created_at, users.created_at) desc');
+            })
             ->paginate($perPage)
             ->withQueryString();
 
@@ -51,6 +78,9 @@ class AdminOnboardingController extends Controller
         return view('admin.onboarding.index', [
             'models' => $models,
             'perPage' => $perPage,
+            'search' => $search,
+            'sort' => $sort,
+            'direction' => strtolower($direction),
             'stats' => $stats,
             'onboardingForm' => OnboardingFormDefinition::get(),
             'customFieldTypes' => [
@@ -70,6 +100,20 @@ class AdminOnboardingController extends Controller
         $perPage = (int) $request->query('per_page', 20);
 
         return in_array($perPage, [10, 20, 50], true) ? $perPage : 20;
+    }
+
+    private function sort(Request $request): string
+    {
+        $sort = (string) $request->query('sort', 'name');
+
+        return in_array($sort, ['name', 'application_date'], true) ? $sort : 'name';
+    }
+
+    private function sortDirection(Request $request): string
+    {
+        $direction = strtolower((string) $request->query('direction', 'asc'));
+
+        return in_array($direction, ['asc', 'desc'], true) ? $direction : 'asc';
     }
 
     public function show(ModelProfile $profile): View
