@@ -20,6 +20,8 @@
 
         <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
+        @include('partials.google-analytics')
+
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body

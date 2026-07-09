@@ -63,4 +63,8 @@ return [
         'timeout' => (int) env('GOOGLE_TRANSLATE_TIMEOUT', 10),
     ],
 
+    'google_analytics' => [
+        'measurement_id' => env('GOOGLE_ANALYTICS_ID'),
+    ],
+
 ];
