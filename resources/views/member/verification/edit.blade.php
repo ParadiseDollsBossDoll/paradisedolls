@@ -63,7 +63,14 @@
                 <div class="space-y-5">
                     <div>
                         <label for="id_document" class="pd-label">{{ __('Valid ID') }}</label>
-                        <input id="id_document" type="file" name="id_document" accept=".jpg,.jpeg,.png,.pdf" class="pd-input mt-2" @if (! $profile->id_document_path) required @endif>
+                        <input
+                            id="id_document"
+                            type="file"
+                            name="id_document"
+                            accept=".jpg,.jpeg,.png,.pdf"
+                            class="mt-2 block w-full cursor-pointer rounded-xl border border-boss-rose/25 bg-white/80 px-3 py-2 text-[0.82rem] text-boss-ink/70 shadow-sm file:mr-4 file:rounded-full file:border-0 file:bg-boss-rose/20 file:px-4 file:py-2 file:text-[0.72rem] file:font-semibold file:text-boss-rose file:transition-colors hover:file:bg-boss-rose/30 focus:border-boss-rose/45 focus:outline-none focus:ring-2 focus:ring-boss-rose/15"
+                            @if (! $profile->id_document_path) required @endif
+                        >
                         @if ($profile->id_document_path)
                             <p class="mt-2 text-[0.72rem] text-boss-ivory/28">{{ __('Existing file on record. Leave blank to keep it.') }}</p>
                         @endif
@@ -71,7 +78,14 @@
 
                     <div>
                         <label for="selfie_with_id" class="pd-label">{{ __('Selfie holding ID') }}</label>
-                        <input id="selfie_with_id" type="file" name="selfie_with_id" accept=".jpg,.jpeg,.png,.webp" class="pd-input mt-2" @if (! $profile->selfie_with_id_path) required @endif>
+                        <input
+                            id="selfie_with_id"
+                            type="file"
+                            name="selfie_with_id"
+                            accept=".jpg,.jpeg,.png,.webp"
+                            class="mt-2 block w-full cursor-pointer rounded-xl border border-boss-rose/25 bg-white/80 px-3 py-2 text-[0.82rem] text-boss-ink/70 shadow-sm file:mr-4 file:rounded-full file:border-0 file:bg-boss-rose/20 file:px-4 file:py-2 file:text-[0.72rem] file:font-semibold file:text-boss-rose file:transition-colors hover:file:bg-boss-rose/30 focus:border-boss-rose/45 focus:outline-none focus:ring-2 focus:ring-boss-rose/15"
+                            @if (! $profile->selfie_with_id_path) required @endif
+                        >
                         @if ($profile->selfie_with_id_path)
                             <p class="mt-2 text-[0.72rem] text-boss-ivory/28">{{ __('Existing file on record. Leave blank to keep it.') }}</p>
                         @endif

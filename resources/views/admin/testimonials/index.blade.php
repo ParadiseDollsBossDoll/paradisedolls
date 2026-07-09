@@ -36,8 +36,8 @@
                                 @endif
                                 <span class="text-[0.62rem] text-boss-ivory/25">{{ __('Order') }} {{ $testimonial->sort_order }}</span>
                             </div>
-                            <h2 class="pd-heading truncate text-[1.15rem] text-boss-ivory">{{ $testimonial->headline }}</h2>
-                            <p class="mt-1 text-[0.78rem] text-boss-ivory/38">{{ $testimonial->name }}{{ $testimonial->location ? ' - '.$testimonial->location : '' }}</p>
+                            <h2 class="pd-heading truncate text-[1.15rem] text-boss-ivory">{{ $testimonial->name }}</h2>
+                            <p class="mt-1 truncate text-[0.78rem] text-boss-ivory/38">{{ $testimonial->displayHandle() }}</p>
                             @if ($testimonial->submitter)
                                 <p class="mt-1 text-[0.68rem] text-boss-ivory/28">{{ __('Submitted by') }} {{ $testimonial->submitter->name }} &middot; {{ $testimonial->created_at->diffForHumans() }}</p>
                             @elseif ($testimonial->approver)
@@ -80,4 +80,3 @@
         <div class="px-2">{{ $testimonials->links() }}</div>
     </div>
 </x-admin-layout>
-

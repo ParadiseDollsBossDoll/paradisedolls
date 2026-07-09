@@ -8,11 +8,10 @@
             <a href="{{ route('admin.testimonials.index') }}" class="pd-btn-secondary">{{ __('Back') }}</a>
         </header>
 
-        <form method="POST" action="{{ route('admin.testimonials.store') }}" class="pd-panel space-y-5 p-6">
+        <form method="POST" action="{{ route('admin.testimonials.store') }}" enctype="multipart/form-data" class="pd-panel space-y-5 p-6">
             @csrf
             @include('admin.testimonials.partials.form', ['testimonial' => null])
             <x-primary-button>{{ __('Create Story') }}</x-primary-button>
         </form>
     </div>
 </x-admin-layout>
-

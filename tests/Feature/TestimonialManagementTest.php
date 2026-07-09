@@ -6,6 +6,7 @@ use App\Mail\AdminActivityAlertMail;
 use App\Models\Testimonial;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -16,27 +17,40 @@ class TestimonialManagementTest extends TestCase
 
     public function test_admin_can_create_and_publish_success_story(): void
     {
+        Storage::fake('public');
+
         $admin = User::factory()->create(['role' => 'admin']);
 
         $this->actingAs($admin)->post(route('admin.testimonials.store'), [
             'name' => 'Success Member',
-            'headline' => 'Built confidence online',
+            'display_handle' => '@successdoll',
             'quote' => 'The support system made the opportunity feel achievable.',
-            'location' => 'Remote',
             'result_label' => 'Confidence',
-            'image_url' => 'https://example.com/story.jpg',
+            'photo' => UploadedFile::fake()->createWithContent(
+                'story.png',
+                base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/luzEGwAAAABJRU5ErkJggg==')
+            ),
             'is_published' => '1',
             'sort_order' => 1,
         ])->assertRedirect(route('admin.testimonials.index'));
 
         $this->assertDatabaseHas('testimonials', [
             'name' => 'Success Member',
+            'display_handle' => 'successdoll',
+            'headline' => 'Confidence',
             'is_published' => true,
             'approved_by' => $admin->id,
         ]);
 
+        $testimonial = Testimonial::query()->where('name', 'Success Member')->firstOrFail();
+
+        $this->assertNotNull($testimonial->image_path);
+        $this->assertNull($testimonial->image_url);
+        Storage::disk('public')->assertExists($testimonial->image_path);
+
         $this->get(route('success-stories'))
             ->assertOk()
+            ->assertSee('@successdoll')
             ->assertSee('The support system made the opportunity feel achievable.')
             ->assertSee('#Confidence');
     }
@@ -130,6 +144,7 @@ class TestimonialManagementTest extends TestCase
             ->assertOk()
             ->assertSeeText('Success Stories')
             ->assertSee('A published testimonial.')
+            ->assertDontSee('Visible win')
             ->assertDontSee('A draft testimonial.')
             ->assertDontSeeText('Testimonials & Success Stories');
     }
@@ -162,6 +177,7 @@ class TestimonialManagementTest extends TestCase
             ->assertSeeText('success is about more than reaching your goals')
             ->assertSeeText('Your story starts with a single step')
             ->assertSee('pd-success-story-scroll', false)
+            ->assertDontSee('Long win')
             ->assertDontSeeText('Community Testimonials');
     }
 }

@@ -18,7 +18,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('admin.testimonials.update', $testimonial) }}" class="pd-panel space-y-5 p-6">
+        <form method="POST" action="{{ route('admin.testimonials.update', $testimonial) }}" enctype="multipart/form-data" class="pd-panel space-y-5 p-6">
             @csrf
             @method('PUT')
             @include('admin.testimonials.partials.form', ['testimonial' => $testimonial])
@@ -26,4 +26,3 @@
         </form>
     </div>
 </x-admin-layout>
-
