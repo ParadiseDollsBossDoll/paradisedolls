@@ -112,6 +112,33 @@ class ProfileTest extends TestCase
         Storage::disk('public')->assertMissing($photoPath);
     }
 
+    public function test_profile_photo_can_be_uploaded_when_existing_email_has_uppercase_letters(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create([
+            'email' => 'Admin@getrichwithparadisedolls.com',
+            'email_verified_at' => now(),
+        ]);
+
+        $this
+            ->actingAs($user)
+            ->patch('/profile', [
+                'name' => $user->name,
+                'email' => $user->email,
+                'profile_photo' => $this->fakePngUpload(),
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+
+        $this->assertSame('admin@getrichwithparadisedolls.com', $user->email);
+        $this->assertNotNull($user->email_verified_at);
+        $this->assertNotNull($user->profile_photo_path);
+        Storage::disk('public')->assertExists($user->profile_photo_path);
+    }
+
     private function fakePngUpload(): UploadedFile
     {
         $path = tempnam(sys_get_temp_dir(), 'avatar');

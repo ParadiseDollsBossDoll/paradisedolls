@@ -32,10 +32,11 @@ class ProfileController extends Controller
     {
         $user = $request->user();
         $validated = $request->safe()->except(['profile_photo', 'remove_profile_photo']);
+        $previousEmail = $user->email;
 
         $user->fill($validated);
 
-        if ($user->isDirty('email')) {
+        if (strcasecmp($previousEmail, $user->email) !== 0) {
             $user->email_verified_at = null;
         }
 
