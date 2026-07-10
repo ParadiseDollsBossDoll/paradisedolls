@@ -9,6 +9,11 @@
         $marketingUser = null;
     }
 @endphp
+@php
+    $canonicalBase = rtrim(config('app.url'), '/');
+    $canonicalPath = request()->path();
+    $canonicalUrl = $canonicalBase.($canonicalPath === '/' ? '' : '/'.$canonicalPath);
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
@@ -17,6 +22,11 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>{{ $title ? $title.' - '.config('app.name') : config('app.name') }}</title>
+        <link rel="canonical" href="{{ $canonicalUrl }}">
+        <meta property="og:url" content="{{ $canonicalUrl }}">
+        <meta property="og:site_name" content="{{ config('app.name') }}">
+        <meta property="og:title" content="{{ $title ? $title.' - '.config('app.name') : config('app.name') }}">
+        <meta property="og:type" content="website">
 
         <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
