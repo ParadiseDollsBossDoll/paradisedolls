@@ -481,6 +481,116 @@ body {
         color: var(--pd-primary);
     }
 
+    /* Pagination */
+
+    .pd-pagination {
+        width: 100%;
+        color: rgba(255, 248, 246, 0.72);
+        font-size: 0.82rem;
+    }
+
+    .pd-pagination-group {
+        display: inline-flex;
+        align-items: center;
+        overflow: hidden;
+        border: 1px solid rgba(238, 180, 195, 0.24);
+        border-radius: 0.75rem;
+        background: rgba(23, 16, 22, 0.82);
+        box-shadow: 0 14px 35px rgba(9, 7, 10, 0.18);
+    }
+
+    .pd-pagination-link,
+    .pd-pagination-mobile-link {
+        display: inline-flex;
+        min-height: 2.35rem;
+        min-width: 2.65rem;
+        align-items: center;
+        justify-content: center;
+        border-right: 1px solid rgba(238, 180, 195, 0.16);
+        color: rgba(255, 248, 246, 0.72);
+        font-weight: 600;
+        transition: background 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .pd-pagination-link:last-child {
+        border-right: 0;
+    }
+
+    .pd-pagination-link:hover,
+    .pd-pagination-mobile-link:hover {
+        background: rgba(238, 180, 195, 0.12);
+        color: var(--pd-primary);
+    }
+
+    .pd-pagination-current {
+        background: linear-gradient(135deg, var(--pd-primary), var(--pd-primary-hover));
+        color: var(--pd-primary-on);
+        cursor: default;
+        box-shadow: inset 0 0 0 1px rgba(255, 248, 246, 0.18);
+    }
+
+    .pd-pagination-dots {
+        color: rgba(255, 248, 246, 0.42);
+        cursor: default;
+    }
+
+    .pd-pagination-arrow {
+        min-width: 2.75rem;
+    }
+
+    .pd-pagination-disabled {
+        color: rgba(255, 248, 246, 0.28);
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .pd-pagination-mobile-link {
+        border: 1px solid rgba(238, 180, 195, 0.22);
+        border-radius: 0.75rem;
+        background: rgba(23, 16, 22, 0.78);
+        padding: 0 1rem;
+        box-shadow: 0 10px 28px rgba(9, 7, 10, 0.14);
+    }
+
+    html.light-mode .pd-pagination {
+        color: rgba(26, 14, 20, 0.66);
+    }
+
+    html.light-mode .pd-pagination-group,
+    html.light-mode .pd-pagination-mobile-link {
+        border-color: rgba(238, 180, 195, 0.56);
+        background: rgba(255, 248, 251, 0.92);
+        box-shadow: 0 14px 34px rgba(181, 82, 122, 0.10);
+    }
+
+    html.light-mode .pd-pagination-link,
+    html.light-mode .pd-pagination-mobile-link {
+        border-color: rgba(238, 180, 195, 0.42);
+        color: rgba(26, 14, 20, 0.68);
+    }
+
+    html.light-mode .pd-pagination-link:hover,
+    html.light-mode .pd-pagination-mobile-link:hover {
+        background: rgba(238, 180, 195, 0.16);
+        color: #8F3D62;
+    }
+
+    html.light-mode .pd-pagination-current {
+        background: linear-gradient(135deg, #EEB4C3, #F5C8D4);
+        color: #1A0E14;
+        box-shadow:
+            inset 0 0 0 1px rgba(255, 255, 255, 0.42),
+            0 8px 20px rgba(238, 180, 195, 0.25);
+    }
+
+    html.light-mode .pd-pagination-dots {
+        color: rgba(26, 14, 20, 0.38);
+    }
+
+    html.light-mode .pd-pagination-disabled {
+        color: rgba(26, 14, 20, 0.30);
+    }
+
     /* ── Community Chat Shell (Elysian) ──────────────── */
 
     .elysian-sidebar {
