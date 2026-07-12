@@ -14,33 +14,33 @@
             </a>
         </header>
 
-        <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            <div class="rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-5 shadow-[0_18px_45px_rgba(0,0,0,0.2)]">
-                <p class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Total Referrals') }}</p>
+        <section class="grid grid-cols-2 gap-3 xl:grid-cols-5">
+            <div class="min-w-0 rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-4 shadow-[0_18px_45px_rgba(0,0,0,0.2)] sm:p-5">
+                <p class="truncate text-[0.65rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Total Referrals') }}</p>
                 <p class="mt-3 font-display text-3xl text-boss-gold-light">{{ number_format($summary['total']) }}</p>
                 <p class="mt-1 text-xs text-boss-ivory/[0.32]">{{ __('All submitted referral records') }}</p>
             </div>
 
-            <div class="rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-5 shadow-[0_18px_45px_rgba(0,0,0,0.2)]">
-                <p class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Referrers') }}</p>
+            <div class="min-w-0 rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-4 shadow-[0_18px_45px_rgba(0,0,0,0.2)] sm:p-5">
+                <p class="truncate text-[0.65rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Referrers') }}</p>
                 <p class="mt-3 font-display text-3xl text-boss-gold-light">{{ number_format($summary['active_referrers']) }}</p>
                 <p class="mt-1 text-xs text-boss-ivory/[0.32]">{{ __('Models with referrals') }}</p>
             </div>
 
-            <div class="rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-5 shadow-[0_18px_45px_rgba(0,0,0,0.2)]">
-                <p class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Needs Review') }}</p>
+            <div class="min-w-0 rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-4 shadow-[0_18px_45px_rgba(0,0,0,0.2)] sm:p-5">
+                <p class="truncate text-[0.65rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Needs Review') }}</p>
                 <p class="mt-3 font-display text-3xl text-boss-gold-light">{{ number_format($summary['leads']) }}</p>
                 <p class="mt-1 text-xs text-boss-ivory/[0.32]">{{ __('Member-submitted leads') }}</p>
             </div>
 
-            <div class="rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-5 shadow-[0_18px_45px_rgba(0,0,0,0.2)]">
-                <p class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Joined') }}</p>
+            <div class="min-w-0 rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-4 shadow-[0_18px_45px_rgba(0,0,0,0.2)] sm:p-5">
+                <p class="truncate text-[0.65rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Joined') }}</p>
                 <p class="mt-3 font-display text-3xl text-boss-gold-light">{{ number_format($summary['joined']) }}</p>
                 <p class="mt-1 text-xs text-boss-ivory/[0.32]">{{ __('Approved referred models') }}</p>
             </div>
 
-            <div class="rounded-2xl border border-boss-gold/15 bg-boss-gold/[0.07] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.2)]">
-                <p class="text-[0.65rem] uppercase tracking-[0.18em] text-boss-gold/70">{{ __('Rewards Due') }}</p>
+            <div class="col-span-2 min-w-0 rounded-2xl border border-boss-gold/15 bg-boss-gold/[0.07] p-4 shadow-[0_18px_45px_rgba(0,0,0,0.2)] sm:p-5 xl:col-span-1">
+                <p class="truncate text-[0.65rem] uppercase tracking-[0.18em] text-boss-gold/70">{{ __('Rewards Due') }}</p>
                 <p class="mt-3 font-display text-3xl text-boss-gold-light">{{ number_format($summary['eligible_rewards']) }}</p>
                 <p class="mt-1 text-xs text-boss-ivory/[0.38]">{{ number_format($summary['paid_rewards']) }} {{ __('paid rewards') }}</p>
             </div>
@@ -60,9 +60,9 @@
                     </p>
                 </div>
 
-                <form method="GET" action="{{ route('admin.referrals.index') }}" class="flex w-full flex-col gap-3 lg:max-w-3xl">
-                    <div class="flex flex-col gap-3 sm:flex-row">
-                        <div class="relative flex-1">
+                <form method="GET" action="{{ route('admin.referrals.index') }}" class="w-full lg:max-w-3xl">
+                    <div class="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-3">
+                        <div class="relative col-span-2 min-w-0 sm:flex-1">
                             <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-boss-ivory/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35M10.75 18.5a7.75 7.75 0 1 1 0-15.5 7.75 7.75 0 0 1 0 15.5Z" />
                             </svg>
@@ -72,30 +72,30 @@
                                 name="search"
                                 type="search"
                                 value="{{ $search }}"
-                                class="pd-input h-12 pl-10"
+                                class="pd-input h-11 w-full pl-10 sm:h-12"
                                 placeholder="{{ __('Search models or referral code') }}"
                             >
                         </div>
 
-                        <div>
+                        <div class="min-w-0">
                             <label for="referrals-per-page" class="sr-only">{{ __('Rows per page') }}</label>
-                            <select id="referrals-per-page" name="per_page" class="pd-input h-12 w-auto min-w-28" onchange="this.form.submit()">
+                            <select id="referrals-per-page" name="per_page" class="pd-input h-11 w-full min-w-0 text-center text-[0.72rem] sm:h-12 sm:w-auto sm:min-w-28 sm:text-left" onchange="this.form.submit()">
                                 @foreach ([10, 20, 50] as $size)
                                     <option value="{{ $size }}" @selected($perPage === $size)>{{ $size }} {{ __('rows') }}</option>
                                 @endforeach
                             </select>
                         </div>
 
-                        <button type="submit" class="pd-btn-secondary h-12 whitespace-nowrap">{{ __('Search') }}</button>
+                        <button type="submit" class="pd-btn-secondary h-11 w-full justify-center whitespace-nowrap text-[0.72rem] sm:h-12 sm:w-auto sm:text-[0.75rem]">{{ __('Search') }}</button>
 
                         @if ($search !== '' || $onlyWithReferrals)
-                            <a href="{{ route('admin.referrals.index', ['per_page' => $perPage]) }}" class="pd-btn-secondary h-12 whitespace-nowrap">{{ __('Clear') }}</a>
+                            <a href="{{ route('admin.referrals.index', ['per_page' => $perPage]) }}" class="pd-btn-secondary col-span-2 h-11 w-full justify-center whitespace-nowrap text-[0.72rem] sm:h-12 sm:w-auto sm:text-[0.75rem]">{{ __('Clear') }}</a>
                         @endif
                     </div>
 
-                    <label for="with-referrals" class="flex w-fit items-center gap-2 text-xs text-boss-ivory/[0.42]">
+                    <label for="with-referrals" class="mt-3 flex min-w-0 items-start gap-2 rounded-xl border border-white/[0.05] bg-white/[0.025] px-3 py-2 text-xs text-boss-ivory/[0.42] sm:w-fit sm:border-transparent sm:bg-transparent sm:px-0 sm:py-0">
                         <input id="with-referrals" type="checkbox" name="with_referrals" value="1" class="rounded border-white/15 bg-white/5 text-boss-gold focus:ring-boss-gold" @checked($onlyWithReferrals)>
-                        <span>{{ __('Only show models with referrals') }}</span>
+                        <span class="min-w-0 leading-5">{{ __('Only show models with referrals') }}</span>
                     </label>
                 </form>
             </div>
@@ -285,4 +285,3 @@
         </section>
     </div>
 </x-admin-layout>
-
