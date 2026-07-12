@@ -1,5 +1,5 @@
 ﻿<x-admin-layout>
-    <div class="mx-auto max-w-6xl space-y-8 text-boss-ivory">
+    <div class="mx-auto w-full min-w-0 max-w-6xl space-y-8 text-boss-ivory">
         @if (session('status'))
             <div class="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm text-green-200">{{ session('status') }}</div>
         @endif
@@ -24,16 +24,16 @@
             @endforeach
         </section>
 
-        <section class="grid gap-6 lg:grid-cols-2">
-            <div class="pd-panel-strong p-6">
-                <div class="mb-5 flex items-center justify-between">
-                    <p class="text-[0.7rem] uppercase tracking-[0.16em] text-boss-ivory/35">{{ __('Recent Applications') }}</p>
-                    <a href="{{ route('admin.applications.index') }}" class="text-[0.72rem] text-boss-gold hover:text-boss-gold-light">{{ __('Review') }} -></a>
+        <section class="grid min-w-0 gap-6 lg:grid-cols-2">
+            <div class="pd-panel-strong min-w-0 p-4 sm:p-6">
+                <div class="mb-5 flex min-w-0 items-center justify-between gap-3">
+                    <p class="min-w-0 truncate text-[0.7rem] uppercase tracking-[0.16em] text-boss-ivory/35">{{ __('Recent Applications') }}</p>
+                    <a href="{{ route('admin.applications.index') }}" class="shrink-0 text-[0.72rem] text-boss-gold hover:text-boss-gold-light">{{ __('Review') }} -></a>
                 </div>
 
                 <div class="space-y-3">
                     @forelse ($recentApplications as $application)
-                        <div class="flex items-center gap-3 rounded-sm border border-white/[0.05] bg-white/[0.025] p-3">
+                        <div class="flex min-w-0 flex-wrap items-center gap-3 rounded-sm border border-white/[0.05] bg-white/[0.025] p-3">
                             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-boss-gold/20 bg-boss-gold/10 font-display text-[0.72rem] text-boss-gold">
                                 {{ strtoupper(substr($application->name, 0, 1)) }}
                             </div>
@@ -41,7 +41,7 @@
                                 <p class="truncate text-[0.84rem] text-boss-ivory">{{ $application->name }}</p>
                                 <p class="truncate text-[0.68rem] text-boss-ivory/30">{{ $application->email }}</p>
                             </div>
-                            <span class="rounded-full px-2 py-0.5 text-[0.62rem] capitalize {{ $application->status === \App\Models\ModelApplication::STATUS_PENDING ? 'bg-boss-gold/10 text-boss-gold' : ($application->status === \App\Models\ModelApplication::STATUS_APPROVED ? 'bg-green-400/10 text-green-300' : 'bg-red-400/10 text-red-300') }}">
+                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[0.62rem] capitalize {{ $application->status === \App\Models\ModelApplication::STATUS_PENDING ? 'bg-boss-gold/10 text-boss-gold' : ($application->status === \App\Models\ModelApplication::STATUS_APPROVED ? 'bg-green-400/10 text-green-300' : 'bg-red-400/10 text-red-300') }}">
                                 {{ __($application->status) }}
                             </span>
                         </div>
@@ -51,22 +51,22 @@
                 </div>
             </div>
 
-            <div class="pd-panel-strong p-6">
-                <div class="mb-5 flex items-center justify-between">
-                    <p class="text-[0.7rem] uppercase tracking-[0.16em] text-boss-ivory/35">{{ __('Recent Courses') }}</p>
-                    <a href="{{ route('admin.courses.create') }}" class="text-[0.72rem] text-boss-gold hover:text-boss-gold-light">{{ __('New Course') }} -></a>
+            <div class="pd-panel-strong min-w-0 p-4 sm:p-6">
+                <div class="mb-5 flex min-w-0 items-center justify-between gap-3">
+                    <p class="min-w-0 truncate text-[0.7rem] uppercase tracking-[0.16em] text-boss-ivory/35">{{ __('Recent Courses') }}</p>
+                    <a href="{{ route('admin.courses.create') }}" class="shrink-0 text-[0.72rem] text-boss-gold hover:text-boss-gold-light">{{ __('New Course') }} -></a>
                 </div>
 
                 <div class="space-y-4">
                     @forelse ($recentCourses as $course)
-                        <a href="{{ route('admin.courses.edit', $course) }}" class="group block rounded-sm border border-white/[0.05] bg-white/[0.025] p-4 transition-colors hover:border-boss-gold/20">
-                            <div class="mb-2 flex items-center gap-2">
-                                <span class="pd-badge">{{ $course->platform_label ?: __('General') }}</span>
-                                <span class="text-[0.65rem] text-boss-ivory/28">{{ trans_choice(':count lesson|:count lessons', $course->lessons_count, ['count' => $course->lessons_count]) }}</span>
+                        <a href="{{ route('admin.courses.edit', $course) }}" class="group block min-w-0 max-w-full rounded-sm border border-white/[0.05] bg-white/[0.025] p-3 transition-colors hover:border-boss-gold/20 sm:p-4">
+                            <div class="mb-2 flex min-w-0 flex-wrap items-center gap-2">
+                                <span class="pd-badge max-w-full truncate">{{ $course->platform_label ?: __('General') }}</span>
+                                <span class="shrink-0 text-[0.65rem] text-boss-ivory/28">{{ trans_choice(':count lesson|:count lessons', $course->lessons_count, ['count' => $course->lessons_count]) }}</span>
                             </div>
-                            <div class="flex items-center justify-between gap-4">
-                                <p class="truncate text-[0.88rem] text-boss-ivory group-hover:text-boss-gold-light">{{ $course->title }}</p>
-                                <span class="text-[0.62rem] uppercase tracking-[0.1em] {{ $course->is_published ? 'text-green-300/80' : 'text-boss-ivory/25' }}">
+                            <div class="flex min-w-0 items-center justify-between gap-3">
+                                <p class="min-w-0 flex-1 truncate text-[0.88rem] text-boss-ivory group-hover:text-boss-gold-light">{{ $course->title }}</p>
+                                <span class="shrink-0 text-[0.62rem] uppercase tracking-[0.1em] {{ $course->is_published ? 'text-green-300/80' : 'text-boss-ivory/25' }}">
                                     {{ $course->is_published ? __('Live') : __('Draft') }}
                                 </span>
                             </div>
@@ -79,4 +79,3 @@
         </section>
     </div>
 </x-admin-layout>
-
