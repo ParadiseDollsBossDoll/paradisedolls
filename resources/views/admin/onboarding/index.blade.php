@@ -984,31 +984,22 @@
                 <p class="pd-kicker">{{ __('Onboarding') }}</p>
                 <h1 class="pd-heading mt-2 text-[clamp(2rem,4vw,2.6rem)]">{{ __('Model Onboarding') }}</h1>
             </div>
-            <div class="flex flex-wrap gap-2">
-                <form method="GET" action="{{ route('admin.onboarding.index') }}">
-                    <input type="hidden" name="search" value="{{ $search }}">
-                    <input type="hidden" name="sort" value="{{ $sort }}">
-                    <input type="hidden" name="direction" value="{{ $direction }}">
-                    <label for="onboarding-per-page" class="sr-only">{{ __('Rows per page') }}</label>
-                    <select id="onboarding-per-page" name="per_page" class="pd-input h-11 w-auto min-w-28" onchange="this.form.submit()">
-                        @foreach ([10, 20, 50] as $size)
-                            <option value="{{ $size }}" @selected($perPage === $size)>{{ $size }} {{ __('rows') }}</option>
-                        @endforeach
-                    </select>
-                </form>
-                <button type="button" class="pd-btn-primary h-11 w-fit gap-2" @click="formOpen = true">
+            <div class="grid w-full grid-cols-2 gap-2 sm:w-auto sm:min-w-[420px]">
+                <button type="button" class="pd-btn-primary h-11 w-full justify-center gap-2 px-3 text-[0.68rem] sm:px-4 sm:text-[0.72rem]" @click="formOpen = true">
                     <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7">
                         <path d="M3 3h10v10H3z"/>
                         <path d="M5.5 6h5M5.5 8.5h3"/>
                     </svg>
-                    {{ __('Edit Onboarding Form') }}
+                    <span class="sm:hidden">{{ __('Edit Form') }}</span>
+                    <span class="hidden sm:inline">{{ __('Edit Onboarding Form') }}</span>
                 </button>
-                <a href="{{ route('admin.onboarding.export') }}" class="pd-btn-secondary h-11 w-fit gap-2">
+                <a href="{{ route('admin.onboarding.export') }}" class="pd-btn-secondary h-11 w-full justify-center gap-2 px-3 text-[0.68rem] sm:px-4 sm:text-[0.72rem]">
                     <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7">
                         <path d="M8 2v8m0 0 3-3m-3 3L5 7"/>
                         <path d="M3 12.5h10"/>
                     </svg>
-                    {{ __('Download CRM Excel') }}
+                    <span class="sm:hidden">{{ __('Download Excel') }}</span>
+                    <span class="hidden sm:inline">{{ __('Download CRM Excel') }}</span>
                 </a>
             </div>
         </header>
@@ -1027,26 +1018,38 @@
         @endif
 
         {{-- ── Stats ─────────────────────────────────────────────── --}}
-        <section class="grid grid-cols-2 gap-3 xl:grid-cols-6">
+        <section class="grid gap-4 xl:grid-cols-3">
             @foreach ([
-                [__('Members'), $stats['members']],
-                [__('Info Forms'), $stats['information_submitted']],
-                [__('Verification Review'), $stats['verification_submitted']],
-                [__('Verified'), $stats['verified']],
-                [__('Discord Invites'), $stats['community_invited']],
-                [__('Discord Roles'), $stats['role_assigned']],
-            ] as $stat)
-                <div class="pd-stat">
-                    <p class="font-display text-[2rem] leading-none text-boss-gold">{{ $stat[1] }}</p>
-                    <p class="mt-3 text-[0.68rem] uppercase tracking-[0.08em] text-boss-ivory/50">{{ $stat[0] }}</p>
+                __('Applications') => [
+                    [__('Members'), $stats['members']],
+                    [__('Info Forms'), $stats['information_submitted']],
+                ],
+                __('Verification') => [
+                    [__('Verification Review'), $stats['verification_submitted']],
+                    [__('Verified'), $stats['verified']],
+                ],
+                __('Discord') => [
+                    [__('Discord Invites'), $stats['community_invited']],
+                    [__('Discord Roles'), $stats['role_assigned']],
+                ],
+            ] as $groupLabel => $groupStats)
+                <div class="space-y-2">
+                    <p class="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-boss-ivory/38">{{ $groupLabel }}</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        @foreach ($groupStats as $stat)
+                            <div class="pd-stat min-w-0">
+                                <p class="font-display text-[2rem] leading-none text-boss-gold">{{ $stat[1] }}</p>
+                                <p class="mt-3 text-[0.68rem] uppercase tracking-[0.08em] text-boss-ivory/50">{{ $stat[0] }}</p>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             @endforeach
         </section>
 
         {{-- Search and sorting --}}
         <form method="GET" action="{{ route('admin.onboarding.index') }}" class="rounded-2xl border border-white/[0.06] bg-boss-panel-strong p-4">
-            <input type="hidden" name="per_page" value="{{ $perPage }}">
-            <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_13rem_10rem_auto] lg:items-end">
+            <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_7rem_13rem_10rem_auto] lg:items-end">
                 <div>
                     <label for="onboarding-search" class="pd-label">{{ __('Search members') }}</label>
                     <div class="relative mt-2">
@@ -1065,26 +1068,37 @@
                     </div>
                 </div>
 
-                <div>
-                    <label for="onboarding-sort" class="pd-label">{{ __('Sort by') }}</label>
-                    <select id="onboarding-sort" name="sort" class="pd-input mt-2 h-12">
-                        <option value="name" @selected($sort === 'name')>{{ __('Name') }}</option>
-                        <option value="application_date" @selected($sort === 'application_date')>{{ __('Date of application') }}</option>
+                <div class="order-first w-28 justify-self-end lg:order-none lg:w-full lg:justify-self-auto">
+                    <label for="onboarding-per-page" class="sr-only">{{ __('Rows per page') }}</label>
+                    <select id="onboarding-per-page" name="per_page" class="pd-input h-10 text-[0.7rem] lg:h-12" onchange="this.form.submit()">
+                        @foreach ([10, 20, 50] as $size)
+                            <option value="{{ $size }}" @selected($perPage === $size)>{{ $size }} {{ __('rows') }}</option>
+                        @endforeach
                     </select>
                 </div>
 
-                <div>
-                    <label for="onboarding-direction" class="pd-label">{{ __('Order') }}</label>
-                    <select id="onboarding-direction" name="direction" class="pd-input mt-2 h-12">
-                        <option value="asc" @selected($direction === 'asc')>{{ __('Ascending') }}</option>
-                        <option value="desc" @selected($direction === 'desc')>{{ __('Descending') }}</option>
-                    </select>
+                <div class="grid grid-cols-2 gap-3 lg:contents">
+                    <div>
+                        <label for="onboarding-sort" class="pd-label">{{ __('Sort by') }}</label>
+                        <select id="onboarding-sort" name="sort" class="pd-input mt-2 h-12">
+                            <option value="name" @selected($sort === 'name')>{{ __('Name') }}</option>
+                            <option value="application_date" @selected($sort === 'application_date')>{{ __('Date of application') }}</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="onboarding-direction" class="pd-label">{{ __('Order') }}</label>
+                        <select id="onboarding-direction" name="direction" class="pd-input mt-2 h-12">
+                            <option value="asc" @selected($direction === 'asc')>{{ __('Ascending') }}</option>
+                            <option value="desc" @selected($direction === 'desc')>{{ __('Descending') }}</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
-                    <button type="submit" class="pd-btn-primary h-12 px-5">{{ __('Apply') }}</button>
+                <div class="grid grid-cols-2 gap-2 lg:flex lg:flex-wrap">
+                    <button type="submit" class="pd-btn-primary h-12 justify-center px-5">{{ __('Apply') }}</button>
                     @if ($search !== '' || $sort !== 'name' || $direction !== 'asc')
-                        <a href="{{ route('admin.onboarding.index', ['per_page' => $perPage]) }}" class="pd-btn-secondary h-12 px-5">{{ __('Clear') }}</a>
+                        <a href="{{ route('admin.onboarding.index', ['per_page' => $perPage]) }}" class="pd-btn-secondary h-12 justify-center px-5">{{ __('Clear') }}</a>
                     @endif
                 </div>
             </div>
