@@ -164,6 +164,55 @@ class ProfileTest extends TestCase
         Storage::disk('public')->assertMissing($photoPath);
     }
 
+    public function test_profile_photo_can_be_uploaded_and_removed_from_dedicated_photo_form(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+
+        $this
+            ->actingAs($user)
+            ->post(route('profile.photo.update'), [
+                'profile_photo' => $this->fakePngUpload(),
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $photoPath = $user->refresh()->profile_photo_path;
+
+        $this->assertNotNull($photoPath);
+        Storage::disk('public')->assertExists($photoPath);
+
+        $this
+            ->actingAs($user)
+            ->post(route('profile.photo.update'), [
+                'remove_profile_photo' => '1',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $this->assertNull($user->refresh()->profile_photo_path);
+        Storage::disk('public')->assertMissing($photoPath);
+    }
+
+    public function test_profile_photo_form_rejects_non_images(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+
+        $this
+            ->actingAs($user)
+            ->post(route('profile.photo.update'), [
+                'profile_photo' => UploadedFile::fake()->create('avatar.txt', 1, 'text/plain'),
+            ])
+            ->assertSessionHasErrors('profile_photo')
+            ->assertRedirect();
+
+        $this->assertNull($user->refresh()->profile_photo_path);
+        Storage::disk('public')->assertMissing('profile-photos/avatar.txt');
+    }
+
     public function test_profile_photo_can_be_uploaded_when_existing_email_has_uppercase_letters(): void
     {
         Storage::fake('public');

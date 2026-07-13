@@ -312,6 +312,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])
+        ->middleware('throttle:profile-updates')
+        ->name('profile.photo.update');
     Route::patch('/profile', [ProfileController::class, 'update'])
         ->middleware('throttle:profile-updates')
         ->name('profile.update');

@@ -95,6 +95,51 @@ class ProfileController extends Controller
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
+    public function updatePhoto(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'remove_profile_photo' => ['nullable', 'boolean'],
+            'profile_photo' => [
+                $request->boolean('remove_profile_photo') ? 'nullable' : 'required',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:4096',
+            ],
+        ]);
+
+        $user = $request->user();
+        $previousPhotoPath = $user->profile_photo_path;
+
+        if ($request->boolean('remove_profile_photo')) {
+            $user->forceFill(['profile_photo_path' => null])->save();
+            $this->deleteProfilePhoto($previousPhotoPath);
+            CommunityPresence::forgetMemberDirectory();
+
+            return Redirect::route('profile.edit')->with('status', 'profile-photo-removed');
+        }
+
+        $newPhotoPath = $request->file('profile_photo')->store('profile-photos', 'public');
+
+        if (! is_string($newPhotoPath) || ! Storage::disk('public')->exists($newPhotoPath)) {
+            throw ValidationException::withMessages([
+                'profile_photo' => __('The photo could not be saved. Please try again.'),
+            ]);
+        }
+
+        try {
+            $user->forceFill(['profile_photo_path' => $newPhotoPath])->save();
+        } catch (Throwable $exception) {
+            $this->deleteProfilePhoto($newPhotoPath);
+
+            throw $exception;
+        }
+
+        $this->deleteProfilePhoto($previousPhotoPath);
+        CommunityPresence::forgetMemberDirectory();
+
+        return Redirect::route('profile.edit')->with('status', 'profile-photo-updated');
+    }
+
     /**
      * Delete the user's account.
      */

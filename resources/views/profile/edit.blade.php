@@ -28,21 +28,46 @@
             previewUrl: @js($profilePhotoUrl),
             selected: false,
             fileName: '',
+            error: '',
             saving: false,
+            maxBytes: 4096 * 1024,
+            allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
             setPhoto(event) {
                 const file = event.target.files?.[0];
-                if (!file) return;
+                this.error = '';
+
+                if (!file) {
+                    this.clearPickedFile();
+                    return;
+                }
+
+                if (!this.allowedTypes.includes(file.type)) {
+                    this.clearPickedFile();
+                    this.error = @js(__('Please upload a JPG, PNG, or WEBP image.'));
+                    return;
+                }
+
+                if (file.size > this.maxBytes) {
+                    this.clearPickedFile();
+                    this.error = @js(__('This photo is too large. Please choose an image under 4 MB.'));
+                    return;
+                }
+
                 if (this.previewUrl && this.selected) URL.revokeObjectURL(this.previewUrl);
                 this.previewUrl = URL.createObjectURL(file);
                 this.fileName   = file.name;
                 this.selected   = true;
             },
-            resetSelection() {
+            clearPickedFile() {
                 if (this.previewUrl && this.selected) URL.revokeObjectURL(this.previewUrl);
                 this.previewUrl = @js($profilePhotoUrl);
                 this.fileName   = '';
                 this.selected   = false;
-                this.$refs.photoInput.value = '';
+                if (this.$refs.photoInput) this.$refs.photoInput.value = '';
+            },
+            resetSelection() {
+                this.error = '';
+                this.clearPickedFile();
             },
         }"
         class="relative overflow-hidden rounded-2xl border border-white/[0.07] pd-profile-card-bg"
@@ -51,20 +76,15 @@
 
         <form
             method="POST"
-            action="{{ route('profile.update') }}"
+            action="{{ route('profile.photo.update') }}"
             enctype="multipart/form-data"
             @submit="saving = true"
             class="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:gap-6 sm:p-6 lg:p-7"
         >
             @csrf
-            @method('PATCH')
-            <input type="hidden" name="name"  value="{{ old('name',  $user->name) }}">
-            <input type="hidden" name="email" value="{{ old('email', $user->email) }}">
-            <input type="file" name="profile_photo" accept="image/jpeg,image/png,image/webp"
-                   class="sr-only" x-ref="photoInput" @change="setPhoto($event)">
 
             {{-- Avatar --}}
-            <button type="button" @click="$refs.photoInput.click()"
+            <label for="profile-photo-input"
                 class="group relative mx-auto h-[84px] w-[84px] shrink-0 cursor-pointer rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-boss-gold sm:mx-0"
                 :title="previewUrl ? '{{ __('Change photo') }}' : '{{ __('Upload photo') }}'">
                 <div class="absolute inset-0 rounded-2xl p-[2px]"
@@ -82,7 +102,7 @@
                     <span class="text-[0.55rem] font-semibold uppercase tracking-widest text-white/80">{{ __('Edit') }}</span>
                 </div>
                 <span class="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-[#171016] bg-emerald-400"></span>
-            </button>
+            </label>
 
             {{-- Info --}}
             <div class="min-w-0 flex-1 text-center sm:text-left">
@@ -96,35 +116,56 @@
 
             {{-- Photo actions --}}
             <div class="flex flex-wrap items-center justify-center gap-2 sm:flex-col sm:flex-nowrap sm:items-end sm:justify-start">
-                <button type="button" @click="$refs.photoInput.click()"
-                    class="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.09] bg-white/[0.04] px-3.5 py-2 text-[0.72rem] text-boss-ivory/55 transition-all hover:border-[rgba(238,180,195,0.28)] hover:bg-[rgba(238,180,195,0.08)] hover:text-boss-gold">
+                <label for="profile-photo-input"
+                    class="relative inline-flex cursor-pointer items-center gap-1.5 overflow-hidden rounded-lg border border-white/[0.09] bg-white/[0.04] px-3.5 py-2 text-[0.72rem] text-boss-ivory/55 transition-all hover:border-[rgba(238,180,195,0.28)] hover:bg-[rgba(238,180,195,0.08)] hover:text-boss-gold">
+                    <input
+                        id="profile-photo-input"
+                        type="file"
+                        name="profile_photo"
+                        accept="image/jpeg,image/png,image/webp"
+                        class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        x-ref="photoInput"
+                        @change="setPhoto($event)"
+                    >
                     <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[1.5]">
                         <path d="M8 2v8M5 5l3-3 3 3"/><path d="M3 11v1a2 2 0 002 2h6a2 2 0 002-2v-1"/>
                     </svg>
                     <span x-text="previewUrl ? '{{ __('Change Photo') }}' : '{{ __('Upload Photo') }}'"></span>
-                </button>
+                </label>
                 <button type="submit" x-show="selected" x-cloak :disabled="saving"
                     class="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(238,180,195,0.33)] bg-[rgba(238,180,195,0.11)] px-3.5 py-2 text-[0.72rem] text-boss-gold transition-all hover:bg-[rgba(238,180,195,0.18)] disabled:opacity-50">
                     <svg x-show="saving" class="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
                         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="32" stroke-dashoffset="12"/>
                     </svg>
-                    <span x-text="saving ? '{{ __('Saving…') }}' : '{{ __('Save Photo') }}'"></span>
+                    <span x-text="saving ? '{{ __('Saving...') }}' : '{{ __('Save Photo') }}'"></span>
                 </button>
                 <button type="button" x-show="selected" x-cloak @click="resetSelection()"
                     class="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.07] bg-white/[0.03] px-3.5 py-2 text-[0.72rem] text-boss-ivory/38 transition-all hover:text-boss-ivory">
                     {{ __('Cancel') }}
                 </button>
-                @if ($profilePhotoUrl)
+                @if ($profilePhotoUrl || filled($user->profile_photo_path))
                     <button type="submit" name="remove_profile_photo" value="1"
                         class="inline-flex items-center gap-1.5 rounded-lg border border-red-400/13 bg-red-400/[0.04] px-3.5 py-2 text-[0.72rem] text-red-300/45 transition-all hover:border-red-400/22 hover:bg-red-400/[0.07] hover:text-red-200">
                         {{ __('Remove Photo') }}
                     </button>
                 @endif
                 <p class="w-full text-center text-[0.61rem] text-boss-ivory/22 sm:text-right">
-                    <span x-show="!selected">{{ __('JPG, PNG, WEBP · 4 MB max') }}</span>
+                    <span x-show="!selected">{{ __('JPG, PNG, WEBP - 4 MB max') }}</span>
                     <span x-show="selected" x-cloak x-text="fileName" class="text-[rgba(238,180,195,0.45)]"></span>
                 </p>
+                <p x-show="selected" x-cloak class="w-full text-center text-[0.62rem] font-medium text-boss-gold/75 sm:text-right">
+                    {{ __('Tap Save Photo to finish.') }}
+                </p>
+                <p x-show="error" x-cloak x-text="error" class="w-full text-center text-[0.68rem] text-red-300 sm:text-right"></p>
+                <p x-show="error" x-cloak class="w-full text-center text-[0.61rem] text-boss-ivory/35 sm:text-right">
+                    {{ __('If the photo picker or upload fails, please try Safari on iPhone or Chrome on Android.') }}
+                </p>
                 <x-input-error :messages="$errors->get('profile_photo')" />
+                @if ($errors->has('profile_photo'))
+                    <p class="w-full text-center text-[0.61rem] text-boss-ivory/35 sm:text-right">
+                        {{ __('If the photo picker or upload fails, please try Safari on iPhone or Chrome on Android.') }}
+                    </p>
+                @endif
             </div>
         </form>
     </section>
