@@ -387,6 +387,19 @@ body {
         background: rgba(238, 180, 195, 0.07);
     }
 
+    /* Native calendar and clock controls used by email campaign scheduling. */
+    .pd-campaign-datetime-input {
+        min-height: 2.85rem;
+        padding-inline: 0.85rem;
+        color-scheme: dark;
+        cursor: pointer;
+    }
+
+    .pd-campaign-datetime-input::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        opacity: 0.82;
+    }
+
     .pd-input-light {
         width: 100%;
         border: 1px solid rgba(238, 180, 195, 0.7);
@@ -479,6 +492,68 @@ body {
         border: 1px solid rgba(238, 180, 195, 0.28);
         background: rgba(238, 180, 195, 0.1);
         color: var(--pd-primary);
+    }
+
+    .pd-campaign-status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 0.3rem 0.65rem;
+        font-size: 0.66rem;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .pd-campaign-status-active {
+        background: rgba(74, 222, 128, 0.12);
+        color: #86efac;
+    }
+
+    .pd-campaign-status-scheduled {
+        background: rgba(96, 165, 250, 0.12);
+        color: #bfdbfe;
+    }
+
+    .pd-campaign-status-paused {
+        background: rgba(251, 191, 36, 0.12);
+        color: #fde68a;
+    }
+
+    .pd-campaign-status-completed {
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 248, 246, 0.58);
+    }
+
+    .pd-campaign-status-draft {
+        background: var(--pd-primary-soft);
+        color: var(--pd-primary);
+    }
+
+    html.light-mode .pd-campaign-status-active {
+        background: #e8f7ed;
+        color: #237a43;
+    }
+
+    html.light-mode .pd-campaign-status-scheduled {
+        background: #fff3dc;
+        color: #966214;
+    }
+
+    html.light-mode .pd-campaign-status-paused {
+        background: #fff0d6;
+        color: #8a5a12;
+    }
+
+    html.light-mode .pd-campaign-status-completed {
+        background: #f3eef0;
+        color: #6f5b63;
+    }
+
+    html.light-mode .pd-campaign-status-draft {
+        background: rgba(238, 180, 195, 0.22);
+        color: #9b4768;
     }
 
     /* Pagination */
@@ -1406,6 +1481,7 @@ html.light-mode .pd-input:focus {
     box-shadow: 0 0 0 3px rgba(238,180,195,0.2);
     background: #FFFFFF;
 }
+html.light-mode .pd-campaign-datetime-input { color-scheme: light; }
 html.light-mode .pd-input option,
 html.light-mode .pd-input optgroup         { background: #FFFFFF; color: #1A0E14; }
 html.light-mode .pd-label                  { color: rgba(26,14,20,0.55); }

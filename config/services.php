@@ -67,4 +67,8 @@ return [
         'measurement_id' => env('GOOGLE_ANALYTICS_ID'),
     ],
 
+    'email_campaigns' => [
+        'timezone' => env('EMAIL_CAMPAIGN_TIMEZONE', 'Europe/London'),
+    ],
+
 ];

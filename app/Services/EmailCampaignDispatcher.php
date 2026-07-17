@@ -75,7 +75,7 @@ class EmailCampaignDispatcher
                     ? EmailCampaign::STATUS_ACTIVE
                     : EmailCampaign::STATUS_COMPLETED,
                 'next_send_at' => $lockedCampaign->repeats()
-                    ? now()->addDays($lockedCampaign->repeat_every_days)
+                    ? $this->nextRepeatAt($lockedCampaign)
                     : null,
                 'last_sent_at' => now(),
                 'total_runs' => $lockedCampaign->total_runs + 1,
@@ -89,6 +89,18 @@ class EmailCampaignDispatcher
         }
 
         return $run;
+    }
+
+    private function nextRepeatAt(EmailCampaign $campaign): \Carbon\CarbonInterface
+    {
+        $nextSendAt = $campaign->nextSendAtForAdmin();
+        $now = now(EmailCampaign::schedulingTimezone());
+
+        do {
+            $nextSendAt = $nextSendAt->addDays($campaign->repeat_every_days);
+        } while ($nextSendAt->lte($now));
+
+        return $nextSendAt->utc();
     }
 
     public function recipientQuery(EmailCampaign $campaign): Builder

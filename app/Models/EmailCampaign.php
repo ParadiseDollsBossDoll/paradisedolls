@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -80,6 +81,18 @@ class EmailCampaign extends Model
         ];
     }
 
+    public static function repeatPresetOptions(): array
+    {
+        return [
+            'none' => __('Do not repeat'),
+            'daily' => __('Every day'),
+            'weekly' => __('Every week'),
+            'fortnightly' => __('Every 2 weeks'),
+            'monthly' => __('Every month'),
+            'custom' => __('Custom days'),
+        ];
+    }
+
     public function audienceLabel(): string
     {
         return self::audienceOptions()[$this->audience] ?? __('All models');
@@ -99,5 +112,44 @@ class EmailCampaign extends Model
     public function repeats(): bool
     {
         return $this->repeat_every_days !== null;
+    }
+
+    public function repeatPreset(): string
+    {
+        return match ($this->repeat_every_days) {
+            null => 'none',
+            1 => 'daily',
+            7 => 'weekly',
+            14 => 'fortnightly',
+            30 => 'monthly',
+            default => 'custom',
+        };
+    }
+
+    public function repeatLabel(): string
+    {
+        return match ($this->repeat_every_days) {
+            null => __('One-time send'),
+            1 => __('Repeats every day'),
+            7 => __('Repeats every week'),
+            14 => __('Repeats every 2 weeks'),
+            30 => __('Repeats every month'),
+            default => __('Repeats every :days days', ['days' => $this->repeat_every_days]),
+        };
+    }
+
+    public static function schedulingTimezone(): string
+    {
+        return (string) config('services.email_campaigns.timezone', 'Europe/London');
+    }
+
+    public function nextSendAtForAdmin(): ?CarbonInterface
+    {
+        return $this->next_send_at?->copy()->timezone(self::schedulingTimezone());
+    }
+
+    public function lastSentAtForAdmin(): ?CarbonInterface
+    {
+        return $this->last_sent_at?->copy()->timezone(self::schedulingTimezone());
     }
 }

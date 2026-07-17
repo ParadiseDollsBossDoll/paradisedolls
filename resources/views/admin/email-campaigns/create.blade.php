@@ -1,35 +1,101 @@
+@php
+    $selectedAudience = old('audience', $campaign->audience);
+    $selectedDeliveryMode = old('delivery_mode', 'draft');
+    $selectedRepeatPreset = old('repeat_preset', $campaign->repeatPreset());
+    $selectedScheduleDate = old('schedule_date');
+    $selectedScheduleTime = old('schedule_time');
+    $campaignTimezone = \App\Models\EmailCampaign::schedulingTimezone();
+@endphp
+
 <x-admin-layout>
-    <div class="mx-auto max-w-4xl space-y-6 text-boss-ivory">
-        <header class="flex items-center justify-between gap-4">
+    <div class="pd-email-campaigns mx-auto max-w-7xl space-y-6 text-boss-ivory">
+        <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
                 <p class="pd-kicker">{{ __('Email Campaigns') }}</p>
-                <h1 class="pd-heading mt-2 text-[clamp(1.8rem,4vw,2.5rem)]">{{ __('New Campaign') }}</h1>
+                <h1 class="pd-heading mt-2 text-[clamp(1.9rem,4vw,2.6rem)]">{{ __('New Campaign') }}</h1>
             </div>
-            <a href="{{ route('admin.email-campaigns.index') }}" class="pd-btn-secondary">{{ __('Back') }}</a>
+            <a href="{{ route('admin.email-campaigns.index') }}" class="pd-btn-secondary w-full shrink-0 sm:w-auto">{{ __('Back') }}</a>
         </header>
 
-        <form method="POST" action="{{ route('admin.email-campaigns.store') }}" class="pd-panel space-y-6 p-6">
-            @csrf
-            @include('admin.email-campaigns.partials.form')
+        @if ($errors->any())
+            <div class="rounded-lg border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">
+                {{ __('Please review the highlighted campaign fields.') }}
+            </div>
+        @endif
 
-            <div class="grid gap-5 border-t border-white/[0.06] pt-6 md:grid-cols-2">
-                <div>
-                    <x-input-label for="delivery_mode" :value="__('Delivery')" />
-                    <select id="delivery_mode" name="delivery_mode" class="pd-input mt-2" required>
-                        <option value="draft" @selected(old('delivery_mode') === 'draft')>{{ __('Save as draft') }}</option>
-                        <option value="send_now" @selected(old('delivery_mode') === 'send_now')>{{ __('Send now') }}</option>
-                        <option value="schedule" @selected(old('delivery_mode') === 'schedule')>{{ __('Schedule') }}</option>
-                    </select>
-                    <x-input-error class="mt-2" :messages="$errors->get('delivery_mode')" />
-                </div>
-                <div>
-                    <x-input-label for="scheduled_for" :value="__('Scheduled date and time')" />
-                    <x-text-input id="scheduled_for" name="scheduled_for" type="datetime-local" class="mt-2" :value="old('scheduled_for')" />
-                    <x-input-error class="mt-2" :messages="$errors->get('scheduled_for')" />
-                </div>
+        <form
+            method="POST"
+            action="{{ route('admin.email-campaigns.store') }}"
+            class="grid items-start gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]"
+            x-data="{
+                audience: @js($selectedAudience),
+                deliveryMode: @js($selectedDeliveryMode),
+                repeatPreset: @js($selectedRepeatPreset),
+                scheduleDate: @js($selectedScheduleDate),
+                scheduleTime: @js($selectedScheduleTime),
+                audienceCounts: @js($audienceCounts)
+            }"
+        >
+            @csrf
+
+            <div class="space-y-5">
+                @include('admin.email-campaigns.partials.form')
             </div>
 
-            <x-primary-button>{{ __('Create Campaign') }}</x-primary-button>
+            <aside class="space-y-5 xl:sticky xl:top-6">
+                @include('admin.email-campaigns.partials.schedule', [
+                    'includeDeliveryMode' => true,
+                    'defaultDeliveryMode' => 'draft',
+                    'useParentState' => true,
+                ])
+
+                <section class="rounded-lg border border-dashed border-boss-gold/25 bg-boss-gold/[0.035] p-5">
+                    <p class="pd-kicker">{{ __('Campaign Summary') }}</p>
+                    <dl class="mt-4 space-y-3 text-xs">
+                        <div class="flex items-start justify-between gap-4">
+                            <dt class="text-boss-ivory/40">{{ __('Recipients') }}</dt>
+                            <dd class="text-right font-medium text-boss-ivory/75" x-text="audience === 'onboarded_models' ? @js(__('Fully onboarded models')) : @js(__('All models'))"></dd>
+                        </div>
+                        <div class="flex items-start justify-between gap-4">
+                            <dt class="text-boss-ivory/40">{{ __('Estimated audience') }}</dt>
+                            <dd class="font-medium text-boss-ivory/75" x-text="Number(audienceCounts[audience] || 0).toLocaleString()"></dd>
+                        </div>
+                        <div class="flex items-start justify-between gap-4">
+                            <dt class="text-boss-ivory/40">{{ __('Delivery') }}</dt>
+                            <dd
+                                class="text-right font-medium text-boss-ivory/75"
+                                x-text="deliveryMode === 'send_now' ? @js(__('Send immediately')) : (deliveryMode === 'schedule' ? @js(__('Schedule for later')) : @js(__('Save as draft')))"
+                            ></dd>
+                        </div>
+                        <div class="flex items-start justify-between gap-4" x-show="deliveryMode === 'schedule'" x-cloak>
+                            <dt class="text-boss-ivory/40">{{ __('Scheduled') }}</dt>
+                            <dd
+                                class="text-right font-medium text-boss-ivory/75"
+                                x-text="scheduleDate ? scheduleDate + (scheduleTime ? ' at ' + scheduleTime : '') + @js(' UK time') : @js(__('Not selected'))"
+                            ></dd>
+                        </div>
+                        <div class="flex items-start justify-between gap-4">
+                            <dt class="text-boss-ivory/40">{{ __('Repeat') }}</dt>
+                            <dd
+                                class="text-right font-medium capitalize text-boss-ivory/75"
+                                x-text="repeatPreset === 'none' ? @js(__('One-time send')) : repeatPreset.replace('_', ' ')"
+                            ></dd>
+                        </div>
+                    </dl>
+                    <p class="mt-4 border-t border-white/[0.06] pt-3 text-[0.68rem] leading-relaxed text-boss-ivory/40">
+                        {{ __('Schedules use UK time (:timezone).', ['timezone' => $campaignTimezone]) }}
+                    </p>
+                </section>
+            </aside>
+
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <button type="submit" class="pd-btn-primary w-full sm:w-auto">
+                    <span
+                        x-text="deliveryMode === 'send_now' ? @js(__('Send Campaign')) : (deliveryMode === 'schedule' ? @js(__('Schedule Campaign')) : @js(__('Save as Draft')))"
+                    >{{ __('Save as Draft') }}</span>
+                </button>
+                <a href="{{ route('admin.email-campaigns.index') }}" class="pd-btn-secondary w-full sm:w-auto">{{ __('Cancel') }}</a>
+            </div>
         </form>
     </div>
 </x-admin-layout>
