@@ -32,10 +32,21 @@ class ChatterPayrollService
             ->startOfWeek(CarbonInterface::MONDAY)
             ->startOfDay();
 
-        return ChatterTimesheet::query()->firstOrCreate(
-            ['user_id' => $user->id, 'period_start' => $start->toDateString()],
-            ['period_end' => $start->addDays(6)->toDateString(), 'status' => ChatterTimesheet::STATUS_DRAFT]
-        );
+        $existing = ChatterTimesheet::query()
+            ->where('user_id', $user->id)
+            ->whereDate('period_start', $start->toDateString())
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        return ChatterTimesheet::query()->create([
+            'user_id' => $user->id,
+            'period_start' => $start->toDateString(),
+            'period_end' => $start->addDays(6)->toDateString(),
+            'status' => ChatterTimesheet::STATUS_DRAFT,
+        ]);
     }
 
     public function refresh(ChatterTimesheet $timesheet): ChatterTimesheet
@@ -75,7 +86,7 @@ class ChatterPayrollService
         }
     }
 
-    /** @return array{paid_minutes: int, break_minutes: int} */
+    /** @return array{worked_minutes: int, paid_minutes: int, break_minutes: int} */
     public function workedTotals(User $user, CarbonInterface $start, CarbonInterface $end): array
     {
         $startUtc = CarbonImmutable::instance($start)->utc()->startOfMinute();
@@ -108,9 +119,69 @@ class ChatterPayrollService
         }
 
         return [
+            'worked_minutes' => $paidMinutes,
             'paid_minutes' => $paidMinutes,
             'break_minutes' => $breakMinutes,
         ];
+    }
+
+    /** @return array{worked_minutes: int, paid_minutes: int, break_minutes: int} */
+    public function shiftWorkedTotals(ChatterShift $shift, CarbonInterface $start, CarbonInterface $end): array
+    {
+        $startUtc = CarbonImmutable::instance($start)->utc()->startOfMinute();
+        $endUtc = CarbonImmutable::instance($end)->utc()->startOfMinute();
+        $nowUtc = CarbonImmutable::now('UTC')->startOfMinute();
+        $shiftStart = CarbonImmutable::instance($shift->clocked_in_at)->utc()->startOfMinute()->max($startUtc);
+        $rawEnd = $shift->clocked_out_at
+            ? CarbonImmutable::instance($shift->clocked_out_at)->utc()->startOfMinute()
+            : $nowUtc;
+        $shiftEnd = $rawEnd->min($endUtc);
+
+        if ($shiftEnd->lessThanOrEqualTo($shiftStart)) {
+            return ['worked_minutes' => 0, 'paid_minutes' => 0, 'break_minutes' => 0];
+        }
+
+        $paidMinutes = 0;
+        $breakMinutes = 0;
+        $shift->loadMissing('breaks');
+
+        for ($cursor = $shiftStart; $cursor->lessThan($shiftEnd); $cursor = $cursor->addMinute()) {
+            if ($this->minuteIsBreak($cursor, $shift->breaks, $shiftEnd)) {
+                $breakMinutes++;
+            } else {
+                $paidMinutes++;
+            }
+        }
+
+        return [
+            'worked_minutes' => $paidMinutes,
+            'paid_minutes' => $paidMinutes,
+            'break_minutes' => $breakMinutes,
+        ];
+    }
+
+    public function shiftWorkedSeconds(ChatterShift $shift, ?CarbonInterface $until = null): int
+    {
+        $shift->loadMissing('breaks');
+        $start = CarbonImmutable::instance($shift->clocked_in_at)->utc();
+        $end = CarbonImmutable::instance($until ?: $shift->clocked_out_at ?: now('UTC'))->utc();
+
+        if ($end->lessThanOrEqualTo($start)) {
+            return 0;
+        }
+
+        $breakSeconds = 0;
+
+        foreach ($shift->breaks as $break) {
+            $breakStart = CarbonImmutable::instance($break->started_at)->utc()->max($start);
+            $breakEnd = CarbonImmutable::instance($break->ended_at ?: $end)->utc()->min($end);
+
+            if ($breakEnd->greaterThan($breakStart)) {
+                $breakSeconds += (int) $breakStart->diffInSeconds($breakEnd);
+            }
+        }
+
+        return max(0, (int) $start->diffInSeconds($end) - $breakSeconds);
     }
 
     /** @return array<string, mixed> */

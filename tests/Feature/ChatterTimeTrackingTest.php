@@ -83,6 +83,7 @@ class ChatterTimeTrackingTest extends TestCase
 
         $this->actingAs($chatter)->post(route('chatter.clock-in'))->assertSessionHasNoErrors();
         $this->actingAs($chatter)->post(route('chatter.clock-in'))->assertSessionHasErrors('shift');
+        $this->actingAs($chatter)->post(route('chatter.breaks.end'))->assertSessionHasErrors('shift');
 
         CarbonImmutable::setTestNow('2026-07-13 10:00:00 UTC');
         $this->actingAs($chatter)->post(route('chatter.breaks.start'))->assertSessionHasNoErrors();
@@ -98,6 +99,53 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertNotNull($break->ended_at);
         $this->assertNull($break->active_shift_id);
         $this->assertDatabaseHas('chatter_time_audits', ['action' => 'break_ended_on_clock_out']);
+
+        $this->actingAs($chatter)->post(route('chatter.clock-out'))->assertSessionHasErrors('shift');
+    }
+
+    public function test_dashboard_timer_and_totals_exclude_breaks_after_refresh_resume_and_clock_out(): void
+    {
+        $chatter = $this->chatter();
+        CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
+
+        $this->actingAs($chatter)->post(route('chatter.clock-in'))->assertSessionHasNoErrors();
+
+        CarbonImmutable::setTestNow('2026-07-13 08:30:00 UTC');
+        $this->actingAs($chatter)->post(route('chatter.breaks.start'))->assertSessionHasNoErrors();
+
+        CarbonImmutable::setTestNow('2026-07-13 09:30:00 UTC');
+        $this->actingAs($chatter)->get(route('chatter.dashboard'))
+            ->assertOk()
+            ->assertSee('Resume Work')
+            ->assertSee('Hours Worked')
+            ->assertSee('Today worked')
+            ->assertSee('This week worked')
+            ->assertSee('This month worked')
+            ->assertDontSee('Today paid')
+            ->assertDontSee('Week paid')
+            ->assertDontSee('Week breaks')
+            ->assertSee('baseWorkedSeconds: 1800', false)
+            ->assertSee('timerRunning: false', false);
+
+        $this->actingAs($chatter)->post(route('chatter.breaks.end'))->assertSessionHasNoErrors();
+
+        CarbonImmutable::setTestNow('2026-07-13 10:00:00 UTC');
+        $this->actingAs($chatter)->post(route('chatter.clock-out'))->assertSessionHasNoErrors();
+
+        $sheet = app(ChatterPayrollService::class)
+            ->refresh(app(ChatterPayrollService::class)->getOrCreate($chatter, CarbonImmutable::parse('2026-07-13', 'Europe/London')));
+
+        $this->assertSame(60, $sheet->ordinary_minutes);
+        $this->assertSame(60, $sheet->break_minutes);
+        $this->assertDatabaseHas('chatter_shifts', [
+            'user_id' => $chatter->id,
+            'clocked_in_at' => '2026-07-13 08:00:00',
+            'clocked_out_at' => '2026-07-13 10:00:00',
+        ]);
+        $this->assertDatabaseHas('chatter_breaks', [
+            'started_at' => '2026-07-13 08:30:00',
+            'ended_at' => '2026-07-13 09:30:00',
+        ]);
     }
 
     public function test_payroll_excludes_breaks_and_adds_overtime_without_floating_point_money(): void
@@ -118,10 +166,10 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertSame(30, $sheet->break_minutes);
         $this->assertSame(30, $sheet->overtime_minutes);
         $this->assertSame(3300, $sheet->gross_pay_pence);
-        $this->assertSame(
-            ['paid_minutes' => 150, 'break_minutes' => 30],
-            $payroll->workedTotals($chatter, CarbonImmutable::parse('2026-07-13 08:00:00 UTC'), CarbonImmutable::parse('2026-07-13 11:00:00 UTC')),
-        );
+        $totals = $payroll->workedTotals($chatter, CarbonImmutable::parse('2026-07-13 08:00:00 UTC'), CarbonImmutable::parse('2026-07-13 11:00:00 UTC'));
+        $this->assertSame(150, $totals['paid_minutes']);
+        $this->assertSame(150, $totals['worked_minutes']);
+        $this->assertSame(30, $totals['break_minutes']);
     }
 
     public function test_overlapping_night_weekend_and_overtime_use_highest_premium_plus_overtime(): void

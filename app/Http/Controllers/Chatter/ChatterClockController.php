@@ -34,6 +34,6 @@ class ChatterClockController extends Controller
     {
         $clock->endBreak($request->user());
 
-        return back()->with('status', __('Your break has ended.'));
+        return back()->with('status', __('Work resumed.'));
     }
 }
