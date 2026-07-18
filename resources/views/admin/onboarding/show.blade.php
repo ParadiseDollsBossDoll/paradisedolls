@@ -78,7 +78,7 @@
                         ['label' => 'Docs Submitted',     'done' => $profile->hasVerificationSubmission(), 'icon' => '📄'],
                         ['label' => 'Verified',           'done' => $profile->isVerified(),              'icon' => '✅'],
                         ['label' => 'Discord Invited',    'done' => $profile->isCommunityInvited(),      'icon' => '💬'],
-                        ['label' => 'Role Assigned',      'done' => $profile->isCommunityRoleAssigned(), 'icon' => '🎉'],
+                        ['label' => 'Fully Onboarded',    'done' => $profile->isFullyOnboarded(),        'icon' => '🎉'],
                     ];
                 @endphp
                 @foreach ($steps as $step)
@@ -511,7 +511,46 @@
                             </form>
                         @endif
 
-                        @if ($profile->community_role_assigned_at)
+                        {{-- Manual fully onboarded override --}}
+                        @if (! $profile->isFullyOnboarded())
+                            <form action="{{ route('admin.onboarding.fully-onboarded', $profile) }}" method="POST" class="space-y-2">
+                                @csrf
+                                <textarea
+                                    name="manual_fully_onboarded_note"
+                                    rows="2"
+                                    class="pd-input w-full text-sm"
+                                    placeholder="{{ __('Optional note, e.g. fully onboarded through WhatsApp or email') }}"
+                                >{{ old('manual_fully_onboarded_note') }}</textarea>
+                                <button type="submit" class="w-full rounded-xl bg-green-500/20 px-4 py-2.5 text-sm font-medium text-green-300 transition hover:bg-green-500/30">
+                                    {{ __('Mark as Fully Onboarded') }}
+                                </button>
+                                <p class="text-center text-[0.68rem] leading-relaxed text-green-100/45">
+                                    {{ __('Use this when the model was completed manually outside the website. It will not fake verification documents or Discord role status.') }}
+                                </p>
+                            </form>
+                        @endif
+
+                        @if ($profile->isManuallyFullyOnboarded())
+                            <div class="rounded-xl border border-green-300/15 bg-green-400/[0.06] p-3 text-center">
+                                <p class="text-sm font-medium text-green-300">{{ __('Manually fully onboarded ✓') }}</p>
+                                <p class="mt-1 text-[0.68rem] leading-relaxed text-green-100/45">
+                                    {{ __('Marked') }} {{ $profile->manual_fully_onboarded_at?->toFormattedDateString() }}
+                                    @if ($profile->manualFullyOnboardedBy)
+                                        {{ __('by') }} {{ $profile->manualFullyOnboardedBy->name }}
+                                    @endif
+                                </p>
+                                @if ($profile->manual_fully_onboarded_note)
+                                    <p class="mt-2 text-[0.72rem] leading-relaxed text-boss-ivory/45">{{ $profile->manual_fully_onboarded_note }}</p>
+                                @endif
+                                <form action="{{ route('admin.onboarding.fully-onboarded.remove', $profile) }}" method="POST" class="mt-3">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-xs font-semibold uppercase tracking-[0.16em] text-boss-ivory/45 transition hover:text-boss-ivory">
+                                        {{ __('Remove manual status') }}
+                                    </button>
+                                </form>
+                            </div>
+                        @elseif ($profile->community_role_assigned_at)
                             <p class="py-2 text-center text-sm text-green-300/70">{{ __('Fully onboarded ✓') }}</p>
                         @endif
                     </div>

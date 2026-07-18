@@ -113,9 +113,31 @@ class EmailCampaignDispatcher
                 $campaign->audience === EmailCampaign::AUDIENCE_ONBOARDED_MODELS,
                 fn (Builder $query): Builder => $query->whereHas(
                     'modelProfile',
-                    fn (Builder $profile): Builder => $profile->whereNotNull('community_role_assigned_at')
+                    fn (Builder $profile): Builder => $this->fullyOnboardedProfileQuery($profile)
                 )
             )
+            ->when(
+                $campaign->audience === EmailCampaign::AUDIENCE_NOT_ONBOARDED_MODELS,
+                fn (Builder $query): Builder => $query->where(function (Builder $query): void {
+                    $query
+                        ->whereDoesntHave('modelProfile')
+                        ->orWhereHas(
+                            'modelProfile',
+                            fn (Builder $profile): Builder => $profile
+                                ->whereNull('community_role_assigned_at')
+                                ->whereNull('manual_fully_onboarded_at')
+                        );
+                })
+            )
             ->orderBy('id');
+    }
+
+    private function fullyOnboardedProfileQuery(Builder $profile): Builder
+    {
+        return $profile->where(function (Builder $query): void {
+            $query
+                ->whereNotNull('community_role_assigned_at')
+                ->orWhereNotNull('manual_fully_onboarded_at');
+        });
     }
 }

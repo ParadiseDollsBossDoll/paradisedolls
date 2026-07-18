@@ -22,6 +22,7 @@ use App\Models\ModelProfile;
 use App\Models\ModelReferral;
 use App\Models\Testimonial;
 use App\Models\User;
+use App\Services\EmailCampaignDispatcher;
 use App\Support\OnboardingFormDefinition;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -1757,6 +1758,98 @@ class OnboardingFlowTest extends TestCase
         $this->actingAs($member)
             ->get(route('community.show'))
             ->assertOk();
+    }
+
+    public function test_admin_can_manually_mark_and_unmark_model_as_fully_onboarded(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'verification_status' => ModelProfile::VERIFICATION_NOT_REQUESTED,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.fully-onboarded', $profile), [
+                'manual_fully_onboarded_note' => 'Completed through WhatsApp.',
+            ])
+            ->assertRedirect();
+
+        $profile->refresh();
+
+        $this->assertTrue($profile->isManuallyFullyOnboarded());
+        $this->assertTrue($profile->isFullyOnboarded());
+        $this->assertSame(100, $profile->onboardingPercent());
+        $this->assertSame($admin->id, $profile->manual_fully_onboarded_by);
+        $this->assertSame('Completed through WhatsApp.', $profile->manual_fully_onboarded_note);
+        $this->assertFalse($profile->hasCommunityChatAccess());
+
+        $this->actingAs($admin)
+            ->delete(route('admin.onboarding.fully-onboarded.remove', $profile))
+            ->assertRedirect();
+
+        $profile->refresh();
+
+        $this->assertFalse($profile->isManuallyFullyOnboarded());
+        $this->assertFalse($profile->isFullyOnboarded());
+    }
+
+    public function test_email_campaign_audiences_include_manual_fully_onboarded_models(): void
+    {
+        $manuallyOnboarded = User::factory()->create([
+            'role' => 'model',
+            'email' => 'manual@example.com',
+            'email_verified_at' => now(),
+        ]);
+        ModelProfile::create([
+            'user_id' => $manuallyOnboarded->id,
+            'manual_fully_onboarded_at' => now(),
+        ]);
+
+        $roleAssigned = User::factory()->create([
+            'role' => 'model',
+            'email' => 'role@example.com',
+            'email_verified_at' => now(),
+        ]);
+        ModelProfile::create([
+            'user_id' => $roleAssigned->id,
+            'community_role_assigned_at' => now(),
+        ]);
+
+        $notOnboarded = User::factory()->create([
+            'role' => 'model',
+            'email' => 'waiting@example.com',
+            'email_verified_at' => now(),
+        ]);
+        ModelProfile::create(['user_id' => $notOnboarded->id]);
+
+        $dispatcher = new EmailCampaignDispatcher();
+
+        $onboardedCampaign = EmailCampaign::create([
+            'name' => 'Motivation',
+            'subject' => 'Welcome',
+            'body' => 'Hi {name}',
+            'audience' => EmailCampaign::AUDIENCE_ONBOARDED_MODELS,
+            'status' => EmailCampaign::STATUS_DRAFT,
+        ]);
+
+        $notOnboardedCampaign = EmailCampaign::create([
+            'name' => 'Promo',
+            'subject' => 'Next step',
+            'body' => 'Hi {name}',
+            'audience' => EmailCampaign::AUDIENCE_NOT_ONBOARDED_MODELS,
+            'status' => EmailCampaign::STATUS_DRAFT,
+        ]);
+
+        $this->assertSame(
+            ['manual@example.com', 'role@example.com'],
+            $dispatcher->recipientQuery($onboardedCampaign)->pluck('email')->all()
+        );
+
+        $this->assertSame(
+            ['waiting@example.com'],
+            $dispatcher->recipientQuery($notOnboardedCampaign)->pluck('email')->all()
+        );
     }
 
     private function configureDeliverableMailer(): void

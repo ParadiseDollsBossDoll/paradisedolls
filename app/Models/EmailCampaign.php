@@ -25,6 +25,8 @@ class EmailCampaign extends Model
 
     public const AUDIENCE_ONBOARDED_MODELS = 'onboarded_models';
 
+    public const AUDIENCE_NOT_ONBOARDED_MODELS = 'not_onboarded_models';
+
     protected $fillable = [
         'created_by',
         'name',
@@ -78,6 +80,7 @@ class EmailCampaign extends Model
         return [
             self::AUDIENCE_ALL_MODELS => __('All models'),
             self::AUDIENCE_ONBOARDED_MODELS => __('Fully onboarded models'),
+            self::AUDIENCE_NOT_ONBOARDED_MODELS => __('Models not fully onboarded'),
         ];
     }
 

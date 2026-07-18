@@ -93,6 +93,9 @@ class ModelProfile extends Model
         'community_invited_at',
         'community_invite_url',
         'community_role_assigned_at',
+        'manual_fully_onboarded_at',
+        'manual_fully_onboarded_by',
+        'manual_fully_onboarded_note',
     ];
 
     protected function casts(): array
@@ -117,6 +120,7 @@ class ModelProfile extends Model
             'verification_reviewed_at' => 'datetime',
             'community_invited_at' => 'datetime',
             'community_role_assigned_at' => 'datetime',
+            'manual_fully_onboarded_at' => 'datetime',
         ];
     }
 
@@ -133,6 +137,11 @@ class ModelProfile extends Model
     public function verificationReviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verification_reviewed_by');
+    }
+
+    public function manualFullyOnboardedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'manual_fully_onboarded_by');
     }
 
     public function hasInformationForm(): bool
@@ -165,6 +174,16 @@ class ModelProfile extends Model
     public function isCommunityRoleAssigned(): bool
     {
         return $this->community_role_assigned_at !== null;
+    }
+
+    public function isManuallyFullyOnboarded(): bool
+    {
+        return $this->manual_fully_onboarded_at !== null;
+    }
+
+    public function isFullyOnboarded(): bool
+    {
+        return $this->isCommunityRoleAssigned() || $this->isManuallyFullyOnboarded();
     }
 
     public function hasCommunityChatAccess(): bool
@@ -202,6 +221,10 @@ class ModelProfile extends Model
 
     public function onboardingPercent(): int
     {
+        if ($this->isManuallyFullyOnboarded()) {
+            return 100;
+        }
+
         $complete = 1; // account exists
 
         if ($this->hasInformationForm()) {
@@ -220,7 +243,7 @@ class ModelProfile extends Model
             $complete++;
         }
 
-        if ($this->isCommunityRoleAssigned()) {
+        if ($this->isFullyOnboarded()) {
             $complete++;
         }
 
@@ -240,6 +263,10 @@ class ModelProfile extends Model
 
     public function onboardingStatusLabel(): string
     {
+        if ($this->isManuallyFullyOnboarded()) {
+            return __('Fully onboarded manually by the admin team. Verification and Discord statuses are still shown separately.');
+        }
+
         if (! $this->hasInformationForm()) {
             return __('Complete your model information to start onboarding.');
         }

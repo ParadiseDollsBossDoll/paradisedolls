@@ -329,6 +329,10 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
             ->name('onboarding.community-invite');
         Route::post('/onboarding/{profile}/community-role-assigned', [AdminOnboardingController::class, 'markCommunityRoleAssigned'])
             ->name('onboarding.community-role-assigned');
+        Route::post('/onboarding/{profile}/fully-onboarded', [AdminOnboardingController::class, 'markFullyOnboarded'])
+            ->name('onboarding.fully-onboarded');
+        Route::delete('/onboarding/{profile}/fully-onboarded', [AdminOnboardingController::class, 'unmarkFullyOnboarded'])
+            ->name('onboarding.fully-onboarded.remove');
         Route::post('/testimonials/{testimonial}/approve', [AdminTestimonialController::class, 'approve'])->name('testimonials.approve');
         Route::patch('/testimonials/{testimonial}/visibility', [AdminTestimonialController::class, 'visibility'])->name('testimonials.visibility');
         Route::resource('testimonials', AdminTestimonialController::class)->except(['show']);

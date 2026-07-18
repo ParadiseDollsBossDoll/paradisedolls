@@ -38,7 +38,7 @@ class AdminOnboardingController extends Controller
         $models = User::query()
             ->select('users.*')
             ->where('role', 'model')
-            ->with('modelProfile.application')
+            ->with('modelProfile.application', 'modelProfile.manualFullyOnboardedBy')
             ->leftJoin('model_profiles', 'model_profiles.user_id', '=', 'users.id')
             ->leftJoin('model_applications', 'model_applications.id', '=', 'model_profiles.model_application_id')
             ->when($search !== '', function ($query) use ($search): void {
@@ -72,7 +72,11 @@ class AdminOnboardingController extends Controller
             'verification_submitted' => ModelProfile::where('verification_status', ModelProfile::VERIFICATION_SUBMITTED)->count(),
             'verified' => ModelProfile::where('verification_status', ModelProfile::VERIFICATION_VERIFIED)->count(),
             'community_invited' => ModelProfile::whereNotNull('community_invited_at')->count(),
-            'role_assigned' => ModelProfile::whereNotNull('community_role_assigned_at')->count(),
+            'fully_onboarded' => ModelProfile::where(function ($query): void {
+                $query
+                    ->whereNotNull('community_role_assigned_at')
+                    ->orWhereNotNull('manual_fully_onboarded_at');
+            })->count(),
         ];
 
         return view('admin.onboarding.index', [
@@ -118,7 +122,7 @@ class AdminOnboardingController extends Controller
 
     public function show(ModelProfile $profile): View
     {
-        $profile->loadMissing('application.user', 'user.courseAccessRequests.course', 'user.courseAccessRequests.proofFiles', 'user.courseEnrollments', 'verificationReviewer');
+        $profile->loadMissing('application.user', 'user.courseAccessRequests.course', 'user.courseAccessRequests.proofFiles', 'user.courseEnrollments', 'verificationReviewer', 'manualFullyOnboardedBy');
 
         $unlockedCourseIds = $profile->user->courseEnrollments
             ->pluck('course_id')
@@ -468,6 +472,33 @@ class AdminOnboardingController extends Controller
         Cache::forget('broadcast_community_access_'.$profile->user_id);
 
         return redirect()->back()->with('status', __('Discord Community role assignment recorded.'));
+    }
+
+    public function markFullyOnboarded(Request $request, ModelProfile $profile): RedirectResponse
+    {
+        $validated = $request->validate([
+            'manual_fully_onboarded_note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $profile->forceFill([
+            'manual_fully_onboarded_at' => now(),
+            'manual_fully_onboarded_by' => $request->user()?->id,
+            'manual_fully_onboarded_note' => $validated['manual_fully_onboarded_note'] ?? null,
+            'onboarding_stage' => ModelProfile::STAGE_ACTIVE,
+        ])->save();
+
+        return redirect()->back()->with('status', __('Model marked as fully onboarded manually.'));
+    }
+
+    public function unmarkFullyOnboarded(ModelProfile $profile): RedirectResponse
+    {
+        $profile->forceFill([
+            'manual_fully_onboarded_at' => null,
+            'manual_fully_onboarded_by' => null,
+            'manual_fully_onboarded_note' => null,
+        ])->save();
+
+        return redirect()->back()->with('status', __('Manual fully onboarded status removed.'));
     }
 
     public function downloadDocument(ModelProfile $profile, string $document): StreamedResponse

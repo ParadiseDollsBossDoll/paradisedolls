@@ -296,7 +296,20 @@ class AdminEmailCampaignController extends Controller
             EmailCampaign::AUDIENCE_ONBOARDED_MODELS => User::query()
                 ->where('role', 'model')
                 ->whereNull('marketing_unsubscribed_at')
-                ->whereHas('modelProfile', fn ($query) => $query->whereNotNull('community_role_assigned_at'))
+                ->whereHas('modelProfile', fn ($query) => $query
+                    ->whereNotNull('community_role_assigned_at')
+                    ->orWhereNotNull('manual_fully_onboarded_at'))
+                ->count(),
+            EmailCampaign::AUDIENCE_NOT_ONBOARDED_MODELS => User::query()
+                ->where('role', 'model')
+                ->whereNull('marketing_unsubscribed_at')
+                ->where(function ($query): void {
+                    $query
+                        ->whereDoesntHave('modelProfile')
+                        ->orWhereHas('modelProfile', fn ($profile) => $profile
+                            ->whereNull('community_role_assigned_at')
+                            ->whereNull('manual_fully_onboarded_at'));
+                })
                 ->count(),
         ];
     }

@@ -54,7 +54,10 @@
                     <dl class="mt-4 space-y-3 text-xs">
                         <div class="flex items-start justify-between gap-4">
                             <dt class="text-boss-ivory/40">{{ __('Recipients') }}</dt>
-                            <dd class="text-right font-medium text-boss-ivory/75" x-text="audience === 'onboarded_models' ? @js(__('Fully onboarded models')) : @js(__('All models'))"></dd>
+                            <dd
+                                class="text-right font-medium text-boss-ivory/75"
+                                x-text="({ all_models: @js(__('All models')), onboarded_models: @js(__('Fully onboarded models')), not_onboarded_models: @js(__('Models not fully onboarded')) })[audience] || @js(__('All models'))"
+                            ></dd>
                         </div>
                         <div class="flex items-start justify-between gap-4">
                             <dt class="text-boss-ivory/40">{{ __('Estimated audience') }}</dt>

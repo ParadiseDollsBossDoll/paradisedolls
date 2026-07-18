@@ -123,8 +123,8 @@
                                     <span :class="selected.profile.community_invited_at ? 'text-green-300' : 'text-boss-ivory/30'">
                                         <span x-text="selected.profile.community_invited_at ? '✓' : '○'"></span> Discord Invited
                                     </span>
-                                    <span :class="selected.profile.community_role_assigned_at ? 'text-green-300' : 'text-boss-ivory/30'">
-                                        <span x-text="selected.profile.community_role_assigned_at ? '✓' : '○'"></span> Discord Role Assigned
+                                    <span :class="selected.profile.is_fully_onboarded ? 'text-green-300' : 'text-boss-ivory/30'">
+                                        <span x-text="selected.profile.is_fully_onboarded ? '✓' : '○'"></span> Fully Onboarded
                                     </span>
                                 </div>
                             </div>
@@ -557,6 +557,12 @@
                                             <p class="mt-0.5 text-sm text-boss-gold" x-text="selected.profile.community_role_assigned_at"></p>
                                         </div>
                                     </template>
+                                    <template x-if="selected.profile.manual_fully_onboarded_at">
+                                        <div>
+                                            <p class="text-[0.62rem] uppercase tracking-[0.1em] text-boss-ivory/28">Manual Fully Onboarded</p>
+                                            <p class="mt-0.5 text-sm text-green-300" x-text="selected.profile.manual_fully_onboarded_at"></p>
+                                        </div>
+                                    </template>
                                 </div>
                             </div>
                         </template>
@@ -767,10 +773,39 @@
                                 </form>
                             </template>
 
+                            {{-- Manual fully onboarded override --}}
+                            <template x-if="selected.profile.can_mark_fully_onboarded">
+                                <form :action="selected.profile.mark_fully_onboarded_url" method="POST" class="space-y-2">
+                                    @csrf
+                                    <textarea
+                                        name="manual_fully_onboarded_note"
+                                        rows="2"
+                                        class="pd-input w-full text-sm"
+                                        placeholder="Optional note, e.g. fully onboarded through WhatsApp or email"
+                                    ></textarea>
+                                    <button type="submit" class="w-full rounded-xl bg-green-500/20 px-4 py-2.5 text-sm font-medium text-green-300 transition hover:bg-green-500/30">
+                                        Mark as Fully Onboarded
+                                    </button>
+                                    <p class="text-center text-[0.68rem] leading-relaxed text-green-100/45">
+                                        This keeps verification and Discord statuses separate, but treats the model as fully onboarded for admin lists and emails.
+                                    </p>
+                                </form>
+                            </template>
+
+                            <template x-if="selected.profile.manual_fully_onboarded_at">
+                                <form :action="selected.profile.remove_fully_onboarded_url" method="POST">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-boss-ivory/70 transition hover:bg-white/[0.07] hover:text-boss-ivory">
+                                        Remove Manual Fully Onboarded Status
+                                    </button>
+                                </form>
+                            </template>
+
                             {{-- All done --}}
-                            <template x-if="!selected.profile.can_request_verification && !selected.profile.can_verify && !selected.profile.can_community_invite && !selected.profile.can_role_assign">
+                            <template x-if="!selected.profile.can_request_verification && !selected.profile.can_verify && !selected.profile.can_community_invite && !selected.profile.can_role_assign && !selected.profile.can_mark_fully_onboarded">
                                 <p class="text-center text-sm text-boss-ivory/30">
-                                    <span x-text="selected.profile.community_role_assigned_at ? 'Fully onboarded ✓' : 'No actions available at this stage.'"></span>
+                                    <span x-text="selected.profile.is_fully_onboarded ? 'Fully onboarded ✓' : 'No actions available at this stage.'"></span>
                                 </p>
                             </template>
 
@@ -1030,7 +1065,7 @@
                 ],
                 __('Discord') => [
                     [__('Discord Invites'), $stats['community_invited']],
-                    [__('Discord Roles'), $stats['role_assigned']],
+                    [__('Fully Onboarded'), $stats['fully_onboarded']],
                 ],
             ] as $groupLabel => $groupStats)
                 <div class="space-y-2">
@@ -1196,6 +1231,9 @@
                                         'community_invite_sent_url'   => $profile->community_invite_url,
                                         'default_community_url'       => config('paradise.community_url'),
                                         'community_role_assigned_at'  => $profile->community_role_assigned_at?->toFormattedDateString(),
+                                        'manual_fully_onboarded_at'   => $profile->manual_fully_onboarded_at?->toFormattedDateString(),
+                                        'manual_fully_onboarded_note' => $profile->manual_fully_onboarded_note,
+                                        'is_fully_onboarded'          => $profile->isFullyOnboarded(),
                                         'onboarding_percent'          => $profile->onboardingPercent(),
                                         'course_access'               => [],
                                         'course_access_loaded'        => false,
@@ -1205,10 +1243,13 @@
                                         'reject_verification_url'     => route('admin.onboarding.reject-verification', $profile),
                                         'community_invite_url'        => route('admin.onboarding.community-invite', $profile),
                                         'community_role_url'          => route('admin.onboarding.community-role-assigned', $profile),
+                                        'mark_fully_onboarded_url'    => route('admin.onboarding.fully-onboarded', $profile),
+                                        'remove_fully_onboarded_url'  => route('admin.onboarding.fully-onboarded.remove', $profile),
                                         'can_request_verification'    => $profile->hasInformationForm() && ! $profile->isVerified() && $profile->verification_status !== \App\Models\ModelProfile::VERIFICATION_SUBMITTED,
                                         'can_verify'                  => $profile->canApproveVerification(),
                                         'can_community_invite'        => $profile->isVerified() && ! $profile->community_role_assigned_at,
                                         'can_role_assign'             => $profile->isVerified() && (bool) $profile->community_invited_at && ! $profile->community_role_assigned_at,
+                                        'can_mark_fully_onboarded'    => ! $profile->isFullyOnboarded(),
                                     ] : null,
                                 ];
                             @endphp
@@ -1252,7 +1293,7 @@
                                         @endif
 
                                         {{-- Discord Community step --}}
-                                        @if ($profile?->community_role_assigned_at)
+                                        @if ($profile?->isFullyOnboarded())
                                             <span class="rounded-full bg-green-400/10 px-2 py-0.5 text-[0.62rem] text-green-300">Active ✓</span>
                                         @elseif ($profile?->community_invited_at)
                                             <span class="rounded-full bg-green-400/[0.07] px-2 py-0.5 text-[0.62rem] text-green-400/60">Discord invited</span>
