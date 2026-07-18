@@ -67,6 +67,10 @@ return [
         'measurement_id' => env('GOOGLE_ANALYTICS_ID'),
     ],
 
+    'google_tag_manager' => [
+        'container_id' => env('GOOGLE_TAG_MANAGER_ID'),
+    ],
+
     'email_campaigns' => [
         'timezone' => env('EMAIL_CAMPAIGN_TIMEZONE', 'Europe/London'),
     ],

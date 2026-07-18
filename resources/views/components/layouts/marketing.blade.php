@@ -30,6 +30,7 @@
 
         <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
+        @include('partials.google-tag-manager-head')
         @include('partials.google-analytics')
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -40,6 +41,8 @@
         x-data="{ scrolled: false, navOpen: false, transparent: {{ $transparentNav ? 'true' : 'false' }} }"
         @scroll.window="scrolled = (window.pageYOffset || document.documentElement.scrollTop) > 60"
     >
+        @include('partials.google-tag-manager-body')
+
         <x-marketing-navbar :user="$marketingUser" />
 
         <main>

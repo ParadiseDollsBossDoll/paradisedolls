@@ -66,10 +66,13 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ __('Community Chat').' - '.config('app.name') }}</title>
         <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+        @include('partials.google-tag-manager-head')
         <script>(function(){function hRgb(h){return parseInt(h.slice(1,3),16)+' '+parseInt(h.slice(3,5),16)+' '+parseInt(h.slice(5,7),16);}function lum(h){var r=parseInt(h.slice(1,3),16)/255,g=parseInt(h.slice(3,5),16)/255,b=parseInt(h.slice(5,7),16)/255;return 0.2126*r+0.7152*g+0.0722*b;}function applyVars(s){var h=document.documentElement;h.classList.toggle('light-mode',s.mode==='light');if(s.primary){var p=s.primary,pl=s.primaryLight||p;h.style.setProperty('--pd-primary',p);h.style.setProperty('--pd-gold',p);h.style.setProperty('--pd-gold-rgb',hRgb(p));h.style.setProperty('--pd-gold-light-rgb',hRgb(pl));h.style.setProperty('--pd-gold-hover-rgb',hRgb(pl));h.style.setProperty('--pd-primary-hover',pl);h.style.setProperty('--pd-gold-light',pl);h.style.setProperty('--pd-primary-on',lum(p)>0.35?'#09070A':'#FFF8F6');}}try{applyVars(@json($siteTheme));}catch(e){applyVars({mode:'dark',primary:'#EEB4C3',primaryLight:'#F3C3CF'});}window.pdApplyTheme=function(s){applyVars(s);};}());</script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="min-h-screen overflow-hidden bg-[#080808] text-[#f0ede8] font-sans antialiased">
+        @include('partials.google-tag-manager-body')
+
         <div x-data="communityChat(@js($communityState))" x-init="init()" class="flex h-screen min-h-0">
             {{-- Transparent backdrop: intercepts all pointer/hover events from chat when pinned panel is open --}}
             <div x-show="pinnedPanelOpen" x-cloak class="fixed inset-0 z-[80]" @click="pinnedPanelOpen = false" aria-hidden="true"></div>
