@@ -1,4 +1,4 @@
-<x-dynamic-component :component="auth()->user()->isAdmin() ? 'admin-layout' : 'member-layout'">
+<x-dynamic-component :component="auth()->user()->isAdmin() ? 'admin-layout' : (auth()->user()->isChatter() ? 'chatter-layout' : 'member-layout')">
     <div class="mx-auto max-w-4xl space-y-6 text-boss-ivory">
         @if (session('status'))
             <div class="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm text-green-200">{{ session('status') }}</div>

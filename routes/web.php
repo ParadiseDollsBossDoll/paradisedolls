@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\AdminAcademyFileController;
 use App\Http\Controllers\Admin\AdminApplicationController;
+use App\Http\Controllers\Admin\AdminChatterHoursController;
+use App\Http\Controllers\Admin\AdminChatterHoursExportController;
 use App\Http\Controllers\Admin\AdminCourseController;
 use App\Http\Controllers\Admin\AdminCrmExportController;
 use App\Http\Controllers\Admin\AdminDashboardController;
@@ -15,6 +17,10 @@ use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminTestimonialController;
 use App\Http\Controllers\Admin\BunnyVideoController;
 use App\Http\Controllers\ApplyController;
+use App\Http\Controllers\Chatter\ChatterApplicationController;
+use App\Http\Controllers\Chatter\ChatterClockController;
+use App\Http\Controllers\Chatter\ChatterDashboardController;
+use App\Http\Controllers\Chatter\ChatterTimesheetController;
 use App\Http\Controllers\Community\CommunityChannelController;
 use App\Http\Controllers\Community\CommunityController;
 use App\Http\Controllers\Community\CommunityMessageController;
@@ -70,11 +76,26 @@ Route::post('/apply', [ApplyController::class, 'store'])
     ->middleware('throttle:apply-submissions')
     ->name('apply.store');
 
+Route::middleware('guest')->group(function () {
+    Route::get('/chatter/apply', [ChatterApplicationController::class, 'create'])->name('chatter.apply');
+    Route::post('/chatter/apply', [ChatterApplicationController::class, 'store'])
+        ->middleware('throttle:chatter-applications')
+        ->name('chatter.apply.store');
+});
+
 Route::get('/dashboard', function () {
-    return auth()->user()->isAdmin()
-        ? redirect()->route('admin.dashboard')
-        : redirect()->route('member.dashboard');
+    return redirect()->route(auth()->user()->dashboardRouteName());
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware(['auth', 'verified', 'chatter'])->prefix('chatter')->name('chatter.')->group(function () {
+    Route::get('/', ChatterDashboardController::class)->name('dashboard');
+    Route::post('/clock-in', [ChatterClockController::class, 'clockIn'])->middleware('throttle:chatter-clock')->name('clock-in');
+    Route::post('/clock-out', [ChatterClockController::class, 'clockOut'])->middleware('throttle:chatter-clock')->name('clock-out');
+    Route::post('/breaks/start', [ChatterClockController::class, 'startBreak'])->middleware('throttle:chatter-clock')->name('breaks.start');
+    Route::post('/breaks/end', [ChatterClockController::class, 'endBreak'])->middleware('throttle:chatter-clock')->name('breaks.end');
+    Route::post('/timesheets/{timesheet}/submit', [ChatterTimesheetController::class, 'submit'])->middleware('throttle:chatter-clock')->name('timesheets.submit');
+    Route::post('/timesheets/{timesheet}/correction', [ChatterTimesheetController::class, 'requestCorrection'])->middleware('throttle:chatter-clock')->name('timesheets.correction');
+});
 
 Route::middleware(['auth', 'verified', 'model'])->prefix('member')->name('member.')->group(function () {
     Route::get('/', MemberDashboardController::class)->name('dashboard');
@@ -163,6 +184,23 @@ Route::middleware(['auth', 'verified'])->prefix('notifications')->name('notifica
 
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
+    Route::get('/chatter-hours', [AdminChatterHoursController::class, 'index'])->name('chatter-hours.index');
+    Route::get('/chatter-hours/export.csv', [AdminChatterHoursExportController::class, 'csv'])->name('chatter-hours.export.csv');
+    Route::get('/chatter-hours/export.xlsx', [AdminChatterHoursExportController::class, 'xlsx'])->name('chatter-hours.export.xlsx');
+    Route::get('/chatter-hours/timesheets/{timesheet}', [AdminChatterHoursController::class, 'showTimesheet'])->name('chatter-hours.timesheets.show');
+    Route::middleware('throttle:admin-actions')->group(function () {
+        Route::post('/chatter-hours/chatters', [AdminChatterHoursController::class, 'storeChatter'])->name('chatter-hours.chatters.store');
+        Route::post('/chatter-hours/chatters/{chatter}/invitation', [AdminChatterHoursController::class, 'resendInvitation'])->name('chatter-hours.chatters.invitation');
+        Route::patch('/chatter-hours/chatters/{chatter}/status', [AdminChatterHoursController::class, 'updateStatus'])->name('chatter-hours.chatters.status');
+        Route::post('/chatter-hours/chatters/{chatter}/pay-rates', [AdminChatterHoursController::class, 'storePayRate'])->name('chatter-hours.chatters.pay-rates');
+        Route::post('/chatter-hours/requests/{chatterRequest}/approve', [AdminChatterHoursController::class, 'approveRequest'])->name('chatter-hours.requests.approve');
+        Route::post('/chatter-hours/requests/{chatterRequest}/reject', [AdminChatterHoursController::class, 'rejectRequest'])->name('chatter-hours.requests.reject');
+        Route::patch('/chatter-hours/timesheets/{timesheet}/shifts/{shift}', [AdminChatterHoursController::class, 'updateShift'])->name('chatter-hours.shifts.update');
+        Route::patch('/chatter-hours/timesheets/{timesheet}/breaks/{break}', [AdminChatterHoursController::class, 'updateBreak'])->name('chatter-hours.breaks.update');
+        Route::post('/chatter-hours/timesheets/{timesheet}/adjustments', [AdminChatterHoursController::class, 'storeAdjustment'])->name('chatter-hours.adjustments.store');
+        Route::delete('/chatter-hours/timesheets/{timesheet}/adjustments/{adjustment}', [AdminChatterHoursController::class, 'destroyAdjustment'])->name('chatter-hours.adjustments.destroy');
+        Route::post('/chatter-hours/timesheets/{timesheet}/review', [AdminChatterHoursController::class, 'review'])->name('chatter-hours.timesheets.review');
+    });
     Route::get('/site-editor', [AdminSettingsController::class, 'editMarketingContent'])->name('site-editor.edit');
     Route::put('/site-editor', [AdminSettingsController::class, 'updateMarketingContent'])
         ->middleware('throttle:admin-actions')

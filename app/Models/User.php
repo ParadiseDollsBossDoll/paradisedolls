@@ -101,6 +101,21 @@ class User extends Authenticatable
         return $this->role === 'moderator';
     }
 
+    public function isChatter(): bool
+    {
+        return $this->role === 'chatter';
+    }
+
+    public function dashboardRouteName(): string
+    {
+        return match (true) {
+            $this->isAdmin() => 'admin.dashboard',
+            $this->isChatter() => 'chatter.dashboard',
+            $this->isModerator() => 'community.show',
+            default => 'member.dashboard',
+        };
+    }
+
     public function canModerateCommunity(): bool
     {
         return $this->isAdmin() || $this->isModerator();
@@ -139,6 +154,26 @@ class User extends Authenticatable
     public function modelProfile(): HasOne
     {
         return $this->hasOne(ModelProfile::class);
+    }
+
+    public function chatterProfile(): HasOne
+    {
+        return $this->hasOne(ChatterProfile::class);
+    }
+
+    public function chatterShifts(): HasMany
+    {
+        return $this->hasMany(ChatterShift::class);
+    }
+
+    public function chatterTimesheets(): HasMany
+    {
+        return $this->hasMany(ChatterTimesheet::class);
+    }
+
+    public function chatterPayRates(): HasMany
+    {
+        return $this->hasMany(ChatterPayRate::class);
     }
 
     public function courseEnrollments(): HasMany

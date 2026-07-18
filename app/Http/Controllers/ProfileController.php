@@ -145,7 +145,11 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        abort_if($request->user()->isAdmin(), 403, 'Administrator accounts cannot be self-deleted.');
+        abort_if(
+            $request->user()->isAdmin() || $request->user()->isChatter(),
+            403,
+            'Administrator and chatter accounts must be deactivated by an administrator.'
+        );
 
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],

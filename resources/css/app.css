@@ -350,7 +350,8 @@ body {
 
     /* ── Inputs ──────────────────────────────────────── */
 
-    .pd-input {
+    .pd-input,
+    .pd-select {
         width: 100%;
         border-radius: 0.6rem;
         border: 1px solid rgba(238, 180, 195, 0.14);
@@ -362,26 +363,32 @@ body {
         transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
     }
 
-    .pd-input::placeholder {
+    .pd-input::placeholder,
+    .pd-select::placeholder {
         color: rgba(255, 248, 246, 0.22);
     }
 
     .pd-input option,
-    .pd-input optgroup {
+    .pd-input optgroup,
+    .pd-select option,
+    .pd-select optgroup {
         background: var(--pd-panel);
         color: var(--pd-ivory);
     }
 
-    .pd-input option:checked {
+    .pd-input option:checked,
+    .pd-select option:checked {
         background: var(--pd-primary);
         color: var(--pd-ink);
     }
 
-    .pd-input option:disabled {
+    .pd-input option:disabled,
+    .pd-select option:disabled {
         color: rgba(255, 248, 246, 0.28);
     }
 
-    .pd-input:focus {
+    .pd-input:focus,
+    .pd-select:focus {
         border-color: rgba(238, 180, 195, 0.52);
         box-shadow: 0 0 0 3px rgba(238, 180, 195, 0.1);
         background: rgba(238, 180, 195, 0.07);
@@ -1470,20 +1477,25 @@ html.light-mode .pd-table td               { border-bottom-color: rgba(238,180,1
 html.light-mode .pd-table tbody tr:hover   { background: rgba(238,180,195,0.07); }
 
 /* ── Inputs ──────────────────────────────────────────────────────── */
-html.light-mode .pd-input {
+html.light-mode .pd-input,
+html.light-mode .pd-select {
     background: #FFFFFF;
     border-color: rgba(238,180,195,0.5);
     color: #1A0E14;
 }
 html.light-mode .pd-input::placeholder     { color: rgba(26,14,20,0.35); }
-html.light-mode .pd-input:focus {
+html.light-mode .pd-select::placeholder    { color: rgba(26,14,20,0.35); }
+html.light-mode .pd-input:focus,
+html.light-mode .pd-select:focus {
     border-color: #EEB4C3;
     box-shadow: 0 0 0 3px rgba(238,180,195,0.2);
     background: #FFFFFF;
 }
 html.light-mode .pd-campaign-datetime-input { color-scheme: light; }
 html.light-mode .pd-input option,
-html.light-mode .pd-input optgroup         { background: #FFFFFF; color: #1A0E14; }
+html.light-mode .pd-input optgroup,
+html.light-mode .pd-select option,
+html.light-mode .pd-select optgroup        { background: #FFFFFF; color: #1A0E14; }
 html.light-mode .pd-label                  { color: rgba(26,14,20,0.55); }
 
 /* ── Buttons ─────────────────────────────────────────────────────── */

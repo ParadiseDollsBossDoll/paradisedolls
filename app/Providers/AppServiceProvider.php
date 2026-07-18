@@ -44,6 +44,14 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->ip());
         });
 
+        RateLimiter::for('chatter-applications', function (Request $request) {
+            return Limit::perHour(5)->by($request->ip());
+        });
+
+        RateLimiter::for('chatter-clock', function (Request $request) {
+            return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
+        });
+
         RateLimiter::for('password-reset', function (Request $request) {
             return Limit::perMinute(5)->by($request->ip());
         });

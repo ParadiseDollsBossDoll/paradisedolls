@@ -3,9 +3,7 @@
 ])
 @php
     $isAuthenticated = $user !== null;
-    $memberRoute = $user?->isAdmin()
-        ? 'admin.dashboard'
-        : 'member.dashboard';
+    $memberRoute = $user?->dashboardRouteName() ?? 'member.dashboard';
 
     $links = [
         ['route' => 'our-story', 'label' => marketing_content('shared.nav.our_story_label')],

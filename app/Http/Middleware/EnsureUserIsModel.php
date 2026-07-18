@@ -24,6 +24,10 @@ class EnsureUserIsModel
             );
         }
 
+        if ($user?->isChatter()) {
+            return redirect()->route('chatter.dashboard');
+        }
+
         abort(403);
     }
 }

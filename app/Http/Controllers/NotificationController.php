@@ -52,7 +52,7 @@ class NotificationController extends Controller
     private function safeActionUrl(?string $actionUrl, Request $request): string
     {
         if (blank($actionUrl)) {
-            return route($request->user()->isAdmin() ? 'admin.dashboard' : 'member.dashboard');
+            return route($request->user()->dashboardRouteName());
         }
 
         $baseUrl = rtrim((string) config('app.url'), '/');
@@ -68,7 +68,7 @@ class NotificationController extends Controller
             || preg_match('/[\x00-\x1F\x7F]/', $actionUrl)
             || str_starts_with($actionUrl, '//')
         ) {
-            return route($request->user()->isAdmin() ? 'admin.dashboard' : 'member.dashboard');
+            return route($request->user()->dashboardRouteName());
         }
 
         if (str_starts_with($actionUrl, '/') && ! str_starts_with($actionUrl, '//')) {
@@ -88,7 +88,7 @@ class NotificationController extends Controller
             return $actionUrl;
         }
 
-        return route($request->user()->isAdmin() ? 'admin.dashboard' : 'member.dashboard');
+        return route($request->user()->dashboardRouteName());
     }
 
     private function legacyOnboardingProfileUrl(string $actionUrl): ?string

@@ -1,8 +1,8 @@
-<x-dynamic-component :component="$user->isAdmin() ? 'admin-layout' : 'member-layout'">
+<x-dynamic-component :component="$user->isAdmin() ? 'admin-layout' : ($user->isChatter() ? 'chatter-layout' : 'member-layout')">
 @php
     $profilePhotoUrl = $user->profilePhotoUrl();
     $isAdmin         = $user->isAdmin();
-    $roleLabel       = $isAdmin ? __('Administrator') : __('Paradise Dolls Member');
+    $roleLabel       = $isAdmin ? __('Administrator') : ($user->isChatter() ? __('Chatter') : __('Paradise Dolls Member'));
     $siteTheme       = \App\Models\SiteSetting::get('theme', ['mode'=>'dark','primary'=>'#EEB4C3','primaryLight'=>'#F3C3CF','preset'=>'pink-light']);
 @endphp
 
