@@ -54,11 +54,23 @@ class AdminOnboardingController extends Controller
                         ->orWhere('model_applications.email', 'like', $like);
                 });
             })
+            ->when($sort === 'fully_onboarded', function ($query): void {
+                $query->where(function ($query): void {
+                    $query
+                        ->whereNotNull('model_profiles.community_role_assigned_at')
+                        ->orWhereNotNull('model_profiles.manual_fully_onboarded_at');
+                });
+            })
+            ->when($sort === 'not_onboarded', function ($query): void {
+                $query
+                    ->whereNull('model_profiles.community_role_assigned_at')
+                    ->whereNull('model_profiles.manual_fully_onboarded_at');
+            })
             ->when($sort === 'application_date', function ($query) use ($direction): void {
                 $query
                     ->orderByRaw('COALESCE(model_applications.created_at, users.created_at) '.$direction)
                     ->orderBy('users.name');
-            }, function ($query) use ($direction): void {
+            }, function ($query) use ($direction, $sort): void {
                 $query
                     ->orderBy('users.name', $direction)
                     ->orderByRaw('COALESCE(model_applications.created_at, users.created_at) desc');
@@ -110,7 +122,7 @@ class AdminOnboardingController extends Controller
     {
         $sort = (string) $request->query('sort', 'name');
 
-        return in_array($sort, ['name', 'application_date'], true) ? $sort : 'name';
+        return in_array($sort, ['name', 'application_date', 'fully_onboarded', 'not_onboarded'], true) ? $sort : 'name';
     }
 
     private function sortDirection(Request $request): string

@@ -1208,6 +1208,8 @@
                         <select id="onboarding-sort" name="sort" class="pd-input mt-2 h-12">
                             <option value="name" @selected($sort === 'name')>{{ __('Name') }}</option>
                             <option value="application_date" @selected($sort === 'application_date')>{{ __('Date of application') }}</option>
+                            <option value="fully_onboarded" @selected($sort === 'fully_onboarded')>{{ __('Fully Onboarded') }}</option>
+                            <option value="not_onboarded" @selected($sort === 'not_onboarded')>{{ __('Not Onboarded') }}</option>
                         </select>
                     </div>
 

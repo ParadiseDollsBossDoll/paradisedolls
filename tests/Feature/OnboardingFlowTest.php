@@ -1862,6 +1862,41 @@ class OnboardingFlowTest extends TestCase
             ->assertDontSee('Marked as fully onboarded from the onboarding list.');
     }
 
+    public function test_admin_can_sort_onboarding_list_by_fully_onboarded_status(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $fullyOnboarded = User::factory()->create([
+            'role' => 'model',
+            'name' => 'Fully Sorted',
+            'email' => 'fully-sorted@example.com',
+        ]);
+        ModelProfile::create([
+            'user_id' => $fullyOnboarded->id,
+            'manual_fully_onboarded_at' => now(),
+        ]);
+
+        $notOnboarded = User::factory()->create([
+            'role' => 'model',
+            'name' => 'Pending Sorted',
+            'email' => 'pending-sorted@example.com',
+        ]);
+        ModelProfile::create(['user_id' => $notOnboarded->id]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.index', ['sort' => 'fully_onboarded']))
+            ->assertOk()
+            ->assertSee('Fully Onboarded')
+            ->assertSee('Not Onboarded')
+            ->assertSee('Fully Sorted')
+            ->assertDontSee('Pending Sorted');
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.index', ['sort' => 'not_onboarded']))
+            ->assertOk()
+            ->assertSee('Pending Sorted')
+            ->assertDontSee('Fully Sorted');
+    }
+
     public function test_email_campaign_audiences_include_manual_fully_onboarded_models(): void
     {
         $manuallyOnboarded = User::factory()->create([
