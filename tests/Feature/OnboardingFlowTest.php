@@ -230,6 +230,46 @@ class OnboardingFlowTest extends TestCase
         Mail::assertSent(MemberApplicationApprovedMail::class);
     }
 
+    public function test_applications_page_only_marks_applications_as_fully_onboarded_after_completion_or_manual_override(): void
+    {
+        Mail::fake();
+        config([
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp.host' => 'smtp.gmail.com',
+            'mail.mailers.smtp.port' => 465,
+            'mail.mailers.smtp.username' => 'sender@example.com',
+            'mail.mailers.smtp.password' => 'test-password',
+            'mail.from.address' => 'sender@example.com',
+        ]);
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $application = ModelApplication::create([
+            'name' => 'Status Model',
+            'email' => 'status@example.com',
+            'experience_level' => 'none',
+            'age_confirmed' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.applications.approve', $application))
+            ->assertRedirect();
+
+        $this->actingAs($admin)
+            ->get(route('admin.applications.index'))
+            ->assertOk()
+            ->assertDontSee('Fully Onboarded');
+
+        $application->profile()->first()->forceFill([
+            'manual_fully_onboarded_at' => now(),
+            'manual_fully_onboarded_by' => $admin->id,
+        ])->save();
+
+        $this->actingAs($admin)
+            ->get(route('admin.applications.index'))
+            ->assertOk()
+            ->assertSee('Fully Onboarded');
+    }
+
     public function test_admin_approval_shows_temporary_password_when_mailer_cannot_deliver(): void
     {
         Mail::fake();
@@ -1792,6 +1832,34 @@ class OnboardingFlowTest extends TestCase
 
         $this->assertFalse($profile->isManuallyFullyOnboarded());
         $this->assertFalse($profile->isFullyOnboarded());
+    }
+
+    public function test_onboarding_list_has_quick_manual_fully_onboarded_action_until_model_is_fully_onboarded(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['role' => 'model']);
+        $profile = ModelProfile::create([
+            'user_id' => $member->id,
+            'verification_status' => ModelProfile::VERIFICATION_VERIFIED,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.index'))
+            ->assertOk()
+            ->assertSee('Mark Fully Onboarded')
+            ->assertSee('Mark model as fully onboarded?')
+            ->assertSee('This will mark the model as fully onboarded for admin lists and email campaign audiences.')
+            ->assertSee('Marked as fully onboarded from the onboarding list.');
+
+        $this->actingAs($admin)
+            ->post(route('admin.onboarding.fully-onboarded', $profile))
+            ->assertRedirect();
+
+        $this->actingAs($admin)
+            ->get(route('admin.onboarding.index'))
+            ->assertOk()
+            ->assertSee('Fully Onboarded')
+            ->assertDontSee('Marked as fully onboarded from the onboarding list.');
     }
 
     public function test_email_campaign_audiences_include_manual_fully_onboarded_models(): void

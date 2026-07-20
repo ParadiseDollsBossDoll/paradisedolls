@@ -618,8 +618,8 @@
                                                         {{ $application->referral->rewardStatusLabel() }}
                                                     </span>
                                                 @endif
-                                                @if ($application->profile)
-                                                    <span class="rounded-full bg-green-400/10 px-2 py-0.5 text-[0.62rem] text-green-300">Onboarded</span>
+                                                @if ($application->profile?->isFullyOnboarded())
+                                                    <span class="rounded-full bg-green-400/10 px-2 py-0.5 text-[0.62rem] text-green-300">{{ __('Fully Onboarded') }}</span>
                                                 @endif
                                             </div>
                                         </div>

@@ -6,6 +6,38 @@
             formOpen: false,
             selected: null,
             showReject: false,
+            fullyOnboardedDialog: {
+                open: false,
+                form: null,
+                name: '',
+                email: '',
+                submitting: false,
+            },
+            openFullyOnboardedDialog(event, model = {}) {
+                this.fullyOnboardedDialog.open = true;
+                this.fullyOnboardedDialog.form = event.target.closest('form');
+                this.fullyOnboardedDialog.name = model.name || '';
+                this.fullyOnboardedDialog.email = model.email || '';
+                this.fullyOnboardedDialog.submitting = false;
+            },
+            closeFullyOnboardedDialog() {
+                if (this.fullyOnboardedDialog.submitting) {
+                    return;
+                }
+
+                this.fullyOnboardedDialog.open = false;
+                this.fullyOnboardedDialog.form = null;
+                this.fullyOnboardedDialog.name = '';
+                this.fullyOnboardedDialog.email = '';
+            },
+            confirmFullyOnboarded() {
+                if (! this.fullyOnboardedDialog.form) {
+                    return;
+                }
+
+                this.fullyOnboardedDialog.submitting = true;
+                HTMLFormElement.prototype.submit.call(this.fullyOnboardedDialog.form);
+            },
             async selectModel(model) {
                 this.selected = model;
                 this.open = true;
@@ -28,7 +60,7 @@
                 }
             }
         }"
-        @keydown.escape.window="open = false; formOpen = false"
+        @keydown.escape.window="fullyOnboardedDialog.open ? closeFullyOnboardedDialog() : (open = false, formOpen = false)"
     >
 
         {{-- ── Backdrop ──────────────────────────────────────────── --}}
@@ -816,6 +848,64 @@
             </template>
         </div>
 
+        <div
+            x-show="fullyOnboardedDialog.open"
+            x-cloak
+            x-transition.opacity.duration.150ms
+            class="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 px-4 py-6 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="fully-onboarded-dialog-title"
+            @click.self="closeFullyOnboardedDialog()"
+        >
+            <section
+                x-show="fullyOnboardedDialog.open"
+                x-transition:enter="transition duration-180 ease-out"
+                x-transition:enter-start="translate-y-4 scale-[0.98] opacity-0"
+                x-transition:enter-end="translate-y-0 scale-100 opacity-100"
+                class="w-full max-w-lg overflow-hidden rounded-2xl border border-[#f0b4c4] bg-[linear-gradient(135deg,#fff9fb,#ffedf3)] text-[#2a141d] shadow-[0_28px_90px_rgba(54,24,36,0.35)]"
+            >
+                <div class="border-b border-[#f0b4c4]/70 p-5">
+                    <p class="text-[0.64rem] font-semibold uppercase tracking-[0.18em] text-[#0f7a46]">{{ __('Manual Override') }}</p>
+                    <h2 id="fully-onboarded-dialog-title" class="mt-2 font-display text-2xl text-[#2a141d]">{{ __('Mark model as fully onboarded?') }}</h2>
+                    <p class="mt-2 text-sm leading-6 text-[#60424d]">
+                        {{ __('This will mark the model as fully onboarded for admin lists and email campaign audiences. Verification and Discord history will stay visible as separate steps.') }}
+                    </p>
+                </div>
+
+                <div class="space-y-4 p-5">
+                    <div class="rounded-xl border border-[#b8e6c8] bg-[#e7f8ec] px-4 py-3">
+                        <p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-[#0f7a46]">{{ __('Model') }}</p>
+                        <p class="mt-1 font-semibold text-[#2a141d]" x-text="fullyOnboardedDialog.name || '{{ __('Selected model') }}'"></p>
+                        <p class="mt-0.5 break-all text-xs text-[#486454]" x-text="fullyOnboardedDialog.email"></p>
+                    </div>
+
+                    <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                        <button
+                            type="button"
+                            class="pd-btn-secondary h-11 justify-center"
+                            :disabled="fullyOnboardedDialog.submitting"
+                            @click="closeFullyOnboardedDialog()"
+                        >
+                            {{ __('Cancel') }}
+                        </button>
+                        <button
+                            type="button"
+                            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#16834d] bg-[#17a65d] px-5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-white transition hover:border-[#0f6b3e] hover:bg-[#14884e] disabled:cursor-wait disabled:opacity-60"
+                            :disabled="fullyOnboardedDialog.submitting"
+                            @click="confirmFullyOnboarded()"
+                        >
+                            <svg x-show="fullyOnboardedDialog.submitting" x-cloak class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle class="opacity-25" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M21 12a9 9 0 0 1-9 9v-3a6 6 0 0 0 6-6h3Z"></path>
+                            </svg>
+                            <span x-text="fullyOnboardedDialog.submitting ? '{{ __('Saving') }}' : '{{ __('Mark Fully Onboarded') }}'"></span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
         {{-- Inline onboarding form editor --}}
         <div
             x-show="formOpen"
@@ -1294,7 +1384,7 @@
 
                                         {{-- Discord Community step --}}
                                         @if ($profile?->isFullyOnboarded())
-                                            <span class="rounded-full bg-green-400/10 px-2 py-0.5 text-[0.62rem] text-green-300">Active ✓</span>
+                                            <span class="rounded-full bg-green-400/10 px-2 py-0.5 text-[0.62rem] text-green-300">Fully Onboarded</span>
                                         @elseif ($profile?->community_invited_at)
                                             <span class="rounded-full bg-green-400/[0.07] px-2 py-0.5 text-[0.62rem] text-green-400/60">Discord invited</span>
                                         @else
@@ -1313,6 +1403,23 @@
                                 </td>
                                 <td class="align-middle text-right" @click.stop>
                                     <div class="flex items-center justify-end gap-2">
+                                        @if ($profile?->isFullyOnboarded())
+                                            <span class="rounded-lg border border-green-400/15 bg-green-400/10 px-2.5 py-1 text-[0.7rem] font-medium text-green-300">
+                                                Fully Onboarded
+                                            </span>
+                                        @elseif ($profile)
+                                            <form action="{{ route('admin.onboarding.fully-onboarded', $profile) }}" method="POST" class="inline-flex">
+                                                @csrf
+                                                <input type="hidden" name="manual_fully_onboarded_note" value="{{ __('Marked as fully onboarded from the onboarding list.') }}">
+                                                <button
+                                                    type="submit"
+                                                    class="rounded-lg border border-green-400/15 bg-green-400/10 px-2.5 py-1 text-[0.7rem] font-medium text-green-300 transition hover:bg-green-400/20"
+                                                    @click.prevent="openFullyOnboardedDialog($event, {{ Js::from(['name' => $model->name, 'email' => $model->email]) }})"
+                                                >
+                                                    Mark Fully Onboarded
+                                                </button>
+                                            </form>
+                                        @endif
                                         <span class="inline-flex items-center gap-1 text-[0.72rem] text-boss-ivory/30">
                                             Quick view
                                         </span>

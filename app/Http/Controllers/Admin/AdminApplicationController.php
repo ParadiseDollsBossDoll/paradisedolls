@@ -34,7 +34,7 @@ class AdminApplicationController extends Controller
             ->latest()
             ->with([
                 'reviewer:id,name',
-                'profile:id,model_application_id,information_submitted_at,verification_status',
+                'profile:id,model_application_id,information_submitted_at,verification_status,community_role_assigned_at,manual_fully_onboarded_at',
                 'referral.referrer:id,name,email',
                 'user:id,name,email,role,last_login_at',
             ])
