@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Services\AdminActivityNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
 
@@ -29,13 +28,24 @@ class ChatterApplicationController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => [
                 'required', 'string', 'lowercase', 'email:rfc', 'max:255',
-                Rule::unique(User::class, 'email'),
-                Rule::unique(ChatterRequest::class, 'email'),
             ],
             'timezone' => ['required', 'timezone'],
         ]);
 
-        $chatterRequest = ChatterRequest::create($validated);
+        $genericStatus = __('Your request was received. An administrator will contact you if access is available.');
+
+        if (User::query()->where('email', $validated['email'])->exists()) {
+            return redirect()->route('chatter.apply')->with('status', $genericStatus);
+        }
+
+        $chatterRequest = ChatterRequest::query()->firstOrCreate(
+            ['email' => $validated['email']],
+            ['name' => $validated['name'], 'timezone' => $validated['timezone']],
+        );
+
+        if (! $chatterRequest->wasRecentlyCreated) {
+            return redirect()->route('chatter.apply')->with('status', $genericStatus);
+        }
 
         $notifier->notify(
             title: __('New chatter account request'),
@@ -47,7 +57,7 @@ class ChatterApplicationController extends Controller
             actionLabel: __('Review chatter request'),
         );
 
-        return redirect()->route('chatter.apply')->with('status', __('Your request was sent. An administrator will contact you after it has been reviewed.'));
+        return redirect()->route('chatter.apply')->with('status', $genericStatus);
     }
 
     /** @return array<string, string> */

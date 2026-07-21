@@ -92,7 +92,7 @@
         ],
         [
             'route'  => 'admin.chatter-hours.index',
-            'label'  => __('Chatter Hours'),
+            'label'  => __('Chatters'),
             'active' => request()->routeIs('admin.chatter-hours.*'),
             'icon'   => 'chatter-hours',
             'count'  => $chatterActionCount,

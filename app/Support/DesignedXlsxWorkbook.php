@@ -20,7 +20,7 @@ class DesignedXlsxWorkbook
             throw new RuntimeException('Unable to create temporary XLSX file.');
         }
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
 
         if ($zip->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             @unlink($path);
@@ -171,16 +171,22 @@ class DesignedXlsxWorkbook
             ? '<pane ySplit="'.$freezeRow.'" topLeftCell="A'.($freezeRow + 1).'" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A1" sqref="A1"/>'
             : '<selection activeCell="A1" sqref="A1"/>';
 
+        $pageMargins = $sheet['pageMargins'] ?? ['left' => 0.75, 'right' => 0.75, 'top' => 1, 'bottom' => 1, 'header' => 0.5, 'footer' => 0.5];
+        $pageSetupXml = isset($sheet['pageSetup'])
+            ? '<pageSetup orientation="'.$this->xml((string) ($sheet['pageSetup']['orientation'] ?? 'portrait')).'" paperSize="'.((int) ($sheet['pageSetup']['paperSize'] ?? 9)).'" fitToWidth="'.((int) ($sheet['pageSetup']['fitToWidth'] ?? 1)).'" fitToHeight="'.((int) ($sheet['pageSetup']['fitToHeight'] ?? 0)).'"/>'
+            : '';
+
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             .'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-            .'<sheetPr><outlinePr summaryBelow="1" summaryRight="1"/><pageSetUpPr/></sheetPr>'
+            .'<sheetPr><outlinePr summaryBelow="1" summaryRight="1"/><pageSetUpPr'.($pageSetupXml !== '' ? ' fitToPage="1"' : '').'/></sheetPr>'
             .'<dimension ref="'.$dimension.'"/>'
             .'<sheetViews><sheetView showGridLines="0" workbookViewId="0">'.$paneXml.'</sheetView></sheetViews>'
             .'<sheetFormatPr baseColWidth="8" defaultRowHeight="15"/>'
             .($colsXml !== '' ? '<cols>'.$colsXml.'</cols>' : '')
             .'<sheetData>'.$rowsXml.'</sheetData>'
             .$mergeXml
-            .'<pageMargins left="0.75" right="0.75" top="1" bottom="1" header="0.5" footer="0.5"/>'
+            .'<pageMargins left="'.$pageMargins['left'].'" right="'.$pageMargins['right'].'" top="'.$pageMargins['top'].'" bottom="'.$pageMargins['bottom'].'" header="'.$pageMargins['header'].'" footer="'.$pageMargins['footer'].'"/>'
+            .$pageSetupXml
             .'</worksheet>';
     }
 
@@ -206,6 +212,12 @@ class DesignedXlsxWorkbook
         $style = isset($cell['style']) ? ' s="'.((int) $cell['style']).'"' : '';
         $value = $cell['value'] ?? null;
 
+        if (isset($cell['formula'])) {
+            $cached = is_int($value) || is_float($value) ? $value : 0;
+
+            return '<c r="'.$reference.'"'.$style.' t="n"><f>'.$this->xml((string) $cell['formula']).'</f><v>'.$cached.'</v></c>';
+        }
+
         if ($value === null || $value === '') {
             return '<c r="'.$reference.'"'.$style.'/>';
         }
@@ -215,7 +227,7 @@ class DesignedXlsxWorkbook
         }
 
         $value = $this->cleanString((string) $value);
-        $space = preg_match('/^\s|\s$/u', $value) ? ' xml:space="preserve"' : '';
+        $space = preg_match('/^\s|\s$/u', $value) || str_contains($value, "\n") ? ' xml:space="preserve"' : '';
 
         return '<c r="'.$reference.'"'.$style.' t="inlineStr"><is><t'.$space.'>'.$this->xml($value).'</t></is></c>';
     }
@@ -224,6 +236,13 @@ class DesignedXlsxWorkbook
     {
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             .'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            .'<numFmts count="5">'
+            .'<numFmt numFmtId="200" formatCode="[h]:mm:ss"/>'
+            .'<numFmt numFmtId="201" formatCode="&quot;$&quot;#,##0.00"/>'
+            .'<numFmt numFmtId="202" formatCode="&quot;&#8369;&quot;#,##0.00"/>'
+            .'<numFmt numFmtId="203" formatCode="0.0000"/>'
+            .'<numFmt numFmtId="204" formatCode="dddd, mmmm d, yyyy&quot; at &quot;h:mm AM/PM"/>'
+            .'</numFmts>'
             .$this->fontsXml()
             .$this->fillsXml()
             .$this->bordersXml()
@@ -251,6 +270,13 @@ class DesignedXlsxWorkbook
             ['Arial', 14, '2E7D32', true, false],
             ['Arial', 14, '6A1B9A', true, false],
             ['Arial', 14, 'E65100', true, false],
+            ['Georgia', 23, 'FFFFFF', true, false],
+            ['Arial', 9, '111827', true, false],
+            ['Arial', 10, 'FFFFFF', true, false],
+            ['Arial', 18, 'FFFFFF', true, false],
+            ['Georgia', 8, '111827', true, false],
+            ['Arial', 10, '111827', true, false],
+            ['Arial', 10, '27313A', false, false],
         ];
 
         return '<fonts count="'.count($fonts).'">'
@@ -284,6 +310,11 @@ class DesignedXlsxWorkbook
             'E8F5E9',
             'FFEBEE',
             'FFF3E0',
+            '0C3E63',
+            '343E76',
+            'F2F7FA',
+            '34735D',
+            'DDE9E3',
         ];
 
         return '<fills count="'.count($fills).'">'
@@ -303,7 +334,7 @@ class DesignedXlsxWorkbook
 
     private function bordersXml(): string
     {
-        return '<borders count="2">'
+        return '<borders count="6">'
             .'<border><left/><right/><top/><bottom/><diagonal/></border>'
             .'<border>'
             .'<left style="thin"><color rgb="00DDBBCC"/></left>'
@@ -311,6 +342,10 @@ class DesignedXlsxWorkbook
             .'<top style="thin"><color rgb="00DDBBCC"/></top>'
             .'<bottom style="thin"><color rgb="00DDBBCC"/></bottom>'
             .'</border>'
+            .'<border><left/><right/><top/><bottom style="thin"><color rgb="00D8E0E5"/></bottom><diagonal/></border>'
+            .'<border><left style="medium"><color rgb="00343E76"/></left><right style="medium"><color rgb="00343E76"/></right><top style="medium"><color rgb="00343E76"/></top><bottom style="medium"><color rgb="00343E76"/></bottom><diagonal/></border>'
+            .'<border><left style="medium"><color rgb="0034735D"/></left><right style="medium"><color rgb="0034735D"/></right><top style="medium"><color rgb="0034735D"/></top><bottom style="medium"><color rgb="0034735D"/></bottom><diagonal/></border>'
+            .'<border><left/><right/><top style="medium"><color rgb="000C3E63"/></top><bottom/><diagonal/></border>'
             .'</borders>';
     }
 
@@ -341,13 +376,44 @@ class DesignedXlsxWorkbook
             [13, 10, 0, 'center', true],
             [3, 9, 0, 'left', false],
             [9, 14, 1, 'left', true],
+            [14, 16, 0, 'center', true, 0],
+            [15, 0, 0, 'right', false, 0],
+            [16, 17, 3, 'center', true, 0],
+            [20, 18, 2, 'center', true, 0],
+            [20, 8, 2, 'center', true, 0],
+            [20, 18, 2, 'center', true, 204],
+            [20, 8, 2, 'center', true, 204],
+            [20, 18, 2, 'center', true, 200],
+            [20, 8, 2, 'center', true, 200],
+            [16, 16, 0, 'right', true, 0],
+            [16, 16, 0, 'center', true, 200],
+            [17, 19, 0, 'center', true, 0],
+            [18, 0, 0, 'center', true, 0],
+            [15, 0, 0, 'right', true, 0],
+            [19, 0, 0, 'right', false, 203],
+            [16, 19, 4, 'center', true, 0],
+            [20, 18, 2, 'left', true, 0],
+            [20, 8, 2, 'left', true, 0],
+            [20, 18, 2, 'center', true, 200],
+            [20, 8, 2, 'center', true, 200],
+            [20, 18, 2, 'center', true, 201],
+            [20, 8, 2, 'center', true, 201],
+            [20, 18, 2, 'center', true, 202],
+            [20, 8, 2, 'center', true, 202],
+            [19, 20, 4, 'left', true, 0],
+            [19, 20, 4, 'center', true, 200],
+            [19, 20, 4, 'center', true, 201],
+            [19, 20, 4, 'center', true, 202],
+            [20, 18, 2, 'center', true, 201],
+            [20, 8, 2, 'center', true, 201],
         ];
 
         return '<cellXfs count="'.count($formats).'">'
             .collect($formats)->map(function (array $format): string {
                 [$fontId, $fillId, $borderId, $horizontal, $wrap] = $format;
+                $numFmtId = $format[5] ?? 0;
 
-                return '<xf numFmtId="0" fontId="'.$fontId.'" fillId="'.$fillId.'" borderId="'.$borderId.'" applyAlignment="1" xfId="0">'
+                return '<xf numFmtId="'.$numFmtId.'" fontId="'.$fontId.'" fillId="'.$fillId.'" borderId="'.$borderId.'" applyNumberFormat="1" applyAlignment="1" xfId="0">'
                     .'<alignment horizontal="'.$horizontal.'" vertical="center"'.($wrap ? ' wrapText="1"' : '').'/>'
                     .'</xf>';
             })->implode('')

@@ -6,15 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\ChatterShift;
 use App\Models\ChatterTimesheet;
 use App\Services\ChatterPayrollService;
+use App\Support\ChatterCurrency;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ChatterDashboardController extends Controller
 {
-    public function __invoke(Request $request, ChatterPayrollService $payroll): View
+    public function __invoke(Request $request, ChatterPayrollService $payroll, ChatterCurrency $currency): View
     {
-        $user = $request->user()->load('chatterProfile');
+        $user = $request->user()->load(['chatterProfile', 'chatterRoleAssignments.workRole']);
         $tz = $user->chatterProfile->timezone ?: config('app.timezone', ChatterPayrollService::REPORTING_TIMEZONE);
         $nowUtc = CarbonImmutable::now('UTC');
         $todayStart = CarbonImmutable::now($tz)->startOfDay();
@@ -26,8 +27,12 @@ class ChatterDashboardController extends Controller
         $openShift = ChatterShift::query()
             ->where('user_id', $user->id)
             ->whereNull('clocked_out_at')
-            ->with('breaks')
+            ->with(['breaks', 'workRole'])
             ->first();
+        $availableWorkRoles = $user->chatterRoleAssignments
+            ->filter(fn ($assignment) => $assignment->is_active && $assignment->workRole?->is_active)
+            ->sortBy(fn ($assignment) => $assignment->workRole->sort_order)
+            ->values();
         $activeBreak = $openShift?->breaks->firstWhere('ended_at', null);
         $activeWorkedSeconds = $openShift ? $payroll->shiftWorkedSeconds($openShift, $nowUtc) : 0;
         $activeTimerRunning = (bool) $openShift && ! $activeBreak;
@@ -37,7 +42,7 @@ class ChatterDashboardController extends Controller
             ->where('user_id', $user->id)
             ->where('clocked_in_at', '<', $periodEndUtc)
             ->where(fn ($query) => $query->whereNull('clocked_out_at')->orWhere('clocked_out_at', '>', $periodStartUtc))
-            ->with('breaks')
+            ->with(['breaks', 'workRole'])
             ->latest('clocked_in_at')
             ->get()
             ->map(function (ChatterShift $shift) use ($payroll, $periodStartUtc, $periodEndUtc) {
@@ -52,6 +57,8 @@ class ChatterDashboardController extends Controller
             ->where('user_id', $user->id)
             ->latest('period_start')
             ->paginate(8);
+        $usdToPhpRate = $currency->rateForTimesheet($currentTimesheet);
+        $currentPayPhpCentavos = $currency->phpCentavosForTimesheet($currentTimesheet);
 
         return view('chatter.dashboard', compact(
             'user',
@@ -63,8 +70,12 @@ class ChatterDashboardController extends Controller
             'activeBreak',
             'activeWorkedSeconds',
             'activeTimerRunning',
+            'availableWorkRoles',
             'currentShifts',
-            'timesheets'
+            'timesheets',
+            'currency',
+            'usdToPhpRate',
+            'currentPayPhpCentavos'
         ));
     }
 }

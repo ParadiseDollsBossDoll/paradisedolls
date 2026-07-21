@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,7 +46,12 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('chatter-applications', function (Request $request) {
-            return Limit::perHour(5)->by($request->ip());
+            $email = Str::lower(trim((string) $request->input('email')));
+
+            return [
+                Limit::perHour(5)->by('chatter-ip|'.$request->ip()),
+                Limit::perDay(3)->by('chatter-email|'.hash('sha256', $email)),
+            ];
         });
 
         RateLimiter::for('chatter-clock', function (Request $request) {

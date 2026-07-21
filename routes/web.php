@@ -185,14 +185,16 @@ Route::middleware(['auth', 'verified'])->prefix('notifications')->name('notifica
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
     Route::get('/chatter-hours', [AdminChatterHoursController::class, 'index'])->name('chatter-hours.index');
-    Route::get('/chatter-hours/export.csv', [AdminChatterHoursExportController::class, 'csv'])->name('chatter-hours.export.csv');
+    Route::get('/chatter-hours/attendance', [AdminChatterHoursController::class, 'attendance'])->name('chatter-hours.attendance');
     Route::get('/chatter-hours/export.xlsx', [AdminChatterHoursExportController::class, 'xlsx'])->name('chatter-hours.export.xlsx');
     Route::get('/chatter-hours/timesheets/{timesheet}', [AdminChatterHoursController::class, 'showTimesheet'])->name('chatter-hours.timesheets.show');
     Route::middleware('throttle:admin-actions')->group(function () {
         Route::post('/chatter-hours/chatters', [AdminChatterHoursController::class, 'storeChatter'])->name('chatter-hours.chatters.store');
         Route::post('/chatter-hours/chatters/{chatter}/invitation', [AdminChatterHoursController::class, 'resendInvitation'])->name('chatter-hours.chatters.invitation');
         Route::patch('/chatter-hours/chatters/{chatter}/status', [AdminChatterHoursController::class, 'updateStatus'])->name('chatter-hours.chatters.status');
+        Route::delete('/chatter-hours/chatters/{chatter}', [AdminChatterHoursController::class, 'destroyChatter'])->name('chatter-hours.chatters.destroy');
         Route::post('/chatter-hours/chatters/{chatter}/pay-rates', [AdminChatterHoursController::class, 'storePayRate'])->name('chatter-hours.chatters.pay-rates');
+        Route::post('/chatter-hours/chatters/{chatter}/roles', [AdminChatterHoursController::class, 'storeRoleAssignment'])->name('chatter-hours.chatters.roles');
         Route::post('/chatter-hours/requests/{chatterRequest}/approve', [AdminChatterHoursController::class, 'approveRequest'])->name('chatter-hours.requests.approve');
         Route::post('/chatter-hours/requests/{chatterRequest}/reject', [AdminChatterHoursController::class, 'rejectRequest'])->name('chatter-hours.requests.reject');
         Route::patch('/chatter-hours/timesheets/{timesheet}/shifts/{shift}', [AdminChatterHoursController::class, 'updateShift'])->name('chatter-hours.shifts.update');

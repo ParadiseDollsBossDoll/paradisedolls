@@ -6,6 +6,7 @@ use App\Models\Lesson;
 use App\Models\LessonContentBlock;
 use App\Services\CourseCommunityService;
 use App\Services\EmailCampaignDispatcher;
+use App\Services\UsdPhpExchangeRateService;
 use App\Support\SqlDumpInsertParser;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Arr;
@@ -37,6 +38,24 @@ Artisan::command('email-campaigns:dispatch', function () {
 
 Schedule::command('email-campaigns:dispatch')
     ->everyMinute()
+    ->withoutOverlapping();
+
+Artisan::command('chatter-currency:refresh', function () {
+    $details = app(UsdPhpExchangeRateService::class)->refresh();
+
+    if ($details['is_fallback'] || $details['is_stale']) {
+        $this->components->warn('The automatic USD/PHP refresh failed. Payroll is still using the protected last-known rate.');
+
+        return 1;
+    }
+
+    $this->components->info("USD/PHP reference rate refreshed: {$details['rate']} (rate date {$details['rate_date']}).");
+
+    return 0;
+})->purpose('Refresh the automatic USD to PHP payroll reference rate');
+
+Schedule::command('chatter-currency:refresh')
+    ->everySixHours()
     ->withoutOverlapping();
 
 Artisan::command('courses:import-from-sql {path : SQL dump path} {--slug=boss-doll-blueprint-the-ultimate-multi-streaming-online-brand-mastery-course : Course slug to import} {--dry-run : Parse only; do not write to the database} {--force : Skip production confirmation}', function () {

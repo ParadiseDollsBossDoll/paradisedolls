@@ -11,7 +11,10 @@ class ChatterShift extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'active_user_id', 'clocked_in_at', 'clocked_out_at', 'timezone', 'note'];
+    protected $fillable = [
+        'user_id', 'active_user_id', 'chatter_work_role_id', 'hourly_rate_pence',
+        'clocked_in_at', 'clocked_out_at', 'timezone', 'note',
+    ];
 
     protected function casts(): array
     {
@@ -21,6 +24,11 @@ class ChatterShift extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function workRole(): BelongsTo
+    {
+        return $this->belongsTo(ChatterWorkRole::class, 'chatter_work_role_id');
     }
 
     public function breaks(): HasMany

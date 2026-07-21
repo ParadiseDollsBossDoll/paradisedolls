@@ -51,8 +51,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('active_user_id')->nullable()->unique()->constrained('users')->cascadeOnDelete();
-            $table->timestamp('clocked_in_at')->index();
-            $table->timestamp('clocked_out_at')->nullable()->index();
+            $table->dateTime('clocked_in_at')->index();
+            $table->dateTime('clocked_out_at')->nullable()->index();
             $table->string('timezone', 64)->default('Europe/London');
             $table->text('note')->nullable();
             $table->timestamps();
@@ -63,8 +63,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('chatter_shift_id')->constrained()->cascadeOnDelete();
             $table->foreignId('active_shift_id')->nullable()->unique()->constrained('chatter_shifts')->cascadeOnDelete();
-            $table->timestamp('started_at');
-            $table->timestamp('ended_at')->nullable();
+            $table->dateTime('started_at');
+            $table->dateTime('ended_at')->nullable();
             $table->timestamps();
             $table->index(['chatter_shift_id', 'started_at']);
         });

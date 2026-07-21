@@ -6,6 +6,7 @@ use App\Models\ChatterPayRate;
 use App\Models\ChatterShift;
 use App\Models\ChatterTimesheet;
 use App\Models\User;
+use App\Support\ChatterCurrency;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
@@ -15,6 +16,10 @@ class ChatterPayrollService
     public const REPORTING_TIMEZONE = 'Europe/London';
     private const BASIS_POINTS = 10000;
     private const PAY_DENOMINATOR = 600000;
+
+    public function __construct(private readonly ChatterCurrency $currency)
+    {
+    }
 
     /** @return array{start: CarbonImmutable, end: CarbonImmutable} */
     public function periodFor(CarbonInterface $moment): array
@@ -92,14 +97,14 @@ class ChatterPayrollService
         $startUtc = CarbonImmutable::instance($start)->utc()->startOfMinute();
         $endUtc = CarbonImmutable::instance($end)->utc()->startOfMinute();
         $nowUtc = CarbonImmutable::now('UTC')->startOfMinute();
-        $paidMinutes = 0;
+        $workedMinutes = 0;
         $breakMinutes = 0;
 
         $shifts = ChatterShift::query()
             ->where('user_id', $user->id)
             ->where('clocked_in_at', '<', $endUtc)
             ->where(fn ($query) => $query->whereNull('clocked_out_at')->orWhere('clocked_out_at', '>', $startUtc))
-            ->with('breaks')
+            ->with(['breaks', 'workRole'])
             ->get();
 
         foreach ($shifts as $shift) {
@@ -109,18 +114,19 @@ class ChatterPayrollService
                 : $nowUtc;
             $shiftEnd = $rawEnd->min($endUtc);
 
-            for ($cursor = $shiftStart; $cursor->lessThan($shiftEnd); $cursor = $cursor->addMinute()) {
-                if ($this->minuteIsBreak($cursor, $shift->breaks, $shiftEnd)) {
-                    $breakMinutes++;
-                } else {
-                    $paidMinutes++;
-                }
+            if ($shiftEnd->lessThanOrEqualTo($shiftStart)) {
+                continue;
             }
+
+            $shiftBreakMinutes = $this->breakMinutesWithin($shift->breaks, $shiftStart, $shiftEnd);
+            $elapsedMinutes = (int) $shiftStart->diffInMinutes($shiftEnd);
+            $breakMinutes += $shiftBreakMinutes;
+            $workedMinutes += max(0, $elapsedMinutes - $shiftBreakMinutes);
         }
 
         return [
-            'worked_minutes' => $paidMinutes,
-            'paid_minutes' => $paidMinutes,
+            'worked_minutes' => $workedMinutes,
+            'paid_minutes' => $workedMinutes,
             'break_minutes' => $breakMinutes,
         ];
     }
@@ -141,17 +147,10 @@ class ChatterPayrollService
             return ['worked_minutes' => 0, 'paid_minutes' => 0, 'break_minutes' => 0];
         }
 
-        $paidMinutes = 0;
-        $breakMinutes = 0;
         $shift->loadMissing('breaks');
-
-        for ($cursor = $shiftStart; $cursor->lessThan($shiftEnd); $cursor = $cursor->addMinute()) {
-            if ($this->minuteIsBreak($cursor, $shift->breaks, $shiftEnd)) {
-                $breakMinutes++;
-            } else {
-                $paidMinutes++;
-            }
-        }
+        $breakMinutes = $this->breakMinutesWithin($shift->breaks, $shiftStart, $shiftEnd);
+        $elapsedMinutes = (int) $shiftStart->diffInMinutes($shiftEnd);
+        $paidMinutes = max(0, $elapsedMinutes - $breakMinutes);
 
         return [
             'worked_minutes' => $paidMinutes,
@@ -170,16 +169,34 @@ class ChatterPayrollService
             return 0;
         }
 
-        $breakSeconds = 0;
+        $intervals = $shift->breaks
+            ->map(function ($break) use ($start, $end): ?array {
+                $breakStart = CarbonImmutable::instance($break->started_at)->utc()->max($start);
+                $breakEnd = CarbonImmutable::instance($break->ended_at ?: $end)->utc()->min($end);
 
-        foreach ($shift->breaks as $break) {
-            $breakStart = CarbonImmutable::instance($break->started_at)->utc()->max($start);
-            $breakEnd = CarbonImmutable::instance($break->ended_at ?: $end)->utc()->min($end);
+                return $breakEnd->greaterThan($breakStart) ? [$breakStart, $breakEnd] : null;
+            })
+            ->filter()
+            ->sortBy(fn (array $interval) => $interval[0]->getTimestamp())
+            ->values();
 
-            if ($breakEnd->greaterThan($breakStart)) {
-                $breakSeconds += (int) $breakStart->diffInSeconds($breakEnd);
+        $merged = [];
+        foreach ($intervals as [$intervalStart, $intervalEnd]) {
+            $lastIndex = count($merged) - 1;
+            if ($lastIndex >= 0 && $intervalStart->lessThanOrEqualTo($merged[$lastIndex][1])) {
+                if ($intervalEnd->greaterThan($merged[$lastIndex][1])) {
+                    $merged[$lastIndex][1] = $intervalEnd;
+                }
+                continue;
             }
+
+            $merged[] = [$intervalStart, $intervalEnd];
         }
+
+        $breakSeconds = array_sum(array_map(
+            fn (array $interval): int => (int) $interval[0]->diffInSeconds($interval[1]),
+            $merged,
+        ));
 
         return max(0, (int) $start->diffInSeconds($end) - $breakSeconds);
     }
@@ -203,7 +220,7 @@ class ChatterPayrollService
             ->where(function ($query) use ($startUtc) {
                 $query->whereNull('clocked_out_at')->orWhere('clocked_out_at', '>', $startUtc);
             })
-            ->with('breaks')
+            ->with(['breaks', 'workRole'])
             ->orderBy('clocked_in_at')
             ->get();
 
@@ -232,7 +249,17 @@ class ChatterPayrollService
                 continue;
             }
 
-            $row = ['shift_id' => $shift->id, 'started_at' => $shiftStart->toIso8601String(), 'ended_at' => $shiftEnd->toIso8601String(), 'paid_minutes' => 0, 'break_minutes' => 0, 'pay_pence' => 0];
+            $row = [
+                'shift_id' => $shift->id,
+                'work_role_id' => $shift->chatter_work_role_id,
+                'work_role' => $shift->workRole?->name ?? 'Chatter',
+                'hourly_rate_pence' => $shift->hourly_rate_pence,
+                'started_at' => $shiftStart->toIso8601String(),
+                'ended_at' => $shiftEnd->toIso8601String(),
+                'paid_minutes' => 0,
+                'break_minutes' => 0,
+                'pay_pence' => 0,
+            ];
             $rowPayNumerator = 0;
             $cursor = $shiftStart;
 
@@ -246,6 +273,7 @@ class ChatterPayrollService
 
                 $local = $cursor->timezone(self::REPORTING_TIMEZONE);
                 $rate = $this->rateForDate($rates, $local);
+                $baseRatePence = $shift->hourly_rate_pence ?? $rate?->base_rate_pence;
                 $paidMinutes++;
                 $row['paid_minutes']++;
 
@@ -263,7 +291,7 @@ class ChatterPayrollService
                     $overtimeMinutes++;
                 }
 
-                if ($rate) {
+                if ($rate && $baseRatePence !== null) {
                     $premiumBps = max(
                         self::BASIS_POINTS,
                         $night ? $rate->night_premium_bps : self::BASIS_POINTS,
@@ -272,7 +300,7 @@ class ChatterPayrollService
                     $combinedBps = self::BASIS_POINTS
                         + ($premiumBps - self::BASIS_POINTS)
                         + ($overtime ? $rate->overtime_multiplier_bps - self::BASIS_POINTS : 0);
-                    $minuteNumerator = $rate->base_rate_pence * $combinedBps;
+                    $minuteNumerator = $baseRatePence * $combinedBps;
                     $payNumerator += $minuteNumerator;
                     $rowPayNumerator += $minuteNumerator;
                 }
@@ -286,6 +314,9 @@ class ChatterPayrollService
 
         $adjustmentPence = $timesheet?->adjustments->sum('amount_pence') ?? 0;
         $grossPayPence = $this->roundPay($payNumerator) + $adjustmentPence;
+        $currencyDetails = $this->currency->usdToPhpDetails();
+        $usdToPhpRate = $currencyDetails['rate'];
+        $grossPayPhpCentavos = $this->currency->phpCentavosFromUsdCents($grossPayPence, $usdToPhpRate);
 
         return [
             'ordinary_minutes' => $paidMinutes,
@@ -296,7 +327,13 @@ class ChatterPayrollService
             'adjustment_pence' => $adjustmentPence,
             'gross_pay_pence' => $grossPayPence,
             'snapshot' => [
-                'currency' => 'GBP',
+                'currency' => 'USD',
+                'base_currency_minor_unit' => 'cent',
+                'usd_to_php_rate' => $usdToPhpRate,
+                'usd_to_php_rate_date' => $currencyDetails['rate_date'],
+                'usd_to_php_rate_fetched_at' => $currencyDetails['fetched_at'],
+                'usd_to_php_rate_provider' => $currencyDetails['provider'],
+                'gross_pay_php_centavos' => $grossPayPhpCentavos,
                 'reporting_timezone' => self::REPORTING_TIMEZONE,
                 'period_start' => $periodStart->toDateString(),
                 'period_end' => $periodEnd->toDateString(),
@@ -331,6 +368,44 @@ class ChatterPayrollService
         }
 
         return false;
+    }
+
+    private function breakMinutesWithin(Collection $breaks, CarbonImmutable $start, CarbonImmutable $end): int
+    {
+        $intervals = $breaks
+            ->map(function ($break) use ($start, $end): ?array {
+                $breakStart = CarbonImmutable::instance($break->started_at)->utc()->startOfMinute()->max($start);
+                $breakEnd = ($break->ended_at
+                    ? CarbonImmutable::instance($break->ended_at)->utc()->startOfMinute()
+                    : $end)->min($end);
+
+                return $breakEnd->greaterThan($breakStart) ? [$breakStart, $breakEnd] : null;
+            })
+            ->filter()
+            ->sortBy(fn (array $interval) => $interval[0]->getTimestamp())
+            ->values();
+
+        if ($intervals->isEmpty()) {
+            return 0;
+        }
+
+        $merged = [];
+        foreach ($intervals as [$intervalStart, $intervalEnd]) {
+            $lastIndex = count($merged) - 1;
+            if ($lastIndex >= 0 && $intervalStart->lessThanOrEqualTo($merged[$lastIndex][1])) {
+                if ($intervalEnd->greaterThan($merged[$lastIndex][1])) {
+                    $merged[$lastIndex][1] = $intervalEnd;
+                }
+                continue;
+            }
+
+            $merged[] = [$intervalStart, $intervalEnd];
+        }
+
+        return array_sum(array_map(
+            fn (array $interval): int => (int) $interval[0]->diffInMinutes($interval[1]),
+            $merged,
+        ));
     }
 
     private function rateForDate(Collection $rates, CarbonImmutable $local): ?ChatterPayRate

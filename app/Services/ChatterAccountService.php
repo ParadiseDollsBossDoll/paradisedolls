@@ -6,12 +6,16 @@ use App\Mail\ChatterInvitationMail;
 use App\Models\ChatterPayRate;
 use App\Models\ChatterProfile;
 use App\Models\ChatterRequest;
+use App\Models\ChatterRoleAssignment;
+use App\Models\ChatterWorkRole;
 use App\Models\User;
 use App\Notifications\SystemNotification;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ChatterAccountService
@@ -48,6 +52,18 @@ class ChatterAccountService
                 'created_by' => $admin->id,
             ]);
 
+            $chatterRole = ChatterWorkRole::query()->firstOrCreate(
+                ['slug' => 'chatter'],
+                ['name' => 'Chatter', 'is_active' => true, 'sort_order' => 10],
+            );
+            ChatterRoleAssignment::create([
+                'user_id' => $user->id,
+                'chatter_work_role_id' => $chatterRole->id,
+                'hourly_rate_pence' => $data['base_rate_pence'],
+                'is_active' => true,
+                'created_by' => $admin->id,
+            ]);
+
             if ($request) {
                 $request->forceFill([
                     'status' => ChatterRequest::STATUS_APPROVED,
@@ -76,5 +92,29 @@ class ChatterAccountService
             actionUrl: route('login', absolute: false),
             category: 'chatter_invitation',
         ));
+    }
+
+    public function delete(User $user): string
+    {
+        if (! $user->isChatter()) {
+            throw new AuthorizationException('Only chatter accounts can be deleted from chatter management.');
+        }
+
+        $name = $user->name;
+        $profilePhotoPath = $user->profile_photo_path;
+
+        DB::transaction(function () use ($user): void {
+            ChatterRequest::query()->where('email', Str::lower($user->email))->delete();
+            DB::table('password_reset_tokens')->where('email', Str::lower($user->email))->delete();
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+            $user->notifications()->delete();
+            $user->delete();
+        });
+
+        if (filled($profilePhotoPath)) {
+            Storage::disk('public')->delete($profilePhotoPath);
+        }
+
+        return $name;
     }
 }

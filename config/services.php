@@ -75,4 +75,13 @@ return [
         'timezone' => env('EMAIL_CAMPAIGN_TIMEZONE', 'Europe/London'),
     ],
 
+    'chatter_payroll' => [
+        'exchange_rate_enabled' => env('CHATTER_EXCHANGE_RATE_ENABLED', true),
+        'exchange_rate_url' => env('CHATTER_EXCHANGE_RATE_URL', 'https://api.frankfurter.dev/v1/latest'),
+        'exchange_rate_refresh_hours' => env('CHATTER_EXCHANGE_RATE_REFRESH_HOURS', 6),
+        'exchange_rate_retry_minutes' => env('CHATTER_EXCHANGE_RATE_RETRY_MINUTES', 15),
+        'exchange_rate_timeout' => env('CHATTER_EXCHANGE_RATE_TIMEOUT', 5),
+        'usd_to_php_rate_fallback' => env('CHATTER_USD_TO_PHP_RATE', '61.40'),
+    ],
+
 ];
