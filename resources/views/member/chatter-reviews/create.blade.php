@@ -199,9 +199,9 @@
                                 <legend class="text-[0.82rem] font-semibold text-boss-ivory">{{ $label }}</legend>
                                 <div class="mt-3 flex flex-wrap gap-2">
                                     @for ($rating = 1; $rating <= 5; $rating++)
-                                        <label class="inline-flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-[0.78rem] font-semibold text-boss-ivory/70 has-[:checked]:border-boss-gold has-[:checked]:bg-boss-gold has-[:checked]:text-[#09070A]">
+                                        <label class="pd-rating-option cursor-pointer">
                                             <input type="radio" name="{{ $field }}" value="{{ $rating }}" class="sr-only" @checked((string) old($field) === (string) $rating) required>
-                                            {{ $rating }}
+                                            <span class="pd-rating-pill">{{ $rating }}</span>
                                         </label>
                                     @endfor
                                 </div>

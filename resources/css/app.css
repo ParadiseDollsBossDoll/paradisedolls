@@ -394,6 +394,46 @@ body {
         background: rgba(238, 180, 195, 0.07);
     }
 
+    .pd-rating-pill {
+        display: inline-flex;
+        min-width: 2.25rem;
+        height: 2.25rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        border: 1px solid rgba(238, 180, 195, 0.22);
+        background: rgba(238, 180, 195, 0.06);
+        color: rgba(255, 248, 246, 0.72);
+        font-size: 0.78rem;
+        font-weight: 600;
+        transition:
+            transform 160ms ease,
+            border-color 160ms ease,
+            background 160ms ease,
+            color 160ms ease,
+            box-shadow 160ms ease;
+    }
+
+    .pd-rating-option:hover .pd-rating-pill {
+        border-color: rgba(238, 180, 195, 0.45);
+        background: rgba(238, 180, 195, 0.1);
+        color: var(--pd-ivory);
+    }
+
+    .pd-rating-option input:focus-visible + .pd-rating-pill {
+        box-shadow: 0 0 0 3px rgba(238, 180, 195, 0.18);
+    }
+
+    .pd-rating-option input:checked + .pd-rating-pill {
+        transform: translateY(-1px);
+        border-color: rgba(238, 180, 195, 0.95);
+        background: var(--pd-primary);
+        color: var(--pd-primary-on);
+        box-shadow:
+            inset 0 0 0 1px rgba(255, 248, 246, 0.3),
+            0 10px 22px rgba(181, 82, 122, 0.18);
+    }
+
     /* Native calendar and clock controls used by email campaign scheduling. */
     .pd-campaign-datetime-input {
         min-height: 2.85rem;
@@ -2480,6 +2520,31 @@ html.light-mode .pd-member-onboarding label:has(input[type="radio"]:checked) spa
 html.light-mode .pd-member-onboarding input[type="checkbox"],
 html.light-mode .pd-member-onboarding input[type="radio"] {
     accent-color: #B5527A;
+}
+
+html.light-mode .pd-rating-pill {
+    border-color: rgba(181, 82, 122, 0.18);
+    background: rgba(181, 82, 122, 0.04);
+    color: #3B2930;
+}
+
+html.light-mode .pd-rating-option:hover .pd-rating-pill {
+    border-color: rgba(181, 82, 122, 0.42);
+    background: rgba(181, 82, 122, 0.08);
+    color: #1A0E14;
+}
+
+html.light-mode .pd-rating-option input:focus-visible + .pd-rating-pill {
+    box-shadow: 0 0 0 3px rgba(181, 82, 122, 0.14);
+}
+
+html.light-mode .pd-rating-option input:checked + .pd-rating-pill {
+    border-color: #B5527A;
+    background: #B5527A;
+    color: #FFFFFF;
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+        0 10px 22px rgba(181, 82, 122, 0.18);
 }
 
 /* Shared dropdown indicator: keeps native selects recognizable without changing layout. */
