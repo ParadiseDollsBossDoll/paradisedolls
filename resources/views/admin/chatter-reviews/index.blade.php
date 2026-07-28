@@ -23,20 +23,22 @@
             <div class="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm text-green-200">{{ session('status') }}</div>
         @endif
 
-        <form method="GET" action="{{ route('admin.chatter-reviews.index') }}" class="pd-panel grid gap-3 p-4 md:grid-cols-[1fr_220px_auto] md:items-end">
-            <div>
-                <x-input-label for="search" :value="__('Search reviews')" />
-                <x-text-input id="search" name="search" class="mt-2" :value="$search" placeholder="{{ __('Model, chatter, or email') }}" />
+        <form method="GET" action="{{ route('admin.chatter-reviews.index') }}" class="pd-panel p-4">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-end">
+                <div class="min-w-0 flex-1">
+                    <x-input-label for="search" :value="__('Search reviews')" />
+                    <x-text-input id="search" name="search" class="mt-2 h-11" :value="$search" placeholder="{{ __('Model, chatter, or email') }}" />
+                </div>
+                <div class="lg:w-56">
+                    <x-input-label for="status" :value="__('Status')" />
+                    <select id="status" name="status" class="pd-input mt-2 h-11">
+                        @foreach ($statusOptions as $value => $label)
+                            <option value="{{ $value }}" @selected($status === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <x-primary-button class="h-11 w-full justify-center px-6 lg:w-32">{{ __('Apply') }}</x-primary-button>
             </div>
-            <div>
-                <x-input-label for="status" :value="__('Status')" />
-                <select id="status" name="status" class="pd-input mt-2">
-                    @foreach ($statusOptions as $value => $label)
-                        <option value="{{ $value }}" @selected($status === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <x-primary-button class="justify-center">{{ __('Apply') }}</x-primary-button>
         </form>
 
         <section class="overflow-hidden rounded-sm border border-white/[0.06] bg-[#141419]">
