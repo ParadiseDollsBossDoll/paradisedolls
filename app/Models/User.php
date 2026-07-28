@@ -171,6 +171,11 @@ class User extends Authenticatable
         return $this->hasMany(ChatterTimesheet::class);
     }
 
+    public function chatterPerformanceReviews(): HasMany
+    {
+        return $this->hasMany(ChatterPerformanceReview::class);
+    }
+
     public function chatterPayRates(): HasMany
     {
         return $this->hasMany(ChatterPayRate::class);

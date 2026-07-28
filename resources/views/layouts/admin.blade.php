@@ -98,6 +98,13 @@
             'count'  => $chatterActionCount,
         ],
         [
+            'route'  => 'admin.chatter-reviews.index',
+            'label'  => __('Chatter Reviews'),
+            'active' => request()->routeIs('admin.chatter-reviews.*'),
+            'icon'   => 'stories',
+            'count'  => 0,
+        ],
+        [
             'route'  => 'admin.site-editor.edit',
             'label'  => __('Site Editor'),
             'active' => request()->routeIs('admin.site-editor.*'),

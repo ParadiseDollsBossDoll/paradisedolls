@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminAcademyFileController;
 use App\Http\Controllers\Admin\AdminApplicationController;
 use App\Http\Controllers\Admin\AdminChatterHoursController;
 use App\Http\Controllers\Admin\AdminChatterHoursExportController;
+use App\Http\Controllers\Admin\AdminChatterPerformanceReviewController;
 use App\Http\Controllers\Admin\AdminCourseController;
 use App\Http\Controllers\Admin\AdminCrmExportController;
 use App\Http\Controllers\Admin\AdminDashboardController;
@@ -33,6 +34,7 @@ use App\Http\Controllers\Member\CourseAssetController;
 use App\Http\Controllers\Member\CourseChatController;
 use App\Http\Controllers\Member\LessonProgressController;
 use App\Http\Controllers\Member\MemberCourseController;
+use App\Http\Controllers\Member\MemberChatterPerformanceReviewController;
 use App\Http\Controllers\Member\MemberDashboardController;
 use App\Http\Controllers\Member\MemberOnboardingController;
 use App\Http\Controllers\Member\MemberReferralController;
@@ -111,6 +113,12 @@ Route::middleware(['auth', 'verified', 'model'])->prefix('member')->name('member
     Route::post('/testimonials', [MemberTestimonialController::class, 'store'])
         ->middleware('throttle:profile-updates')
         ->name('testimonials.store');
+    Route::get('/chatter-review', [MemberChatterPerformanceReviewController::class, 'create'])
+        ->middleware('signed')
+        ->name('chatter-reviews.create');
+    Route::post('/chatter-review', [MemberChatterPerformanceReviewController::class, 'store'])
+        ->middleware(['signed', 'throttle:profile-updates'])
+        ->name('chatter-reviews.store');
     Route::get('/referrals', [MemberReferralController::class, 'index'])->name('referrals.index');
     Route::post('/referrals', [MemberReferralController::class, 'store'])
         ->middleware('throttle:profile-updates')
@@ -188,6 +196,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/chatter-hours/attendance', [AdminChatterHoursController::class, 'attendance'])->name('chatter-hours.attendance');
     Route::get('/chatter-hours/export.xlsx', [AdminChatterHoursExportController::class, 'xlsx'])->name('chatter-hours.export.xlsx');
     Route::get('/chatter-hours/timesheets/{timesheet}', [AdminChatterHoursController::class, 'showTimesheet'])->name('chatter-hours.timesheets.show');
+    Route::get('/chatter-reviews', [AdminChatterPerformanceReviewController::class, 'index'])->name('chatter-reviews.index');
+    Route::get('/chatter-reviews/{review}', [AdminChatterPerformanceReviewController::class, 'show'])->name('chatter-reviews.show');
     Route::middleware('throttle:admin-actions')->group(function () {
         Route::post('/chatter-hours/chatters', [AdminChatterHoursController::class, 'storeChatter'])->name('chatter-hours.chatters.store');
         Route::post('/chatter-hours/chatters/{chatter}/invitation', [AdminChatterHoursController::class, 'resendInvitation'])->name('chatter-hours.chatters.invitation');
@@ -202,6 +212,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         Route::post('/chatter-hours/timesheets/{timesheet}/adjustments', [AdminChatterHoursController::class, 'storeAdjustment'])->name('chatter-hours.adjustments.store');
         Route::delete('/chatter-hours/timesheets/{timesheet}/adjustments/{adjustment}', [AdminChatterHoursController::class, 'destroyAdjustment'])->name('chatter-hours.adjustments.destroy');
         Route::post('/chatter-hours/timesheets/{timesheet}/review', [AdminChatterHoursController::class, 'review'])->name('chatter-hours.timesheets.review');
+        Route::patch('/chatter-reviews/{review}', [AdminChatterPerformanceReviewController::class, 'update'])->name('chatter-reviews.update');
     });
     Route::get('/site-editor', [AdminSettingsController::class, 'editMarketingContent'])->name('site-editor.edit');
     Route::put('/site-editor', [AdminSettingsController::class, 'updateMarketingContent'])
