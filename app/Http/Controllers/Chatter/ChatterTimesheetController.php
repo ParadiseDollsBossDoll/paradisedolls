@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Chatter;
 
 use App\Http\Controllers\Controller;
+use App\Models\ChatterModelReview;
 use App\Models\ChatterShift;
 use App\Models\ChatterTimeAudit;
 use App\Models\ChatterTimesheet;
+use App\Models\User;
 use App\Services\AdminActivityNotifier;
 use App\Services\ChatterPayrollService;
 use Carbon\CarbonImmutable;
@@ -35,6 +37,8 @@ class ChatterTimesheetController extends Controller
         if (ChatterShift::query()->where('user_id', $request->user()->id)->whereNull('clocked_out_at')->exists()) {
             throw ValidationException::withMessages(['timesheet' => __('Clock out before submitting a timesheet.')]);
         }
+
+        $this->ensureWeeklyModelReviewsComplete($request, $timesheet);
 
         $timesheet = $payroll->refresh($timesheet);
         $timesheet->forceFill([
@@ -85,6 +89,36 @@ class ChatterTimesheetController extends Controller
     private function authorizeOwner(Request $request, ChatterTimesheet $timesheet): void
     {
         abort_unless((int) $timesheet->user_id === (int) $request->user()->id, 403);
+    }
+
+    private function ensureWeeklyModelReviewsComplete(Request $request, ChatterTimesheet $timesheet): void
+    {
+        $requiredModelIds = $request->user()
+            ->activeAssignedModels()
+            ->whereHas('modelProfile')
+            ->pluck('users.id');
+
+        if ($requiredModelIds->isEmpty()) {
+            return;
+        }
+
+        $submittedModelIds = ChatterModelReview::query()
+            ->where('chatter_id', $request->user()->id)
+            ->whereDate('week_ending', $timesheet->period_end->toDateString())
+            ->whereIn('model_id', $requiredModelIds)
+            ->pluck('model_id');
+
+        $missingReviews = $requiredModelIds->diff($submittedModelIds)->count();
+
+        if ($missingReviews > 0) {
+            throw ValidationException::withMessages([
+                'timesheet' => trans_choice(
+                    'Submit the required weekly model review before submitting this timesheet. :count review is still missing.|Submit the required weekly model reviews before submitting this timesheet. :count reviews are still missing.',
+                    $missingReviews,
+                    ['count' => $missingReviews],
+                ),
+            ]);
+        }
     }
 
     private function audit(ChatterTimesheet $timesheet, Request $request, string $action, ?string $reason, ?array $before = null, ?array $after = null): void

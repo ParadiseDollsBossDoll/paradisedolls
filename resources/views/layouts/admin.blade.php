@@ -3,8 +3,8 @@
     $initials = $user->initials();
     $profilePhotoUrl = $user->profilePhotoUrl();
 
-    [$pendingLayoutApplications, $pendingLayoutVerification, $referralActionCount, $chatterActionCount] =
-        \Illuminate\Support\Facades\Cache::remember('admin_sidebar_counts', 60, fn () => [
+    [$pendingLayoutApplications, $pendingLayoutVerification, $referralActionCount, $chatterActionCount, $chatterReviewCount, $modelReviewCount] =
+        \Illuminate\Support\Facades\Cache::remember('admin_sidebar_counts_v2', 60, fn () => [
             \App\Models\ModelApplication::query()
                 ->where('status', \App\Models\ModelApplication::STATUS_PENDING)
                 ->count(),
@@ -31,6 +31,12 @@
                         \App\Models\ChatterTimesheet::STATUS_CHANGES_REQUESTED,
                     ])
                     ->count(),
+            \App\Models\ChatterPerformanceReview::query()
+                ->where('status', \App\Models\ChatterPerformanceReview::STATUS_SUBMITTED)
+                ->count(),
+            \App\Models\ChatterModelReview::query()
+                ->whereNull('reviewed_at')
+                ->count(),
         ]);
 
     $links = [
@@ -102,7 +108,14 @@
             'label'  => __('Chatter Reviews'),
             'active' => request()->routeIs('admin.chatter-reviews.*'),
             'icon'   => 'stories',
-            'count'  => 0,
+            'count'  => $chatterReviewCount,
+        ],
+        [
+            'route'  => 'admin.chatter-model-reviews.index',
+            'label'  => __('Model Reviews'),
+            'active' => request()->routeIs('admin.chatter-model-reviews.*'),
+            'icon'   => 'stories',
+            'count'  => $modelReviewCount,
         ],
         [
             'route'  => 'admin.site-editor.edit',

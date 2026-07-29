@@ -71,6 +71,8 @@ class MemberChatterPerformanceReviewController extends Controller
             'status' => ChatterPerformanceReview::STATUS_SUBMITTED,
         ]);
 
+        \Illuminate\Support\Facades\Cache::forget('admin_sidebar_counts_v2');
+
         app(AdminActivityNotifier::class)->notify(
             title: __('New chatter performance review'),
             body: __('A model submitted a confidential chatter performance review.'),

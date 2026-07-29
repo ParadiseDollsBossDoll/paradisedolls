@@ -7,6 +7,7 @@ use App\Mail\ChatterWorkflowMail;
 use App\Models\ChatterBreak;
 use App\Models\ChatterPayAdjustment;
 use App\Models\ChatterProfile;
+use App\Models\ChatterModelAssignment;
 use App\Models\ChatterRequest;
 use App\Models\ChatterRoleAssignment;
 use App\Models\ChatterShift;
@@ -42,6 +43,7 @@ class AdminChatterHoursController extends Controller
                 'chatterPayRates' => fn ($query) => $query->latest('effective_from'),
                 'chatterRoleAssignments.workRole',
                 'chatterShifts' => fn ($query) => $query->whereNull('clocked_out_at')->with(['breaks', 'workRole']),
+                'activeAssignedModels:id,name,email',
             ])
             ->orderBy('name')
             ->paginate(12, ['*'], 'chatters_page')
@@ -55,6 +57,11 @@ class AdminChatterHoursController extends Controller
             ->get();
 
         $workRoles = ChatterWorkRole::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+        $modelOptions = User::query()
+            ->where('role', 'model')
+            ->whereHas('modelProfile')
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
         $openShifts = ChatterShift::query()->whereNull('clocked_out_at')->with(['user', 'breaks', 'workRole'])->get();
         $stats = [
             'chatters' => User::query()->where('role', 'chatter')->count(),
@@ -66,7 +73,7 @@ class AdminChatterHoursController extends Controller
         $mode = 'accounts';
 
         return view('admin.chatter-hours.index', compact(
-            'chatters', 'requests', 'openShifts', 'workRoles', 'stats', 'mode'
+            'chatters', 'requests', 'openShifts', 'workRoles', 'modelOptions', 'stats', 'mode'
         ));
     }
 
@@ -302,6 +309,65 @@ class AdminChatterHoursController extends Controller
         ]);
 
         return back()->with('status', __('Work role and hourly rate saved. New shifts will use this rate.'));
+    }
+
+    public function storeModelAssignment(Request $request, User $chatter): RedirectResponse
+    {
+        $this->assertChatter($chatter);
+        $validated = $request->validate([
+            'model_id' => ['required', Rule::exists(User::class, 'id')->where(fn ($query) => $query->where('role', 'model'))],
+        ]);
+
+        $model = User::query()
+            ->where('role', 'model')
+            ->whereHas('modelProfile')
+            ->findOrFail($validated['model_id']);
+
+        $alreadyAssigned = ChatterModelAssignment::query()
+            ->where('chatter_id', $chatter->id)
+            ->where('model_id', $model->id)
+            ->whereNull('ended_at')
+            ->exists();
+
+        if ($alreadyAssigned) {
+            return back()->with('status', __('That model is already assigned to this chatter.'));
+        }
+
+        ChatterModelAssignment::create([
+            'chatter_id' => $chatter->id,
+            'model_id' => $model->id,
+            'assigned_by' => $request->user()->id,
+            'assigned_at' => now(),
+        ]);
+
+        return back()->with('status', __(':model was added to :chatter weekly review list.', [
+            'model' => $model->name,
+            'chatter' => $chatter->name,
+        ]));
+    }
+
+    public function destroyModelAssignment(Request $request, User $chatter, User $model): RedirectResponse
+    {
+        $this->assertChatter($chatter);
+        abort_unless($model->role === 'model', 404);
+
+        $assignment = ChatterModelAssignment::query()
+            ->where('chatter_id', $chatter->id)
+            ->where('model_id', $model->id)
+            ->whereNull('ended_at')
+            ->latest('assigned_at')
+            ->first();
+
+        if (! $assignment) {
+            return back()->withErrors(['model_id' => __('That model is not currently assigned to this chatter.')]);
+        }
+
+        $assignment->forceFill(['ended_at' => now()])->save();
+
+        return back()->with('status', __(':model was removed from :chatter weekly review list.', [
+            'model' => $model->name,
+            'chatter' => $chatter->name,
+        ]));
     }
 
     public function showTimesheet(ChatterTimesheet $timesheet, ChatterCurrency $currency): View

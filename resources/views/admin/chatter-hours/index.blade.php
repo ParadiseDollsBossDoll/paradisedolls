@@ -256,6 +256,8 @@
                             $open = $chatter->chatterShifts->first();
                             $assignments = $chatter->chatterRoleAssignments->sortBy(fn ($assignment) => $assignment->workRole?->sort_order);
                             $unassignedRoles = $workRoles->whereNotIn('id', $assignments->pluck('chatter_work_role_id'));
+                            $assignedModels = $chatter->activeAssignedModels ?? collect();
+                            $availableModels = ($modelOptions ?? collect())->whereNotIn('id', $assignedModels->pluck('id'));
                         @endphp
                         <div class="px-5 py-4" x-data="{ accountOpen: false, deleteOpen: false }">
                             <div class="flex items-center justify-between gap-3">
@@ -295,6 +297,128 @@
                                     </div>
                                     @if($unassignedRoles->isNotEmpty())
                                         <form method="POST" action="{{ route('admin.chatter-hours.chatters.roles', $chatter) }}" class="mt-3 grid gap-2 rounded-lg border border-dashed border-boss-gold/20 p-3 sm:grid-cols-[1fr_140px_auto] sm:items-end">@csrf<input type="hidden" name="is_active" value="1"><label><span class="pd-label">{{ __('Add another role') }}</span><select class="pd-input mt-1" name="work_role_id" required>@foreach($unassignedRoles as $role)<option value="{{ $role->id }}">{{ $role->name }}</option>@endforeach</select></label><label><span class="pd-label">{{ __('USD/hr') }}</span><input class="pd-input mt-1" type="number" name="hourly_rate" step="0.01" min="0" value="{{ number_format(($rate?->base_rate_pence ?? 0) / 100, 2, '.', '') }}" required></label><button class="pd-btn-primary h-[43px] rounded-lg px-3 text-xs">{{ __('Assign role') }}</button></form>
+                                    @endif
+                                </div>
+                                <div class="border-t border-white/[0.06] pt-5">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p class="pd-label">{{ __('Assigned models') }}</p>
+                                            <p class="mt-1 text-xs text-boss-ivory/40">{{ __('Only these models appear in this chatter weekly review checklist.') }}</p>
+                                        </div>
+                                        <span class="rounded-full bg-boss-pink/10 px-2.5 py-1 text-[0.65rem] font-semibold text-boss-rose">{{ trans_choice(':count model|:count models', $assignedModels->count(), ['count' => $assignedModels->count()]) }}</span>
+                                    </div>
+                                    <div class="mt-3 space-y-2">
+                                        @forelse($assignedModels as $model)
+                                            <div class="flex flex-col gap-3 rounded-lg border border-white/[0.06] bg-white/[0.025] p-3 sm:flex-row sm:items-center sm:justify-between">
+                                                <div class="min-w-0">
+                                                    <p class="truncate text-sm font-semibold">{{ $model->name }}</p>
+                                                    <p class="truncate text-xs text-boss-ivory/35">{{ $model->email }}</p>
+                                                </div>
+                                                <form method="POST" action="{{ route('admin.chatter-hours.chatters.models.destroy', [$chatter, $model]) }}">@csrf @method('DELETE')<button class="pd-btn-secondary rounded-lg px-3 py-2 text-xs">{{ __('Remove') }}</button></form>
+                                            </div>
+                                        @empty
+                                            <p class="rounded-lg border border-dashed border-white/[0.06] bg-white/[0.02] p-3 text-xs text-boss-ivory/40">{{ __('No models assigned yet. This chatter will not be asked for weekly model reviews until at least one model is assigned.') }}</p>
+                                        @endforelse
+                                    </div>
+                                    @if($availableModels->isNotEmpty())
+                                        <form method="POST" action="{{ route('admin.chatter-hours.chatters.models', $chatter) }}" class="mt-3 grid gap-2 rounded-lg border border-dashed border-boss-gold/20 p-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                                            @csrf
+                                            <label>
+                                                <span class="pd-label">{{ __('Assign model') }}</span>
+                                                <div
+                                                    class="relative mt-1"
+                                                    x-data="{
+                                                        open: false,
+                                                        search: '',
+                                                        selected: '',
+                                                        models: @js($availableModels->map(fn ($model) => [
+                                                            'id' => $model->id,
+                                                            'name' => $model->name,
+                                                            'email' => $model->email,
+                                                            'label' => trim($model->name.' - '.$model->email),
+                                                        ])->values()),
+                                                        get filtered() {
+                                                            const q = this.search.trim().toLowerCase();
+
+                                                            if (! q || this.models.some((model) => model.id === this.selected && model.label === this.search)) {
+                                                                return this.models;
+                                                            }
+
+                                                            return this.models.filter((model) =>
+                                                                `${model.name || ''} ${model.email || ''} ${model.label || ''}`.toLowerCase().includes(q)
+                                                            );
+                                                        },
+                                                        choose(model) {
+                                                            this.selected = model.id;
+                                                            this.search = model.label;
+                                                            this.open = false;
+                                                        },
+                                                        openDropdown() {
+                                                            this.open = true;
+                                                            this.$nextTick(() => this.$refs.assignModelSearch?.focus());
+                                                        },
+                                                    }"
+                                                    @keydown.escape.window="open = false"
+                                                    @click.outside="open = false"
+                                                >
+                                                    <input type="hidden" name="model_id" x-model="selected" required>
+                                                    <button
+                                                        type="button"
+                                                        class="pd-input pd-combobox-trigger"
+                                                        aria-haspopup="listbox"
+                                                        :aria-expanded="open.toString()"
+                                                        @click="openDropdown()"
+                                                    >
+                                                        <span class="min-w-0 flex-1 truncate" x-text="search || '{{ __('Choose a model') }}'"></span>
+                                                        <svg class="h-3.5 w-3.5 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M4 6l4 4 4-4" />
+                                                        </svg>
+                                                    </button>
+
+                                                    <div
+                                                        x-cloak
+                                                        x-show="open"
+                                                        x-transition
+                                                        class="pd-combobox-menu absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-md shadow-luxe"
+                                                        role="listbox"
+                                                    >
+                                                        <div class="pd-combobox-search-wrap p-2">
+                                                            <input
+                                                                x-ref="assignModelSearch"
+                                                                type="text"
+                                                                x-model="search"
+                                                                placeholder="{{ __('Search model name or email...') }}"
+                                                                class="pd-combobox-search"
+                                                                autocomplete="off"
+                                                                @input="selected = ''; open = true"
+                                                                @keydown.escape.stop="open = false"
+                                                            >
+                                                        </div>
+                                                        <div class="max-h-56 overflow-y-auto py-1">
+                                                            <template x-if="filtered.length === 0">
+                                                                <p class="pd-combobox-empty">{{ __('No models found') }}</p>
+                                                            </template>
+                                                            <template x-for="model in filtered" :key="model.id">
+                                                                <button
+                                                                    type="button"
+                                                                    class="pd-combobox-option"
+                                                                    :class="selected === model.id ? 'is-selected' : ''"
+                                                                    role="option"
+                                                                    :aria-selected="(selected === model.id).toString()"
+                                                                    @click="choose(model)"
+                                                                >
+                                                                    <span class="font-semibold" x-text="model.name"></span>
+                                                                    <span class="pd-combobox-option-meta" x-text="model.email"></span>
+                                                                </button>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                            <button class="pd-btn-primary h-[43px] rounded-lg px-3 text-xs">{{ __('Assign model') }}</button>
+                                        </form>
+                                    @else
+                                        <p class="mt-3 text-xs text-boss-ivory/35">{{ __('All available models are already assigned to this chatter.') }}</p>
                                     @endif
                                 </div>
                                 <div class="flex flex-wrap gap-2">

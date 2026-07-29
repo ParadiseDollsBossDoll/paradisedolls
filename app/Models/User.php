@@ -176,6 +176,45 @@ class User extends Authenticatable
         return $this->hasMany(ChatterPerformanceReview::class);
     }
 
+    public function submittedChatterModelReviews(): HasMany
+    {
+        return $this->hasMany(ChatterModelReview::class, 'chatter_id');
+    }
+
+    public function receivedChatterModelReviews(): HasMany
+    {
+        return $this->hasMany(ChatterModelReview::class, 'model_id');
+    }
+
+    public function chatterModelAssignments(): HasMany
+    {
+        return $this->hasMany(ChatterModelAssignment::class, 'chatter_id');
+    }
+
+    public function assignedChatterModels(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'chatter_model_assignments', 'chatter_id', 'model_id')
+            ->withPivot(['assigned_by', 'assigned_at', 'ended_at'])
+            ->withTimestamps();
+    }
+
+    public function activeAssignedModels(): BelongsToMany
+    {
+        return $this->assignedChatterModels()->wherePivotNull('ended_at');
+    }
+
+    public function assignedChatters(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'chatter_model_assignments', 'model_id', 'chatter_id')
+            ->withPivot(['assigned_by', 'assigned_at', 'ended_at'])
+            ->withTimestamps();
+    }
+
+    public function activeAssignedChatters(): BelongsToMany
+    {
+        return $this->assignedChatters()->wherePivotNull('ended_at');
+    }
+
     public function chatterPayRates(): HasMany
     {
         return $this->hasMany(ChatterPayRate::class);

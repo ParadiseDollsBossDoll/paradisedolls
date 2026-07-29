@@ -2,7 +2,18 @@
     $user = auth()->user();
     $profilePhotoUrl = $user->profilePhotoUrl();
     $links = [
-        ['route' => 'chatter.dashboard', 'label' => __('Time Tracker'), 'active' => request()->routeIs('chatter.*'), 'icon' => 'clock'],
+        [
+            'route' => 'chatter.dashboard',
+            'label' => __('Time Tracker'),
+            'active' => request()->routeIs('chatter.dashboard', 'chatter.clock-*', 'chatter.breaks.*', 'chatter.timesheets.*'),
+            'icon' => 'clock',
+        ],
+        [
+            'route' => 'chatter.model-reviews.index',
+            'label' => __('Model Reviews'),
+            'active' => request()->routeIs('chatter.model-reviews.*'),
+            'icon' => 'review',
+        ],
         ['route' => 'profile.edit', 'label' => __('Profile'), 'active' => request()->routeIs('profile.*'), 'icon' => 'profile'],
     ];
     $currentLabel = request()->routeIs('notifications.*') ? __('Notifications') : (collect($links)->firstWhere('active', true)['label'] ?? __('Time Tracker'));
@@ -48,6 +59,8 @@
                 <a href="{{ route($link['route']) }}" class="elysian-nav-item {{ $link['active'] ? 'active' : '' }}" @click="sidebarOpen=false">
                     @if($link['icon']==='clock')
                         <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4v4l3 2"/></svg>
+                    @elseif($link['icon']==='review')
+                        <svg viewBox="0 0 16 16"><path d="M3 2.5h10v11H3z"/><path d="M5 5.5h6M5 8h6M5 10.5h3"/></svg>
                     @else
                         <svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
                     @endif

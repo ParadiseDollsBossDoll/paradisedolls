@@ -79,6 +79,8 @@ class AdminChatterPerformanceReviewController extends Controller
             'reviewed_at' => now(),
         ])->save();
 
+        \Illuminate\Support\Facades\Cache::forget('admin_sidebar_counts_v2');
+
         return redirect()
             ->route('admin.chatter-reviews.show', $review)
             ->with('status', __('Chatter review notes were saved.'));
