@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\EnforceAuthenticatedSessionPolicy;
 use App\Http\Middleware\EnsureUserIsChatter;
 use App\Http\Middleware\EnsureCommunityAccessIsAssigned;
 use App\Http\Middleware\EnsureUserIsEnrolledInCourse;
@@ -34,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->appendToGroup('web', [
             SecurityHeaders::class,
+            EnforceAuthenticatedSessionPolicy::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

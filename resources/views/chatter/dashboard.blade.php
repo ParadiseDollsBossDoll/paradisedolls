@@ -9,7 +9,16 @@
     <div class="flex flex-wrap items-end justify-between gap-3"><div><p class="pd-kicker">{{ __('Working Hours') }}</p><h1 class="pd-heading mt-2 text-[clamp(2rem,4vw,3rem)]">{{ __('Time Tracker') }}</h1><p class="mt-2 text-sm text-boss-ivory/45">{{ __('Your time: :timezone - Payroll weeks use Europe/London', ['timezone'=>$tz]) }}</p></div></div>
 
     <section class="grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)]">
-        <div x-data="{ baseWorkedSeconds: @js($activeWorkedSeconds), timerRunning: @js($activeTimerRunning), clientStartedAt: performance.now(), displaySeconds: @js($activeWorkedSeconds), timer: null, calculateWorkedSeconds(){ const secondsSinceLoad = this.timerRunning ? Math.max(0, Math.floor((performance.now() - this.clientStartedAt) / 1000)) : 0; return this.baseWorkedSeconds + secondsSinceLoad }, format(v){const s=Math.max(0,v);return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor((s%3600)/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')} }" x-init="displaySeconds = calculateWorkedSeconds(); timer=setInterval(()=>{ displaySeconds = calculateWorkedSeconds() },1000)" class="rounded-md border border-white/[0.08] bg-white/[0.035] p-6 sm:p-8">
+        <div
+            x-data="chatterTimeTracker({
+                stateUrl: @js(route('chatter.state')),
+                initialWorkedSeconds: @js($activeWorkedSeconds),
+                initialTimerRunning: @js($activeTimerRunning),
+                initialOnBreak: @js((bool) $activeBreak),
+                hasOpenShift: @js((bool) $openShift),
+            })"
+            class="rounded-md border border-white/[0.08] bg-white/[0.035] p-6 sm:p-8"
+        >
             <div class="flex flex-wrap items-start justify-between gap-4"><div><p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/40">{{ $openShift ? ($activeBreak ? __('On break') : __('Active shift')) : __('Ready') }}</p><p class="mt-3 font-display text-4xl sm:text-5xl" x-text="{{ $openShift ? 'format(displaySeconds)' : '\'00:00:00\'' }}"></p>@if($openShift)<div class="mt-3 flex flex-wrap items-center gap-2"><span class="rounded-full border border-boss-gold/20 bg-boss-gold/10 px-2.5 py-1 text-xs text-boss-gold">{{ $openShift->workRole?->name ?? __('Chatter') }}</span><span class="text-xs text-boss-ivory/40">${{ number_format(($openShift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr</span></div><p class="mt-2 text-sm text-boss-ivory/45">{{ __('Clocked in :time', ['time'=>$openShift->clocked_in_at->timezone($tz)->format('D, j M - g:i A T')]) }}</p><p class="mt-1 text-xs text-boss-ivory/35">{{ __('Worked time excludes breaks and is recalculated from server records after refresh.') }}</p>@endif</div><span class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs {{ $openShift ? 'border-emerald-400/25 bg-emerald-400/10 text-emerald-200' : 'border-white/10 text-boss-ivory/45' }}"><span class="h-2 w-2 rounded-full {{ $openShift ? 'bg-emerald-400' : 'bg-white/25' }}"></span>{{ $openShift ? ($activeBreak ? __('On break') : __('Clocked in')) : __('Clocked out') }}</span></div>
             <div class="mt-8 grid gap-3 sm:grid-cols-2">
                 @if(!$openShift)<form method="POST" action="{{ route('chatter.clock-in') }}" class="space-y-3 sm:col-span-2">@csrf

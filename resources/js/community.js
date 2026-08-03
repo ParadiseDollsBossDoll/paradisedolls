@@ -218,13 +218,18 @@ document.addEventListener('alpine:init', () => {
             }, { once: true });
 
             document.addEventListener('visibilitychange', () => {
-                if (!document.hidden) {
-                    this.refreshChannelRoster(true);
-                    this.refreshPresence();
+                if (document.hidden) {
+                    this.sendTypingState(false);
+                    this.stopFallbackPolling();
+                    return;
+                }
 
-                    if (this.selectedChannel && this.isNearBottom()) {
-                        this.markCurrentChannelRead();
-                    }
+                this.syncPollingMode();
+                this.refreshChannelRoster(true);
+                this.refreshPresence();
+
+                if (this.selectedChannel && this.isNearBottom()) {
+                    this.markCurrentChannelRead();
                 }
             });
         },
@@ -342,7 +347,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         shouldUsePollingFallback() {
-            return !window.Echo || this.connectionState !== 'connected';
+            return !document.hidden && (!window.Echo || this.connectionState !== 'connected');
         },
 
         selectedRealtimeChannelName() {
@@ -1952,7 +1957,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         async markCurrentChannelRead() {
-            if (!this.selectedChannel) {
+            if (document.hidden || !this.selectedChannel) {
                 return;
             }
 

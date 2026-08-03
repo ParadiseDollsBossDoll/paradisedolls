@@ -52,8 +52,10 @@ Route::middleware('auth')->group(function () {
 
     Route::put('password', [PasswordController::class, 'update'])
         ->middleware('throttle:profile-updates')
+        ->block(5, 5)
         ->name('password.update');
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
+        ->block(5, 5)
         ->name('logout');
 });

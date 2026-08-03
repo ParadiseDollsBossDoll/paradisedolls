@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Mail\AdminActivityAlertMail;
+use App\Models\ChatterProfile;
 use App\Models\ChatterPerformanceReview;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -57,6 +58,12 @@ class ChatterPerformanceReviewTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $chatter = User::factory()->create(['role' => 'chatter']);
+        ChatterProfile::create([
+            'user_id' => $chatter->id,
+            'timezone' => 'Europe/London',
+            'employment_status' => ChatterProfile::STATUS_ACTIVE,
+            'started_at' => now(),
+        ]);
         $model = User::factory()->create(['role' => 'model']);
         $reviewUrl = URL::temporarySignedRoute('member.chatter-reviews.create', now()->addDays(60));
 

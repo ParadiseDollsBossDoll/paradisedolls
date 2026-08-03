@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\ChatterProfile;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -42,13 +43,32 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $credentials = $this->only('email', 'password');
+        $guard = Auth::guard('web');
+        $provider = $guard->getProvider();
+        $user = $provider->retrieveByCredentials($credentials);
+
+        if (! $user || ! $provider->validateCredentials($user, $credentials)) {
             RateLimiter::hit($this->throttleKey(), 900);
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
             ]);
         }
+
+        if ($user?->isChatter() && $user->chatterProfile?->employment_status !== ChatterProfile::STATUS_ACTIVE) {
+            RateLimiter::hit($this->throttleKey(), 900);
+
+            throw ValidationException::withMessages([
+                'email' => trans('auth.failed'),
+            ]);
+        }
+
+        $provider->rehashPasswordIfRequired($user, $credentials);
+
+        // Chatter sessions must remain explicit so a shared work device cannot
+        // silently restore a long-lived workspace session from a remember cookie.
+        $guard->login($user, $this->boolean('remember') && ! $user->isChatter());
 
         RateLimiter::clear($this->throttleKey());
     }

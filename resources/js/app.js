@@ -1,6 +1,7 @@
 import './bootstrap';
 import './admin-course-form';
 import './application-form';
+import './chatter-time-tracker';
 import './community';
 import './translator';
 

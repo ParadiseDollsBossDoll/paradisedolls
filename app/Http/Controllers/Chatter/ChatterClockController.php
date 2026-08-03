@@ -3,12 +3,43 @@
 namespace App\Http\Controllers\Chatter;
 
 use App\Http\Controllers\Controller;
+use App\Models\ChatterShift;
 use App\Services\ChatterClockService;
+use App\Services\ChatterPayrollService;
+use Carbon\CarbonImmutable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class ChatterClockController extends Controller
 {
+    public function state(Request $request, ChatterPayrollService $payroll): JsonResponse
+    {
+        $nowUtc = CarbonImmutable::now('UTC');
+        $shift = ChatterShift::query()
+            ->where('active_user_id', $request->user()->id)
+            ->with(['breaks' => fn ($query) => $query->select([
+                'id',
+                'chatter_shift_id',
+                'started_at',
+                'ended_at',
+            ])])
+            ->first();
+        $activeBreak = $shift?->breaks->firstWhere('ended_at', null);
+
+        return response()
+            ->json([
+                'has_open_shift' => (bool) $shift,
+                'on_break' => (bool) $activeBreak,
+                'timer_running' => (bool) $shift && ! $activeBreak,
+                'worked_seconds' => $shift ? $payroll->shiftWorkedSeconds($shift, $nowUtc) : 0,
+            ])
+            ->withHeaders([
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, private',
+                'Pragma' => 'no-cache',
+            ]);
+    }
+
     public function clockIn(Request $request, ChatterClockService $clock): RedirectResponse
     {
         $validated = $request->validate(['work_role_id' => ['nullable', 'integer']]);

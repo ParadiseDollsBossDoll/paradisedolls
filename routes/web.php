@@ -93,15 +93,19 @@ Route::get('/dashboard', function () {
 
 Route::middleware(['auth', 'verified', 'chatter'])->prefix('chatter')->name('chatter.')->group(function () {
     Route::get('/', ChatterDashboardController::class)->name('dashboard');
+    Route::post('/state', [ChatterClockController::class, 'state'])
+        ->middleware('throttle:chatter-state-sync')
+        ->block(5, 5)
+        ->name('state');
     Route::get('/model-reviews', [ChatterModelReviewController::class, 'index'])->name('model-reviews.index');
     Route::get('/model-reviews/create', [ChatterModelReviewController::class, 'create'])->name('model-reviews.create');
     Route::post('/model-reviews', [ChatterModelReviewController::class, 'store'])
         ->middleware('throttle:profile-updates')
         ->name('model-reviews.store');
-    Route::post('/clock-in', [ChatterClockController::class, 'clockIn'])->middleware('throttle:chatter-clock')->name('clock-in');
-    Route::post('/clock-out', [ChatterClockController::class, 'clockOut'])->middleware('throttle:chatter-clock')->name('clock-out');
-    Route::post('/breaks/start', [ChatterClockController::class, 'startBreak'])->middleware('throttle:chatter-clock')->name('breaks.start');
-    Route::post('/breaks/end', [ChatterClockController::class, 'endBreak'])->middleware('throttle:chatter-clock')->name('breaks.end');
+    Route::post('/clock-in', [ChatterClockController::class, 'clockIn'])->middleware('throttle:chatter-clock')->block(5, 5)->name('clock-in');
+    Route::post('/clock-out', [ChatterClockController::class, 'clockOut'])->middleware('throttle:chatter-clock')->block(5, 5)->name('clock-out');
+    Route::post('/breaks/start', [ChatterClockController::class, 'startBreak'])->middleware('throttle:chatter-clock')->block(5, 5)->name('breaks.start');
+    Route::post('/breaks/end', [ChatterClockController::class, 'endBreak'])->middleware('throttle:chatter-clock')->block(5, 5)->name('breaks.end');
     Route::post('/timesheets/{timesheet}/submit', [ChatterTimesheetController::class, 'submit'])->middleware('throttle:chatter-clock')->name('timesheets.submit');
     Route::post('/timesheets/{timesheet}/correction', [ChatterTimesheetController::class, 'requestCorrection'])->middleware('throttle:chatter-clock')->name('timesheets.correction');
 });

@@ -32,7 +32,13 @@ return [
     |
     */
 
-    'lifetime' => (int) env('SESSION_LIFETIME', 120),
+    // Keep the backing session long enough for the longest role. The middleware
+    // below enforces shorter role-specific idle limits for authenticated users.
+    'lifetime' => (int) env('SESSION_LIFETIME', 720),
+
+    'authenticated_lifetime' => (int) env('AUTH_SESSION_LIFETIME', 120),
+
+    'chatter_lifetime' => (int) env('CHATTER_SESSION_LIFETIME', 720),
 
     'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
 

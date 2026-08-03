@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\RefreshChatterPayrollForShift;
 use App\Mail\ChatterWorkflowMail;
 use App\Models\ChatterBreak;
 use App\Models\ChatterPayAdjustment;
@@ -18,6 +19,7 @@ use App\Models\User;
 use App\Notifications\SystemNotification;
 use App\Services\ChatterAccountService;
 use App\Services\ChatterPayrollService;
+use App\Services\UserSessionService;
 use App\Support\ChatterCurrency;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -204,21 +206,37 @@ class AdminChatterHoursController extends Controller
         return back()->with('status', __('A fresh secure invitation was queued for :email.', ['email' => $chatter->email]));
     }
 
-    public function updateStatus(Request $request, User $chatter, ChatterPayrollService $payroll): RedirectResponse
+    public function updateStatus(
+        Request $request,
+        User $chatter,
+        UserSessionService $sessions
+    ): RedirectResponse
     {
         $this->assertChatter($chatter);
         $validated = $request->validate(['employment_status' => ['required', Rule::in([ChatterProfile::STATUS_ACTIVE, ChatterProfile::STATUS_SUSPENDED])]]);
 
-        DB::transaction(function () use ($request, $chatter, $validated, $payroll) {
-            $profile = $chatter->chatterProfile()->lockForUpdate()->firstOrFail();
+        $closedShift = DB::transaction(function () use ($request, $chatter, $validated): ?ChatterShift {
+            $lockedChatter = User::query()->lockForUpdate()->findOrFail($chatter->id);
+            $profile = $lockedChatter->chatterProfile()->lockForUpdate()->firstOrFail();
             $before = ['employment_status' => $profile->employment_status];
             $profile->forceFill([
                 'employment_status' => $validated['employment_status'],
                 'suspended_at' => $validated['employment_status'] === ChatterProfile::STATUS_SUSPENDED ? now() : null,
             ])->save();
 
+            $closedShift = null;
+
             if ($validated['employment_status'] === ChatterProfile::STATUS_SUSPENDED) {
-                $shift = $chatter->chatterShifts()->whereNull('clocked_out_at')->with('breaks')->lockForUpdate()->first();
+                $lockedChatter->forceFill([
+                    'auth_session_version' => (int) $lockedChatter->auth_session_version + 1,
+                    'remember_token' => Str::random(60),
+                ])->save();
+
+                $shift = ChatterShift::query()
+                    ->where('active_user_id', $lockedChatter->id)
+                    ->with('breaks')
+                    ->lockForUpdate()
+                    ->first();
                 if ($shift) {
                     $now = now('UTC');
                     $activeBreak = $shift->breaks()->whereNull('ended_at')->lockForUpdate()->first();
@@ -240,7 +258,7 @@ class AdminChatterHoursController extends Controller
                         'reason' => $request->string('reason')->toString() ?: __('Chatter account suspended.'),
                         'after' => ['clocked_out_at' => $now->toIso8601String()],
                     ]);
-                    $payroll->refreshPeriodsTouchedBy($shift->load('user'));
+                    $closedShift = $shift->load('user');
                 }
             }
 
@@ -251,7 +269,17 @@ class AdminChatterHoursController extends Controller
                 'before' => $before,
                 'after' => ['employment_status' => $profile->employment_status, 'chatter_id' => $chatter->id],
             ]);
+
+            return $closedShift;
         });
+
+        if ($validated['employment_status'] === ChatterProfile::STATUS_SUSPENDED) {
+            $sessions->revokeAll($chatter);
+        }
+
+        if ($closedShift) {
+            RefreshChatterPayrollForShift::dispatch($closedShift->id)->afterResponse();
+        }
 
         return back()->with('status', __('Chatter account status updated.'));
     }

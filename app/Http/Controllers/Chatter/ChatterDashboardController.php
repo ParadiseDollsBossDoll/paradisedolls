@@ -15,8 +15,8 @@ class ChatterDashboardController extends Controller
 {
     public function __invoke(Request $request, ChatterPayrollService $payroll, ChatterCurrency $currency): View
     {
-        $user = $request->user()->load(['chatterProfile', 'chatterRoleAssignments.workRole']);
-        $tz = $user->chatterProfile->timezone ?: config('app.timezone', ChatterPayrollService::REPORTING_TIMEZONE);
+        $user = $request->user()->loadMissing(['chatterProfile', 'chatterRoleAssignments.workRole']);
+        $tz = $user->chatterProfile?->timezone ?: config('app.timezone', ChatterPayrollService::REPORTING_TIMEZONE);
         $nowUtc = CarbonImmutable::now('UTC');
         $todayStart = CarbonImmutable::now($tz)->startOfDay();
         $todayTotals = $payroll->workedTotals($user, $todayStart, $todayStart->addDay());
@@ -25,8 +25,7 @@ class ChatterDashboardController extends Controller
         $monthStart = CarbonImmutable::now($tz)->startOfMonth();
         $monthTotals = $payroll->workedTotals($user, $monthStart, $monthStart->addMonth());
         $openShift = ChatterShift::query()
-            ->where('user_id', $user->id)
-            ->whereNull('clocked_out_at')
+            ->where('active_user_id', $user->id)
             ->with(['breaks', 'workRole'])
             ->first();
         $availableWorkRoles = $user->chatterRoleAssignments

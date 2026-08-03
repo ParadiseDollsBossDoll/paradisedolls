@@ -67,6 +67,8 @@ class PasswordResetTest extends TestCase
                 ->assertSessionHasNoErrors()
                 ->assertRedirect(route('login'));
 
+            $this->assertSame(1, $user->refresh()->auth_session_version);
+
             return true;
         });
     }

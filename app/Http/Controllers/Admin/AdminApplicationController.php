@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Notifications\SystemNotification;
 use App\Services\ModelEmailSyncService;
 use App\Services\ModelRecordDeletionService;
+use App\Services\UserSessionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -131,7 +132,10 @@ class AdminApplicationController extends Controller
         return redirect()->back()->with('status', __('Application approved. The member received the Application Approval Email with login and Model Information Form instructions.'));
     }
 
-    public function resendApprovalEmail(ModelApplication $application): RedirectResponse
+    public function resendApprovalEmail(
+        ModelApplication $application,
+        UserSessionService $sessions
+    ): RedirectResponse
     {
         if ($application->status !== ModelApplication::STATUS_APPROVED) {
             return redirect()->back()->withErrors(['application' => __('Approval emails can only be resent for approved applications.')]);
@@ -160,10 +164,19 @@ class AdminApplicationController extends Controller
         $temporaryPassword = Str::password(14, letters: true, numbers: true, symbols: false);
         $recipientEmail = $member->email ?: $application->email;
 
-        $member->forceFill([
-            'password' => Hash::make($temporaryPassword),
-            'email_verified_at' => $member->email_verified_at ?: now(),
-        ])->save();
+        $member = DB::transaction(function () use ($member, $temporaryPassword): User {
+            $lockedMember = User::query()->lockForUpdate()->findOrFail($member->id);
+            $lockedMember->forceFill([
+                'password' => Hash::make($temporaryPassword),
+                'email_verified_at' => $lockedMember->email_verified_at ?: now(),
+                'remember_token' => Str::random(60),
+                'auth_session_version' => (int) $lockedMember->auth_session_version + 1,
+            ])->save();
+
+            return $lockedMember;
+        });
+
+        $sessions->revokeAll($member);
 
         try {
             Mail::to($recipientEmail)->sendNow(new MemberApplicationApprovedMail(
@@ -197,7 +210,8 @@ class AdminApplicationController extends Controller
     public function updateEmail(
         Request $request,
         ModelApplication $application,
-        ModelEmailSyncService $emailSyncService
+        ModelEmailSyncService $emailSyncService,
+        UserSessionService $sessions
     ): RedirectResponse
     {
         $application->loadMissing(['user', 'profile', 'referral']);
@@ -236,26 +250,30 @@ class AdminApplicationController extends Controller
 
         $oldMemberEmail = $member?->email;
         $oldApplicationEmail = $application->email;
-        $memberId = $member?->id;
         $emailChanged = $application->email !== $email || ($member && $member->email !== $email);
 
-        DB::transaction(function () use ($application, $email, $member, $memberId, $emailChanged, $oldMemberEmail, $oldApplicationEmail, $emailSyncService): void {
-            $application->forceFill(['email' => $email])->save();
+        DB::transaction(function () use ($application, $email, &$member, $emailChanged, $oldMemberEmail, $oldApplicationEmail, $emailSyncService): void {
+            $lockedApplication = ModelApplication::query()->lockForUpdate()->findOrFail($application->id);
+            $lockedApplication->forceFill(['email' => $email])->save();
 
-            if ($application->referral) {
-                $application->referral->forceFill(['candidate_email' => $email])->save();
+            if ($lockedApplication->referral) {
+                $lockedApplication->referral->forceFill(['candidate_email' => $email])->save();
             }
 
             if ($member) {
+                $member = User::query()->lockForUpdate()->findOrFail($member->id);
                 $member->forceFill([
                     'email' => $email,
                     'email_verified_at' => now(),
+                    'remember_token' => $emailChanged ? Str::random(60) : $member->remember_token,
+                    'auth_session_version' => $emailChanged
+                        ? (int) $member->auth_session_version + 1
+                        : $member->auth_session_version,
                 ])->save();
 
                 $emailSyncService->syncLinkedApplications($member, $email);
 
                 if ($emailChanged) {
-                    DB::table('sessions')->where('user_id', $memberId)->delete();
                     DB::table('password_reset_tokens')
                         ->whereIn('email', array_values(array_unique(array_filter([
                             $oldMemberEmail,
@@ -266,6 +284,10 @@ class AdminApplicationController extends Controller
                 }
             }
         });
+
+        if ($emailChanged && $member) {
+            $sessions->revokeAll($member);
+        }
 
         $application->refresh()->loadMissing(['user', 'profile']);
         $member = $application->user;
@@ -293,10 +315,19 @@ class AdminApplicationController extends Controller
 
         $temporaryPassword = Str::password(14, letters: true, numbers: true, symbols: false);
 
-        $member->forceFill([
-            'password' => Hash::make($temporaryPassword),
-            'email_verified_at' => $member->email_verified_at ?: now(),
-        ])->save();
+        $member = DB::transaction(function () use ($member, $temporaryPassword): User {
+            $lockedMember = User::query()->lockForUpdate()->findOrFail($member->id);
+            $lockedMember->forceFill([
+                'password' => Hash::make($temporaryPassword),
+                'email_verified_at' => $lockedMember->email_verified_at ?: now(),
+                'remember_token' => Str::random(60),
+                'auth_session_version' => (int) $lockedMember->auth_session_version + 1,
+            ])->save();
+
+            return $lockedMember;
+        });
+
+        $sessions->revokeAll($member);
 
         try {
             Mail::to($email)->sendNow(new MemberApplicationApprovedMail(

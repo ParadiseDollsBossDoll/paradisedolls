@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\EnforceAuthenticatedSessionPolicy;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Jobs\RefreshChatterPayrollForShift;
 use App\Services\ChatterClockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,6 +31,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $request->session()->put([
+            EnforceAuthenticatedSessionPolicy::SESSION_VERSION_KEY => (int) $request->user()->auth_session_version,
+            EnforceAuthenticatedSessionPolicy::LAST_ACTIVITY_KEY => now()->timestamp,
+        ]);
+
         $request->user()->forceFill([
             'last_login_at' => now(),
         ])->save();
@@ -41,15 +48,19 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request, ChatterClockService $clock): RedirectResponse
     {
-        if ($request->user()?->isChatter()) {
-            $clock->clockOutForLogout($request->user());
-        }
+        $closedShift = $request->user()?->isChatter()
+            ? $clock->clockOutForLogout($request->user())
+            : null;
 
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
+
+        if ($closedShift) {
+            RefreshChatterPayrollForShift::dispatch($closedShift->id)->afterResponse();
+        }
 
         return redirect('/');
     }

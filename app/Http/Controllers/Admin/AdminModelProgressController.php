@@ -8,6 +8,7 @@ use App\Models\LessonProgress;
 use App\Models\User;
 use App\Services\ModelEmailSyncService;
 use App\Services\ModelRecordDeletionService;
+use App\Services\UserSessionService;
 use App\Support\CommunityPresence;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -141,7 +142,12 @@ class AdminModelProgressController extends Controller
             ->with('status', __(':name has been deleted from the system.', ['name' => $memberName]));
     }
 
-    public function updateLogin(Request $request, User $user, ModelEmailSyncService $emailSyncService): RedirectResponse
+    public function updateLogin(
+        Request $request,
+        User $user,
+        ModelEmailSyncService $emailSyncService,
+        UserSessionService $sessions
+    ): RedirectResponse
     {
         abort_unless($user->isModel(), 403, 'Only model login details can be managed here.');
 
@@ -178,16 +184,25 @@ class AdminModelProgressController extends Controller
             $payload['password'] = $validated['password'];
         }
 
-        DB::transaction(function () use ($user, $payload, $emailChanged, $validated, $emailSyncService): void {
-            $user->forceFill($payload)->save();
+        $user = DB::transaction(function () use ($user, $payload, $passwordChanged, $emailChanged, $validated, $emailSyncService): User {
+            $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
+
+            if ($passwordChanged || $emailChanged) {
+                $payload['remember_token'] = Str::random(60);
+                $payload['auth_session_version'] = (int) $lockedUser->auth_session_version + 1;
+            }
+
+            $lockedUser->forceFill($payload)->save();
 
             if ($emailChanged) {
-                $emailSyncService->syncLinkedApplications($user, $validated['email']);
+                $emailSyncService->syncLinkedApplications($lockedUser, $validated['email']);
             }
+
+            return $lockedUser;
         });
 
         if ($passwordChanged || $emailChanged) {
-            DB::table('sessions')->where('user_id', $user->id)->delete();
+            $sessions->revokeAll($user);
         }
 
         if ($emailChanged) {
@@ -204,18 +219,25 @@ class AdminModelProgressController extends Controller
         return redirect()->back()->with('status', __('Login details updated for :name.', ['name' => $user->fresh()->name]));
     }
 
-    public function generatePassword(Request $request, User $user): RedirectResponse
+    public function generatePassword(Request $request, User $user, UserSessionService $sessions): RedirectResponse
     {
         abort_unless($user->isModel(), 403, 'Only model passwords can be managed here.');
 
         $temporaryPassword = Str::password(14, letters: true, numbers: true, symbols: false);
 
-        $user->forceFill([
-            'password' => $temporaryPassword,
-            'email_verified_at' => $user->email_verified_at ?: now(),
-        ])->save();
+        $user = DB::transaction(function () use ($user, $temporaryPassword): User {
+            $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
+            $lockedUser->forceFill([
+                'password' => $temporaryPassword,
+                'email_verified_at' => $lockedUser->email_verified_at ?: now(),
+                'remember_token' => Str::random(60),
+                'auth_session_version' => (int) $lockedUser->auth_session_version + 1,
+            ])->save();
 
-        DB::table('sessions')->where('user_id', $user->id)->delete();
+            return $lockedUser;
+        });
+
+        $sessions->revokeAll($user);
 
         return redirect()->back()
             ->with('warning', __('A temporary password was created for :name. Share it manually and ask them to log in with it.', ['name' => $user->name]))

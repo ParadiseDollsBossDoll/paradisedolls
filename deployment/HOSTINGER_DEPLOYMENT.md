@@ -66,7 +66,7 @@ cd /var/www/paradisedollz
 nano .env
 ```
 
-Use `deployment/.env.production` as the template, but replace every
+Use `deployment/env.production.example` as the template, but replace every
 `CHANGE_ME` value. Generate the app key with:
 
 ```bash
@@ -77,7 +77,10 @@ Important values:
 
 - `APP_URL=https://yourdomain.tld`
 - `DB_PASSWORD=...`
-- `SESSION_DOMAIN=yourdomain.tld`
+- `SESSION_LIFETIME=720` so database session storage retains chatter sessions
+- `AUTH_SESSION_LIFETIME=120` for the normal authenticated idle limit
+- `CHATTER_SESSION_LIFETIME=720` for the chatter workspace idle limit
+- `SESSION_DOMAIN=null` when using the secure `__Host-paradise-dolls-session` cookie
 - `REDIS_PASSWORD=...` or `null` if Redis has no password
 - `RESEND_API_KEY=...`
 - `REVERB_APP_SECRET=...`

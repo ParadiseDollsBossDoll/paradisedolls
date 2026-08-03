@@ -15,6 +15,7 @@ use App\Models\ChatterShift;
 use App\Models\ChatterTimesheet;
 use App\Models\ChatterWorkRole;
 use App\Models\User;
+use App\Http\Middleware\EnforceAuthenticatedSessionPolicy;
 use App\Services\ChatterPayrollService;
 use App\Services\UsdPhpExchangeRateService;
 use App\Support\ChatterCurrency;
@@ -22,6 +23,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -194,7 +196,146 @@ class ChatterTimeTrackingTest extends TestCase
         $this->actingAs($chatter)->get(route('member.onboarding.edit'))->assertRedirect(route('chatter.dashboard'));
 
         $chatter->chatterProfile->update(['employment_status' => ChatterProfile::STATUS_SUSPENDED]);
-        $this->actingAs($chatter)->get(route('chatter.dashboard'))->assertForbidden();
+        $this->actingAs($chatter)->get(route('chatter.dashboard'))
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
+    public function test_authenticated_idle_limits_are_enforced_by_role(): void
+    {
+        config([
+            'session.lifetime' => 720,
+            'session.authenticated_lifetime' => 120,
+            'session.chatter_lifetime' => 720,
+        ]);
+
+        CarbonImmutable::setTestNow('2026-07-13 12:00:00 UTC');
+        $chatter = $this->chatter();
+        $this->actingAs($chatter)
+            ->withSession([
+                EnforceAuthenticatedSessionPolicy::SESSION_VERSION_KEY => 0,
+                EnforceAuthenticatedSessionPolicy::LAST_ACTIVITY_KEY => now()->subHours(3)->timestamp,
+            ])
+            ->get(route('chatter.dashboard'))
+            ->assertOk();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin)
+            ->withSession([
+                EnforceAuthenticatedSessionPolicy::SESSION_VERSION_KEY => 0,
+                EnforceAuthenticatedSessionPolicy::LAST_ACTIVITY_KEY => now()->subHours(3)->timestamp,
+            ])
+            ->get(route('admin.dashboard'))
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
+
+    public function test_chatter_session_expires_after_the_chatter_idle_limit(): void
+    {
+        config([
+            'session.lifetime' => 720,
+            'session.chatter_lifetime' => 720,
+        ]);
+
+        CarbonImmutable::setTestNow('2026-07-13 21:00:00 UTC');
+        $chatter = $this->chatter();
+
+        $this->actingAs($chatter)
+            ->withSession([
+                EnforceAuthenticatedSessionPolicy::SESSION_VERSION_KEY => 0,
+                EnforceAuthenticatedSessionPolicy::LAST_ACTIVITY_KEY => now()->subHours(13)->timestamp,
+            ])
+            ->get(route('chatter.dashboard'))
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
+
+    public function test_chatter_login_never_creates_a_remember_me_cookie(): void
+    {
+        $chatter = $this->chatter();
+
+        $response = $this->post(route('login'), [
+            'email' => $chatter->email,
+            'password' => 'password',
+            'remember' => '1',
+        ]);
+
+        $response->assertRedirect(route('dashboard', absolute: false));
+        $this->assertAuthenticatedAs($chatter);
+        $this->assertNotContains(
+            Auth::guard('web')->getRecallerName(),
+            collect($response->headers->getCookies())->map->getName()->all(),
+        );
+    }
+
+    public function test_session_version_change_revokes_an_existing_chatter_session(): void
+    {
+        $chatter = $this->chatter();
+        $chatter->forceFill(['auth_session_version' => 2])->save();
+
+        $this->actingAs($chatter)
+            ->withSession([
+                EnforceAuthenticatedSessionPolicy::SESSION_VERSION_KEY => 1,
+                EnforceAuthenticatedSessionPolicy::LAST_ACTIVITY_KEY => now()->timestamp,
+            ])
+            ->get(route('chatter.dashboard'))
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
+
+    public function test_missing_session_version_cannot_bypass_credential_revocation(): void
+    {
+        $chatter = $this->chatter();
+        $chatter->forceFill(['auth_session_version' => 1])->save();
+
+        $this->actingAs($chatter)
+            ->withSession([
+                EnforceAuthenticatedSessionPolicy::LAST_ACTIVITY_KEY => now()->timestamp,
+            ])
+            ->get(route('chatter.dashboard'))
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
+
+    public function test_passive_chatter_state_sync_does_not_extend_idle_session_lifetime(): void
+    {
+        config([
+            'session.lifetime' => 720,
+            'session.chatter_lifetime' => 720,
+        ]);
+
+        CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
+        $chatter = $this->chatter();
+        $initialActivity = now()->timestamp;
+
+        $this->actingAs($chatter)
+            ->withSession([
+                EnforceAuthenticatedSessionPolicy::SESSION_VERSION_KEY => 0,
+                EnforceAuthenticatedSessionPolicy::LAST_ACTIVITY_KEY => $initialActivity,
+            ]);
+
+        CarbonImmutable::setTestNow('2026-07-13 11:00:00 UTC');
+        $this->postJson(route('chatter.state'))
+            ->assertOk()
+            ->assertSessionHas(
+                EnforceAuthenticatedSessionPolicy::LAST_ACTIVITY_KEY,
+                $initialActivity,
+            );
+
+        CarbonImmutable::setTestNow('2026-07-13 21:00:01 UTC');
+        $this->postJson(route('chatter.state'))
+            ->assertUnauthorized();
+
+        $this->assertGuest();
     }
 
     public function test_clock_actions_prevent_duplicates_and_clock_out_closes_an_active_break(): void
@@ -257,12 +398,22 @@ class ChatterTimeTrackingTest extends TestCase
 
     public function test_suspending_an_active_chatter_closes_and_audits_the_break_and_shift(): void
     {
+        config(['session.driver' => 'database']);
+
         $admin = User::factory()->create(['role' => 'admin']);
         $chatter = $this->chatter();
         CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
         $this->actingAs($chatter)->post(route('chatter.clock-in'))->assertSessionHasNoErrors();
         CarbonImmutable::setTestNow('2026-07-13 08:30:00 UTC');
         $this->actingAs($chatter)->post(route('chatter.breaks.start'))->assertSessionHasNoErrors();
+        DB::table('sessions')->insert([
+            'id' => 'suspended-chatter-session',
+            'user_id' => $chatter->id,
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'Test',
+            'payload' => '',
+            'last_activity' => time(),
+        ]);
 
         CarbonImmutable::setTestNow('2026-07-13 09:00:00 UTC');
         $this->actingAs($admin)->patch(route('admin.chatter-hours.chatters.status', $chatter), [
@@ -274,6 +425,7 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertSame('2026-07-13 09:00:00', ChatterBreak::firstOrFail()->ended_at->utc()->format('Y-m-d H:i:s'));
         $this->assertDatabaseHas('chatter_time_audits', ['action' => 'break_ended_on_suspension', 'reason' => 'Access ended.']);
         $this->assertDatabaseHas('chatter_time_audits', ['action' => 'clocked_out_on_suspension', 'reason' => 'Access ended.']);
+        $this->assertDatabaseMissing('sessions', ['id' => 'suspended-chatter-session']);
     }
 
     public function test_dashboard_timer_and_totals_exclude_breaks_after_refresh_resume_and_clock_out(): void
@@ -297,16 +449,17 @@ class ChatterTimeTrackingTest extends TestCase
             ->assertDontSee('Today paid')
             ->assertDontSee('Week paid')
             ->assertDontSee('Week breaks')
-            ->assertSee('baseWorkedSeconds: 1800', false)
-            ->assertSee('timerRunning: false', false);
+            ->assertSee('initialWorkedSeconds: 1800', false)
+            ->assertSee('initialTimerRunning: false', false)
+            ->assertSee('chatter\/state', false);
 
         $this->actingAs($chatter)->post(route('chatter.breaks.end'))->assertSessionHasNoErrors();
 
         $this->actingAs($chatter)->get(route('chatter.dashboard'))
             ->assertOk()
             ->assertSee('Start Break')
-            ->assertSee('baseWorkedSeconds: 1800', false)
-            ->assertSee('timerRunning: true', false);
+            ->assertSee('initialWorkedSeconds: 1800', false)
+            ->assertSee('initialTimerRunning: true', false);
 
         CarbonImmutable::setTestNow('2026-07-13 10:00:00 UTC');
         $this->actingAs($chatter)->post(route('chatter.clock-out'))->assertSessionHasNoErrors();
@@ -342,8 +495,8 @@ class ChatterTimeTrackingTest extends TestCase
 
         $this->actingAs($chatter)->get(route('chatter.dashboard'))
             ->assertOk()
-            ->assertSee('baseWorkedSeconds: 1810', false)
-            ->assertSee('timerRunning: true', false)
+            ->assertSee('initialWorkedSeconds: 1810', false)
+            ->assertSee('initialTimerRunning: true', false)
             ->assertDontSee('clockedInAt:', false)
             ->assertDontSee('completedBreakSeconds:', false);
 
@@ -354,6 +507,50 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertSame('2026-07-13 08:30:20', $break->started_at->utc()->format('Y-m-d H:i:s'));
         $this->assertSame('2026-07-13 08:35:40', $break->ended_at->utc()->format('Y-m-d H:i:s'));
         $this->assertSame(1810, app(ChatterPayrollService::class)->shiftWorkedSeconds($shift->load('breaks')));
+    }
+
+    public function test_state_sync_keeps_shift_state_server_authoritative_and_excludes_breaks(): void
+    {
+        $chatter = $this->chatter();
+        CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
+
+        $this->actingAs($chatter)->post(route('chatter.clock-in'))->assertSessionHasNoErrors();
+
+        CarbonImmutable::setTestNow('2026-07-13 08:30:00 UTC');
+        $this->actingAs($chatter)->post(route('chatter.breaks.start'))->assertSessionHasNoErrors();
+
+        CarbonImmutable::setTestNow('2026-07-13 09:30:00 UTC');
+        $this->actingAs($chatter)->postJson(route('chatter.state'))
+            ->assertOk()
+            ->assertHeader('Cache-Control', 'must-revalidate, no-cache, no-store, private')
+            ->assertHeader('Pragma', 'no-cache')
+            ->assertJson([
+                'has_open_shift' => true,
+                'on_break' => true,
+                'timer_running' => false,
+                'worked_seconds' => 1800,
+            ]);
+
+        $this->actingAs($chatter)->post(route('chatter.breaks.end'))->assertSessionHasNoErrors();
+
+        CarbonImmutable::setTestNow('2026-07-13 10:00:00 UTC');
+        $this->actingAs($chatter)->postJson(route('chatter.state'))
+            ->assertOk()
+            ->assertJson([
+                'has_open_shift' => true,
+                'on_break' => false,
+                'timer_running' => true,
+                'worked_seconds' => 3600,
+            ]);
+
+        $this->assertNull(ChatterShift::firstOrFail()->clocked_out_at);
+    }
+
+    public function test_state_sync_is_not_available_via_get(): void
+    {
+        $this->actingAs($this->chatter())
+            ->getJson('/chatter/state')
+            ->assertMethodNotAllowed();
     }
 
     public function test_payroll_excludes_breaks_and_adds_overtime_without_floating_point_money(): void

@@ -53,6 +53,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
             'marketing_unsubscribed_at' => 'datetime',
+            'auth_session_version' => 'integer',
             'password' => 'hashed',
         ];
     }

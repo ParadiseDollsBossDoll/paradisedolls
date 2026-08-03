@@ -111,9 +111,9 @@ class ChatterClockService
         }
 
         $shift = DB::transaction(function () use ($user) {
+            User::query()->lockForUpdate()->findOrFail($user->id);
             $shift = ChatterShift::query()
-                ->where('user_id', $user->id)
-                ->whereNull('clocked_out_at')
+                ->where('active_user_id', $user->id)
                 ->with('breaks')
                 ->lockForUpdate()
                 ->first();
@@ -136,27 +136,24 @@ class ChatterClockService
             return $shift->load('user');
         });
 
-        if ($shift) {
-            $this->payroll->refreshPeriodsTouchedBy($shift);
-        }
-
         return $shift;
     }
 
     private function lockAndAssertActive(User $user): void
     {
-        $locked = User::query()->with('chatterProfile')->lockForUpdate()->findOrFail($user->id);
+        $locked = User::query()->lockForUpdate()->findOrFail($user->id);
+        $profile = $locked->chatterProfile()->lockForUpdate()->first();
 
-        if (! $locked->isChatter() || ! $locked->chatterProfile?->isActive()) {
+        if (! $locked->isChatter() || ! $profile?->isActive()) {
             throw ValidationException::withMessages(['shift' => __('This chatter account is not active.')]);
         }
 
-        $user->setRelation('chatterProfile', $locked->chatterProfile);
+        $user->setRelation('chatterProfile', $profile);
     }
 
     private function assertNoOpenShift(User $user): void
     {
-        if (ChatterShift::query()->where('user_id', $user->id)->whereNull('clocked_out_at')->exists()) {
+        if (ChatterShift::query()->where('active_user_id', $user->id)->exists()) {
             throw ValidationException::withMessages(['shift' => __('You are already clocked in.')]);
         }
     }
@@ -200,7 +197,7 @@ class ChatterClockService
 
     private function openShift(User $user, bool $lock = false): ChatterShift
     {
-        $query = ChatterShift::query()->where('user_id', $user->id)->whereNull('clocked_out_at')->with('breaks');
+        $query = ChatterShift::query()->where('active_user_id', $user->id)->with('breaks');
         $shift = $lock ? $query->lockForUpdate()->first() : $query->first();
 
         if (! $shift) {
