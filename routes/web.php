@@ -339,6 +339,10 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::middleware('throttle:admin-actions')->group(function () {
         Route::post('/onboarding/{profile}/stage', [AdminOnboardingController::class, 'updateStage'])
             ->name('onboarding.stage');
+        Route::post('/onboarding/{profile}/work-status', [AdminOnboardingController::class, 'updateWorkStatus'])
+            ->name('onboarding.work-status');
+        Route::post('/onboarding/{profile}/approved-platforms', [AdminOnboardingController::class, 'updateApprovedPlatforms'])
+            ->name('onboarding.approved-platforms');
         Route::post('/onboarding/{profile}/verification-instructions', [AdminOnboardingController::class, 'updateVerificationInstructions'])
             ->name('onboarding.verification-instructions');
         Route::post('/onboarding/{profile}/courses/{course}/unlock', [AdminOnboardingController::class, 'unlockCourse'])

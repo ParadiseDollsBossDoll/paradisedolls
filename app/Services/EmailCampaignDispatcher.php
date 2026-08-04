@@ -6,6 +6,7 @@ use App\Jobs\SendEmailCampaignDelivery;
 use App\Models\EmailCampaign;
 use App\Models\EmailCampaignDelivery;
 use App\Models\EmailCampaignRun;
+use App\Models\ModelProfile;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -110,6 +111,19 @@ class EmailCampaignDispatcher
             ->whereNotNull('email')
             ->whereNull('marketing_unsubscribed_at')
             ->when(
+                $campaign->audience === EmailCampaign::AUDIENCE_APPLICATIONS,
+                fn (Builder $query): Builder => $query->where(function (Builder $query): void {
+                    $query
+                        ->whereDoesntHave('modelProfile')
+                        ->orWhereHas(
+                            'modelProfile',
+                            fn (Builder $profile): Builder => $this->notFullyOnboardedProfileQuery($profile)
+                                ->whereNull('information_submitted_at')
+                                ->where('work_status', '!=', ModelProfile::WORK_STATUS_INACTIVE)
+                        );
+                })
+            )
+            ->when(
                 $campaign->audience === EmailCampaign::AUDIENCE_ONBOARDED_MODELS,
                 fn (Builder $query): Builder => $query->whereHas(
                     'modelProfile',
@@ -118,16 +132,26 @@ class EmailCampaignDispatcher
             )
             ->when(
                 $campaign->audience === EmailCampaign::AUDIENCE_NOT_ONBOARDED_MODELS,
-                fn (Builder $query): Builder => $query->where(function (Builder $query): void {
-                    $query
-                        ->whereDoesntHave('modelProfile')
-                        ->orWhereHas(
-                            'modelProfile',
-                            fn (Builder $profile): Builder => $profile
-                                ->whereNull('community_role_assigned_at')
-                                ->whereNull('manual_fully_onboarded_at')
-                        );
-                })
+                fn (Builder $query): Builder => $query->whereHas(
+                    'modelProfile',
+                    fn (Builder $profile): Builder => $this->notFullyOnboardedProfileQuery($profile)
+                        ->whereNotNull('information_submitted_at')
+                )
+            )
+            ->when(
+                $campaign->audience === EmailCampaign::AUDIENCE_ACTIVE_MODELS,
+                fn (Builder $query): Builder => $query->whereHas(
+                    'modelProfile',
+                    fn (Builder $profile): Builder => $this->fullyOnboardedProfileQuery($profile)
+                        ->where('work_status', ModelProfile::WORK_STATUS_ACTIVE)
+                )
+            )
+            ->when(
+                $campaign->audience === EmailCampaign::AUDIENCE_INACTIVE_MODELS,
+                fn (Builder $query): Builder => $query->whereHas(
+                    'modelProfile',
+                    fn (Builder $profile): Builder => $profile->where('work_status', ModelProfile::WORK_STATUS_INACTIVE)
+                )
             )
             ->orderBy('id');
     }
@@ -139,5 +163,12 @@ class EmailCampaignDispatcher
                 ->whereNotNull('community_role_assigned_at')
                 ->orWhereNotNull('manual_fully_onboarded_at');
         });
+    }
+
+    private function notFullyOnboardedProfileQuery(Builder $profile): Builder
+    {
+        return $profile
+            ->whereNull('community_role_assigned_at')
+            ->whereNull('manual_fully_onboarded_at');
     }
 }

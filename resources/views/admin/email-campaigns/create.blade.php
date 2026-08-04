@@ -56,7 +56,7 @@
                             <dt class="text-boss-ivory/40">{{ __('Recipients') }}</dt>
                             <dd
                                 class="text-right font-medium text-boss-ivory/75"
-                                x-text="({ all_models: @js(__('All models')), onboarded_models: @js(__('Fully onboarded models')), not_onboarded_models: @js(__('Models not fully onboarded')) })[audience] || @js(__('All models'))"
+                                x-text="({ all_models: @js(__('All models')), applications: @js(__('Applications')), not_onboarded_models: @js(__('Onboarding')), onboarded_models: @js(__('Fully onboarded')), active_models: @js(__('Active models')), inactive_models: @js(__('Inactive models')) })[audience] || @js(__('All models'))"
                             ></dd>
                         </div>
                         <div class="flex items-start justify-between gap-4">

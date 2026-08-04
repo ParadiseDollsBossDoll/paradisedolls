@@ -23,9 +23,15 @@ class EmailCampaign extends Model
 
     public const AUDIENCE_ALL_MODELS = 'all_models';
 
+    public const AUDIENCE_APPLICATIONS = 'applications';
+
     public const AUDIENCE_ONBOARDED_MODELS = 'onboarded_models';
 
     public const AUDIENCE_NOT_ONBOARDED_MODELS = 'not_onboarded_models';
+
+    public const AUDIENCE_ACTIVE_MODELS = 'active_models';
+
+    public const AUDIENCE_INACTIVE_MODELS = 'inactive_models';
 
     protected $fillable = [
         'created_by',
@@ -79,8 +85,11 @@ class EmailCampaign extends Model
     {
         return [
             self::AUDIENCE_ALL_MODELS => __('All models'),
-            self::AUDIENCE_ONBOARDED_MODELS => __('Fully onboarded models'),
-            self::AUDIENCE_NOT_ONBOARDED_MODELS => __('Models not fully onboarded'),
+            self::AUDIENCE_APPLICATIONS => __('Applications'),
+            self::AUDIENCE_NOT_ONBOARDED_MODELS => __('Onboarding'),
+            self::AUDIENCE_ONBOARDED_MODELS => __('Fully onboarded'),
+            self::AUDIENCE_ACTIVE_MODELS => __('Active models'),
+            self::AUDIENCE_INACTIVE_MODELS => __('Inactive models'),
         ];
     }
 

@@ -66,6 +66,11 @@
             $applicationPhotos = $profile->application
                 ? collect($profile->application->photo_paths ?? [])->filter()->values()
                 : collect();
+            $selectedApprovedPlatforms = collect(old('approved_platforms', $profile->approved_platforms ?? []))
+                ->map(fn ($platform) => trim((string) $platform))
+                ->filter()
+                ->values()
+                ->all();
         @endphp
 
         <section class="pd-panel-strong p-5">
@@ -567,6 +572,84 @@
                             {{ __('Permanent removal for this model account and its onboarding records.') }}
                         </p>
                     </div>
+                </section>
+
+                {{-- Working status --}}
+                <section class="pd-panel-strong p-5">
+                    <p class="mb-4 text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Working Status') }}</p>
+                    <form action="{{ route('admin.onboarding.work-status', $profile) }}" method="POST" class="space-y-3">
+                        @csrf
+                        <div>
+                            <label for="work_status" class="pd-label">{{ __('Current status') }}</label>
+                            <select id="work_status" name="work_status" class="pd-input mt-1 w-full text-sm" required>
+                                @foreach ($workStatusOptions as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('work_status', $profile->work_status ?: \App\Models\ModelProfile::WORK_STATUS_NOT_ACTIVE) === $value)>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label for="work_status_note" class="pd-label">{{ __('Admin note') }}</label>
+                            <textarea
+                                id="work_status_note"
+                                name="work_status_note"
+                                rows="2"
+                                class="pd-input mt-1 w-full text-sm"
+                                placeholder="{{ __('Optional note, e.g. currently working, paused, independent') }}"
+                            >{{ old('work_status_note', $profile->work_status_note) }}</textarea>
+                        </div>
+                        @if ($profile->work_status_updated_at)
+                            <p class="text-[0.68rem] text-boss-ivory/35">
+                                {{ __('Updated') }} {{ $profile->work_status_updated_at->diffForHumans() }}
+                            </p>
+                        @endif
+                        <button type="submit" class="pd-btn-primary w-full text-sm">{{ __('Save Working Status') }}</button>
+                    </form>
+                </section>
+
+                {{-- Website approvals --}}
+                <section class="pd-panel-strong p-5">
+                    <div class="mb-4 flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/35">{{ __('Website Approvals') }}</p>
+                            <p class="mt-1 text-[0.72rem] leading-relaxed text-boss-ivory/35">
+                                {{ __('Track which websites this model has been approved for or added to.') }}
+                            </p>
+                        </div>
+                        <span class="shrink-0 rounded-full bg-boss-gold/10 px-2.5 py-1 text-[0.65rem] font-semibold text-boss-gold">
+                            {{ count($selectedApprovedPlatforms) }} {{ __('approved') }}
+                        </span>
+                    </div>
+                    <form action="{{ route('admin.onboarding.approved-platforms', $profile) }}" method="POST" class="space-y-4">
+                        @csrf
+                        <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                            @foreach ($approvedPlatformOptions as $platform)
+                                <label class="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-sm text-boss-ivory/70">
+                                    <input
+                                        type="checkbox"
+                                        name="approved_platforms[]"
+                                        value="{{ $platform }}"
+                                        class="rounded border-boss-gold/25 text-boss-gold focus:ring-boss-gold/30"
+                                        @checked(in_array($platform, $selectedApprovedPlatforms, true))
+                                    >
+                                    <span>{{ $platform }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                        <div>
+                            <label for="custom_platform" class="pd-label">{{ __('Add another website') }}</label>
+                            <input
+                                id="custom_platform"
+                                name="custom_platform"
+                                type="text"
+                                class="pd-input mt-1 w-full text-sm"
+                                placeholder="{{ __('e.g. New premium site') }}"
+                                maxlength="80"
+                            >
+                        </div>
+                        <button type="submit" class="pd-btn-primary w-full text-sm">{{ __('Save Website Approvals') }}</button>
+                    </form>
                 </section>
 
                 {{-- Login Access --}}

@@ -17,6 +17,12 @@ class ModelProfile extends Model
 
     public const STAGE_ACTIVE = 'active';
 
+    public const WORK_STATUS_NOT_ACTIVE = 'not_active';
+
+    public const WORK_STATUS_ACTIVE = 'active';
+
+    public const WORK_STATUS_INACTIVE = 'inactive';
+
     public const VERIFICATION_NOT_REQUESTED = 'not_requested';
 
     public const VERIFICATION_REQUESTED = 'requested';
@@ -50,6 +56,7 @@ class ModelProfile extends Model
         'has_tattoos_piercings',
         'platforms',
         'current_platforms',
+        'approved_platforms',
         'fetishes_checklist',
         'work_interests',
         'comfort_levels',
@@ -79,6 +86,9 @@ class ModelProfile extends Model
         'discord_username',
         'discord_user_id',
         'onboarding_stage',
+        'work_status',
+        'work_status_updated_at',
+        'work_status_note',
         'onboarding_started_at',
         'information_submitted_at',
         'verification_status',
@@ -103,6 +113,7 @@ class ModelProfile extends Model
         return [
             'date_of_birth' => 'date',
             'platforms'          => 'array',
+            'approved_platforms' => 'array',
             'fetishes_checklist' => 'array',
             'work_interests'     => 'array',
             'comfort_levels'     => 'array',
@@ -114,6 +125,7 @@ class ModelProfile extends Model
             'payout_iban' => 'encrypted',
             'custom_onboarding_answers' => 'array',
             'equipment' => 'array',
+            'work_status_updated_at' => 'datetime',
             'onboarding_started_at' => 'datetime',
             'information_submitted_at' => 'datetime',
             'verification_submitted_at' => 'datetime',
@@ -186,6 +198,16 @@ class ModelProfile extends Model
         return $this->isCommunityRoleAssigned() || $this->isManuallyFullyOnboarded();
     }
 
+    public function isWorkActive(): bool
+    {
+        return $this->work_status === self::WORK_STATUS_ACTIVE;
+    }
+
+    public function isWorkInactive(): bool
+    {
+        return $this->work_status === self::WORK_STATUS_INACTIVE;
+    }
+
     public function hasCommunityChatAccess(): bool
     {
         return $this->isVerified() && $this->isCommunityRoleAssigned();
@@ -217,6 +239,21 @@ class ModelProfile extends Model
     {
         return self::onboardingStageOptions()[$this->onboarding_stage ?: self::STAGE_REGISTRATION]
             ?? __('Registration');
+    }
+
+    public static function workStatusOptions(): array
+    {
+        return [
+            self::WORK_STATUS_NOT_ACTIVE => __('Not active yet'),
+            self::WORK_STATUS_ACTIVE => __('Active model'),
+            self::WORK_STATUS_INACTIVE => __('Inactive model'),
+        ];
+    }
+
+    public function workStatusLabel(): string
+    {
+        return self::workStatusOptions()[$this->work_status ?: self::WORK_STATUS_NOT_ACTIVE]
+            ?? __('Not active yet');
     }
 
     public function onboardingPercent(): int

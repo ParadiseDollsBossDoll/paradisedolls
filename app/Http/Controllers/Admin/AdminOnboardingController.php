@@ -155,6 +155,8 @@ class AdminOnboardingController extends Controller
             'courses'               => $courses,
             'unlockedCourseIds'     => $unlockedCourseIds,
             'accessRequestsByCourse' => $accessRequestsByCourse,
+            'workStatusOptions' => ModelProfile::workStatusOptions(),
+            'approvedPlatformOptions' => $this->approvedPlatformOptions($profile),
             'customOnboardingAnswers' => OnboardingFormDefinition::customAnswersForDisplay(
                 OnboardingFormDefinition::get(),
                 $profile->custom_onboarding_answers ?? []
@@ -227,6 +229,45 @@ class AdminOnboardingController extends Controller
         ])->save();
 
         return redirect()->back()->with('status', __('Onboarding stage updated.'));
+    }
+
+    public function updateWorkStatus(Request $request, ModelProfile $profile): RedirectResponse
+    {
+        $validated = $request->validate([
+            'work_status' => ['required', 'string', Rule::in(array_keys(ModelProfile::workStatusOptions()))],
+            'work_status_note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $profile->forceFill([
+            'work_status' => $validated['work_status'],
+            'work_status_note' => $validated['work_status_note'] ?? null,
+            'work_status_updated_at' => now(),
+        ])->save();
+
+        return redirect()->back()->with('status', __('Model working status updated.'));
+    }
+
+    public function updateApprovedPlatforms(Request $request, ModelProfile $profile): RedirectResponse
+    {
+        $validated = $request->validate([
+            'approved_platforms' => ['nullable', 'array', 'max:80'],
+            'approved_platforms.*' => ['string', 'max:80'],
+            'custom_platform' => ['nullable', 'string', 'max:80'],
+        ]);
+
+        $platforms = collect($validated['approved_platforms'] ?? [])
+            ->push($validated['custom_platform'] ?? null)
+            ->map(fn ($platform) => trim((string) $platform))
+            ->filter()
+            ->unique(fn ($platform) => strtolower($platform))
+            ->values()
+            ->all();
+
+        $profile->forceFill([
+            'approved_platforms' => $platforms,
+        ])->save();
+
+        return redirect()->back()->with('status', __('Approved websites updated.'));
     }
 
     public function updateVerificationInstructions(Request $request, ModelProfile $profile): RedirectResponse
@@ -689,5 +730,38 @@ class AdminOnboardingController extends Controller
             'discord.com', 'discordapp.com' => str_starts_with($path, '/invite/') && strlen(trim($path, '/')) > strlen('invite/'),
             default => false,
         };
+    }
+
+    private function approvedPlatformOptions(ModelProfile $profile): array
+    {
+        return collect([
+            'CAM4',
+            'Flirt4Free',
+            'Susi.live',
+            'XLoveCam',
+            'FanCentro',
+            'Fanzi',
+            'OnlyFans',
+            'LoyalFans',
+            'Supermodels.fans',
+            'Playboy Fans',
+            'OnlyPPV',
+            'OhChatAI',
+            'Stripchat',
+            'AdultWork',
+            'Chaturbate',
+            'Babestation',
+            'BongaCams',
+            'ManyVids',
+            'Fanvue',
+        ])
+            ->merge($profile->platforms ?? [])
+            ->merge($profile->approved_platforms ?? [])
+            ->map(fn ($platform) => trim((string) $platform))
+            ->filter()
+            ->unique(fn ($platform) => strtolower($platform))
+            ->sortBy(fn ($platform) => strtolower($platform))
+            ->values()
+            ->all();
     }
 }

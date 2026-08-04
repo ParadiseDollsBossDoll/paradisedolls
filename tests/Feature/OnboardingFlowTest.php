@@ -1924,7 +1924,38 @@ class OnboardingFlowTest extends TestCase
             'email' => 'waiting@example.com',
             'email_verified_at' => now(),
         ]);
-        ModelProfile::create(['user_id' => $notOnboarded->id]);
+        ModelProfile::create([
+            'user_id' => $notOnboarded->id,
+            'information_submitted_at' => now(),
+        ]);
+
+        $applicationStage = User::factory()->create([
+            'role' => 'model',
+            'email' => 'application@example.com',
+            'email_verified_at' => now(),
+        ]);
+        ModelProfile::create(['user_id' => $applicationStage->id]);
+
+        $active = User::factory()->create([
+            'role' => 'model',
+            'email' => 'active@example.com',
+            'email_verified_at' => now(),
+        ]);
+        ModelProfile::create([
+            'user_id' => $active->id,
+            'manual_fully_onboarded_at' => now(),
+            'work_status' => ModelProfile::WORK_STATUS_ACTIVE,
+        ]);
+
+        $inactive = User::factory()->create([
+            'role' => 'model',
+            'email' => 'inactive@example.com',
+            'email_verified_at' => now(),
+        ]);
+        ModelProfile::create([
+            'user_id' => $inactive->id,
+            'work_status' => ModelProfile::WORK_STATUS_INACTIVE,
+        ]);
 
         $dispatcher = new EmailCampaignDispatcher();
 
@@ -1944,14 +1975,53 @@ class OnboardingFlowTest extends TestCase
             'status' => EmailCampaign::STATUS_DRAFT,
         ]);
 
+        $applicationsCampaign = EmailCampaign::create([
+            'name' => 'Application reminder',
+            'subject' => 'Finish your setup',
+            'body' => 'Hi {name}',
+            'audience' => EmailCampaign::AUDIENCE_APPLICATIONS,
+            'status' => EmailCampaign::STATUS_DRAFT,
+        ]);
+
+        $activeCampaign = EmailCampaign::create([
+            'name' => 'Active model update',
+            'subject' => 'This week',
+            'body' => 'Hi {name}',
+            'audience' => EmailCampaign::AUDIENCE_ACTIVE_MODELS,
+            'status' => EmailCampaign::STATUS_DRAFT,
+        ]);
+
+        $inactiveCampaign = EmailCampaign::create([
+            'name' => 'Inactive model update',
+            'subject' => 'Checking in',
+            'body' => 'Hi {name}',
+            'audience' => EmailCampaign::AUDIENCE_INACTIVE_MODELS,
+            'status' => EmailCampaign::STATUS_DRAFT,
+        ]);
+
         $this->assertSame(
-            ['manual@example.com', 'role@example.com'],
+            ['manual@example.com', 'role@example.com', 'active@example.com'],
             $dispatcher->recipientQuery($onboardedCampaign)->pluck('email')->all()
         );
 
         $this->assertSame(
             ['waiting@example.com'],
             $dispatcher->recipientQuery($notOnboardedCampaign)->pluck('email')->all()
+        );
+
+        $this->assertSame(
+            ['application@example.com'],
+            $dispatcher->recipientQuery($applicationsCampaign)->pluck('email')->all()
+        );
+
+        $this->assertSame(
+            ['active@example.com'],
+            $dispatcher->recipientQuery($activeCampaign)->pluck('email')->all()
+        );
+
+        $this->assertSame(
+            ['inactive@example.com'],
+            $dispatcher->recipientQuery($inactiveCampaign)->pluck('email')->all()
         );
     }
 
