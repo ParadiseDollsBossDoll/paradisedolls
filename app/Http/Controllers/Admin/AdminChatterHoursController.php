@@ -23,6 +23,7 @@ use App\Services\UserSessionService;
 use App\Support\ChatterCurrency;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use DateTimeZone;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -59,6 +60,7 @@ class AdminChatterHoursController extends Controller
             ->get();
 
         $workRoles = ChatterWorkRole::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+        $timezoneOptions = $this->timezoneOptions();
         $modelOptions = User::query()
             ->where('role', 'model')
             ->whereHas('modelProfile')
@@ -75,7 +77,7 @@ class AdminChatterHoursController extends Controller
         $mode = 'accounts';
 
         return view('admin.chatter-hours.index', compact(
-            'chatters', 'requests', 'openShifts', 'workRoles', 'modelOptions', 'stats', 'mode'
+            'chatters', 'requests', 'openShifts', 'workRoles', 'timezoneOptions', 'modelOptions', 'stats', 'mode'
         ));
     }
 
@@ -204,6 +206,35 @@ class AdminChatterHoursController extends Controller
         $accounts->sendInvitation($chatter);
 
         return back()->with('status', __('A fresh secure invitation was queued for :email.', ['email' => $chatter->email]));
+    }
+
+    public function updateTimezone(Request $request, User $chatter): RedirectResponse
+    {
+        $this->assertChatter($chatter);
+        $validated = $request->validate([
+            'timezone' => ['required', 'timezone'],
+        ]);
+
+        DB::transaction(function () use ($request, $chatter, $validated): void {
+            $lockedChatter = User::query()->lockForUpdate()->findOrFail($chatter->id);
+            $profile = $lockedChatter->chatterProfile()->lockForUpdate()->firstOrFail();
+            $before = ['timezone' => $profile->timezone];
+
+            $profile->forceFill(['timezone' => $validated['timezone']])->save();
+
+            ChatterTimeAudit::create([
+                'actor_id' => $request->user()->id,
+                'action' => 'chatter_timezone_updated',
+                'reason' => __('Timezone updated from the chatter account manager.'),
+                'before' => $before,
+                'after' => [
+                    'chatter_id' => $chatter->id,
+                    'timezone' => $profile->timezone,
+                ],
+            ]);
+        });
+
+        return back()->with('status', __('Chatter timezone updated.'));
     }
 
     public function updateStatus(
@@ -663,6 +694,66 @@ class AdminChatterHoursController extends Controller
         ];
     }
 
+    /** @return \Illuminate\Support\Collection<int, array{value: string, label: string, search: string}> */
+    private function timezoneOptions(): \Illuminate\Support\Collection
+    {
+        $now = CarbonImmutable::now('UTC');
+
+        return collect(DateTimeZone::listIdentifiers())
+            ->map(function (string $timezone) use ($now): array {
+                $offset = $now->setTimezone($timezone)->getOffset();
+                $label = $this->friendlyTimezoneLabel($timezone, $offset);
+
+                return [
+                    'value' => $timezone,
+                    'label' => $label,
+                    'search' => $label.' '.$timezone.' '.str_replace(['/', '_'], ' ', $timezone),
+                ];
+            })
+            ->sortBy([
+                fn (array $left, array $right) => $this->timezoneOffset($left['value']) <=> $this->timezoneOffset($right['value']),
+                fn (array $left, array $right) => $left['value'] <=> $right['value'],
+            ])
+            ->values();
+    }
+
+    private function friendlyTimezoneLabel(string $timezone, int $offset): string
+    {
+        $friendlyGroups = [
+            '+01:00' => 'Central European Time (CET), West Africa Time (WAT)',
+            '+02:00' => 'Eastern European Time (EET), Central Africa Time (CAT)',
+            '+03:00' => 'Moscow Time (MSK), East Africa Time (EAT), Arabia Standard Time (AST)',
+            '+03:30' => 'Iran Standard Time (IRST)',
+            '+04:00' => 'Gulf Standard Time (GST), Georgia, Armenia',
+            '+04:30' => 'Afghanistan Time (AFT)',
+            '+05:00' => 'Pakistan Standard Time (PKT), Yekaterinburg Time (YEKT)',
+            '+05:30' => 'Indian Standard Time (IST), Sri Lanka Standard Time (SLST)',
+            '+05:45' => 'Nepal Time (NPT)',
+            '+06:00' => 'Bangladesh Standard Time (BST), Bhutan Time (BTT)',
+            '+06:30' => 'Myanmar Time (MMT), Cocos Islands',
+            '+07:00' => 'Indochina Time (ICT), Western Indonesian Time (WIB)',
+        ];
+
+        $offsetLabel = $this->formatUtcOffset($offset);
+        $name = $friendlyGroups[$offsetLabel] ?? str_replace(['/', '_'], [' / ', ' '], $timezone);
+
+        return "UTC{$offsetLabel}: {$name} - {$timezone}";
+    }
+
+    private function timezoneOffset(string $timezone): int
+    {
+        return CarbonImmutable::now('UTC')->setTimezone($timezone)->getOffset();
+    }
+
+    private function formatUtcOffset(int $offset): string
+    {
+        $sign = $offset >= 0 ? '+' : '-';
+        $offset = abs($offset);
+        $hours = intdiv($offset, 3600);
+        $minutes = intdiv($offset % 3600, 60);
+
+        return sprintf('%s%02d:%02d', $sign, $hours, $minutes);
+    }
     /** @return array<string, string|int|null> */
     private function filters(Request $request): array
     {

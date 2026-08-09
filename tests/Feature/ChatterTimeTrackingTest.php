@@ -99,6 +99,34 @@ class ChatterTimeTrackingTest extends TestCase
         Mail::assertQueued(ChatterInvitationMail::class, fn (ChatterInvitationMail $mail) => $mail->chatter->is($chatter));
     }
 
+    public function test_admin_can_update_existing_chatter_timezone(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $chatter = $this->chatter();
+
+        $this->actingAs($admin)
+            ->patch(route('admin.chatter-hours.chatters.timezone', $chatter), [
+                'timezone' => 'Asia/Manila',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('status', 'Chatter timezone updated.');
+
+        $this->assertDatabaseHas('chatter_profiles', [
+            'user_id' => $chatter->id,
+            'timezone' => 'Asia/Manila',
+        ]);
+        $this->assertDatabaseHas('chatter_time_audits', [
+            'actor_id' => $admin->id,
+            'action' => 'chatter_timezone_updated',
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.chatter-hours.chatters.timezone', $chatter), [
+                'timezone' => 'Not/A_Timezone',
+            ])
+            ->assertSessionHasErrors('timezone');
+    }
+
     public function test_admin_can_permanently_delete_a_chatter_and_all_related_records(): void
     {
         Mail::fake();

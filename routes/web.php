@@ -214,6 +214,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::middleware('throttle:admin-actions')->group(function () {
         Route::post('/chatter-hours/chatters', [AdminChatterHoursController::class, 'storeChatter'])->name('chatter-hours.chatters.store');
         Route::post('/chatter-hours/chatters/{chatter}/invitation', [AdminChatterHoursController::class, 'resendInvitation'])->name('chatter-hours.chatters.invitation');
+        Route::patch('/chatter-hours/chatters/{chatter}/timezone', [AdminChatterHoursController::class, 'updateTimezone'])->name('chatter-hours.chatters.timezone');
         Route::patch('/chatter-hours/chatters/{chatter}/status', [AdminChatterHoursController::class, 'updateStatus'])->name('chatter-hours.chatters.status');
         Route::delete('/chatter-hours/chatters/{chatter}', [AdminChatterHoursController::class, 'destroyChatter'])->name('chatter-hours.chatters.destroy');
         Route::post('/chatter-hours/chatters/{chatter}/pay-rates', [AdminChatterHoursController::class, 'storePayRate'])->name('chatter-hours.chatters.pay-rates');
