@@ -371,8 +371,8 @@ class ChatterTimeTrackingTest extends TestCase
         $chatter = $this->chatter();
         CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
 
-        $this->actingAs($chatter)->post(route('chatter.clock-in'))->assertSessionHasNoErrors();
-        $this->actingAs($chatter)->post(route('chatter.clock-in'))->assertSessionHasErrors('shift');
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate'])->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate'])->assertSessionHasErrors('shift');
         $this->actingAs($chatter)->post(route('chatter.breaks.end'))->assertSessionHasErrors('shift');
 
         CarbonImmutable::setTestNow('2026-07-13 10:00:00 UTC');
@@ -398,7 +398,7 @@ class ChatterTimeTrackingTest extends TestCase
         $chatter = $this->chatter();
         CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
 
-        $this->actingAs($chatter)->post(route('chatter.clock-in'))->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate'])->assertSessionHasNoErrors();
 
         CarbonImmutable::setTestNow('2026-07-13 08:30:00 UTC');
         $this->actingAs($chatter)->post(route('chatter.breaks.start'))->assertSessionHasNoErrors();
@@ -431,7 +431,7 @@ class ChatterTimeTrackingTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $chatter = $this->chatter();
         CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
-        $this->actingAs($chatter)->post(route('chatter.clock-in'))->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate'])->assertSessionHasNoErrors();
         CarbonImmutable::setTestNow('2026-07-13 08:30:00 UTC');
         $this->actingAs($chatter)->post(route('chatter.breaks.start'))->assertSessionHasNoErrors();
         DB::table('sessions')->insert([
@@ -461,7 +461,7 @@ class ChatterTimeTrackingTest extends TestCase
         $chatter = $this->chatter();
         CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
 
-        $this->actingAs($chatter)->post(route('chatter.clock-in'))->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate'])->assertSessionHasNoErrors();
 
         CarbonImmutable::setTestNow('2026-07-13 08:30:00 UTC');
         $this->actingAs($chatter)->post(route('chatter.breaks.start'))->assertSessionHasNoErrors();
@@ -513,7 +513,7 @@ class ChatterTimeTrackingTest extends TestCase
         $chatter = $this->chatter();
         CarbonImmutable::setTestNow('2026-07-13 08:00:10 UTC');
 
-        $this->actingAs($chatter)->post(route('chatter.clock-in'))->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate'])->assertSessionHasNoErrors();
 
         CarbonImmutable::setTestNow('2026-07-13 08:30:20 UTC');
         $this->actingAs($chatter)->post(route('chatter.breaks.start'))->assertSessionHasNoErrors();
@@ -542,7 +542,7 @@ class ChatterTimeTrackingTest extends TestCase
         $chatter = $this->chatter();
         CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
 
-        $this->actingAs($chatter)->post(route('chatter.clock-in'))->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate'])->assertSessionHasNoErrors();
 
         CarbonImmutable::setTestNow('2026-07-13 08:30:00 UTC');
         $this->actingAs($chatter)->post(route('chatter.breaks.start'))->assertSessionHasNoErrors();
@@ -581,7 +581,7 @@ class ChatterTimeTrackingTest extends TestCase
             ->assertMethodNotAllowed();
     }
 
-    public function test_payroll_excludes_breaks_and_adds_overtime_without_floating_point_money(): void
+    public function test_payroll_excludes_breaks_and_uses_fixed_shift_rate_without_floating_point_money(): void
     {
         $chatter = $this->chatter(['overtime_threshold_minutes' => 120]);
         $shift = ChatterShift::create([
@@ -597,8 +597,8 @@ class ChatterTimeTrackingTest extends TestCase
 
         $this->assertSame(150, $sheet->ordinary_minutes);
         $this->assertSame(30, $sheet->break_minutes);
-        $this->assertSame(30, $sheet->overtime_minutes);
-        $this->assertSame(3300, $sheet->gross_pay_pence);
+        $this->assertSame(0, $sheet->overtime_minutes);
+        $this->assertSame(3000, $sheet->gross_pay_pence);
         $totals = $payroll->workedTotals($chatter, CarbonImmutable::parse('2026-07-13 08:00:00 UTC'), CarbonImmutable::parse('2026-07-13 11:00:00 UTC'));
         $this->assertSame(150, $totals['paid_minutes']);
         $this->assertSame(150, $totals['worked_minutes']);
@@ -620,6 +620,7 @@ class ChatterTimeTrackingTest extends TestCase
         CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
         $this->actingAs($chatter)->post(route('chatter.clock-in'), [
             'work_role_id' => $adminTask->id,
+            'platform' => 'Stripchat',
         ])->assertSessionHasNoErrors();
 
         CarbonImmutable::setTestNow('2026-07-13 09:00:00 UTC');
@@ -628,6 +629,7 @@ class ChatterTimeTrackingTest extends TestCase
         $shift = ChatterShift::query()->firstOrFail();
         $this->assertSame($adminTask->id, $shift->chatter_work_role_id);
         $this->assertSame(1575, $shift->hourly_rate_pence);
+        $this->assertSame('Stripchat', $shift->platform);
 
         $sheet = app(ChatterPayrollService::class)
             ->refresh(app(ChatterPayrollService::class)->getOrCreate($chatter, CarbonImmutable::parse('2026-07-13', 'Europe/London')));
@@ -637,6 +639,7 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertSame('61.4000', data_get($sheet->calculation_snapshot, 'usd_to_php_rate'));
         $this->assertSame(96705, data_get($sheet->calculation_snapshot, 'gross_pay_php_centavos'));
         $this->assertSame('Admin Task', data_get($sheet->calculation_snapshot, 'shifts.0.work_role'));
+        $this->assertSame('Stripchat', data_get($sheet->calculation_snapshot, 'shifts.0.platform'));
         $this->assertSame(1575, data_get($sheet->calculation_snapshot, 'shifts.0.hourly_rate_pence'));
 
         ChatterRoleAssignment::query()->where('user_id', $chatter->id)->where('chatter_work_role_id', $adminTask->id)->update([
@@ -652,6 +655,7 @@ class ChatterTimeTrackingTest extends TestCase
 
         $this->actingAs($chatter)->post(route('chatter.clock-in'), [
             'work_role_id' => $adminTask->id,
+            'platform' => 'Stripchat',
         ])->assertSessionHasErrors('work_role_id');
 
         $this->assertDatabaseCount('chatter_shifts', 0);
@@ -815,7 +819,7 @@ class ChatterTimeTrackingTest extends TestCase
             ->assertDontSee('Approved periods keep their saved rate');
     }
 
-    public function test_overlapping_night_weekend_and_overtime_use_highest_premium_plus_overtime(): void
+    public function test_night_weekend_and_overtime_do_not_change_fixed_rate_pay(): void
     {
         $chatter = $this->chatter([
             'overtime_threshold_minutes' => 0,
@@ -832,10 +836,10 @@ class ChatterTimeTrackingTest extends TestCase
         $payroll = app(ChatterPayrollService::class);
         $sheet = $payroll->refresh($payroll->getOrCreate($chatter, CarbonImmutable::parse('2026-07-13', 'Europe/London')));
 
-        $this->assertSame(60, $sheet->night_minutes);
-        $this->assertSame(60, $sheet->weekend_minutes);
-        $this->assertSame(60, $sheet->overtime_minutes);
-        $this->assertSame(2400, $sheet->gross_pay_pence);
+        $this->assertSame(0, $sheet->night_minutes);
+        $this->assertSame(0, $sheet->weekend_minutes);
+        $this->assertSame(0, $sheet->overtime_minutes);
+        $this->assertSame(1200, $sheet->gross_pay_pence);
     }
 
     public function test_overnight_shift_is_split_across_uk_payroll_weeks(): void
@@ -1033,14 +1037,8 @@ class ChatterTimeTrackingTest extends TestCase
             'name' => 'Shift Worker',
             'email' => 'worker@example.com',
             'timezone' => 'Europe/London',
+            'work_role_id' => ChatterWorkRole::query()->where('slug', 'chatter')->value('id'),
             'base_hourly_rate' => '12.50',
-            'overtime_threshold_hours' => '40',
-            'overtime_multiplier' => '1.5',
-            'night_premium_multiplier' => '1.2',
-            'weekend_premium_multiplier' => '1.5',
-            'night_starts_at' => '22:00',
-            'night_ends_at' => '06:00',
-            'effective_from' => '2026-07-13',
         ];
     }
 }

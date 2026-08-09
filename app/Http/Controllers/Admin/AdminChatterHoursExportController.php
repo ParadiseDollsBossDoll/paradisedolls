@@ -26,7 +26,7 @@ class AdminChatterHoursExportController extends Controller
                 'clock_in' => $this->excelDateText($shift['started_at'] ?? null),
                 'clock_out' => $this->excelDateText($shift['ended_at'] ?? null),
                 'employee' => $timesheet->user->name,
-                'role' => $shift['work_role'] ?? 'Chatter',
+                'role' => trim(($shift['work_role'] ?? 'Chatter').(filled($shift['platform'] ?? null) ? ' - '.$shift['platform'] : '')),
                 'worked_minutes' => (int) ($shift['paid_minutes'] ?? 0),
             ]))
             ->sortBy('clock_in')

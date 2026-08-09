@@ -17,13 +17,10 @@
         @if (session('status'))<div class="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">{{ session('status') }}</div>@endif
         @if ($errors->any())<div class="rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200"><ul class="list-disc pl-5">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
 
-        <section class="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
+        <section class="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-5">
             @php
                 $summary = [
                     [__('Paid hours'), number_format($timesheet->ordinary_minutes / 60, 2)],
-                    [__('Night'), number_format($timesheet->night_minutes / 60, 2).'h'],
-                    [__('Weekend'), number_format($timesheet->weekend_minutes / 60, 2).'h'],
-                    [__('Overtime'), number_format($timesheet->overtime_minutes / 60, 2).'h'],
                     [__('Adjustments USD'), '$'.number_format($timesheet->adjustment_pence / 100, 2)],
                     [__('Gross USD'), '$'.number_format($timesheet->gross_pay_pence / 100, 2)],
                     [__('Final pay PHP'), '₱'.number_format($grossPayPhpCentavos / 100, 2)],
@@ -47,7 +44,7 @@
                             @endphp
                             <details class="group p-5" @if (!$editable) open @endif>
                                 <summary class="flex cursor-pointer list-none flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                    <div><div class="flex flex-wrap items-center gap-2"><p class="font-semibold">{{ $shiftStart->format('D d M Y') }}</p><span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.65rem] text-boss-gold">{{ $shift->workRole?->name ?? __('Chatter') }} · ${{ number_format(($shift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr</span></div><p class="mt-1 text-xs text-boss-ivory/40">{{ $shiftStart->format('H:i') }} - {{ $shiftEnd?->format('H:i') ?? __('Open') }} UK</p></div>
+                                    <div><div class="flex flex-wrap items-center gap-2"><p class="font-semibold">{{ $shiftStart->format('D d M Y') }}</p><span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.65rem] text-boss-gold">{{ $shift->workRole?->name ?? __('Chatter') }} - ${{ number_format(($shift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr</span>@if($shift->platform)<span class="rounded-full bg-white/[0.06] px-2 py-0.5 text-[0.65rem] text-boss-ivory/55">{{ $shift->platform }}</span>@endif</div><p class="mt-1 text-xs text-boss-ivory/40">{{ $shiftStart->format('H:i') }} - {{ $shiftEnd?->format('H:i') ?? __('Open') }} UK</p></div>
                                     <span class="text-xs text-boss-gold">{{ $shiftEnd ? number_format(max(0, $shiftStart->diffInMinutes($shiftEnd) - $breakMinutes) / 60, 2).'h' : __('Needs attention') }}</span>
                                 </summary>
 

@@ -52,10 +52,10 @@ class ChatterAccountService
                 'created_by' => $admin->id,
             ]);
 
-            $chatterRole = ChatterWorkRole::query()->firstOrCreate(
-                ['slug' => 'chatter'],
-                ['name' => 'Chatter', 'is_active' => true, 'sort_order' => 10],
-            );
+            $chatterRole = ChatterWorkRole::query()
+                ->whereKey($data['work_role_id'])
+                ->where('is_active', true)
+                ->firstOrFail();
             ChatterRoleAssignment::create([
                 'user_id' => $user->id,
                 'chatter_work_role_id' => $chatterRole->id,

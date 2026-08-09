@@ -42,8 +42,15 @@ class ChatterClockController extends Controller
 
     public function clockIn(Request $request, ChatterClockService $clock): RedirectResponse
     {
-        $validated = $request->validate(['work_role_id' => ['nullable', 'integer']]);
-        $clock->clockIn($request->user(), isset($validated['work_role_id']) ? (int) $validated['work_role_id'] : null);
+        $validated = $request->validate([
+            'work_role_id' => ['nullable', 'integer'],
+            'platform' => ['required', 'string', 'max:100'],
+        ]);
+        $clock->clockIn(
+            $request->user(),
+            isset($validated['work_role_id']) ? (int) $validated['work_role_id'] : null,
+            trim($validated['platform']),
+        );
 
         return back()->with('status', __('You are clocked in.'));
     }

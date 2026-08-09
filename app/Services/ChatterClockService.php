@@ -15,12 +15,16 @@ class ChatterClockService
 {
     public function __construct(private readonly ChatterPayrollService $payroll) {}
 
-    public function clockIn(User $user, ?int $workRoleId = null): ChatterShift
+    public function clockIn(User $user, ?int $workRoleId = null, string $platform = ''): ChatterShift
     {
-        return DB::transaction(function () use ($user, $workRoleId) {
+        return DB::transaction(function () use ($user, $workRoleId, $platform) {
             $this->lockAndAssertActive($user);
             $this->assertNoOpenShift($user);
             $assignment = $this->resolveRoleAssignment($user, $workRoleId);
+            $platform = trim($platform);
+            if ($platform === '') {
+                throw ValidationException::withMessages(['platform' => __('Choose the website or platform you are working on.')]);
+            }
             $now = now('UTC');
             $shift = ChatterShift::create([
                 'user_id' => $user->id,
@@ -29,11 +33,13 @@ class ChatterClockService
                 'hourly_rate_pence' => $assignment->hourly_rate_pence,
                 'clocked_in_at' => $now,
                 'timezone' => $user->chatterProfile->timezone,
+                'platform' => $platform,
             ]);
             $this->audit($shift, $user, 'clocked_in', null, null, [
                 'clocked_in_at' => $now->toIso8601String(),
                 'work_role_id' => $assignment->chatter_work_role_id,
                 'hourly_rate_pence' => $assignment->hourly_rate_pence,
+                'platform' => $platform,
             ]);
 
             return $shift;

@@ -13,7 +13,7 @@ class ChatterShift extends Model
 
     protected $fillable = [
         'user_id', 'active_user_id', 'chatter_work_role_id', 'hourly_rate_pence',
-        'clocked_in_at', 'clocked_out_at', 'timezone', 'note',
+        'clocked_in_at', 'clocked_out_at', 'timezone', 'platform', 'note',
     ];
 
     protected function casts(): array

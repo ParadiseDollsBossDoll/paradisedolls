@@ -341,13 +341,15 @@ class AdminChatterHoursController extends Controller
     {
         $this->assertChatter($chatter);
         $data = $request->validate([
-            'work_role_id' => ['required', 'integer', Rule::exists(ChatterWorkRole::class, 'id')->where('is_active', true)],
+            'work_role_id' => ['nullable', 'integer', Rule::exists(ChatterWorkRole::class, 'id')->where('is_active', true)],
+            'work_role_name' => ['required_without:work_role_id', 'nullable', 'string', 'max:80'],
             'hourly_rate' => ['required', 'numeric', 'between:0,1000'],
             'is_active' => ['required', 'boolean'],
         ]);
+        $workRole = $this->resolveWorkRole($data['work_role_id'] ?? null, $data['work_role_name'] ?? null);
 
         $assignment = ChatterRoleAssignment::query()->updateOrCreate(
-            ['user_id' => $chatter->id, 'chatter_work_role_id' => (int) $data['work_role_id']],
+            ['user_id' => $chatter->id, 'chatter_work_role_id' => $workRole->id],
             [
                 'hourly_rate_pence' => (int) round(((float) $data['hourly_rate']) * 100),
                 'is_active' => (bool) $data['is_active'],
@@ -673,25 +675,59 @@ class AdminChatterHoursController extends Controller
     {
         $data = $request->validate([
             'base_hourly_rate' => ['required', 'numeric', 'between:0,1000'],
-            'overtime_threshold_hours' => ['required', 'numeric', 'between:0,168'],
-            'overtime_multiplier' => ['required', 'numeric', 'between:1,5'],
-            'night_premium_multiplier' => ['required', 'numeric', 'between:1,5'],
-            'weekend_premium_multiplier' => ['required', 'numeric', 'between:1,5'],
-            'night_starts_at' => ['required', 'date_format:H:i'],
-            'night_ends_at' => ['required', 'date_format:H:i'],
-            'effective_from' => ['required', 'date'],
+            'work_role_id' => ['nullable', 'integer', Rule::exists(ChatterWorkRole::class, 'id')->where('is_active', true)],
+            'work_role_name' => ['required_without:work_role_id', 'nullable', 'string', 'max:80'],
         ]);
+        $workRole = $this->resolveWorkRole($data['work_role_id'] ?? null, $data['work_role_name'] ?? null);
 
         return [
             'base_rate_pence' => (int) round(((float) $data['base_hourly_rate']) * 100),
-            'overtime_threshold_minutes' => (int) round(((float) $data['overtime_threshold_hours']) * 60),
-            'overtime_multiplier_bps' => (int) round(((float) $data['overtime_multiplier']) * 10000),
-            'night_premium_bps' => (int) round(((float) $data['night_premium_multiplier']) * 10000),
-            'weekend_premium_bps' => (int) round(((float) $data['weekend_premium_multiplier']) * 10000),
-            'night_starts_at' => $data['night_starts_at'],
-            'night_ends_at' => $data['night_ends_at'],
-            'effective_from' => $data['effective_from'],
+            'overtime_threshold_minutes' => 10080,
+            'overtime_multiplier_bps' => 10000,
+            'night_premium_bps' => 10000,
+            'weekend_premium_bps' => 10000,
+            'night_starts_at' => '00:00',
+            'night_ends_at' => '00:00',
+            'effective_from' => now(ChatterPayrollService::REPORTING_TIMEZONE)->toDateString(),
+            'work_role_id' => $workRole->id,
         ];
+    }
+
+    private function resolveWorkRole(mixed $workRoleId, ?string $workRoleName): ChatterWorkRole
+    {
+        if ($workRoleId) {
+            return ChatterWorkRole::query()
+                ->whereKey((int) $workRoleId)
+                ->where('is_active', true)
+                ->firstOrFail();
+        }
+
+        $name = trim((string) $workRoleName);
+        if ($name === '') {
+            throw ValidationException::withMessages(['work_role_name' => __('Enter a role for this chatter.')]);
+        }
+
+        $baseSlug = Str::slug($name) ?: 'work-role';
+        $slug = $baseSlug;
+        $counter = 2;
+        while (ChatterWorkRole::query()->where('slug', $slug)->exists()) {
+            $existing = ChatterWorkRole::query()->where('slug', $slug)->first();
+            if ($existing && strcasecmp($existing->name, $name) === 0) {
+                if (! $existing->is_active) {
+                    $existing->forceFill(['is_active' => true])->save();
+                }
+
+                return $existing;
+            }
+            $slug = $baseSlug.'-'.$counter++;
+        }
+
+        return ChatterWorkRole::create([
+            'name' => $name,
+            'slug' => $slug,
+            'is_active' => true,
+            'sort_order' => ((int) ChatterWorkRole::query()->max('sort_order')) + 10,
+        ]);
     }
 
     /** @return \Illuminate\Support\Collection<int, array{value: string, label: string, search: string}> */
@@ -754,6 +790,7 @@ class AdminChatterHoursController extends Controller
 
         return sprintf('%s%02d:%02d', $sign, $hours, $minutes);
     }
+
     /** @return array<string, string|int|null> */
     private function filters(Request $request): array
     {

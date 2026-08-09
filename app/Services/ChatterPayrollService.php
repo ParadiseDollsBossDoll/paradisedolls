@@ -253,6 +253,7 @@ class ChatterPayrollService
                 'shift_id' => $shift->id,
                 'work_role_id' => $shift->chatter_work_role_id,
                 'work_role' => $shift->workRole?->name ?? 'Chatter',
+                'platform' => $shift->platform,
                 'hourly_rate_pence' => $shift->hourly_rate_pence,
                 'started_at' => $shiftStart->toIso8601String(),
                 'ended_at' => $shiftEnd->toIso8601String(),
@@ -272,35 +273,12 @@ class ChatterPayrollService
                 }
 
                 $local = $cursor->timezone(self::REPORTING_TIMEZONE);
-                $rate = $this->rateForDate($rates, $local);
-                $baseRatePence = $shift->hourly_rate_pence ?? $rate?->base_rate_pence;
+                $baseRatePence = $shift->hourly_rate_pence ?? $this->rateForDate($rates, $local)?->base_rate_pence;
                 $paidMinutes++;
                 $row['paid_minutes']++;
 
-                $night = $rate ? $this->isNightMinute($local, $rate) : false;
-                $weekend = $local->isWeekend();
-                $overtime = $rate && $paidMinutes > $rate->overtime_threshold_minutes;
-
-                if ($night) {
-                    $nightMinutes++;
-                }
-                if ($weekend) {
-                    $weekendMinutes++;
-                }
-                if ($overtime) {
-                    $overtimeMinutes++;
-                }
-
-                if ($rate && $baseRatePence !== null) {
-                    $premiumBps = max(
-                        self::BASIS_POINTS,
-                        $night ? $rate->night_premium_bps : self::BASIS_POINTS,
-                        $weekend ? $rate->weekend_premium_bps : self::BASIS_POINTS,
-                    );
-                    $combinedBps = self::BASIS_POINTS
-                        + ($premiumBps - self::BASIS_POINTS)
-                        + ($overtime ? $rate->overtime_multiplier_bps - self::BASIS_POINTS : 0);
-                    $minuteNumerator = $baseRatePence * $combinedBps;
+                if ($baseRatePence !== null) {
+                    $minuteNumerator = $baseRatePence * self::BASIS_POINTS;
                     $payNumerator += $minuteNumerator;
                     $rowPayNumerator += $minuteNumerator;
                 }
@@ -343,12 +321,6 @@ class ChatterPayrollService
                     'id' => $rate->id,
                     'effective_from' => $rate->effective_from->toDateString(),
                     'base_rate_pence' => $rate->base_rate_pence,
-                    'overtime_threshold_minutes' => $rate->overtime_threshold_minutes,
-                    'overtime_multiplier_bps' => $rate->overtime_multiplier_bps,
-                    'night_premium_bps' => $rate->night_premium_bps,
-                    'weekend_premium_bps' => $rate->weekend_premium_bps,
-                    'night_starts_at' => $rate->night_starts_at,
-                    'night_ends_at' => $rate->night_ends_at,
                 ])->values()->all(),
             ],
         ];
@@ -411,17 +383,6 @@ class ChatterPayrollService
     private function rateForDate(Collection $rates, CarbonImmutable $local): ?ChatterPayRate
     {
         return $rates->last(fn (ChatterPayRate $rate) => $rate->effective_from->toDateString() <= $local->toDateString());
-    }
-
-    private function isNightMinute(CarbonImmutable $local, ChatterPayRate $rate): bool
-    {
-        $time = $local->format('H:i:s');
-        $start = $rate->night_starts_at;
-        $end = $rate->night_ends_at;
-
-        return $start <= $end
-            ? $time >= $start && $time < $end
-            : $time >= $start || $time < $end;
     }
 
     private function roundPay(int $numerator): int
