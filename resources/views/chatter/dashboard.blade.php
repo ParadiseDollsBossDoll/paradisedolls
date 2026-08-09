@@ -8,6 +8,26 @@
 
     <div class="flex flex-wrap items-end justify-between gap-3"><div><p class="pd-kicker">{{ __('Working Hours') }}</p><h1 class="pd-heading mt-2 text-[clamp(2rem,4vw,3rem)]">{{ __('Time Tracker') }}</h1><p class="mt-2 text-sm text-boss-ivory/45">{{ __('Your time: :timezone - Payroll weeks use Europe/London', ['timezone'=>$tz]) }}</p></div></div>
 
+    @if($trainingCourses->isNotEmpty())
+        <section class="rounded-md border border-white/[0.08] bg-white/[0.025] p-5">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <p class="pd-kicker">{{ __('Training Academy') }}</p>
+                    <h2 class="mt-1 font-display text-2xl">{{ __('Unlocked courses') }}</h2>
+                </div>
+                <a href="{{ route('chatter.courses.index') }}" class="pd-btn-secondary inline-flex justify-center rounded-lg px-4 py-2.5 text-xs">{{ __('View academy') }}</a>
+            </div>
+            <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                @foreach($trainingCourses->take(3) as $course)
+                    <a href="{{ route('chatter.courses.show', $course->slug) }}" class="group rounded-md border border-white/[0.07] bg-white/[0.025] p-4 transition hover:border-boss-gold/25 hover:bg-boss-gold/[0.04]">
+                        <p class="truncate font-semibold text-boss-ivory group-hover:text-boss-gold">{{ $course->title }}</p>
+                        <p class="mt-1 text-xs text-boss-ivory/40">{{ $course->platform_label ?: __('General training') }} - {{ trans_choice(':count lesson|:count lessons', (int) $course->published_lessons_count, ['count' => (int) $course->published_lessons_count]) }}</p>
+                    </a>
+                @endforeach
+            </div>
+        </section>
+    @endif
+
     <section class="grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)]">
         <div
             x-data="chatterTimeTracker({

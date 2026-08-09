@@ -60,6 +60,12 @@ class CourseCommunityService
      */
     public function joinCourse(User $user, Course $course): void
     {
+        if ($user->isChatter()) {
+            $this->leaveCourse($user, $course);
+
+            return;
+        }
+
         $channel = $this->ensureForCourse($course, $user);
 
         DB::transaction(function () use ($user, $channel, $course): void {

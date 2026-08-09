@@ -389,7 +389,9 @@ class Course extends Model
             return route('admin.academy-files.show', ['path' => $path]);
         }
 
-        return route('member.courses.outline', $this->slug);
+        $routePrefix = auth()->user()?->isChatter() ? 'chatter' : 'member';
+
+        return route($routePrefix.'.courses.outline', $this->slug);
     }
 
     /**

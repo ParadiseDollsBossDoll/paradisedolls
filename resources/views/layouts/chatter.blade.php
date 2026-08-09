@@ -14,6 +14,12 @@
             'active' => request()->routeIs('chatter.model-reviews.*'),
             'icon' => 'review',
         ],
+        [
+            'route' => 'chatter.courses.index',
+            'label' => __('Academy'),
+            'active' => request()->routeIs('chatter.courses.*', 'chatter.lessons.*'),
+            'icon' => 'academy',
+        ],
         ['route' => 'profile.edit', 'label' => __('Profile'), 'active' => request()->routeIs('profile.*'), 'icon' => 'profile'],
     ];
     $currentLabel = request()->routeIs('notifications.*') ? __('Notifications') : (collect($links)->firstWhere('active', true)['label'] ?? __('Time Tracker'));
@@ -61,6 +67,8 @@
                         <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4v4l3 2"/></svg>
                     @elseif($link['icon']==='review')
                         <svg viewBox="0 0 16 16"><path d="M3 2.5h10v11H3z"/><path d="M5 5.5h6M5 8h6M5 10.5h3"/></svg>
+                    @elseif($link['icon']==='academy')
+                        <svg viewBox="0 0 16 16"><path d="M2.5 3.5h4.75A2.75 2.75 0 0 1 10 6.25V14a2.75 2.75 0 0 0-2.75-2.75H2.5z"/><path d="M10 6.25A2.75 2.75 0 0 1 12.75 3.5h.75v7.75h-.75A2.75 2.75 0 0 0 10 14z"/></svg>
                     @else
                         <svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
                     @endif

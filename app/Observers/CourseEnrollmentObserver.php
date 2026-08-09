@@ -15,7 +15,7 @@ class CourseEnrollmentObserver
         $user   = User::find($enrollment->user_id);
         $course = $enrollment->course;
 
-        if ($user && $course) {
+        if ($user && $course && ! $user->isChatter()) {
             $this->community->joinCourse($user, $course);
         }
     }

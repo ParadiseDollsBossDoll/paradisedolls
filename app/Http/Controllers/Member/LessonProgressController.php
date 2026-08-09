@@ -16,6 +16,7 @@ class LessonProgressController extends Controller
     {
         $course = $lesson->course;
         abort_unless($course->is_published && $lesson->is_published, 404);
+        $courseRoutePrefix = $request->user()->isChatter() ? 'chatter' : 'member';
 
         $completed = $request->boolean('completed');
 
@@ -54,7 +55,7 @@ class LessonProgressController extends Controller
 
             if ($nextLesson !== null) {
                 return redirect()
-                    ->route('member.courses.lessons.show', [$course->slug, $nextLesson])
+                    ->route($courseRoutePrefix.'.courses.lessons.show', [$course->slug, $nextLesson])
                     ->with('status', __('Lesson completed.'));
             }
 
@@ -84,9 +85,11 @@ class LessonProgressController extends Controller
     {
         $lesson->loadMissing('course');
         $profile = $request->user()->modelProfile()->first();
-        $actionUrl = $profile
-            ? route('admin.onboarding.show', ['profile' => $profile], false)
-            : route('admin.models.progress', ['member' => $request->user()->id], false);
+        $actionUrl = match (true) {
+            (bool) $profile => route('admin.onboarding.show', ['profile' => $profile], false),
+            $request->user()->isChatter() => route('admin.chatter-hours.index', absolute: false),
+            default => route('admin.models.progress', ['member' => $request->user()->id], false),
+        };
 
         app(AdminActivityNotifier::class)->notify(
             title: __('Do\'s & Don\'ts completed'),

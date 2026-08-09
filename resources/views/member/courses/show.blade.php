@@ -1,5 +1,8 @@
-﻿<x-member-layout>
+﻿<x-dynamic-component :component="$courseLayout ?? 'member-layout'">
     @php
+        $courseRoutePrefix = $courseRoutePrefix ?? 'member';
+        $courseRoute = fn (string $name, mixed $parameters = []) => route($courseRoutePrefix.'.courses.'.$name, $parameters);
+        $isChatterAcademy = (bool) ($isChatterAcademy ?? false);
         $color = $course->displayColor();
         $bg = $course->displayColorBackground();
         $image = $course->overviewImageUrl();
@@ -19,7 +22,7 @@
             <div class="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm text-green-200">{{ session('status') }}</div>
         @endif
 
-        <a href="{{ route('member.courses.index') }}" class="inline-flex rounded-xl border border-white/[0.07] bg-white/[0.04] px-3 py-2 text-[0.78rem] text-boss-ivory/45 transition-colors hover:text-boss-gold">
+        <a href="{{ $courseRoute('index') }}" class="inline-flex rounded-xl border border-white/[0.07] bg-white/[0.04] px-3 py-2 text-[0.78rem] text-boss-ivory/45 transition-colors hover:text-boss-gold">
             <- {{ __('Academy Catalog') }}
         </a>
 
@@ -41,7 +44,7 @@
 
                     <div class="flex flex-wrap items-center gap-3">
                         @if ($isEnrolled)
-                            <form method="POST" action="{{ route('member.courses.learn', $course->slug) }}">
+                            <form method="POST" action="{{ $courseRoute('learn', $course->slug) }}">
                                 @csrf
                                 <button type="submit" class="pd-btn-primary">
                                     {{ __('Resume Course') }}
@@ -60,13 +63,15 @@
                             </div>
                         @endif
 
-                        @if ($isEnrolled && isset($communityChannel) && $communityChannel)
+                        @if ($isEnrolled && ! $isChatterAcademy && isset($communityChannel) && $communityChannel)
                             <a href="{{ route('community.channels.show', $communityChannel->slug) }}" class="pd-btn-secondary inline-flex items-center gap-2">
                                 <svg viewBox="0 0 16 16" class="h-4 w-4 fill-none stroke-current stroke-[1.6]"><path d="M14 10c0 1.1-.9 2-2 2H4l-3 3V4c0-1.1.9-2 2-2h9c1.1 0 2 .9 2 2v6z"/></svg>
                                 {{ __('Open Community') }}
                             </a>
                         @elseif ($isEnrolled)
-                            <a href="{{ route('member.courses.community', $course->slug) }}" class="pd-btn-secondary">{{ __('Course Community') }}</a>
+                            @unless($isChatterAcademy)
+                                <a href="{{ $courseRoute('community', $course->slug) }}" class="pd-btn-secondary">{{ __('Course Community') }}</a>
+                            @endunless
                         @endif
                     </div>
                 </div>
@@ -97,7 +102,7 @@
             </div>
         </section>
 
-        @if (! $isEnrolled)
+        @if (! $isEnrolled && ! $isChatterAcademy)
             <section class="rounded-2xl border border-boss-gold/25 bg-boss-gold/[0.08] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)] md:flex md:items-center md:justify-between md:gap-5">
                 <div>
                     <p class="pd-kicker">{{ __('Course Access Review') }}</p>
@@ -208,7 +213,7 @@
                                     </div>
                                 @endif
 
-                                <form method="POST" action="{{ route('member.courses.request-access', $course->slug) }}" enctype="multipart/form-data" class="mt-4 space-y-3">
+                                <form method="POST" action="{{ $courseRoute('request-access', $course->slug) }}" enctype="multipart/form-data" class="mt-4 space-y-3">
                                     @csrf
                                     <textarea
                                         name="member_notes"
@@ -243,7 +248,7 @@
                                     </div>
                                 @endif
 
-                                <form method="POST" action="{{ route('member.courses.request-access', $course->slug) }}" enctype="multipart/form-data" class="mt-4 space-y-3">
+                                <form method="POST" action="{{ $courseRoute('request-access', $course->slug) }}" enctype="multipart/form-data" class="mt-4 space-y-3">
                                     @csrf
                                     <textarea
                                         name="member_notes"
@@ -359,4 +364,4 @@
             </aside>
         </section>
     </div>
-</x-member-layout>
+</x-dynamic-component>

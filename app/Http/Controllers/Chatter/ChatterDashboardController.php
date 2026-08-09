@@ -15,7 +15,15 @@ class ChatterDashboardController extends Controller
 {
     public function __invoke(Request $request, ChatterPayrollService $payroll, ChatterCurrency $currency): View
     {
-        $user = $request->user()->loadMissing(['chatterProfile', 'chatterRoleAssignments.workRole']);
+        $user = $request->user()->loadMissing([
+            'chatterProfile',
+            'chatterRoleAssignments.workRole',
+            'enrolledCourses' => fn ($query) => $query
+                ->where('courses.is_published', true)
+                ->withCount('publishedLessons')
+                ->orderBy('sort_order')
+                ->orderBy('title'),
+        ]);
         $tz = $user->chatterProfile?->timezone ?: config('app.timezone', ChatterPayrollService::REPORTING_TIMEZONE);
         $nowUtc = CarbonImmutable::now('UTC');
         $todayStart = CarbonImmutable::now($tz)->startOfDay();
@@ -58,6 +66,7 @@ class ChatterDashboardController extends Controller
             ->paginate(8);
         $usdToPhpRate = $currency->rateForTimesheet($currentTimesheet);
         $currentPayPhpCentavos = $currency->phpCentavosForTimesheet($currentTimesheet);
+        $trainingCourses = $user->enrolledCourses;
 
         return view('chatter.dashboard', compact(
             'user',
@@ -74,7 +83,8 @@ class ChatterDashboardController extends Controller
             'timesheets',
             'currency',
             'usdToPhpRate',
-            'currentPayPhpCentavos'
+            'currentPayPhpCentavos',
+            'trainingCourses'
         ));
     }
 }

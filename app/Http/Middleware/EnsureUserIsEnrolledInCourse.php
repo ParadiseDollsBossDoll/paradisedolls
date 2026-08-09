@@ -18,12 +18,14 @@ class EnsureUserIsEnrolledInCourse
             abort(404);
         }
 
-        if (! $request->user()?->modelProfile()->first()?->isVerified()) {
-            return $this->deny($request, $course, __('Verification must be approved before Kayla can unlock this course.'));
+        $user = $request->user();
+
+        if ($user?->enrolledCourses()->whereKey($course->id)->exists()) {
+            return $next($request);
         }
 
-        if ($request->user()?->enrolledCourses()->whereKey($course->id)->exists()) {
-            return $next($request);
+        if (! $user?->isChatter() && ! $user?->modelProfile()->first()?->isVerified()) {
+            return $this->deny($request, $course, __('Verification must be approved before Kayla can unlock this course.'));
         }
 
         return $this->deny($request, $course, __('Locked pending Kayla approval.'));
@@ -32,8 +34,12 @@ class EnsureUserIsEnrolledInCourse
     private function deny(Request $request, Course $course, string $message): Response
     {
         if ($request->isMethod('GET')) {
+            $route = $request->user()?->isChatter()
+                ? 'chatter.courses.index'
+                : 'member.courses.show';
+
             return redirect()
-                ->route('member.courses.show', $course->slug)
+                ->route($route, $request->user()?->isChatter() ? [] : $course->slug)
                 ->with('status', $message);
         }
 

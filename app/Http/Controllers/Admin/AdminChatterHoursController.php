@@ -15,6 +15,8 @@ use App\Models\ChatterShift;
 use App\Models\ChatterTimeAudit;
 use App\Models\ChatterTimesheet;
 use App\Models\ChatterWorkRole;
+use App\Models\Course;
+use App\Models\CourseEnrollment;
 use App\Models\User;
 use App\Notifications\SystemNotification;
 use App\Services\ChatterAccountService;
@@ -45,6 +47,7 @@ class AdminChatterHoursController extends Controller
                 'chatterProfile',
                 'chatterPayRates' => fn ($query) => $query->latest('effective_from'),
                 'chatterRoleAssignments.workRole',
+                'courseEnrollments.course:id,title,slug,platform_label,is_published,sort_order',
                 'chatterShifts' => fn ($query) => $query->whereNull('clocked_out_at')->with(['breaks', 'workRole']),
                 'activeAssignedModels:id,name,email',
             ])
@@ -61,6 +64,11 @@ class AdminChatterHoursController extends Controller
 
         $workRoles = ChatterWorkRole::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
         $timezoneOptions = $this->timezoneOptions();
+        $courseOptions = Course::query()
+            ->where('is_published', true)
+            ->orderBy('sort_order')
+            ->orderBy('title')
+            ->get(['id', 'title', 'slug', 'platform_label', 'sort_order']);
         $modelOptions = User::query()
             ->where('role', 'model')
             ->whereHas('modelProfile')
@@ -77,7 +85,7 @@ class AdminChatterHoursController extends Controller
         $mode = 'accounts';
 
         return view('admin.chatter-hours.index', compact(
-            'chatters', 'requests', 'openShifts', 'workRoles', 'timezoneOptions', 'modelOptions', 'stats', 'mode'
+            'chatters', 'requests', 'openShifts', 'workRoles', 'timezoneOptions', 'courseOptions', 'modelOptions', 'stats', 'mode'
         ));
     }
 
@@ -405,6 +413,36 @@ class AdminChatterHoursController extends Controller
             'model' => $model->name,
             'chatter' => $chatter->name,
         ]));
+    }
+
+    public function grantCourseAccess(Request $request, User $chatter): RedirectResponse
+    {
+        $this->assertChatter($chatter);
+        $validated = $request->validate([
+            'course_id' => ['required', Rule::exists(Course::class, 'id')->where('is_published', true)],
+        ]);
+
+        CourseEnrollment::query()->firstOrCreate([
+            'course_id' => (int) $validated['course_id'],
+            'user_id' => $chatter->id,
+        ], [
+            'enrolled_at' => now(),
+        ]);
+
+        return back()->with('status', __('Course access unlocked for :chatter.', ['chatter' => $chatter->name]));
+    }
+
+    public function revokeCourseAccess(Request $request, User $chatter, Course $course): RedirectResponse
+    {
+        $this->assertChatter($chatter);
+
+        CourseEnrollment::query()
+            ->where('course_id', $course->id)
+            ->where('user_id', $chatter->id)
+            ->get()
+            ->each(fn (CourseEnrollment $enrollment) => $enrollment->delete());
+
+        return back()->with('status', __('Course access revoked for :chatter.', ['chatter' => $chatter->name]));
     }
 
     public function destroyModelAssignment(Request $request, User $chatter, User $model): RedirectResponse

@@ -1,5 +1,7 @@
-﻿<x-member-layout>
+﻿<x-dynamic-component :component="$courseLayout ?? 'member-layout'">
     @php
+        $courseRoutePrefix = $courseRoutePrefix ?? 'member';
+        $courseRoute = fn (string $name, mixed $parameters = []) => route($courseRoutePrefix.'.courses.'.$name, $parameters);
         // ── Progress calculations ─────────────────────────────────────────────
         $totalCompleted  = count($completedLessonIds);
         $totalAvailable  = $courses->sum('lessons_count');
@@ -47,7 +49,7 @@
                         {{ $inProgressCourses->isNotEmpty() ? __('Continue Learning') : __('Ready to Start') }}
                     </h2>
                     @if ($inProgressCourses->count() > 3)
-                        <a href="{{ route('member.courses.index', ['filter' => 'in-progress']) }}"
+                        <a href="{{ $courseRoute('index', ['filter' => 'in-progress']) }}"
                            class="text-[0.62rem] text-boss-ivory/28 transition-colors hover:text-boss-gold">
                             {{ __('View all') }} →
                         </a>
@@ -64,8 +66,8 @@
                             $ccLesson    = $cc->lessons->first(fn ($l) => ! in_array($l->id, $completedLessonIds, true))
                                             ?: $cc->lessons->last();
                             $ccUrl       = $ccLesson
-                                ? route('member.courses.lessons.show', [$cc->slug, $ccLesson])
-                                : route('member.courses.learn.show', $cc->slug);
+                                ? $courseRoute('lessons.show', [$cc->slug, $ccLesson])
+                                : $courseRoute('learn.show', $cc->slug);
                             $ccCTAText   = $ccStatus === 'in-progress' ? __('Continue') : __('Start');
                         @endphp
 
@@ -109,7 +111,7 @@
                                     {{ $ccCTAText }}
                                     <svg viewBox="0 0 16 16" class="h-3 w-3 fill-none stroke-current stroke-[2.5]"><path d="M3 8h10M9 5l4 3-4 3"/></svg>
                                 </a>
-                                <a href="{{ route('member.courses.show', $cc->slug) }}"
+                                <a href="{{ $courseRoute('show', $cc->slug) }}"
                                    class="text-[0.62rem] text-boss-ivory/25 transition-colors hover:text-boss-ivory/55">
                                     {{ __('Overview') }}
                                 </a>
@@ -187,7 +189,7 @@
                         'completed'   => __('Completed'),
                     ] as $key => $label)
                         <a
-                            href="{{ route('member.courses.index', ['filter' => $key]) }}"
+                            href="{{ $courseRoute('index', ['filter' => $key]) }}"
                             class="rounded-full px-3.5 py-1.5 text-[0.7rem] transition-colors {{ $filter === $key ? 'bg-boss-gold font-semibold text-boss-ink' : 'border border-white/[0.07] bg-white/[0.03] text-boss-ivory/40 hover:border-boss-gold/25 hover:text-boss-gold' }}"
                         >
                             {{ $label }}
@@ -213,9 +215,9 @@
                             : null;
                         $primaryUrl  = $isEnrolled
                             ? ($nextLesson
-                                ? route('member.courses.lessons.show', [$course->slug, $nextLesson])
-                                : route('member.courses.learn.show', $course->slug))
-                            : route('member.courses.show', $course->slug);
+                                ? $courseRoute('lessons.show', [$course->slug, $nextLesson])
+                                : $courseRoute('learn.show', $course->slug))
+                            : $courseRoute('show', $course->slug);
                         $ctaLabel = match (true) {
                             ! $isEnrolled && $accessRequest?->isPending() => __('View Request'),
                             ! $isEnrolled => __('Request Access'),
@@ -353,7 +355,7 @@
                                          style="color: {{ $color }};"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
                                 </a>
                             @else
-                                <a href="{{ route('member.courses.show', $course->slug) }}" class="flex h-11 items-center justify-between gap-3 rounded-xl border border-boss-gold/35 bg-boss-gold/15 px-4 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-boss-gold transition hover:-translate-y-0.5 hover:bg-boss-gold/22 hover:text-boss-gold-light">
+                                <a href="{{ $courseRoute('show', $course->slug) }}" class="flex h-11 items-center justify-between gap-3 rounded-xl border border-boss-gold/35 bg-boss-gold/15 px-4 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-boss-gold transition hover:-translate-y-0.5 hover:bg-boss-gold/22 hover:text-boss-gold-light">
                                     <span>{{ $ctaLabel }}</span>
                                     <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[2] transition-transform duration-300 group-hover:translate-x-1"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
                                 </a>
@@ -363,10 +365,10 @@
                 @empty
                     <div class="col-span-full rounded-2xl border border-white/[0.05] bg-boss-ink px-6 py-16 text-center">
                         <p class="font-display text-[1.1rem] text-boss-ivory/30">
-                            {{ $courses->isEmpty() ? __('Courses are coming soon.') : __('No courses match this filter yet.') }}
+                            {{ $isChatterAcademy && $courses->isEmpty() ? __('No training courses have been unlocked for your chatter account yet.') : ($courses->isEmpty() ? __('Courses are coming soon.') : __('No courses match this filter yet.')) }}
                         </p>
                         @if (! $courses->isEmpty())
-                            <a href="{{ route('member.courses.index') }}" class="mt-3 inline-flex text-[0.78rem] text-boss-gold hover:text-boss-gold-light">
+                            <a href="{{ $courseRoute('index') }}" class="mt-3 inline-flex text-[0.78rem] text-boss-gold hover:text-boss-gold-light">
                                 {{ __('View all courses') }} →
                             </a>
                         @endif
@@ -382,4 +384,4 @@
         </section>
 
     </div>
-</x-member-layout>
+</x-dynamic-component>

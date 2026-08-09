@@ -197,7 +197,9 @@ class LessonContentBlock extends Model
             return null;
         }
 
-        return route('member.courses.content-blocks.media', array_filter([
+        $routePrefix = auth()->user()?->isChatter() ? 'chatter' : 'member';
+
+        return route($routePrefix.'.courses.content-blocks.media', array_filter([
             'slug' => $course->slug,
             'block' => $this,
             'field' => $field,

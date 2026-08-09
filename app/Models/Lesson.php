@@ -256,7 +256,9 @@ class Lesson extends Model
             return null;
         }
 
-        return route('member.courses.lessons.media', array_filter([
+        $routePrefix = auth()->user()?->isChatter() ? 'chatter' : 'member';
+
+        return route($routePrefix.'.courses.lessons.media', array_filter([
             'slug' => $course->slug,
             'lesson' => $this,
             'kind' => $kind,

@@ -265,6 +265,11 @@
                             $unassignedRoles = $workRoles->whereNotIn('id', $assignments->pluck('chatter_work_role_id'));
                             $assignedModels = $chatter->activeAssignedModels ?? collect();
                             $availableModels = ($modelOptions ?? collect())->whereNotIn('id', $assignedModels->pluck('id'));
+                            $assignedCourses = $chatter->courseEnrollments
+                                ->filter(fn ($enrollment) => $enrollment->course?->is_published)
+                                ->sortBy(fn ($enrollment) => $enrollment->course?->sort_order ?? 999999)
+                                ->values();
+                            $availableCourses = ($courseOptions ?? collect())->whereNotIn('id', $assignedCourses->pluck('course_id'));
                             $profileTimezone = $profile?->timezone ?: 'Europe/London';
                             $profileTimezoneLabel = $timezoneOptions->firstWhere('value', $profileTimezone)['label'] ?? $profileTimezone;
                         @endphp
@@ -321,6 +326,37 @@
                                         @endforeach
                                     </div>
                                     <form method="POST" action="{{ route('admin.chatter-hours.chatters.roles', $chatter) }}" class="mt-3 grid gap-2 rounded-lg border border-dashed border-boss-gold/20 p-3 sm:grid-cols-[1fr_140px_auto] sm:items-end">@csrf<input type="hidden" name="is_active" value="1"><label><span class="pd-label">{{ __('Add another role') }}</span><input class="pd-input mt-1" name="work_role_name" list="chatter-work-role-options" placeholder="{{ __('Role name') }}" required></label><label><span class="pd-label">{{ __('USD/hr') }}</span><input class="pd-input mt-1" type="number" name="hourly_rate" step="0.01" min="0" value="{{ number_format(($rate?->base_rate_pence ?? 0) / 100, 2, '.', '') }}" required></label><button class="pd-btn-primary h-[43px] rounded-lg px-3 text-xs">{{ __('Assign role') }}</button></form>
+                                </div>
+                                <div class="border-t border-white/[0.06] pt-5">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p class="pd-label">{{ __('Course access') }}</p>
+                                            <p class="mt-1 text-xs text-boss-ivory/40">{{ __('Unlock only the training courses this chatter should use for website/platform prep.') }}</p>
+                                        </div>
+                                        <span class="rounded-full bg-boss-gold/10 px-2.5 py-1 text-[0.65rem] font-semibold text-boss-gold">{{ trans_choice(':count course|:count courses', $assignedCourses->count(), ['count' => $assignedCourses->count()]) }}</span>
+                                    </div>
+                                    <div class="mt-3 space-y-2">
+                                        @forelse($assignedCourses as $enrollment)
+                                            @php($course = $enrollment->course)
+                                            <div class="flex flex-col gap-3 rounded-lg border border-white/[0.06] bg-white/[0.025] p-3 sm:flex-row sm:items-center sm:justify-between">
+                                                <div class="min-w-0">
+                                                    <p class="truncate font-medium">{{ $course->title }}</p>
+                                                    <p class="mt-0.5 text-xs text-boss-ivory/35">{{ $course->platform_label ?: __('General training') }}</p>
+                                                </div>
+                                                <form method="POST" action="{{ route('admin.chatter-hours.chatters.courses.destroy', [$chatter, $course]) }}" class="shrink-0">@csrf @method('DELETE')<button class="pd-btn-secondary rounded-lg px-3 py-2 text-xs">{{ __('Revoke') }}</button></form>
+                                            </div>
+                                        @empty
+                                            <p class="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3 text-xs text-boss-ivory/35">{{ __('No course access unlocked yet.') }}</p>
+                                        @endforelse
+                                    </div>
+                                    @if($availableCourses->isNotEmpty())
+                                        <form method="POST" action="{{ route('admin.chatter-hours.chatters.courses', $chatter) }}" class="mt-3 grid gap-2 rounded-lg border border-dashed border-boss-gold/20 p-3 sm:grid-cols-[1fr_auto] sm:items-end">@csrf
+                                            <label><span class="pd-label">{{ __('Unlock course') }}</span><select class="pd-input mt-1" name="course_id" required>@foreach($availableCourses as $course)<option value="{{ $course->id }}">{{ $course->title }} @if($course->platform_label) - {{ $course->platform_label }} @endif</option>@endforeach</select></label>
+                                            <button class="pd-btn-primary h-[43px] rounded-lg px-3 text-xs">{{ __('Grant access') }}</button>
+                                        </form>
+                                    @else
+                                        <p class="mt-3 text-xs text-boss-ivory/35">{{ __('All published courses are already unlocked for this chatter.') }}</p>
+                                    @endif
                                 </div>
                                 <div class="border-t border-white/[0.06] pt-5">
                                     <div class="flex items-start justify-between gap-3">

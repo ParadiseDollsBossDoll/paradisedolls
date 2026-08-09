@@ -1,5 +1,9 @@
-﻿<x-member-layout :hide-sidebar="true" :player="true">
+﻿<x-dynamic-component :component="$courseLayout ?? 'member-layout'" :hide-sidebar="true" :player="true">
     @php
+        $courseRoutePrefix = $courseRoutePrefix ?? 'member';
+        $courseRoute = fn (string $name, mixed $parameters = []) => route($courseRoutePrefix.'.courses.'.$name, $parameters);
+        $lessonProgressRoute = fn (mixed $lesson) => route($courseRoutePrefix.'.lessons.progress', $lesson);
+        $isChatterAcademy = (bool) ($isChatterAcademy ?? false);
         $previewMode = (bool) ($previewMode ?? false);
         $previewExitUrl = $previewExitUrl ?? null;
         $color = $course->displayColor();
@@ -81,16 +85,16 @@
         $unassignedLessons      = $course->lessons->whereNull('course_module_id');
         $lessonUrl              = fn ($lesson) => $previewMode
             ? route('admin.courses.lessons.preview', [$course, $lesson])
-            : route('member.courses.lessons.show', [$course->slug, $lesson]);
+            : $courseRoute('lessons.show', [$course->slug, $lesson]);
         $courseMaterialUrl      = fn (string $item) => $previewMode
             ? route('admin.courses.preview', [$course, 'item' => $item])
-            : route('member.courses.learn.show', [$course->slug, 'item' => $item]);
-        $courseOverviewUrl      = $previewMode ? route('admin.courses.preview', $course) : route('member.courses.show', $course->slug);
-        $academyUrl             = $previewMode ? route('admin.courses.edit', $course) : route('member.courses.index');
-        $communityUrl           = $previewMode ? null : (
+            : $courseRoute('learn.show', [$course->slug, 'item' => $item]);
+        $courseOverviewUrl      = $previewMode ? route('admin.courses.preview', $course) : $courseRoute('show', $course->slug);
+        $academyUrl             = $previewMode ? route('admin.courses.edit', $course) : $courseRoute('index');
+        $communityUrl           = ($previewMode || $isChatterAcademy) ? null : (
             isset($communityChannel) && $communityChannel
                 ? route('community.channels.show', $communityChannel->slug)
-                : route('member.courses.community', $course->slug)
+                : $courseRoute('community', $course->slug)
         );
         $learningEntries = collect();
         if ($hasCourseOutlineItem) {
@@ -630,7 +634,7 @@
                                 @endif
 
                                 @if ($selectedLesson && ! $previewMode)
-                                    <form method="POST" action="{{ route('member.lessons.progress', $selectedLesson) }}">
+                                    <form method="POST" action="{{ $lessonProgressRoute($selectedLesson) }}">
                                         @csrf
                                         @method('PATCH')
                                         @if ($selectedDone)
@@ -795,5 +799,4 @@
         </div>
 
     </div>{{-- /course player --}}
-</x-member-layout>
-
+</x-dynamic-component>

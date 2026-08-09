@@ -14,9 +14,12 @@ use App\Models\ChatterRoleAssignment;
 use App\Models\ChatterShift;
 use App\Models\ChatterTimesheet;
 use App\Models\ChatterWorkRole;
+use App\Models\CommunityChannelAccess;
+use App\Models\Course;
 use App\Models\User;
 use App\Http\Middleware\EnforceAuthenticatedSessionPolicy;
 use App\Services\ChatterPayrollService;
+use App\Services\CourseCommunityService;
 use App\Services\UsdPhpExchangeRateService;
 use App\Support\ChatterCurrency;
 use Carbon\CarbonImmutable;
@@ -125,6 +128,110 @@ class ChatterTimeTrackingTest extends TestCase
                 'timezone' => 'Not/A_Timezone',
             ])
             ->assertSessionHasErrors('timezone');
+    }
+
+    public function test_admin_can_manually_grant_and_revoke_chatter_course_access(): void
+    {
+        Storage::fake('local');
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $chatter = $this->chatter();
+        $unlocked = Course::create([
+            'title' => 'Stripchat Chatter Training',
+            'slug' => 'stripchat-chatter-training',
+            'platform_label' => 'Stripchat',
+            'description' => 'Training for chatters.',
+            'has_course_outline' => true,
+            'course_outline_url' => 'academy/stripchat-outline.pdf',
+            'is_published' => true,
+        ]);
+        $lesson = $unlocked->lessons()->create([
+            'title' => 'Platform basics',
+            'sort_order' => 1,
+            'is_published' => true,
+        ]);
+        $locked = Course::create([
+            'title' => 'Chaturbate Chatter Training',
+            'slug' => 'chaturbate-chatter-training',
+            'platform_label' => 'Chaturbate',
+            'description' => 'Locked training.',
+            'is_published' => true,
+        ]);
+        $communityChannel = app(CourseCommunityService::class)->ensureForCourse($unlocked, $admin);
+        Storage::disk('local')->put('academy/stripchat-outline.pdf', 'outline');
+
+        $this->actingAs($chatter)
+            ->get(route('chatter.courses.index'))
+            ->assertOk()
+            ->assertDontSee('Stripchat Chatter Training')
+            ->assertDontSee('Chaturbate Chatter Training');
+
+        $this->actingAs($chatter)
+            ->get(route('chatter.courses.outline', $unlocked->slug))
+            ->assertRedirect(route('chatter.courses.index'));
+
+        $this->actingAs($admin)
+            ->post(route('admin.chatter-hours.chatters.courses', $chatter), [
+                'course_id' => $unlocked->id,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('course_enrollments', [
+            'course_id' => $unlocked->id,
+            'user_id' => $chatter->id,
+        ]);
+        $this->assertFalse(CommunityChannelAccess::query()
+            ->where('community_channel_id', $communityChannel->id)
+            ->where('user_id', $chatter->id)
+            ->exists());
+
+        $this->actingAs($chatter)
+            ->get(route('chatter.courses.index'))
+            ->assertOk()
+            ->assertSee('Stripchat Chatter Training')
+            ->assertDontSee('Chaturbate Chatter Training');
+
+        $this->actingAs($chatter)
+            ->get(route('chatter.courses.show', $unlocked->slug))
+            ->assertOk()
+            ->assertSee('Resume Course')
+            ->assertDontSee('Open Community')
+            ->assertDontSee('Request Access');
+
+        $this->actingAs($chatter)
+            ->post(route('chatter.courses.learn', $unlocked->slug))
+            ->assertRedirect(route('chatter.courses.learn.show', $unlocked->slug));
+
+        $this->actingAs($chatter)
+            ->get(route('chatter.courses.outline', $unlocked->slug))
+            ->assertOk();
+
+        $this->actingAs($chatter)
+            ->get(route('chatter.courses.learn.show', $unlocked->slug))
+            ->assertOk()
+            ->assertDontSee('Ask in Community')
+            ->assertDontSee('community/channels/'.$communityChannel->slug, false);
+
+        $this->actingAs($chatter)
+            ->get(route('community.channels.show', $communityChannel->slug))
+            ->assertRedirect(route('dashboard'));
+
+        $this->actingAs($chatter)
+            ->get(route('chatter.courses.show', $locked->slug))
+            ->assertNotFound();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.chatter-hours.chatters.courses.destroy', [$chatter, $unlocked]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseMissing('course_enrollments', [
+            'course_id' => $unlocked->id,
+            'user_id' => $chatter->id,
+        ]);
+
+        $this->actingAs($chatter)
+            ->get(route('chatter.courses.lessons.show', [$unlocked->slug, $lesson]))
+            ->assertRedirect(route('chatter.courses.index'));
     }
 
     public function test_admin_can_permanently_delete_a_chatter_and_all_related_records(): void

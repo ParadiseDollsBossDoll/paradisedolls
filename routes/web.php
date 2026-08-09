@@ -93,6 +93,25 @@ Route::get('/dashboard', function () {
 
 Route::middleware(['auth', 'verified', 'chatter'])->prefix('chatter')->name('chatter.')->group(function () {
     Route::get('/', ChatterDashboardController::class)->name('dashboard');
+    Route::get('/courses', [MemberCourseController::class, 'index'])->name('courses.index');
+    Route::get('/courses/{slug}', [MemberCourseController::class, 'show'])->name('courses.show');
+    Route::post('/courses/{slug}/learn', [MemberCourseController::class, 'learn'])
+        ->middleware('throttle:member-progress')
+        ->name('courses.learn');
+    Route::middleware('course.enrolled')->group(function () {
+        Route::get('/courses/{slug}/learn', [MemberCourseController::class, 'learnShow'])->name('courses.learn.show');
+        Route::get('/courses/{slug}/lessons/{lesson}', [MemberCourseController::class, 'lesson'])->name('courses.lessons.show');
+        Route::get('/courses/{slug}/outline', [CourseAssetController::class, 'outline'])->name('courses.outline');
+        Route::get('/courses/{slug}/lessons/{lesson}/media/{kind}/{index?}', [CourseAssetController::class, 'lessonMedia'])
+            ->whereNumber('index')
+            ->name('courses.lessons.media');
+        Route::get('/courses/{slug}/content-blocks/{block}/{field}/{index?}', [CourseAssetController::class, 'contentBlock'])
+            ->whereNumber('index')
+            ->name('courses.content-blocks.media');
+        Route::patch('/lessons/{lesson}/progress', [LessonProgressController::class, 'update'])
+            ->middleware('throttle:member-progress')
+            ->name('lessons.progress');
+    });
     Route::post('/state', [ChatterClockController::class, 'state'])
         ->middleware('throttle:chatter-state-sync')
         ->block(5, 5)
@@ -221,6 +240,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         Route::post('/chatter-hours/chatters/{chatter}/roles', [AdminChatterHoursController::class, 'storeRoleAssignment'])->name('chatter-hours.chatters.roles');
         Route::post('/chatter-hours/chatters/{chatter}/models', [AdminChatterHoursController::class, 'storeModelAssignment'])->name('chatter-hours.chatters.models');
         Route::delete('/chatter-hours/chatters/{chatter}/models/{model}', [AdminChatterHoursController::class, 'destroyModelAssignment'])->name('chatter-hours.chatters.models.destroy');
+        Route::post('/chatter-hours/chatters/{chatter}/courses', [AdminChatterHoursController::class, 'grantCourseAccess'])->name('chatter-hours.chatters.courses');
+        Route::delete('/chatter-hours/chatters/{chatter}/courses/{course}', [AdminChatterHoursController::class, 'revokeCourseAccess'])->name('chatter-hours.chatters.courses.destroy');
         Route::post('/chatter-hours/requests/{chatterRequest}/approve', [AdminChatterHoursController::class, 'approveRequest'])->name('chatter-hours.requests.approve');
         Route::post('/chatter-hours/requests/{chatterRequest}/reject', [AdminChatterHoursController::class, 'rejectRequest'])->name('chatter-hours.requests.reject');
         Route::patch('/chatter-hours/timesheets/{timesheet}/shifts/{shift}', [AdminChatterHoursController::class, 'updateShift'])->name('chatter-hours.shifts.update');

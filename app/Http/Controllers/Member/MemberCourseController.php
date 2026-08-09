@@ -21,8 +21,12 @@ class MemberCourseController extends Controller
 {
     public function index(Request $request): View
     {
+        $user = $request->user();
+        $isChatterAcademy = $user->isChatter();
+
         $coursesPaginator = Course::query()
             ->where('is_published', true)
+            ->when($isChatterAcademy, fn ($query) => $query->whereHas('enrollments', fn ($enrollment) => $enrollment->where('user_id', $user->id)))
             ->with([
                 'lessons' => fn ($q) => $q
                     ->publishedForMembers()
@@ -41,10 +45,10 @@ class MemberCourseController extends Controller
 
         $courses = $coursesPaginator->getCollection();
 
-        $progressPercents = Course::batchProgressPercentsForUser($request->user(), $courses);
+        $progressPercents = Course::batchProgressPercentsForUser($user, $courses);
 
         $completedLessonIds = LessonProgress::query()
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
             ->whereNotNull('completed_at')
             ->pluck('lesson_id')
             ->map(fn ($lessonId) => (int) $lessonId)
@@ -74,15 +78,21 @@ class MemberCourseController extends Controller
 
         $enrolledCourseIds = $request->user()
             ->enrolledCourses()
+            ->when($isChatterAcademy, fn ($query) => $query->where('courses.is_published', true))
             ->pluck('courses.id')
             ->map(fn ($courseId) => (int) $courseId)
             ->all();
 
-        $accessRequestsByCourse = $request->user()
-            ->courseAccessRequests()
-            ->whereIn('course_id', $courses->pluck('id'))
-            ->get()
-            ->keyBy('course_id');
+        $accessRequestsByCourse = $isChatterAcademy
+            ? collect()
+            : $request->user()
+                ->courseAccessRequests()
+                ->whereIn('course_id', $courses->pluck('id'))
+                ->get()
+                ->keyBy('course_id');
+
+        $courseRoutePrefix = $this->courseRoutePrefix($request);
+        $courseLayout = $this->courseLayout($request);
 
         return view('member.courses.index', compact(
             'courses',
@@ -92,62 +102,73 @@ class MemberCourseController extends Controller
             'enrolledCourseIds',
             'accessRequestsByCourse',
             'filter',
-            'coursesPaginator'
+            'coursesPaginator',
+            'courseRoutePrefix',
+            'courseLayout',
+            'isChatterAcademy'
         ));
     }
 
     public function learn(Request $request, string $slug, CourseCommunityService $community): RedirectResponse
     {
         $course = $this->publishedCourse($slug);
-        $profile = $request->user()->modelProfile()->first();
+        $user = $request->user();
+        $courseRoutePrefix = $this->courseRoutePrefix($request);
 
-        if (! $profile?->isVerified()) {
+        if (! $user->isChatter() && ! $user->modelProfile()->first()?->isVerified()) {
             return redirect()
-                ->route('member.courses.show', $course->slug)
+                ->route($courseRoutePrefix.'.courses.show', $course->slug)
                 ->with('status', __('Verification must be approved before Kayla can unlock this course.'));
         }
 
-        if (! $course->isEnrolledBy($request->user())) {
+        if (! $course->isEnrolledBy($user)) {
             return redirect()
-                ->route('member.courses.show', $course->slug)
+                ->route($courseRoutePrefix.'.courses.show', $course->slug)
                 ->with('status', __('Locked pending Kayla approval.'));
         }
 
-        $community->joinCourse($request->user(), $course);
+        $community->joinCourse($user, $course);
 
         $course = $this->learningCourse($slug);
-        $lesson = $this->resumeLesson($course, $request->user()->id);
-        $progress = $this->courseProgress($course, $request->user()->id);
+        $lesson = $this->resumeLesson($course, $user->id);
+        $progress = $this->courseProgress($course, $user->id);
 
         if ($course->hasPreLessonMaterials() && $progress['completed'] === 0) {
             return redirect()
-                ->route('member.courses.learn.show', $course->slug)
+                ->route($courseRoutePrefix.'.courses.learn.show', $course->slug)
                 ->with('status', __('You are enrolled in this course.'));
         }
 
         if ($lesson !== null) {
             return redirect()
-                ->route('member.courses.lessons.show', [$course->slug, $lesson])
+                ->route($courseRoutePrefix.'.courses.lessons.show', [$course->slug, $lesson])
                 ->with('status', __('You are enrolled in this course.'));
         }
 
         return redirect()
-            ->route('member.courses.learn.show', $course->slug)
+            ->route($courseRoutePrefix.'.courses.learn.show', $course->slug)
             ->with('status', __('You are enrolled in this course.'));
     }
 
     public function show(Request $request, string $slug): View
     {
         $course = $this->overviewCourse($slug);
-        $isEnrolled = $course->isEnrolledBy($request->user());
-        $isVerified = (bool) $request->user()->modelProfile()->first()?->isVerified();
-        $courseAccessRequest = $course->accessRequestFor($request->user());
+        $user = $request->user();
+        $isChatterAcademy = $user->isChatter();
+        $isEnrolled = $course->isEnrolledBy($user);
+
+        abort_if($isChatterAcademy && ! $isEnrolled, 404);
+
+        $isVerified = $isChatterAcademy || (bool) $user->modelProfile()->first()?->isVerified();
+        $courseAccessRequest = $isChatterAcademy ? null : $course->accessRequestFor($user);
         $courseAccessRequest?->loadMissing('proofFiles');
-        $progress = $this->courseProgress($course, $request->user()->id);
-        $resumeLesson = $this->resumeLesson($course, $request->user()->id);
+        $progress = $this->courseProgress($course, $user->id);
+        $resumeLesson = $this->resumeLesson($course, $user->id);
         $communityChannel = $course->communityChannels()
             ->where('is_archived', false)
             ->first();
+        $courseRoutePrefix = $this->courseRoutePrefix($request);
+        $courseLayout = $this->courseLayout($request);
 
         return view('member.courses.show', compact(
             'course',
@@ -156,12 +177,17 @@ class MemberCourseController extends Controller
             'courseAccessRequest',
             'progress',
             'resumeLesson',
-            'communityChannel'
+            'communityChannel',
+            'courseRoutePrefix',
+            'courseLayout',
+            'isChatterAcademy'
         ));
     }
 
     public function requestAccess(Request $request, string $slug): RedirectResponse
     {
+        abort_if($request->user()->isChatter(), 404);
+
         $course = $this->publishedCourse($slug);
         $profile = $request->user()->modelProfile()->first();
 
@@ -382,6 +408,8 @@ class MemberCourseController extends Controller
 
     private function learningView(Request $request, Course $course, ?Lesson $selectedLesson, ?array $progress = null): View
     {
+        abort_if($request->user()->isChatter() && ! $course->isEnrolledBy($request->user()), 404);
+
         $progress ??= $this->courseProgress($course, $request->user()->id);
         $lessonIds = $course->lessons->pluck('id')->values();
         if ($selectedLesson === null && ! $course->hasPreLessonMaterials()) {
@@ -423,6 +451,9 @@ class MemberCourseController extends Controller
         $communityChannel = $course->communityChannels()
             ->where('is_archived', false)
             ->first();
+        $courseRoutePrefix = $this->courseRoutePrefix($request);
+        $courseLayout = $this->courseLayout($request);
+        $isChatterAcademy = $request->user()->isChatter();
 
         return view('member.courses.learn', compact(
             'course',
@@ -432,8 +463,21 @@ class MemberCourseController extends Controller
             'progress',
             'moduleProgress',
             'messages',
-            'communityChannel'
+            'communityChannel',
+            'courseRoutePrefix',
+            'courseLayout',
+            'isChatterAcademy'
         ));
+    }
+
+    private function courseRoutePrefix(Request $request): string
+    {
+        return $request->user()->isChatter() ? 'chatter' : 'member';
+    }
+
+    private function courseLayout(Request $request): string
+    {
+        return $request->user()->isChatter() ? 'chatter-layout' : 'member-layout';
     }
 
     private function resumeLessonFromProgress(Course $course, array $completedLessonIds): ?Lesson
