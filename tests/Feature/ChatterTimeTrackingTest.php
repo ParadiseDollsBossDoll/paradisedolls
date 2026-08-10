@@ -130,6 +130,48 @@ class ChatterTimeTrackingTest extends TestCase
             ->assertSessionHasErrors('timezone');
     }
 
+    public function test_admin_can_update_existing_chatter_role_name_rate_and_clock_in_availability(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $chatter = $this->chatter();
+        $originalRole = ChatterWorkRole::query()->where('slug', 'chatter')->firstOrFail();
+        ChatterRoleAssignment::create([
+            'user_id' => $chatter->id,
+            'chatter_work_role_id' => $originalRole->id,
+            'hourly_rate_pence' => 1200,
+            'is_active' => true,
+            'created_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.chatter-hours.chatters.roles', $chatter), [
+                'work_role_id' => $originalRole->id,
+                'work_role_name' => 'Stripchat Training',
+                'hourly_rate' => '15.75',
+                'is_active' => '0',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('status', 'Work role and hourly rate saved. New shifts will use this rate.');
+
+        $newRole = ChatterWorkRole::query()->where('name', 'Stripchat Training')->firstOrFail();
+        $this->assertSame('Chatter', $originalRole->fresh()->name);
+        $this->assertDatabaseMissing('chatter_role_assignments', [
+            'user_id' => $chatter->id,
+            'chatter_work_role_id' => $originalRole->id,
+        ]);
+        $this->assertDatabaseHas('chatter_role_assignments', [
+            'user_id' => $chatter->id,
+            'chatter_work_role_id' => $newRole->id,
+            'hourly_rate_pence' => 1575,
+            'is_active' => false,
+            'created_by' => $admin->id,
+        ]);
+        $this->assertDatabaseHas('chatter_time_audits', [
+            'actor_id' => $admin->id,
+            'action' => 'work_role_assignment_updated',
+        ]);
+    }
+
     public function test_admin_can_manually_grant_and_revoke_chatter_course_access(): void
     {
         Storage::fake('local');
@@ -720,6 +762,7 @@ class ChatterTimeTrackingTest extends TestCase
 
         $this->actingAs($admin)->post(route('admin.chatter-hours.chatters.roles', $chatter), [
             'work_role_id' => $adminTask->id,
+            'work_role_name' => $adminTask->name,
             'hourly_rate' => '15.75',
             'is_active' => '1',
         ])->assertSessionHasNoErrors();

@@ -350,32 +350,58 @@ class AdminChatterHoursController extends Controller
         $this->assertChatter($chatter);
         $data = $request->validate([
             'work_role_id' => ['nullable', 'integer', Rule::exists(ChatterWorkRole::class, 'id')->where('is_active', true)],
-            'work_role_name' => ['required_without:work_role_id', 'nullable', 'string', 'max:80'],
+            'work_role_name' => ['required', 'string', 'max:80'],
             'hourly_rate' => ['required', 'numeric', 'between:0,1000'],
             'is_active' => ['required', 'boolean'],
         ]);
-        $workRole = $this->resolveWorkRole($data['work_role_id'] ?? null, $data['work_role_name'] ?? null);
+        $previousRoleId = isset($data['work_role_id']) ? (int) $data['work_role_id'] : null;
+        $workRole = $this->resolveEditableWorkRole($previousRoleId, $data['work_role_name']);
 
-        $assignment = ChatterRoleAssignment::query()->updateOrCreate(
-            ['user_id' => $chatter->id, 'chatter_work_role_id' => $workRole->id],
-            [
-                'hourly_rate_pence' => (int) round(((float) $data['hourly_rate']) * 100),
-                'is_active' => (bool) $data['is_active'],
-                'created_by' => $request->user()->id,
-            ],
-        );
+        $assignment = DB::transaction(function () use ($request, $chatter, $data, $previousRoleId, $workRole): ChatterRoleAssignment {
+            $previousAssignment = $previousRoleId
+                ? ChatterRoleAssignment::query()
+                    ->where('user_id', $chatter->id)
+                    ->where('chatter_work_role_id', $previousRoleId)
+                    ->with('workRole')
+                    ->lockForUpdate()
+                    ->first()
+                : null;
 
-        ChatterTimeAudit::create([
-            'actor_id' => $request->user()->id,
-            'action' => 'work_role_assignment_updated',
-            'reason' => __('Role and hourly rate updated from the chatter account manager.'),
-            'after' => [
-                'chatter_id' => $chatter->id,
-                'work_role_id' => $assignment->chatter_work_role_id,
-                'hourly_rate_pence' => $assignment->hourly_rate_pence,
-                'is_active' => $assignment->is_active,
-            ],
-        ]);
+            if ($previousAssignment && $previousRoleId !== $workRole->id) {
+                $previousAssignment->delete();
+            }
+
+            $assignment = ChatterRoleAssignment::query()->updateOrCreate(
+                ['user_id' => $chatter->id, 'chatter_work_role_id' => $workRole->id],
+                [
+                    'hourly_rate_pence' => (int) round(((float) $data['hourly_rate']) * 100),
+                    'is_active' => (bool) $data['is_active'],
+                    'created_by' => $request->user()->id,
+                ],
+            );
+
+            ChatterTimeAudit::create([
+                'actor_id' => $request->user()->id,
+                'action' => 'work_role_assignment_updated',
+                'reason' => __('Role and hourly rate updated from the chatter account manager.'),
+                'before' => $previousAssignment ? [
+                    'chatter_id' => $chatter->id,
+                    'work_role_id' => $previousAssignment->chatter_work_role_id,
+                    'work_role_name' => $previousAssignment->workRole?->name,
+                    'hourly_rate_pence' => $previousAssignment->hourly_rate_pence,
+                    'is_active' => $previousAssignment->is_active,
+                ] : null,
+                'after' => [
+                    'chatter_id' => $chatter->id,
+                    'work_role_id' => $assignment->chatter_work_role_id,
+                    'work_role_name' => $workRole->name,
+                    'hourly_rate_pence' => $assignment->hourly_rate_pence,
+                    'is_active' => $assignment->is_active,
+                ],
+            ]);
+
+            return $assignment;
+        });
 
         return back()->with('status', __('Work role and hourly rate saved. New shifts will use this rate.'));
     }
@@ -766,6 +792,27 @@ class AdminChatterHoursController extends Controller
             'is_active' => true,
             'sort_order' => ((int) ChatterWorkRole::query()->max('sort_order')) + 10,
         ]);
+    }
+
+    private function resolveEditableWorkRole(?int $workRoleId, ?string $workRoleName): ChatterWorkRole
+    {
+        $name = trim((string) $workRoleName);
+        if ($name === '') {
+            throw ValidationException::withMessages(['work_role_name' => __('Enter a role for this chatter.')]);
+        }
+
+        if ($workRoleId) {
+            $currentRole = ChatterWorkRole::query()
+                ->whereKey($workRoleId)
+                ->where('is_active', true)
+                ->firstOrFail();
+
+            if (strcasecmp($currentRole->name, $name) === 0) {
+                return $currentRole;
+            }
+        }
+
+        return $this->resolveWorkRole(null, $name);
     }
 
     /** @return \Illuminate\Support\Collection<int, array{value: string, label: string, search: string}> */
