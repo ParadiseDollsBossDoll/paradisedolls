@@ -12,6 +12,7 @@ deployment/.env.production
 /.phpunit.cache
 /.vscode
 /.zed
+/.obsidian/workspace.json
 /auth.json
 /node_modules
 /public/build

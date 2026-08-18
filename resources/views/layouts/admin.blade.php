@@ -76,6 +76,13 @@
             'count'  => 0,
         ],
         [
+            'route'  => 'admin.weekly-draws.index',
+            'label'  => __('Weekly Draws'),
+            'active' => request()->routeIs('admin.weekly-draws.*'),
+            'icon'   => 'weekly-draws',
+            'count'  => 0,
+        ],
+        [
             'route'  => 'admin.courses.index',
             'label'  => __('Courses'),
             'active' => request()->routeIs('admin.courses.*'),
@@ -211,6 +218,8 @@
                                 <svg viewBox="0 0 16 16"><circle cx="7" cy="5" r="3"/><path d="M2 13c0-2.8 2.2-5 5-5"/><path d="M11 10l1.5 1.5L15 9"/></svg>
                             @elseif ($link['icon'] === 'members')
                                 <svg viewBox="0 0 16 16"><circle cx="5.5" cy="5" r="2.5"/><path d="M1 13c0-2.5 2-4.5 4.5-4.5S10 10.5 10 13"/><circle cx="11.5" cy="5.5" r="2"/><path d="M10 12.5c.2-1.4 1.3-2.5 2.7-2.5 1.5 0 2.8 1.1 2.8 2.5"/></svg>
+                            @elseif ($link['icon'] === 'weekly-draws')
+                                <svg viewBox="0 0 16 16"><path d="M4 2h8v2.5a4 4 0 01-8 0V2z"/><path d="M4 4H2.5a1.5 1.5 0 000 3H4M12 4h1.5a1.5 1.5 0 010 3H12"/><path d="M8 8.5V12M5.5 14h5M6.5 12h3"/></svg>
                             @elseif ($link['icon'] === 'courses')
                                 <svg viewBox="0 0 16 16"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/></svg>
                             @elseif ($link['icon'] === 'stories')

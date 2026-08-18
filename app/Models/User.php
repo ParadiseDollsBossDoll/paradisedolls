@@ -253,6 +253,11 @@ class User extends Authenticatable
         return $this->hasMany(Testimonial::class, 'submitted_by');
     }
 
+    public function weeklyModelDrawEntries(): HasMany
+    {
+        return $this->hasMany(WeeklyModelDrawEntry::class);
+    }
+
     public function modelReferrals(): HasMany
     {
         return $this->hasMany(ModelReferral::class, 'referrer_id');

@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\AdminOnboardingController;
 use App\Http\Controllers\Admin\AdminReferralController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminTestimonialController;
+use App\Http\Controllers\Admin\AdminWeeklyModelDrawController;
 use App\Http\Controllers\Admin\BunnyVideoController;
 use App\Http\Controllers\ApplyController;
 use App\Http\Controllers\Chatter\ChatterApplicationController;
@@ -331,6 +332,21 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         ->name('email-campaigns.resume');
 
     Route::get('/models/progress', [AdminModelProgressController::class, 'index'])->name('models.progress');
+    Route::get('/weekly-draws', [AdminWeeklyModelDrawController::class, 'index'])->name('weekly-draws.index');
+    Route::get('/weekly-draws/{draw}', [AdminWeeklyModelDrawController::class, 'show'])->name('weekly-draws.show');
+    Route::get('/weekly-draws/{draw}/qualified.txt', [AdminWeeklyModelDrawController::class, 'exportQualified'])->name('weekly-draws.qualified.export');
+    Route::middleware('throttle:admin-actions')->group(function () {
+        Route::post('/weekly-draws', [AdminWeeklyModelDrawController::class, 'store'])->name('weekly-draws.store');
+        Route::patch('/weekly-draws/{draw}', [AdminWeeklyModelDrawController::class, 'update'])->name('weekly-draws.update');
+        Route::post('/weekly-draws/{draw}/entries', [AdminWeeklyModelDrawController::class, 'storeEntry'])->name('weekly-draws.entries.store');
+        Route::post('/weekly-draws/{draw}/entries/import', [AdminWeeklyModelDrawController::class, 'importEntries'])->name('weekly-draws.entries.import');
+        Route::patch('/weekly-draws/{draw}/entries/{entry}', [AdminWeeklyModelDrawController::class, 'updateEntry'])->name('weekly-draws.entries.update');
+        Route::delete('/weekly-draws/{draw}/entries/{entry}', [AdminWeeklyModelDrawController::class, 'destroyEntry'])->name('weekly-draws.entries.destroy');
+        Route::post('/weekly-draws/{draw}/prizes', [AdminWeeklyModelDrawController::class, 'storePrize'])->name('weekly-draws.prizes.store');
+        Route::patch('/weekly-draws/{draw}/prizes/{prize}', [AdminWeeklyModelDrawController::class, 'updatePrize'])->name('weekly-draws.prizes.update');
+        Route::delete('/weekly-draws/{draw}/prizes/{prize}', [AdminWeeklyModelDrawController::class, 'destroyPrize'])->name('weekly-draws.prizes.destroy');
+        Route::post('/weekly-draws/{draw}/complete', [AdminWeeklyModelDrawController::class, 'complete'])->name('weekly-draws.complete');
+    });
     Route::patch('/models/{user}/login', [AdminModelProgressController::class, 'updateLogin'])
         ->middleware('throttle:admin-actions')
         ->name('models.login.update');
