@@ -26,7 +26,7 @@ class AdminChatterHoursExportController extends Controller
                 'clock_in' => $this->excelDateText($shift['started_at'] ?? null),
                 'clock_out' => $this->excelDateText($shift['ended_at'] ?? null),
                 'employee' => $timesheet->user->name,
-                'role' => trim(($shift['work_role'] ?? 'Chatter').(filled($shift['platform'] ?? null) ? ' - '.$shift['platform'] : '')),
+                'role' => trim(($shift['work_role'] ?? 'Chatter').(filled($shift['platform'] ?? null) ? ' - '.$shift['platform'] : '').(filled($shift['model_name'] ?? null) ? ' - '.$shift['model_name'] : '')),
                 'worked_minutes' => (int) ($shift['paid_minutes'] ?? 0),
             ]))
             ->sortBy('clock_in')
@@ -48,7 +48,7 @@ class AdminChatterHoursExportController extends Controller
                 $additionalCents = (int) $employeeTimesheets->sum('adjustment_pence');
                 $finalCents = (int) $employeeTimesheets->sum('gross_pay_pence');
                 $basicCents = $finalCents - $additionalCents;
-                $statuses = $employeeTimesheets->map->statusLabel()->unique()->values();
+                $statuses = $employeeTimesheets->map->workflowStatusLabel()->unique()->values();
                 $notes = $employeeTimesheets->flatMap(fn (ChatterTimesheet $timesheet) => $timesheet->adjustments->map(function ($adjustment): string {
                     return trim($adjustment->label.($adjustment->note ? ': '.$adjustment->note : ''));
                 }))->filter()->unique()->implode('; ');
@@ -111,7 +111,7 @@ class AdminChatterHoursExportController extends Controller
             $this->row(1, $this->styledRow('PARADISE DOLLS', 24), 30),
             $this->row(2, $this->styledRow(null, 24), 30),
             $this->row(3, $this->styledRow('Payroll contact: '.config('paradise.onboarding_email'), 25), 20),
-            $this->row(4, $this->cells(['DATE/TIME IN', null, 'DATE/TIME OUT', null, 'EMPLOYEE', null, 'ROLE', null, 'BONUS', 'HOURS WORKED'], 26), 26),
+            $this->row(4, $this->cells(['DATE/TIME IN', null, 'DATE/TIME OUT', null, 'EMPLOYEE', null, 'ROLE / SITE / MODEL', null, 'BONUS', 'HOURS WORKED'], 26), 26),
         ];
         $merges = ['A1:J2', 'A3:J3', 'A4:B4', 'C4:D4', 'E4:F4', 'G4:H4'];
         $rowNumber = 5;
@@ -224,6 +224,10 @@ class AdminChatterHoursExportController extends Controller
         $validated = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', Rule::in([
+                ChatterTimesheet::WORKFLOW_IN_PROGRESS,
+                ChatterTimesheet::WORKFLOW_READY_FOR_REVIEW,
+                ChatterTimesheet::WORKFLOW_APPROVED,
+                ChatterTimesheet::WORKFLOW_CLOSED,
                 ChatterTimesheet::STATUS_DRAFT,
                 ChatterTimesheet::STATUS_SUBMITTED,
                 ChatterTimesheet::STATUS_CHANGES_REQUESTED,
@@ -251,7 +255,22 @@ class AdminChatterHoursExportController extends Controller
             ->when(isset($validated['search']) && trim($validated['search']) !== '', fn (Builder $q) => $q->whereHas('user', fn (Builder $userQuery) => $userQuery
                 ->where('name', 'like', '%'.trim($validated['search']).'%')
                 ->orWhere('email', 'like', '%'.trim($validated['search']).'%')))
-            ->when(isset($validated['status']), fn (Builder $q) => $q->where('status', $validated['status']))
+            ->when(isset($validated['status']), function (Builder $query) use ($validated) {
+                $status = $validated['status'];
+
+                if (in_array($status, [
+                    ChatterTimesheet::WORKFLOW_IN_PROGRESS,
+                    ChatterTimesheet::WORKFLOW_READY_FOR_REVIEW,
+                    ChatterTimesheet::WORKFLOW_APPROVED,
+                    ChatterTimesheet::WORKFLOW_CLOSED,
+                ], true)) {
+                    $query->whereWorkflowStatus($status);
+
+                    return;
+                }
+
+                $query->where('status', $status);
+            })
             ->when(isset($validated['chatter_id']), fn (Builder $q) => $q->where('user_id', (int) $validated['chatter_id']))
             ->whereDate('period_end', '>=', $from->toDateString())
             ->whereDate('period_start', '<=', $to->toDateString())

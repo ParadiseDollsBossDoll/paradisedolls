@@ -39,9 +39,168 @@
             })"
             class="rounded-md border border-white/[0.08] bg-white/[0.035] p-6 sm:p-8"
         >
-            <div class="flex flex-wrap items-start justify-between gap-4"><div><p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/40">{{ $openShift ? ($activeBreak ? __('On break') : __('Active shift')) : __('Ready') }}</p><p class="mt-3 font-display text-4xl sm:text-5xl" x-text="{{ $openShift ? 'format(displaySeconds)' : '\'00:00:00\'' }}"></p>@if($openShift)<div class="mt-3 flex flex-wrap items-center gap-2"><span class="rounded-full border border-boss-gold/20 bg-boss-gold/10 px-2.5 py-1 text-xs text-boss-gold">{{ $openShift->workRole?->name ?? __('Chatter') }}</span>@if($openShift->platform)<span class="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs text-boss-ivory/60">{{ $openShift->platform }}</span>@endif<span class="text-xs text-boss-ivory/40">${{ number_format(($openShift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr</span></div><p class="mt-2 text-sm text-boss-ivory/45">{{ __('Clocked in :time', ['time'=>$openShift->clocked_in_at->timezone($tz)->format('D, j M - g:i A T')]) }}</p><p class="mt-1 text-xs text-boss-ivory/35">{{ __('Worked time excludes breaks and is recalculated from server records after refresh.') }}</p>@endif</div><span class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs {{ $openShift ? 'border-emerald-400/25 bg-emerald-400/10 text-emerald-200' : 'border-white/10 text-boss-ivory/45' }}"><span class="h-2 w-2 rounded-full {{ $openShift ? 'bg-emerald-400' : 'bg-white/25' }}"></span>{{ $openShift ? ($activeBreak ? __('On break') : __('Clocked in')) : __('Clocked out') }}</span></div>
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <p class="text-[0.66rem] uppercase tracking-[0.18em] text-boss-ivory/40">{{ $openShift ? ($activeBreak ? __('On break') : __('Active shift')) : __('Ready') }}</p>
+                    <p class="mt-3 font-display text-4xl sm:text-5xl" x-text="{{ $openShift ? 'format(displaySeconds)' : '\'00:00:00\'' }}"></p>
+                    @if($openShift)
+                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                            <span class="rounded-full border border-boss-gold/20 bg-boss-gold/10 px-2.5 py-1 text-xs text-boss-gold">{{ $openShift->workRole?->name ?? __('Chatter') }}</span>
+                            @if($openShift->platform)
+                                <span class="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs text-boss-ivory/60">{{ $openShift->platform }}</span>
+                            @endif
+                            @if($openShift->model)
+                                <span class="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs text-boss-ivory/60">{{ $openShift->model->name }}</span>
+                            @endif
+                            <span class="text-xs text-boss-ivory/40">${{ number_format(($openShift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr</span>
+                        </div>
+                        <p class="mt-2 text-sm text-boss-ivory/45">{{ __('Clocked in :time', ['time' => $openShift->clocked_in_at->timezone($tz)->format('D, j M - g:i A T')]) }}</p>
+                        <p class="mt-1 text-xs text-boss-ivory/35">{{ __('Worked time excludes breaks and is recalculated from server records after refresh.') }}</p>
+                    @endif
+                </div>
+                <span class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs {{ $openShift ? 'border-emerald-400/25 bg-emerald-400/10 text-emerald-200' : 'border-white/10 text-boss-ivory/45' }}"><span class="h-2 w-2 rounded-full {{ $openShift ? 'bg-emerald-400' : 'bg-white/25' }}"></span>{{ $openShift ? ($activeBreak ? __('On break') : __('Clocked in')) : __('Clocked out') }}</span>
+            </div>
             <div class="mt-8 grid gap-3 sm:grid-cols-2">
-                @if(!$openShift)<form method="POST" action="{{ route('chatter.clock-in') }}" class="space-y-3 sm:col-span-2">@csrf
+                @if(!$openShift)<form
+                    method="POST"
+                    action="{{ route('chatter.clock-in') }}"
+                    class="space-y-3 sm:col-span-2"
+                    x-data="{
+                        open: false,
+                        search: '',
+                        selected: @js((string) old('model_id', '')),
+                        selectedLabel: '',
+                        activeIndex: -1,
+                        models: @js($availableModels->map(fn ($model) => [
+                            'id' => (string) $model->id,
+                            'name' => $model->name,
+                            'email' => $model->email,
+                            'label' => trim($model->name.' - '.$model->email),
+                        ])->values()),
+                        init() {
+                            const match = this.models.find((model) => model.id === this.selected);
+                            this.selectedLabel = match?.label || '';
+                        },
+                        get filtered() {
+                            const q = this.search.trim().toLowerCase();
+
+                            return q
+                                ? this.models.filter((model) => `${model.name || ''} ${model.email || ''}`.toLowerCase().includes(q))
+                                : this.models;
+                        },
+                        choose(model) {
+                            this.selected = model.id;
+                            this.selectedLabel = model.label;
+                            this.search = '';
+                            this.activeIndex = -1;
+                            this.open = false;
+                        },
+                        openDropdown() {
+                            this.open = true;
+                            this.search = '';
+                            this.activeIndex = -1;
+                            this.$nextTick(() => this.$refs.modelSearch?.focus());
+                        },
+                        filterModels() {
+                            this.selected = '';
+                            this.selectedLabel = '';
+                            this.activeIndex = this.filtered.length ? 0 : -1;
+                            this.open = true;
+                        },
+                        moveActive(step) {
+                            this.open = true;
+
+                            if (! this.filtered.length) {
+                                this.activeIndex = -1;
+                                return;
+                            }
+
+                            if (this.activeIndex < 0) {
+                                this.activeIndex = step > 0 ? 0 : this.filtered.length - 1;
+                                return;
+                            }
+
+                            this.activeIndex = (this.activeIndex + step + this.filtered.length) % this.filtered.length;
+                        },
+                        chooseActive() {
+                            if (this.open && this.activeIndex >= 0 && this.filtered[this.activeIndex]) {
+                                this.choose(this.filtered[this.activeIndex]);
+                            }
+                        },
+                        ensureValidSelection(event) {
+                            if (this.models.some((model) => model.id === this.selected)) {
+                                return;
+                            }
+
+                            event.preventDefault();
+                            this.openDropdown();
+                        },
+                    }"
+                    @submit="ensureValidSelection($event)"
+                    @keydown.escape.window="open = false"
+                >@csrf
+                    @if($availableModels->isNotEmpty())
+                        <label class="block">
+                            <span class="pd-label">{{ __('Model') }}</span>
+                            <div class="relative mt-2" @click.outside="open = false">
+                                <input type="hidden" name="model_id" x-model="selected">
+                                <button
+                                    type="button"
+                                    class="pd-input pd-combobox-trigger"
+                                    aria-haspopup="listbox"
+                                    :aria-expanded="open.toString()"
+                                    @click="openDropdown()"
+                                >
+                                    <span class="min-w-0 flex-1 truncate" x-text="selectedLabel || '{{ __('Choose the model you are working with') }}'"></span>
+                                    <svg class="h-3.5 w-3.5 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M4 6l4 4 4-4" />
+                                    </svg>
+                                </button>
+
+                                <div x-cloak x-show="open" x-transition class="pd-combobox-menu absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-md shadow-luxe" role="listbox">
+                                    <div class="pd-combobox-search-wrap p-2">
+                                        <input
+                                            x-ref="modelSearch"
+                                            type="text"
+                                            x-model="search"
+                                            placeholder="{{ __('Search model name or email...') }}"
+                                            class="pd-combobox-search"
+                                            role="combobox"
+                                            aria-autocomplete="list"
+                                            :aria-expanded="open.toString()"
+                                            autocomplete="off"
+                                            @input="filterModels()"
+                                            @keydown.arrow-down.prevent="moveActive(1)"
+                                            @keydown.arrow-up.prevent="moveActive(-1)"
+                                            @keydown.enter.prevent="chooseActive()"
+                                            @keydown.escape.stop="open = false"
+                                        >
+                                    </div>
+                                    <div class="max-h-56 overflow-y-auto py-1">
+                                        <template x-if="filtered.length === 0">
+                                            <p class="pd-combobox-empty">{{ __('No models found') }}</p>
+                                        </template>
+                                        <template x-for="(model, index) in filtered" :key="model.id">
+                                            <button
+                                                type="button"
+                                                class="pd-combobox-option"
+                                                :class="selected === model.id || activeIndex === index ? 'is-selected' : ''"
+                                                role="option"
+                                                :aria-selected="(selected === model.id).toString()"
+                                                @mouseenter="activeIndex = index"
+                                                @click="choose(model)"
+                                            >
+                                                <span class="font-semibold" x-text="model.name"></span>
+                                                <span class="pd-combobox-option-meta" x-text="model.email"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                    @else
+                        <div class="rounded-md border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">{{ __('Ask admin to assign at least one model before clocking in.') }}</div>
+                    @endif
                     <label class="block"><span class="pd-label">{{ __('Website / platform') }}</span><input class="pd-input mt-2" name="platform" list="chatter-platform-options" placeholder="{{ __('Type the site you are working on') }}" required><datalist id="chatter-platform-options"><option value="Chaturbate"></option><option value="Stripchat"></option><option value="Babestation"></option><option value="OnlyFans"></option><option value="Fansly"></option><option value="ManyVids"></option></datalist></label>
                     @if($availableWorkRoles->count() > 1)
                         <label class="block"><span class="pd-label">{{ __('What are you working on?') }}</span><select class="pd-input mt-2" name="work_role_id" required>@foreach($availableWorkRoles as $assignment)<option value="{{ $assignment->chatter_work_role_id }}">{{ $assignment->workRole->name }} - ${{ number_format($assignment->hourly_rate_pence / 100, 2) }} USD/hr</option>@endforeach</select></label>
@@ -49,7 +208,7 @@
                         <input type="hidden" name="work_role_id" value="{{ $availableWorkRoles->first()->chatter_work_role_id }}">
                         <div class="flex items-center justify-between rounded-md border border-white/[0.07] bg-white/[0.025] px-4 py-3 text-sm"><span>{{ $availableWorkRoles->first()->workRole->name }}</span><span class="text-boss-ivory/45">${{ number_format($availableWorkRoles->first()->hourly_rate_pence / 100, 2) }} USD/hr</span></div>
                     @endif
-                    <button class="pd-btn-primary h-12 w-full">{{ __('Clock In') }}</button></form>@else
+                    <button class="pd-btn-primary h-12 w-full" @disabled($availableModels->isEmpty())>{{ __('Clock In') }}</button></form>@else
                     @if($activeBreak)<form method="POST" action="{{ route('chatter.breaks.end') }}">@csrf<button class="pd-btn-secondary h-12 w-full">{{ __('Resume Work') }}</button></form>@else<form method="POST" action="{{ route('chatter.breaks.start') }}">@csrf<button class="pd-btn-secondary h-12 w-full">{{ __('Start Break') }}</button></form>@endif
                     <form method="POST" action="{{ route('chatter.clock-out') }}">@csrf<button class="h-12 w-full rounded-md border border-red-400/30 bg-red-400/10 px-5 text-sm font-bold text-red-200 transition hover:bg-red-400/20">{{ __('Clock Out') }}</button></form>
                 @endif
@@ -60,10 +219,32 @@
         </div>
     </section>
 
-    <section class="rounded-md border border-white/[0.08] bg-white/[0.025] p-5"><div class="flex flex-wrap items-end justify-between gap-3"><div><p class="pd-kicker">{{ __('Current Week') }}</p><h2 class="mt-1 font-display text-2xl">{{ $currentTimesheet->period_start->format('j M') }} - {{ $currentTimesheet->period_end->format('j M Y') }}</h2></div><span class="rounded-full border border-white/10 px-3 py-1 text-xs text-boss-ivory/50">{{ $currentTimesheet->statusLabel() }}</span></div>
-        <div class="mt-5 overflow-x-auto"><table class="pd-table min-w-[920px]"><thead><tr><th>{{ __('Date') }}</th><th>{{ __('Work role') }}</th><th>{{ __('Platform') }}</th><th>{{ __('Clock in') }}</th><th>{{ __('Clock out') }}</th><th>{{ __('Hours Worked') }}</th><th>{{ __('Status') }}</th></tr></thead><tbody>@forelse($currentShifts as $shift)<tr><td>{{ $shift->clocked_in_at->timezone($tz)->format('D, j M') }}</td><td><span class="font-medium">{{ $shift->workRole?->name ?? __('Chatter') }}</span><span class="mt-0.5 block text-xs text-boss-ivory/35">${{ number_format(($shift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr</span></td><td>{{ $shift->platform ?? '-' }}</td><td>{{ $shift->clocked_in_at->timezone($tz)->format('g:i A') }}</td><td>{{ $shift->clocked_out_at?->timezone($tz)->format('g:i A') ?? __('Active') }}</td><td>{{ $formatMinutes((int) $shift->getAttribute('worked_minutes')) }}</td><td>{{ $shift->isOpen() ? ($activeBreak && $openShift?->is($shift) ? __('On break') : __('In progress')) : __('Recorded') }}</td></tr>@empty<tr><td colspan="7" class="text-center text-boss-ivory/40">{{ __('No shifts recorded this week.') }}</td></tr>@endforelse</tbody></table></div>
+    <section class="rounded-md border border-white/[0.08] bg-white/[0.025] p-5"><div class="flex flex-wrap items-end justify-between gap-3"><div><p class="pd-kicker">{{ __('Current Week') }}</p><h2 class="mt-1 font-display text-2xl">{{ $currentTimesheet->period_start->format('j M') }} - {{ $currentTimesheet->period_end->format('j M Y') }}</h2></div><span class="rounded-full border border-white/10 px-3 py-1 text-xs text-boss-ivory/50">{{ $currentTimesheet->workflowStatusLabel() }}</span></div>
+        <div class="mt-5 overflow-x-auto"><table class="pd-table min-w-[1020px]"><thead><tr><th>{{ __('Date') }}</th><th>{{ __('Work role') }}</th><th>{{ __('Model') }}</th><th>{{ __('Platform') }}</th><th>{{ __('Clock in') }}</th><th>{{ __('Clock out') }}</th><th>{{ __('Hours Worked') }}</th><th>{{ __('Status') }}</th></tr></thead><tbody>@forelse($currentShifts as $shift)<tr><td>{{ $shift->clocked_in_at->timezone($tz)->format('D, j M') }}</td><td><span class="font-medium">{{ $shift->workRole?->name ?? __('Chatter') }}</span><span class="mt-0.5 block text-xs text-boss-ivory/35">${{ number_format(($shift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr</span></td><td>{{ $shift->model?->name ?? '-' }}</td><td>{{ $shift->platform ?? '-' }}</td><td>{{ $shift->clocked_in_at->timezone($tz)->format('g:i A') }}</td><td>{{ $shift->clocked_out_at?->timezone($tz)->format('g:i A') ?? __('Active') }}</td><td>{{ $formatMinutes((int) $shift->getAttribute('worked_minutes')) }}</td><td>{{ $shift->isOpen() ? ($activeBreak && $openShift?->is($shift) ? __('On break') : __('In progress')) : __('Recorded') }}</td></tr>@empty<tr><td colspan="8" class="text-center text-boss-ivory/40">{{ __('No shifts recorded this week.') }}</td></tr>@endforelse</tbody></table></div>
     </section>
 
-    <section class="rounded-md border border-white/[0.08] bg-white/[0.025] p-5"><p class="pd-kicker">{{ __('Timesheet History') }}</p><div class="mt-4 space-y-3">@foreach($timesheets as $sheet)<div class="flex flex-col gap-3 rounded-md border border-white/[0.07] bg-white/[0.025] p-4 sm:flex-row sm:items-center sm:justify-between"><div><p class="font-semibold">{{ $sheet->period_start->format('j M') }} - {{ $sheet->period_end->format('j M Y') }}</p><p class="mt-1 text-xs text-boss-ivory/45">{{ $formatMinutes($sheet->ordinary_minutes) }} · ${{ number_format($sheet->gross_pay_pence/100,2) }} USD · ₱{{ number_format($currency->phpCentavosForTimesheet($sheet)/100,2) }} PHP · {{ $sheet->statusLabel() }}</p></div><div class="flex flex-wrap gap-2">@if(in_array($sheet->status,[\App\Models\ChatterTimesheet::STATUS_DRAFT,\App\Models\ChatterTimesheet::STATUS_CHANGES_REQUESTED],true) && now(\App\Services\ChatterPayrollService::REPORTING_TIMEZONE)->startOfDay()->gt($sheet->period_end))<form method="POST" action="{{ route('chatter.timesheets.submit',$sheet) }}">@csrf<button class="pd-btn-primary h-9">{{ __('Submit') }}</button></form>@endif @if(in_array($sheet->status,[\App\Models\ChatterTimesheet::STATUS_SUBMITTED,\App\Models\ChatterTimesheet::STATUS_APPROVED],true))<form method="POST" action="{{ route('chatter.timesheets.correction',$sheet) }}" class="flex gap-2">@csrf<input name="reason" class="pd-input h-9 min-w-0" placeholder="{{ __('Correction reason') }}" required><button class="pd-btn-secondary h-9">{{ __('Request') }}</button></form>@endif</div></div>@endforeach</div>@if($timesheets->hasPages())<div class="mt-5">{{ $timesheets->links() }}</div>@endif</section>
+    <section class="rounded-md border border-white/[0.08] bg-white/[0.025] p-5">
+        <p class="pd-kicker">{{ __('Timesheet History') }}</p>
+        <div class="mt-4 space-y-3">
+            @foreach($timesheets as $sheet)
+                <div class="flex flex-col gap-3 rounded-md border border-white/[0.07] bg-white/[0.025] p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="font-semibold">{{ $sheet->period_start->format('j M') }} - {{ $sheet->period_end->format('j M Y') }}</p>
+                        <p class="mt-1 text-xs text-boss-ivory/45">
+                            {{ $formatMinutes($sheet->ordinary_minutes) }} · ${{ number_format($sheet->gross_pay_pence/100,2) }} USD · ₱{{ number_format($currency->phpCentavosForTimesheet($sheet)/100,2) }} PHP · {{ $sheet->workflowStatusLabel() }}
+                        </p>
+                    </div>
+                    @if($sheet->periodHasEnded())
+                        <form method="POST" action="{{ route('chatter.timesheets.problem', $sheet) }}" class="flex min-w-0 flex-col gap-2 sm:flex-row">
+                            @csrf
+                            <input name="reason" class="pd-input h-9 min-w-0" placeholder="{{ __('Describe the timesheet problem') }}" required>
+                            <button class="pd-btn-secondary h-9 whitespace-nowrap">{{ __('Report a problem') }}</button>
+                        </form>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+        @if($timesheets->hasPages())<div class="mt-5">{{ $timesheets->links() }}</div>@endif
+    </section>
 </div>
 </x-chatter-layout>

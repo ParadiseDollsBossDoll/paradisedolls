@@ -105,12 +105,12 @@ class ChatterModelReviewTest extends TestCase
         $this->assertSame(1, ChatterModelReview::count());
     }
 
-    public function test_chatter_must_complete_weekly_model_reviews_before_submitting_timesheet(): void
+    public function test_admin_cannot_approve_payroll_until_required_weekly_model_reviews_are_complete(): void
     {
         Mail::fake();
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-07-27 10:00:00', ChatterPayrollService::REPORTING_TIMEZONE));
 
-        User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin']);
         $chatter = $this->activeChatter();
         $model = $this->grantCommunityAccess(User::factory()->create(['role' => 'model']));
         $this->assignModel($chatter, $model);
@@ -121,10 +121,8 @@ class ChatterModelReviewTest extends TestCase
             'status' => ChatterTimesheet::STATUS_DRAFT,
         ]);
 
-        $this->actingAs($chatter)
-            ->from(route('chatter.dashboard'))
-            ->post(route('chatter.timesheets.submit', $timesheet))
-            ->assertRedirect(route('chatter.dashboard'))
+        $this->actingAs($admin)
+            ->post(route('admin.chatter-hours.timesheets.review', $timesheet), ['decision' => 'approve'])
             ->assertSessionHasErrors('timesheet');
 
         $this->actingAs($chatter)
@@ -134,12 +132,12 @@ class ChatterModelReviewTest extends TestCase
             ]))
             ->assertSessionHasNoErrors();
 
-        $this->actingAs($chatter)
-            ->post(route('chatter.timesheets.submit', $timesheet))
+        $this->actingAs($admin)
+            ->post(route('admin.chatter-hours.timesheets.review', $timesheet), ['decision' => 'approve'])
             ->assertSessionHasNoErrors()
             ->assertSessionHas('status');
 
-        $this->assertSame(ChatterTimesheet::STATUS_SUBMITTED, $timesheet->fresh()->status);
+        $this->assertSame(ChatterTimesheet::STATUS_APPROVED, $timesheet->fresh()->status);
     }
 
     public function test_chatter_review_dashboard_only_shows_assigned_models(): void

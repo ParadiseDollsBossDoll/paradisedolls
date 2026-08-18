@@ -18,6 +18,7 @@ class ChatterDashboardController extends Controller
         $user = $request->user()->loadMissing([
             'chatterProfile',
             'chatterRoleAssignments.workRole',
+            'activeAssignedModels:id,name,email',
             'enrolledCourses' => fn ($query) => $query
                 ->where('courses.is_published', true)
                 ->withCount('publishedLessons')
@@ -34,11 +35,14 @@ class ChatterDashboardController extends Controller
         $monthTotals = $payroll->workedTotals($user, $monthStart, $monthStart->addMonth());
         $openShift = ChatterShift::query()
             ->where('active_user_id', $user->id)
-            ->with(['breaks', 'workRole'])
+            ->with(['breaks', 'workRole', 'model:id,name,email'])
             ->first();
         $availableWorkRoles = $user->chatterRoleAssignments
             ->filter(fn ($assignment) => $assignment->is_active && $assignment->workRole?->is_active)
             ->sortBy(fn ($assignment) => $assignment->workRole->sort_order)
+            ->values();
+        $availableModels = $user->activeAssignedModels
+            ->sortBy('name')
             ->values();
         $activeBreak = $openShift?->breaks->firstWhere('ended_at', null);
         $activeWorkedSeconds = $openShift ? $payroll->shiftWorkedSeconds($openShift, $nowUtc) : 0;
@@ -49,7 +53,7 @@ class ChatterDashboardController extends Controller
             ->where('user_id', $user->id)
             ->where('clocked_in_at', '<', $periodEndUtc)
             ->where(fn ($query) => $query->whereNull('clocked_out_at')->orWhere('clocked_out_at', '>', $periodStartUtc))
-            ->with(['breaks', 'workRole'])
+            ->with(['breaks', 'workRole', 'model:id,name,email'])
             ->latest('clocked_in_at')
             ->get()
             ->map(function (ChatterShift $shift) use ($payroll, $periodStartUtc, $periodEndUtc) {
@@ -79,6 +83,7 @@ class ChatterDashboardController extends Controller
             'activeWorkedSeconds',
             'activeTimerRunning',
             'availableWorkRoles',
+            'availableModels',
             'currentShifts',
             'timesheets',
             'currency',

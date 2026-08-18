@@ -13,7 +13,7 @@ class ChatterShift extends Model
 
     protected $fillable = [
         'user_id', 'active_user_id', 'chatter_work_role_id', 'hourly_rate_pence',
-        'clocked_in_at', 'clocked_out_at', 'timezone', 'platform', 'note',
+        'clocked_in_at', 'clocked_out_at', 'timezone', 'platform', 'model_id', 'note',
     ];
 
     protected function casts(): array
@@ -29,6 +29,11 @@ class ChatterShift extends Model
     public function workRole(): BelongsTo
     {
         return $this->belongsTo(ChatterWorkRole::class, 'chatter_work_role_id');
+    }
+
+    public function model(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'model_id');
     }
 
     public function breaks(): HasMany

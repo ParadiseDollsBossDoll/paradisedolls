@@ -4,6 +4,7 @@ use App\Models\Course;
 use App\Models\CourseModule;
 use App\Models\Lesson;
 use App\Models\LessonContentBlock;
+use App\Services\ChatterPayrollService;
 use App\Services\CourseCommunityService;
 use App\Services\EmailCampaignDispatcher;
 use App\Services\UsdPhpExchangeRateService;
@@ -56,6 +57,17 @@ Artisan::command('chatter-currency:refresh', function () {
 
 Schedule::command('chatter-currency:refresh')
     ->everySixHours()
+    ->withoutOverlapping();
+
+Artisan::command('chatter-timesheets:ensure', function () {
+    $created = app(ChatterPayrollService::class)->ensureWeeklyTimesheetsForActiveChatters();
+
+    $this->components->info("Created {$created} missing chatter timesheet(s).");
+})->purpose('Create missing weekly payroll records for active chatter accounts');
+
+Schedule::command('chatter-timesheets:ensure')
+    ->dailyAt('00:15')
+    ->timezone(ChatterPayrollService::REPORTING_TIMEZONE)
     ->withoutOverlapping();
 
 Artisan::command('courses:import-from-sql {path : SQL dump path} {--slug=boss-doll-blueprint-the-ultimate-multi-streaming-online-brand-mastery-course : Course slug to import} {--dry-run : Parse only; do not write to the database} {--force : Skip production confirmation}', function () {

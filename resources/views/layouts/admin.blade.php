@@ -4,7 +4,7 @@
     $profilePhotoUrl = $user->profilePhotoUrl();
 
     [$pendingLayoutApplications, $pendingLayoutVerification, $referralActionCount, $chatterActionCount, $chatterReviewCount, $modelReviewCount] =
-        \Illuminate\Support\Facades\Cache::remember('admin_sidebar_counts_v2', 60, fn () => [
+        \Illuminate\Support\Facades\Cache::remember('admin_sidebar_counts_v3', 60, fn () => [
             \App\Models\ModelApplication::query()
                 ->where('status', \App\Models\ModelApplication::STATUS_PENDING)
                 ->count(),
@@ -26,10 +26,7 @@
                 ->where('status', \App\Models\ChatterRequest::STATUS_PENDING)
                 ->count()
                 + \App\Models\ChatterTimesheet::query()
-                    ->whereIn('status', [
-                        \App\Models\ChatterTimesheet::STATUS_SUBMITTED,
-                        \App\Models\ChatterTimesheet::STATUS_CHANGES_REQUESTED,
-                    ])
+                    ->whereWorkflowStatus(\App\Models\ChatterTimesheet::WORKFLOW_READY_FOR_REVIEW)
                     ->count(),
             \App\Models\ChatterPerformanceReview::query()
                 ->where('status', \App\Models\ChatterPerformanceReview::STATUS_SUBMITTED)

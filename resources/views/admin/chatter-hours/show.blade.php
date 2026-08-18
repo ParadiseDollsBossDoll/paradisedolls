@@ -11,7 +11,7 @@
                 <h1 class="pd-heading mt-2 text-3xl sm:text-4xl">{{ $timesheet->user->name }}</h1>
                 <p class="mt-2 text-sm text-boss-ivory/45">{{ $timesheet->period_start->format('D d M') }} - {{ $timesheet->period_end->format('D d M Y') }} - {{ __('Europe/London payroll week') }}</p>
             </div>
-            <span class="w-fit rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-xs capitalize text-boss-ivory/65">{{ $timesheet->statusLabel() }}</span>
+            <span class="w-fit rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-xs capitalize text-boss-ivory/65">{{ $timesheet->workflowStatusLabel() }}</span>
         </div>
 
         @if (session('status'))<div class="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">{{ session('status') }}</div>@endif
@@ -44,7 +44,27 @@
                             @endphp
                             <details class="group p-5" @if (!$editable) open @endif>
                                 <summary class="flex cursor-pointer list-none flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                    <div><div class="flex flex-wrap items-center gap-2"><p class="font-semibold">{{ $shiftStart->format('D d M Y') }}</p><span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.65rem] text-boss-gold">{{ $shift->workRole?->name ?? __('Chatter') }} - ${{ number_format(($shift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr</span>@if($shift->platform)<span class="rounded-full bg-white/[0.06] px-2 py-0.5 text-[0.65rem] text-boss-ivory/55">{{ $shift->platform }}</span>@endif</div><p class="mt-1 text-xs text-boss-ivory/40">{{ $shiftStart->format('H:i') }} - {{ $shiftEnd?->format('H:i') ?? __('Open') }} UK</p></div>
+                                    <div>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <p class="font-semibold">{{ $shiftStart->format('D d M Y') }}</p>
+                                            <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.65rem] text-boss-gold">
+                                                {{ $shift->workRole?->name ?? __('Chatter') }} - ${{ number_format(($shift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr
+                                            </span>
+                                            @if ($shift->platform)
+                                                <span class="rounded-full bg-white/[0.06] px-2 py-0.5 text-[0.65rem] text-boss-ivory/55">
+                                                    {{ $shift->platform }}
+                                                </span>
+                                            @endif
+                                            @if ($shift->model)
+                                                <span class="rounded-full bg-white/[0.06] px-2 py-0.5 text-[0.65rem] text-boss-ivory/55">
+                                                    {{ __('Model: :model', ['model' => $shift->model->name]) }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <p class="mt-1 text-xs text-boss-ivory/40">
+                                            {{ $shiftStart->format('g:i A') }} - {{ $shiftEnd?->format('g:i A') ?? __('Open') }} UK Time
+                                        </p>
+                                    </div>
                                     <span class="text-xs text-boss-gold">{{ $shiftEnd ? number_format(max(0, $shiftStart->diffInMinutes($shiftEnd) - $breakMinutes) / 60, 2).'h' : __('Needs attention') }}</span>
                                 </summary>
 
@@ -77,6 +97,41 @@
             </div>
 
             <aside class="space-y-6">
+                <section class="rounded-xl border border-white/[0.07] bg-white/[0.025] p-5">
+                    <p class="pd-kicker">{{ __('Review') }}</p>
+                    <h2 class="mt-1 font-display text-xl">{{ __('Payroll decision') }}</h2>
+                    @if ($timesheet->review_note)
+                        <p class="mt-3 rounded-lg border border-white/[0.06] bg-white/[0.025] p-3 text-xs leading-5 text-boss-ivory/55">{{ $timesheet->review_note }}</p>
+                    @endif
+
+                    @if ($timesheet->status === \App\Models\ChatterTimesheet::STATUS_APPROVED)
+                        <p class="mt-3 text-xs leading-5 text-boss-ivory/40">{{ __('Approved payroll is frozen. Reopen it before correcting shifts, breaks, or adjustments.') }}</p>
+                        <form method="POST" action="{{ route('admin.chatter-hours.timesheets.review', $timesheet) }}" class="mt-4 space-y-3">
+                            @csrf
+                            <input type="hidden" name="decision" value="reopen">
+                            <textarea class="pd-input" name="note" rows="2" placeholder="{{ __('Reason for reopening') }}" required></textarea>
+                            <button class="pd-btn-secondary w-full rounded-lg px-4 py-2.5 text-xs">{{ __('Reopen payroll') }}</button>
+                        </form>
+                    @elseif ($timesheet->status === \App\Models\ChatterTimesheet::STATUS_REJECTED)
+                        <p class="mt-3 text-xs leading-5 text-boss-ivory/40">{{ __('This legacy payroll record is closed and cannot be approved without an administrative data review.') }}</p>
+                    @elseif (! $timesheet->periodHasEnded())
+                        <p class="mt-3 text-xs leading-5 text-boss-ivory/40">{{ __('This payroll week is still in progress. Approval becomes available after the week ends in UK time.') }}</p>
+                    @else
+                        @if ($missingModelReviews > 0)
+                            <p class="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/10 p-3 text-xs leading-5 text-amber-100">
+                                {{ trans_choice(':count required weekly model review is missing.|:count required weekly model reviews are missing.', $missingModelReviews, ['count' => $missingModelReviews]) }}
+                            </p>
+                        @endif
+                        <p class="mt-3 text-xs leading-5 text-boss-ivory/40">{{ __('Review recorded time and adjustments, then approve to freeze the payroll calculation.') }}</p>
+                        <form method="POST" action="{{ route('admin.chatter-hours.timesheets.review', $timesheet) }}" class="mt-4 space-y-3">
+                            @csrf
+                            <input type="hidden" name="decision" value="approve">
+                            <textarea class="pd-input" name="note" rows="2" placeholder="{{ __('Optional approval note') }}"></textarea>
+                            <button class="pd-btn-primary w-full rounded-lg px-4 py-2.5 text-xs" @disabled($missingModelReviews > 0)>{{ __('Approve payroll') }}</button>
+                        </form>
+                    @endif
+                </section>
+
                 <section class="rounded-xl border border-white/[0.07] bg-white/[0.025] p-5">
                     <p class="pd-kicker">{{ __('Pay') }}</p><h2 class="mt-1 font-display text-xl">{{ __('Adjustments') }}</h2>
                     <div class="mt-4 space-y-2">

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ChatterBreak;
+use App\Models\ChatterModelAssignment;
 use App\Models\ChatterRoleAssignment;
 use App\Models\ChatterShift;
 use App\Models\ChatterTimeAudit;
@@ -15,12 +16,13 @@ class ChatterClockService
 {
     public function __construct(private readonly ChatterPayrollService $payroll) {}
 
-    public function clockIn(User $user, ?int $workRoleId = null, string $platform = ''): ChatterShift
+    public function clockIn(User $user, ?int $workRoleId = null, string $platform = '', ?int $modelId = null): ChatterShift
     {
-        return DB::transaction(function () use ($user, $workRoleId, $platform) {
+        return DB::transaction(function () use ($user, $workRoleId, $platform, $modelId) {
             $this->lockAndAssertActive($user);
             $this->assertNoOpenShift($user);
             $assignment = $this->resolveRoleAssignment($user, $workRoleId);
+            $model = $this->resolveAssignedModel($user, $modelId);
             $platform = trim($platform);
             if ($platform === '') {
                 throw ValidationException::withMessages(['platform' => __('Choose the website or platform you are working on.')]);
@@ -34,12 +36,15 @@ class ChatterClockService
                 'clocked_in_at' => $now,
                 'timezone' => $user->chatterProfile->timezone,
                 'platform' => $platform,
+                'model_id' => $model?->id,
             ]);
             $this->audit($shift, $user, 'clocked_in', null, null, [
                 'clocked_in_at' => $now->toIso8601String(),
                 'work_role_id' => $assignment->chatter_work_role_id,
                 'hourly_rate_pence' => $assignment->hourly_rate_pence,
                 'platform' => $platform,
+                'model_id' => $model?->id,
+                'model_name' => $model?->name,
             ]);
 
             return $shift;
@@ -199,6 +204,38 @@ class ChatterClockService
             ['user_id' => $user->id, 'chatter_work_role_id' => $defaultRole->id],
             ['hourly_rate_pence' => $baseRatePence, 'is_active' => true],
         );
+    }
+
+    private function resolveAssignedModel(User $user, ?int $modelId): ?User
+    {
+        if (! $modelId) {
+            $hasAssignedModels = ChatterModelAssignment::query()
+                ->where('chatter_id', $user->id)
+                ->whereNull('ended_at')
+                ->exists();
+
+            if ($hasAssignedModels) {
+                throw ValidationException::withMessages(['model_id' => __('Choose the model you are working with.')]);
+            }
+
+            return null;
+        }
+
+        $isAssigned = ChatterModelAssignment::query()
+            ->where('chatter_id', $user->id)
+            ->where('model_id', $modelId)
+            ->whereNull('ended_at')
+            ->exists();
+
+        if (! $isAssigned) {
+            throw ValidationException::withMessages(['model_id' => __('This model is not assigned to your chatter account.')]);
+        }
+
+        return User::query()
+            ->whereKey($modelId)
+            ->where('role', 'model')
+            ->whereHas('modelProfile')
+            ->firstOrFail();
     }
 
     private function openShift(User $user, bool $lock = false): ChatterShift

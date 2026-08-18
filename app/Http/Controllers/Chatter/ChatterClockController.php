@@ -10,6 +10,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ChatterClockController extends Controller
 {
@@ -45,11 +46,13 @@ class ChatterClockController extends Controller
         $validated = $request->validate([
             'work_role_id' => ['nullable', 'integer'],
             'platform' => ['required', 'string', 'max:100'],
+            'model_id' => ['nullable', 'integer', Rule::exists('users', 'id')->where(fn ($query) => $query->where('role', 'model'))],
         ]);
         $clock->clockIn(
             $request->user(),
             isset($validated['work_role_id']) ? (int) $validated['work_role_id'] : null,
             trim($validated['platform']),
+            isset($validated['model_id']) ? (int) $validated['model_id'] : null,
         );
 
         return back()->with('status', __('You are clocked in.'));

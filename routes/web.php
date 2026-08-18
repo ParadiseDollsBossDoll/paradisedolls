@@ -125,8 +125,7 @@ Route::middleware(['auth', 'verified', 'chatter'])->prefix('chatter')->name('cha
     Route::post('/clock-out', [ChatterClockController::class, 'clockOut'])->middleware('throttle:chatter-clock')->block(5, 5)->name('clock-out');
     Route::post('/breaks/start', [ChatterClockController::class, 'startBreak'])->middleware('throttle:chatter-clock')->block(5, 5)->name('breaks.start');
     Route::post('/breaks/end', [ChatterClockController::class, 'endBreak'])->middleware('throttle:chatter-clock')->block(5, 5)->name('breaks.end');
-    Route::post('/timesheets/{timesheet}/submit', [ChatterTimesheetController::class, 'submit'])->middleware('throttle:chatter-clock')->name('timesheets.submit');
-    Route::post('/timesheets/{timesheet}/correction', [ChatterTimesheetController::class, 'requestCorrection'])->middleware('throttle:chatter-clock')->name('timesheets.correction');
+    Route::post('/timesheets/{timesheet}/problem', [ChatterTimesheetController::class, 'reportProblem'])->middleware('throttle:chatter-clock')->name('timesheets.problem');
 });
 
 Route::middleware(['auth', 'verified', 'model'])->prefix('member')->name('member.')->group(function () {

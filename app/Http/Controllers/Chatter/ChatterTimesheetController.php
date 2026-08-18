@@ -3,122 +3,48 @@
 namespace App\Http\Controllers\Chatter;
 
 use App\Http\Controllers\Controller;
-use App\Models\ChatterModelReview;
-use App\Models\ChatterShift;
 use App\Models\ChatterTimeAudit;
 use App\Models\ChatterTimesheet;
-use App\Models\User;
 use App\Services\AdminActivityNotifier;
-use App\Services\ChatterPayrollService;
-use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class ChatterTimesheetController extends Controller
 {
-    public function submit(
-        Request $request,
-        ChatterTimesheet $timesheet,
-        ChatterPayrollService $payroll,
-        AdminActivityNotifier $notifier,
-    ): RedirectResponse {
-        $this->authorizeOwner($request, $timesheet);
-
-        if (! in_array($timesheet->status, [ChatterTimesheet::STATUS_DRAFT, ChatterTimesheet::STATUS_CHANGES_REQUESTED], true)) {
-            throw ValidationException::withMessages(['timesheet' => __('This timesheet cannot be submitted in its current status.')]);
-        }
-
-        $periodEnd = CarbonImmutable::parse($timesheet->period_end->toDateString(), ChatterPayrollService::REPORTING_TIMEZONE)->endOfDay();
-        if (CarbonImmutable::now(ChatterPayrollService::REPORTING_TIMEZONE)->lessThanOrEqualTo($periodEnd)) {
-            throw ValidationException::withMessages(['timesheet' => __('The week must finish before this timesheet can be submitted.')]);
-        }
-
-        if (ChatterShift::query()->where('user_id', $request->user()->id)->whereNull('clocked_out_at')->exists()) {
-            throw ValidationException::withMessages(['timesheet' => __('Clock out before submitting a timesheet.')]);
-        }
-
-        $this->ensureWeeklyModelReviewsComplete($request, $timesheet);
-
-        $timesheet = $payroll->refresh($timesheet);
-        $timesheet->forceFill([
-            'status' => ChatterTimesheet::STATUS_SUBMITTED,
-            'submitted_at' => now(),
-            'review_note' => null,
-            'reviewed_by' => null,
-            'reviewed_at' => null,
-        ])->save();
-        $this->audit($timesheet, $request, 'timesheet_submitted', null);
-
-        $notifier->notify(
-            title: __('Chatter timesheet submitted'),
-            body: __(':name submitted working hours for :period.', ['name' => $request->user()->name, 'period' => $timesheet->period_start->format('j M').' - '.$timesheet->period_end->format('j M Y')]),
-            actionUrl: route('admin.chatter-hours.timesheets.show', $timesheet, false),
-            category: 'chatter_timesheet_submitted',
-            actionLabel: __('Review timesheet'),
-        );
-
-        return back()->with('status', __('Your timesheet was submitted for review.'));
-    }
-
-    public function requestCorrection(Request $request, ChatterTimesheet $timesheet, AdminActivityNotifier $notifier): RedirectResponse
+    public function reportProblem(Request $request, ChatterTimesheet $timesheet, AdminActivityNotifier $notifier): RedirectResponse
     {
         $this->authorizeOwner($request, $timesheet);
         $validated = $request->validate(['reason' => ['required', 'string', 'max:1000']]);
 
-        if (! in_array($timesheet->status, [ChatterTimesheet::STATUS_SUBMITTED, ChatterTimesheet::STATUS_APPROVED], true)) {
-            throw ValidationException::withMessages(['timesheet' => __('A correction can only be requested for a submitted or approved timesheet.')]);
+        if (! $timesheet->periodHasEnded()) {
+            throw ValidationException::withMessages(['timesheet' => __('Wait until the payroll week has finished before reporting a timesheet problem.')]);
         }
 
-        $before = ['status' => $timesheet->status, 'review_note' => $timesheet->review_note];
-        $timesheet->forceFill(['review_note' => $validated['reason']])->save();
-        $this->audit($timesheet, $request, 'correction_requested', $validated['reason'], $before, ['status' => $timesheet->status, 'review_note' => $timesheet->review_note]);
-
-        $notifier->notify(
-            title: __('Timesheet correction requested'),
-            body: __(':name requested a correction to a timesheet.', ['name' => $request->user()->name]),
-            actionUrl: route('admin.chatter-hours.timesheets.show', $timesheet, false),
-            category: 'chatter_timesheet_correction',
-            details: ['Reason' => $validated['reason']],
-            actionLabel: __('Review correction'),
+        $this->audit(
+            $timesheet,
+            $request,
+            'timesheet_problem_reported',
+            $validated['reason'],
+            ['status' => $timesheet->status],
+            ['status' => $timesheet->status],
         );
 
-        return back()->with('status', __('Your correction request was sent to the admin team.'));
+        $notifier->notify(
+            title: __('Timesheet problem reported'),
+            body: __(':name reported a problem with a timesheet.', ['name' => $request->user()->name]),
+            actionUrl: route('admin.chatter-hours.timesheets.show', $timesheet, false),
+            category: 'chatter_timesheet_problem',
+            details: ['Reason' => $validated['reason']],
+            actionLabel: __('Review problem'),
+        );
+
+        return back()->with('status', __('Your timesheet problem was sent to the admin team.'));
     }
 
     private function authorizeOwner(Request $request, ChatterTimesheet $timesheet): void
     {
         abort_unless((int) $timesheet->user_id === (int) $request->user()->id, 403);
-    }
-
-    private function ensureWeeklyModelReviewsComplete(Request $request, ChatterTimesheet $timesheet): void
-    {
-        $requiredModelIds = $request->user()
-            ->activeAssignedModels()
-            ->whereHas('modelProfile')
-            ->pluck('users.id');
-
-        if ($requiredModelIds->isEmpty()) {
-            return;
-        }
-
-        $submittedModelIds = ChatterModelReview::query()
-            ->where('chatter_id', $request->user()->id)
-            ->whereDate('week_ending', $timesheet->period_end->toDateString())
-            ->whereIn('model_id', $requiredModelIds)
-            ->pluck('model_id');
-
-        $missingReviews = $requiredModelIds->diff($submittedModelIds)->count();
-
-        if ($missingReviews > 0) {
-            throw ValidationException::withMessages([
-                'timesheet' => trans_choice(
-                    'Submit the required weekly model review before submitting this timesheet. :count review is still missing.|Submit the required weekly model reviews before submitting this timesheet. :count reviews are still missing.',
-                    $missingReviews,
-                    ['count' => $missingReviews],
-                ),
-            ]);
-        }
     }
 
     private function audit(ChatterTimesheet $timesheet, Request $request, string $action, ?string $reason, ?array $before = null, ?array $after = null): void

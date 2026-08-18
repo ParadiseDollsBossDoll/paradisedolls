@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\RefreshChatterPayrollForShift;
 use App\Mail\ChatterWorkflowMail;
 use App\Models\ChatterBreak;
+use App\Models\ChatterModelReview;
 use App\Models\ChatterPayAdjustment;
 use App\Models\ChatterProfile;
 use App\Models\ChatterModelAssignment;
@@ -48,7 +49,7 @@ class AdminChatterHoursController extends Controller
                 'chatterPayRates' => fn ($query) => $query->latest('effective_from'),
                 'chatterRoleAssignments.workRole',
                 'courseEnrollments.course:id,title,slug,platform_label,is_published,sort_order',
-                'chatterShifts' => fn ($query) => $query->whereNull('clocked_out_at')->with(['breaks', 'workRole']),
+                'chatterShifts' => fn ($query) => $query->whereNull('clocked_out_at')->with(['breaks', 'workRole', 'model:id,name,email']),
                 'activeAssignedModels:id,name,email',
             ])
             ->orderBy('name')
@@ -74,7 +75,7 @@ class AdminChatterHoursController extends Controller
             ->whereHas('modelProfile')
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
-        $openShifts = ChatterShift::query()->whereNull('clocked_out_at')->with(['user', 'breaks', 'workRole'])->get();
+        $openShifts = ChatterShift::query()->whereNull('clocked_out_at')->with(['user', 'breaks', 'workRole', 'model:id,name,email'])->get();
         $stats = [
             'chatters' => User::query()->where('role', 'chatter')->count(),
             'working' => $openShifts->count(),
@@ -97,9 +98,9 @@ class AdminChatterHoursController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
         $workRoles = ChatterWorkRole::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
-        $openShifts = ChatterShift::query()->whereNull('clocked_out_at')->with(['user', 'breaks', 'workRole'])->get();
+        $openShifts = ChatterShift::query()->whereNull('clocked_out_at')->with(['user', 'breaks', 'workRole', 'model:id,name,email'])->get();
         $attendanceShifts = $this->attendanceQuery($filters)
-            ->with(['user', 'breaks', 'workRole'])
+            ->with(['user', 'breaks', 'workRole', 'model:id,name,email'])
             ->latest('clocked_in_at')
             ->paginate(20, ['*'], 'attendance_page')
             ->withQueryString();
@@ -155,7 +156,7 @@ class AdminChatterHoursController extends Controller
             'working' => $openShifts->count(),
             'on_break' => $openShifts->filter(fn (ChatterShift $shift) => $shift->breaks->contains(fn ($break) => $break->ended_at === null))->count(),
             'overdue' => $openShifts->filter(fn (ChatterShift $shift) => $shift->clocked_in_at->lt(now()->subHours(16)))->count(),
-            'pending' => ChatterTimesheet::query()->whereIn('status', [ChatterTimesheet::STATUS_SUBMITTED, ChatterTimesheet::STATUS_CHANGES_REQUESTED])->count(),
+            'pending' => ChatterTimesheet::query()->whereWorkflowStatus(ChatterTimesheet::WORKFLOW_READY_FOR_REVIEW)->count(),
             'requests' => ChatterRequest::query()->where('status', ChatterRequest::STATUS_PENDING)->count(),
             'total_minutes' => (int) $reportTimesheets->sum('ordinary_minutes'),
             'adjustment_pence' => (int) $reportTimesheets->sum('adjustment_pence'),
@@ -273,7 +274,7 @@ class AdminChatterHoursController extends Controller
 
                 $shift = ChatterShift::query()
                     ->where('active_user_id', $lockedChatter->id)
-                    ->with('breaks')
+                    ->with(['breaks', 'model:id,name,email'])
                     ->lockForUpdate()
                     ->first();
                 if ($shift) {
@@ -504,14 +505,15 @@ class AdminChatterHoursController extends Controller
             ->where('user_id', $timesheet->user_id)
             ->where('clocked_in_at', '<', $endUtc)
             ->where(fn ($query) => $query->whereNull('clocked_out_at')->orWhere('clocked_out_at', '>', $startUtc))
-            ->with(['breaks', 'audits.actor', 'workRole'])
+            ->with(['breaks', 'audits.actor', 'workRole', 'model:id,name,email'])
             ->orderBy('clocked_in_at')
             ->get();
 
         $usdToPhpRate = $currency->rateForTimesheet($timesheet);
         $grossPayPhpCentavos = $currency->phpCentavosForTimesheet($timesheet);
+        $missingModelReviews = $this->missingWeeklyModelReviewCount($timesheet);
 
-        return view('admin.chatter-hours.show', compact('timesheet', 'shifts', 'currency', 'usdToPhpRate', 'grossPayPhpCentavos'));
+        return view('admin.chatter-hours.show', compact('timesheet', 'shifts', 'currency', 'usdToPhpRate', 'grossPayPhpCentavos', 'missingModelReviews'));
     }
 
     public function updateShift(Request $request, ChatterTimesheet $timesheet, ChatterShift $shift, ChatterPayrollService $payroll): RedirectResponse
@@ -663,32 +665,47 @@ class AdminChatterHoursController extends Controller
 
             if ($decision === 'reopen') {
                 abort_unless($lockedTimesheet->status === ChatterTimesheet::STATUS_APPROVED, 422, 'Only an approved timesheet can be reopened.');
-                $status = ChatterTimesheet::STATUS_SUBMITTED;
-            } else {
-                abort_unless($lockedTimesheet->status === ChatterTimesheet::STATUS_SUBMITTED, 422, 'Only a submitted timesheet can be reviewed.');
+                $status = ChatterTimesheet::STATUS_DRAFT;
+            } elseif ($decision === 'approve') {
+                abort_unless(in_array($lockedTimesheet->status, [
+                    ChatterTimesheet::STATUS_DRAFT,
+                    ChatterTimesheet::STATUS_SUBMITTED,
+                    ChatterTimesheet::STATUS_CHANGES_REQUESTED,
+                ], true), 422, 'This timesheet cannot be approved in its current state.');
+                abort_unless($lockedTimesheet->periodHasEnded(), 422, 'This payroll week is not complete yet.');
 
-                if ($decision === 'approve') {
-                    $periodEnd = CarbonImmutable::parse(
-                        $lockedTimesheet->period_end->toDateString().' 23:59:59',
-                        ChatterPayrollService::REPORTING_TIMEZONE,
-                    );
-                    abort_if($periodEnd->isFuture(), 422, 'This payroll week is not complete yet.');
+                $periodEndUtc = CarbonImmutable::parse(
+                    $lockedTimesheet->period_end->toDateString().' 23:59:59',
+                    ChatterPayrollService::REPORTING_TIMEZONE,
+                )->addSecond()->utc();
+                $hasOpenShift = ChatterShift::query()
+                    ->where('user_id', $lockedTimesheet->user_id)
+                    ->whereNull('clocked_out_at')
+                    ->where('clocked_in_at', '<', $periodEndUtc)
+                    ->exists();
+                abort_if($hasOpenShift, 422, 'Clock out before approving this timesheet.');
 
-                    $periodEndUtc = $periodEnd->addSecond()->utc();
-                    $hasOpenShift = ChatterShift::query()
-                        ->where('user_id', $lockedTimesheet->user_id)
-                        ->whereNull('clocked_out_at')
-                        ->where('clocked_in_at', '<', $periodEndUtc)
-                        ->exists();
-                    abort_if($hasOpenShift, 422, 'Clock out before approving this timesheet.');
+                $missingModelReviews = $this->missingWeeklyModelReviewCount($lockedTimesheet);
+                if ($missingModelReviews > 0) {
+                    throw ValidationException::withMessages([
+                        'timesheet' => trans_choice(
+                            'Complete the required weekly model review before approving payroll. :count review is still missing.|Complete the required weekly model reviews before approving payroll. :count reviews are still missing.',
+                            $missingModelReviews,
+                            ['count' => $missingModelReviews],
+                        ),
+                    ]);
                 }
 
                 $lockedTimesheet = $payroll->refresh($lockedTimesheet);
-                $status = match ($decision) {
-                    'approve' => ChatterTimesheet::STATUS_APPROVED,
-                    'changes_requested' => ChatterTimesheet::STATUS_CHANGES_REQUESTED,
-                    default => ChatterTimesheet::STATUS_REJECTED,
-                };
+                $status = ChatterTimesheet::STATUS_APPROVED;
+            } else {
+                // Retain legacy decisions for existing internal records, but the
+                // simplified admin UI no longer creates these workflow states.
+                abort_unless($lockedTimesheet->status === ChatterTimesheet::STATUS_SUBMITTED, 422, 'Only a legacy submitted timesheet can receive this decision.');
+                $lockedTimesheet = $payroll->refresh($lockedTimesheet);
+                $status = $decision === 'changes_requested'
+                    ? ChatterTimesheet::STATUS_CHANGES_REQUESTED
+                    : ChatterTimesheet::STATUS_REJECTED;
             }
 
             $lockedTimesheet->forceFill([
@@ -696,22 +713,23 @@ class AdminChatterHoursController extends Controller
                 'review_note' => $validated['note'] ?? null,
                 'reviewed_by' => $decision === 'reopen' ? null : $request->user()->id,
                 'reviewed_at' => $decision === 'reopen' ? null : now(),
+                'submitted_at' => $decision === 'reopen' ? null : $lockedTimesheet->submitted_at,
             ])->save();
             $this->audit($request, 'timesheet_'.$decision, $validated['note'] ?? null, $before, ['status' => $status, 'gross_pay_pence' => $lockedTimesheet->gross_pay_pence], $lockedTimesheet);
 
             return $lockedTimesheet->fresh('user');
         });
-        $status = $timesheet->status;
+        $status = $timesheet->workflowStatusLabel();
 
         $timesheet->user->notify(new SystemNotification(
-            title: __('Timesheet :status', ['status' => str_replace('_', ' ', $status)]),
+            title: __('Timesheet :status', ['status' => $status]),
             body: $validated['note'] ?? __('Your weekly timesheet status was updated by the admin team.'),
             actionUrl: route('chatter.dashboard', absolute: false),
             category: 'chatter_timesheet_review',
         ));
         $this->emailChatter(
             $timesheet->user,
-            __('Timesheet :status', ['status' => str_replace('_', ' ', $status)]),
+            __('Timesheet :status', ['status' => $status]),
             $validated['note'] ?? __('Your weekly timesheet status was updated by the admin team.'),
         );
 
@@ -882,6 +900,10 @@ class AdminChatterHoursController extends Controller
         $validated = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', Rule::in([
+                ChatterTimesheet::WORKFLOW_IN_PROGRESS,
+                ChatterTimesheet::WORKFLOW_READY_FOR_REVIEW,
+                ChatterTimesheet::WORKFLOW_APPROVED,
+                ChatterTimesheet::WORKFLOW_CLOSED,
                 ChatterTimesheet::STATUS_DRAFT,
                 ChatterTimesheet::STATUS_SUBMITTED,
                 ChatterTimesheet::STATUS_CHANGES_REQUESTED,
@@ -921,7 +943,20 @@ class AdminChatterHoursController extends Controller
             ->when($filters['search'], fn (Builder $query, string $search) => $query->whereHas('user', fn (Builder $userQuery) => $userQuery
                 ->where('name', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%")))
-            ->when($filters['status'], fn (Builder $query, string $status) => $query->where('status', $status))
+            ->when($filters['status'], function (Builder $query, string $status) {
+                if (in_array($status, [
+                    ChatterTimesheet::WORKFLOW_IN_PROGRESS,
+                    ChatterTimesheet::WORKFLOW_READY_FOR_REVIEW,
+                    ChatterTimesheet::WORKFLOW_APPROVED,
+                    ChatterTimesheet::WORKFLOW_CLOSED,
+                ], true)) {
+                    $query->whereWorkflowStatus($status);
+
+                    return;
+                }
+
+                $query->where('status', $status);
+            })
             ->when($filters['chatter_id'], fn (Builder $query, int $id) => $query->where('user_id', $id))
             ->when($filters['from'], fn (Builder $query, string $from) => $query->whereDate('period_end', '>=', $from))
             ->when($filters['to'], fn (Builder $query, string $to) => $query->whereDate('period_start', '<=', $to));
@@ -948,6 +983,27 @@ class AdminChatterHoursController extends Controller
     private function assertChatter(User $user): void
     {
         abort_unless($user->isChatter(), 404);
+    }
+
+    private function missingWeeklyModelReviewCount(ChatterTimesheet $timesheet): int
+    {
+        $timesheet->loadMissing('user');
+        $requiredModelIds = $timesheet->user
+            ->activeAssignedModels()
+            ->whereHas('modelProfile')
+            ->pluck('users.id');
+
+        if ($requiredModelIds->isEmpty()) {
+            return 0;
+        }
+
+        $submittedModelIds = ChatterModelReview::query()
+            ->where('chatter_id', $timesheet->user_id)
+            ->whereDate('week_ending', $timesheet->period_end->toDateString())
+            ->whereIn('model_id', $requiredModelIds)
+            ->pluck('model_id');
+
+        return $requiredModelIds->diff($submittedModelIds)->count();
     }
 
     private function assertEditable(ChatterTimesheet $timesheet): void

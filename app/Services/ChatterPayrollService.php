@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ChatterPayRate;
+use App\Models\ChatterProfile;
 use App\Models\ChatterShift;
 use App\Models\ChatterTimesheet;
 use App\Models\User;
@@ -37,21 +38,57 @@ class ChatterPayrollService
             ->startOfWeek(CarbonInterface::MONDAY)
             ->startOfDay();
 
-        $existing = ChatterTimesheet::query()
+        $timesheet = ChatterTimesheet::query()
             ->where('user_id', $user->id)
             ->whereDate('period_start', $start->toDateString())
             ->first();
 
-        if ($existing) {
-            return $existing;
-        }
-
-        return ChatterTimesheet::query()->create([
+        return $timesheet ?: ChatterTimesheet::query()->create([
             'user_id' => $user->id,
             'period_start' => $start->toDateString(),
             'period_end' => $start->addDays(6)->toDateString(),
             'status' => ChatterTimesheet::STATUS_DRAFT,
         ]);
+    }
+
+    public function ensureWeeklyTimesheetsForActiveChatters(?CarbonInterface $through = null): int
+    {
+        $through ??= CarbonImmutable::now('UTC');
+        $created = 0;
+
+        User::query()
+            ->where('role', 'chatter')
+            ->whereHas('chatterProfile', fn ($query) => $query->where('employment_status', ChatterProfile::STATUS_ACTIVE))
+            ->with('chatterProfile')
+            ->chunkById(100, function (Collection $chatters) use ($through, &$created): void {
+                foreach ($chatters as $chatter) {
+                    $created += $this->ensureWeeklyTimesheetsFor($chatter, $through);
+                }
+            });
+
+        return $created;
+    }
+
+    public function ensureWeeklyTimesheetsFor(User $user, CarbonInterface $through): int
+    {
+        $user->loadMissing('chatterProfile');
+        $startedAt = $user->chatterProfile?->started_at ?: $user->created_at ?: $through;
+        $cursor = $this->periodFor(CarbonImmutable::instance($startedAt))['start'];
+        $lastPeriod = $this->periodFor($through)['start'];
+        $created = 0;
+
+        while ($cursor->lessThanOrEqualTo($lastPeriod)) {
+            $timesheet = $this->getOrCreate($user, $cursor);
+
+            if ($timesheet->wasRecentlyCreated) {
+                $this->refresh($timesheet);
+                $created++;
+            }
+
+            $cursor = $cursor->addWeek();
+        }
+
+        return $created;
     }
 
     public function refresh(ChatterTimesheet $timesheet): ChatterTimesheet
@@ -104,7 +141,7 @@ class ChatterPayrollService
             ->where('user_id', $user->id)
             ->where('clocked_in_at', '<', $endUtc)
             ->where(fn ($query) => $query->whereNull('clocked_out_at')->orWhere('clocked_out_at', '>', $startUtc))
-            ->with(['breaks', 'workRole'])
+            ->with(['breaks', 'workRole', 'model:id,name,email'])
             ->get();
 
         foreach ($shifts as $shift) {
@@ -220,7 +257,7 @@ class ChatterPayrollService
             ->where(function ($query) use ($startUtc) {
                 $query->whereNull('clocked_out_at')->orWhere('clocked_out_at', '>', $startUtc);
             })
-            ->with(['breaks', 'workRole'])
+            ->with(['breaks', 'workRole', 'model:id,name,email'])
             ->orderBy('clocked_in_at')
             ->get();
 
@@ -254,6 +291,9 @@ class ChatterPayrollService
                 'work_role_id' => $shift->chatter_work_role_id,
                 'work_role' => $shift->workRole?->name ?? 'Chatter',
                 'platform' => $shift->platform,
+                'model_id' => $shift->model_id,
+                'model_name' => $shift->model?->name,
+                'model_email' => $shift->model?->email,
                 'hourly_rate_pence' => $shift->hourly_rate_pence,
                 'started_at' => $shiftStart->toIso8601String(),
                 'ended_at' => $shiftEnd->toIso8601String(),

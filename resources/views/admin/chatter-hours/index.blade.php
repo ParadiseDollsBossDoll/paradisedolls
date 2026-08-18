@@ -137,7 +137,7 @@
                 <label><span class="pd-label">{{ __('Search') }}</span><input class="pd-input mt-2" name="search" value="{{ $filters['search'] }}" placeholder="{{ __('Name or email') }}"></label>
                 <label><span class="pd-label">{{ __('Chatter') }}</span><select class="pd-input mt-2" name="chatter_id"><option value="">{{ __('All chatters') }}</option>@foreach ($chatterOptions as $option)<option value="{{ $option->id }}" @selected((int) $filters['chatter_id'] === $option->id)>{{ $option->name }}</option>@endforeach</select></label>
                 <label><span class="pd-label">{{ __('Work role') }}</span><select class="pd-input mt-2" name="role_id"><option value="">{{ __('All roles') }}</option>@foreach ($workRoles as $role)<option value="{{ $role->id }}" @selected((int) $filters['role_id'] === $role->id)>{{ $role->name }}</option>@endforeach</select></label>
-                <label><span class="pd-label">{{ __('Timesheet status') }}</span><select class="pd-input mt-2" name="status"><option value="">{{ __('All statuses') }}</option>@foreach (['draft', 'submitted', 'changes_requested', 'approved', 'rejected'] as $status)<option value="{{ $status }}" @selected($filters['status'] === $status)>{{ str($status)->replace('_', ' ')->title() }}</option>@endforeach</select></label>
+                <label><span class="pd-label">{{ __('Timesheet status') }}</span><select class="pd-input mt-2" name="status"><option value="">{{ __('All statuses') }}</option>@foreach (['in_progress' => __('In progress'), 'ready_for_review' => __('Ready for review'), 'approved' => __('Approved'), 'closed' => __('Closed - No payroll')] as $status => $label)<option value="{{ $status }}" @selected($filters['status'] === $status)>{{ $label }}</option>@endforeach</select></label>
                 <label><span class="pd-label">{{ __('From') }}</span><input class="pd-input mt-2" type="date" name="from" value="{{ $filters['from'] }}"></label>
                 <label><span class="pd-label">{{ __('To') }}</span><input class="pd-input mt-2" type="date" name="to" value="{{ $filters['to'] }}"></label>
                 <button class="pd-btn-primary h-[43px] rounded-lg px-5 text-xs">{{ __('Apply') }}</button>
@@ -153,7 +153,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[980px] text-left text-sm">
                     <thead class="border-b border-white/[0.06] text-[0.6rem] uppercase tracking-[0.13em] text-boss-ivory/35">
-                        <tr><th class="px-5 py-3">{{ __('Date / time in') }}</th><th class="px-4 py-3">{{ __('Date / time out') }}</th><th class="px-4 py-3">{{ __('Employee') }}</th><th class="px-4 py-3">{{ __('Work role & rate') }}</th><th class="px-4 py-3">{{ __('Hours worked') }}</th><th class="px-5 py-3">{{ __('Status') }}</th></tr>
+                        <tr><th class="px-5 py-3">{{ __('Date / time in') }}</th><th class="px-4 py-3">{{ __('Date / time out') }}</th><th class="px-4 py-3">{{ __('Employee') }}</th><th class="px-4 py-3">{{ __('Work role / site / model') }}</th><th class="px-4 py-3">{{ __('Hours worked') }}</th><th class="px-5 py-3">{{ __('Status') }}</th></tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.05]">
                         @forelse($attendanceShifts as $shift)
@@ -162,10 +162,19 @@
                                 $overdue = !$shift->clocked_out_at && $shift->clocked_in_at->lt(now()->subHours(16));
                             @endphp
                             <tr class="hover:bg-white/[0.02]">
-                                <td class="whitespace-nowrap px-5 py-4"><p class="font-medium">{{ $shift->clocked_in_at->timezone('Europe/London')->format('D, d M Y') }}</p><p class="mt-0.5 text-xs text-boss-ivory/40">{{ $shift->clocked_in_at->timezone('Europe/London')->format('g:i A T') }}</p></td>
-                                <td class="whitespace-nowrap px-4 py-4">@if($shift->clocked_out_at)<p>{{ $shift->clocked_out_at->timezone('Europe/London')->format('D, d M Y') }}</p><p class="mt-0.5 text-xs text-boss-ivory/40">{{ $shift->clocked_out_at->timezone('Europe/London')->format('g:i A T') }}</p>@else<span class="text-emerald-200">{{ __('Still working') }}</span>@endif</td>
+                                <td class="whitespace-nowrap px-5 py-4"><p class="font-medium">{{ $shift->clocked_in_at->timezone('Europe/London')->format('D, d M Y') }}</p><p class="mt-0.5 text-xs text-boss-ivory/40">{{ $shift->clocked_in_at->timezone('Europe/London')->format('g:i A') }} UK Time</p></td>
+                                <td class="whitespace-nowrap px-4 py-4">@if($shift->clocked_out_at)<p>{{ $shift->clocked_out_at->timezone('Europe/London')->format('D, d M Y') }}</p><p class="mt-0.5 text-xs text-boss-ivory/40">{{ $shift->clocked_out_at->timezone('Europe/London')->format('g:i A') }} UK Time</p>@else<span class="text-emerald-200">{{ __('Still working') }}</span>@endif</td>
                                 <td class="px-4 py-4"><p class="font-medium">{{ $shift->user->name }}</p><p class="mt-0.5 text-xs text-boss-ivory/35">{{ $shift->user->email }}</p></td>
-                                <td class="px-4 py-4"><span class="rounded-full bg-boss-gold/10 px-2.5 py-1 text-xs text-boss-gold">{{ $shift->workRole?->name ?? __('Chatter') }}</span><p class="mt-2 text-xs text-boss-ivory/40">${{ number_format(($shift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr</p>@if($shift->platform)<p class="mt-1 text-xs text-boss-ivory/35">{{ $shift->platform }}</p>@endif</td>
+                                <td class="px-4 py-4">
+                                    <span class="rounded-full bg-boss-gold/10 px-2.5 py-1 text-xs text-boss-gold">{{ $shift->workRole?->name ?? __('Chatter') }}</span>
+                                    <p class="mt-2 text-xs text-boss-ivory/40">${{ number_format(($shift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr</p>
+                                    @if($shift->platform)
+                                        <p class="mt-1 text-xs text-boss-ivory/35">{{ $shift->platform }}</p>
+                                    @endif
+                                    @if($shift->model)
+                                        <p class="mt-1 text-xs text-boss-ivory/35">{{ __('Model: :model', ['model' => $shift->model->name]) }}</p>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-4 font-semibold text-boss-gold">{{ $formatMinutes((int) $shift->getAttribute('worked_minutes')) }}</td>
                                 <td class="px-5 py-4"><span class="rounded-full px-2.5 py-1 text-[0.65rem] font-semibold {{ $overdue ? 'bg-red-400/15 text-red-200' : ($activeBreak ? 'bg-amber-400/15 text-amber-200' : ($shift->clocked_out_at ? 'bg-white/[0.06] text-boss-ivory/55' : 'bg-emerald-400/15 text-emerald-200')) }}">{{ $overdue ? __('Overdue') : ($activeBreak ? __('On break') : ($shift->clocked_out_at ? __('Completed') : __('Working'))) }}</span></td>
                             </tr>
@@ -234,7 +243,7 @@
                                         @endforelse
                                     </div>
                                 </td>
-                                <td class="px-4 py-4"><span class="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs">{{ $sheet->statusLabel() }}</span></td>
+                                <td class="px-4 py-4"><span class="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs">{{ $sheet->workflowStatusLabel() }}</span></td>
                                 <td class="px-5 py-4 text-right"><a class="pd-btn-secondary inline-flex rounded-lg px-3 py-2 text-xs" href="{{ route('admin.chatter-hours.timesheets.show', $sheet) }}">{{ __('Manage payroll') }}</a></td>
                             </tr>
                         @empty
@@ -311,7 +320,7 @@
                                             <button class="pd-btn-secondary h-[43px] w-full rounded-lg px-3 text-xs xl:w-auto">{{ __('Save') }}</button>
                                         </div>
                                     </form>
-                                    <p>{{ __('Current shift') }}<span class="mt-1 block text-boss-ivory">{{ $open ? ($open->workRole?->name ?? __('Chatter')).($open->platform ? ' - '.$open->platform : '').' - '.$open->clocked_in_at->timezone('Europe/London')->format('d M H:i').' UK' : __('Not working') }}</span></p>
+                                    <p>{{ __('Current shift') }}<span class="mt-1 block text-boss-ivory">{{ $open ? ($open->workRole?->name ?? __('Chatter')).($open->platform ? ' - '.$open->platform : '').($open->model ? ' - '.$open->model->name : '').' - '.$open->clocked_in_at->timezone('Europe/London')->format('d M g:i A').' UK Time' : __('Not working') }}</span></p>
                                 </div>
                                 <div>
                                     <p class="pd-label">{{ __('Assigned work roles') }}</p>

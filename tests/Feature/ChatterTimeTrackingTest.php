@@ -6,6 +6,7 @@ use App\Mail\AdminActivityAlertMail;
 use App\Mail\ChatterInvitationMail;
 use App\Mail\ChatterWorkflowMail;
 use App\Models\ChatterBreak;
+use App\Models\ChatterModelAssignment;
 use App\Models\ChatterPayAdjustment;
 use App\Models\ChatterPayRate;
 use App\Models\ChatterProfile;
@@ -27,7 +28,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 use ZipArchive;
@@ -811,6 +814,53 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertDatabaseCount('chatter_shifts', 0);
     }
 
+    public function test_chatter_clock_in_stores_the_assigned_model_with_the_platform(): void
+    {
+        $chatter = $this->chatter();
+        $assignedModel = User::factory()->create(['role' => 'model', 'name' => 'Assigned Model']);
+        $otherModel = User::factory()->create(['role' => 'model', 'name' => 'Other Model']);
+        $assignedModel->modelProfile()->create([
+            'verification_status' => 'verified',
+        ]);
+        $otherModel->modelProfile()->create([
+            'verification_status' => 'verified',
+        ]);
+        ChatterModelAssignment::create([
+            'chatter_id' => $chatter->id,
+            'model_id' => $assignedModel->id,
+            'assigned_at' => now(),
+        ]);
+
+        CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), [
+            'platform' => 'Stripchat',
+        ])->assertSessionHasErrors('model_id');
+
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), [
+            'platform' => 'Stripchat',
+            'model_id' => $otherModel->id,
+        ])->assertSessionHasErrors('model_id');
+
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), [
+            'platform' => 'Stripchat',
+            'model_id' => $assignedModel->id,
+        ])->assertSessionHasNoErrors();
+
+        CarbonImmutable::setTestNow('2026-07-13 09:00:00 UTC');
+        $this->actingAs($chatter)->post(route('chatter.clock-out'))->assertSessionHasNoErrors();
+
+        $shift = ChatterShift::query()->firstOrFail();
+        $this->assertSame('Stripchat', $shift->platform);
+        $this->assertSame($assignedModel->id, $shift->model_id);
+
+        $sheet = app(ChatterPayrollService::class)
+            ->refresh(app(ChatterPayrollService::class)->getOrCreate($chatter, CarbonImmutable::parse('2026-07-13', 'Europe/London')));
+
+        $this->assertSame($assignedModel->id, data_get($sheet->calculation_snapshot, 'shifts.0.model_id'));
+        $this->assertSame('Assigned Model', data_get($sheet->calculation_snapshot, 'shifts.0.model_name'));
+        $this->assertSame('Stripchat', data_get($sheet->calculation_snapshot, 'shifts.0.platform'));
+    }
+
     public function test_admin_chatter_hours_pages_separate_accounts_from_attendance_and_payroll(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -853,6 +903,45 @@ class ChatterTimeTrackingTest extends TestCase
             ->assertSee('Status');
     }
 
+    public function test_chatter_timesheets_use_automatic_workflow_labels_without_submission(): void
+    {
+        CarbonImmutable::setTestNow('2026-07-20 12:00:00 Europe/London');
+        $chatter = $this->chatter();
+        $payroll = app(ChatterPayrollService::class);
+        $payroll->getOrCreate($chatter, CarbonImmutable::parse('2026-07-13', 'Europe/London'));
+
+        $this->actingAs($chatter)->get(route('chatter.dashboard'))
+            ->assertOk()
+            ->assertSee('In progress')
+            ->assertSee('Ready for review')
+            ->assertSee('Report a problem')
+            ->assertDontSee('Submit');
+
+        $this->assertFalse(Route::has('chatter.timesheets.submit'));
+    }
+
+    public function test_scheduled_command_creates_missing_weekly_timesheets_for_active_chatters_only(): void
+    {
+        CarbonImmutable::setTestNow('2026-08-24 12:00:00 Europe/London');
+        $active = $this->chatter();
+        $active->chatterProfile->update(['started_at' => '2026-08-10 09:00:00']);
+        $suspended = $this->chatter();
+        $suspended->chatterProfile->update([
+            'employment_status' => ChatterProfile::STATUS_SUSPENDED,
+            'started_at' => '2026-08-10 09:00:00',
+        ]);
+
+        Artisan::call('chatter-timesheets:ensure');
+        Artisan::call('chatter-timesheets:ensure');
+
+        $this->assertSame(3, ChatterTimesheet::query()->where('user_id', $active->id)->count());
+        $this->assertSame(
+            ['2026-08-10', '2026-08-17', '2026-08-24'],
+            ChatterTimesheet::query()->where('user_id', $active->id)->orderBy('period_start')->get()->map(fn (ChatterTimesheet $sheet) => $sheet->period_start->format('Y-m-d'))->all(),
+        );
+        $this->assertSame(0, ChatterTimesheet::query()->where('user_id', $suspended->id)->count());
+    }
+
     public function test_automatic_currency_rate_updates_drafts_and_approved_php_pay_is_preserved(): void
     {
         config()->set('services.chatter_payroll.exchange_rate_enabled', true);
@@ -886,7 +975,6 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertSame(1000, $sheet->gross_pay_pence);
         $this->assertSame(60250, $currency->phpCentavosForTimesheet($sheet));
 
-        $sheet->update(['status' => ChatterTimesheet::STATUS_SUBMITTED, 'submitted_at' => now()]);
         $this->actingAs($admin)->post(route('admin.chatter-hours.timesheets.review', $sheet), [
             'decision' => 'approve',
         ])->assertSessionHasNoErrors();
@@ -1028,12 +1116,12 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertSame(120, $sheet->ordinary_minutes);
     }
 
-    public function test_approved_timesheet_is_snapshotted_and_chatter_correction_request_does_not_reopen_it(): void
+    public function test_approved_timesheet_is_snapshotted_and_chatter_problem_report_does_not_reopen_it(): void
     {
         Mail::fake();
         $admin = User::factory()->create(['role' => 'admin']);
         $chatter = $this->chatter();
-        ChatterShift::create([
+        $shift = ChatterShift::create([
             'user_id' => $chatter->id,
             'clocked_in_at' => '2026-07-13 08:00:00',
             'clocked_out_at' => '2026-07-13 10:00:00',
@@ -1041,8 +1129,6 @@ class ChatterTimeTrackingTest extends TestCase
         ]);
         $payroll = app(ChatterPayrollService::class);
         $sheet = $payroll->refresh($payroll->getOrCreate($chatter, CarbonImmutable::parse('2026-07-13', 'Europe/London')));
-        $sheet->update(['status' => ChatterTimesheet::STATUS_SUBMITTED, 'submitted_at' => now()]);
-
         $this->actingAs($admin)->post(route('admin.chatter-hours.timesheets.review', $sheet), ['decision' => 'approve'])
             ->assertSessionHasNoErrors();
         $sheet->refresh();
@@ -1055,31 +1141,68 @@ class ChatterTimeTrackingTest extends TestCase
         $payroll->refresh($sheet);
         $this->assertSame($approvedPay, $sheet->fresh()->gross_pay_pence);
 
-        $this->actingAs($chatter)->post(route('chatter.timesheets.correction', $sheet), ['reason' => 'My finish time needs checking.'])
+        $this->actingAs($chatter)->post(route('chatter.timesheets.problem', $sheet), ['reason' => 'My finish time needs checking.'])
             ->assertSessionHasNoErrors();
         $this->assertSame(ChatterTimesheet::STATUS_APPROVED, $sheet->fresh()->status);
-        $this->assertDatabaseHas('chatter_time_audits', ['chatter_timesheet_id' => $sheet->id, 'action' => 'correction_requested']);
+        $this->assertSame($approvedPay, $sheet->fresh()->gross_pay_pence);
+        $this->assertDatabaseHas('chatter_time_audits', ['chatter_timesheet_id' => $sheet->id, 'action' => 'timesheet_problem_reported']);
+
+        $this->actingAs($admin)->post(route('admin.chatter-hours.timesheets.review', $sheet), [
+            'decision' => 'reopen',
+            'note' => 'Checking the reported finish time.',
+        ])->assertSessionHasNoErrors();
+        $this->assertSame(ChatterTimesheet::STATUS_DRAFT, $sheet->fresh()->status);
+        $this->assertSame('Ready for review', $sheet->fresh()->workflowStatusLabel());
+
+        $this->actingAs($admin)->patch(route('admin.chatter-hours.shifts.update', [$sheet, $shift]), [
+            'clocked_in_at' => '2026-07-13T08:00',
+            'clocked_out_at' => '2026-07-13T09:30',
+            'reason' => 'Confirmed the corrected finish time.',
+        ])->assertSessionHasNoErrors();
+        $this->actingAs($admin)->post(route('admin.chatter-hours.timesheets.review', $sheet), ['decision' => 'approve'])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(ChatterTimesheet::STATUS_APPROVED, $sheet->fresh()->status);
+        $this->assertSame(90, $sheet->fresh()->ordinary_minutes);
     }
 
-    public function test_admin_cannot_approve_a_draft_or_incomplete_timesheet(): void
+    public function test_admin_can_approve_a_completed_draft_but_not_a_current_timesheet(): void
     {
         Mail::fake();
+        CarbonImmutable::setTestNow('2026-07-20 12:00:00 Europe/London');
         $admin = User::factory()->create(['role' => 'admin']);
         $chatter = $this->chatter();
         $payroll = app(ChatterPayrollService::class);
 
         $draft = $payroll->getOrCreate($chatter, CarbonImmutable::parse('2026-07-13', 'Europe/London'));
         $this->actingAs($admin)->post(route('admin.chatter-hours.timesheets.review', $draft), ['decision' => 'approve'])
-            ->assertStatus(422);
-        $this->assertSame(ChatterTimesheet::STATUS_DRAFT, $draft->fresh()->status);
+            ->assertSessionHasNoErrors();
+        $this->assertSame(ChatterTimesheet::STATUS_APPROVED, $draft->fresh()->status);
 
-        CarbonImmutable::setTestNow('2026-07-20 12:00:00 UTC');
         $current = $payroll->getOrCreate($chatter, CarbonImmutable::parse('2026-07-20', 'Europe/London'));
-        $current->update(['status' => ChatterTimesheet::STATUS_SUBMITTED, 'submitted_at' => now()]);
         $this->actingAs($admin)->post(route('admin.chatter-hours.timesheets.review', $current), ['decision' => 'approve'])
             ->assertStatus(422);
-        $this->assertSame(ChatterTimesheet::STATUS_SUBMITTED, $current->fresh()->status);
-        Mail::assertNothingQueued();
+        $this->assertSame(ChatterTimesheet::STATUS_DRAFT, $current->fresh()->status);
+        Mail::assertQueued(ChatterWorkflowMail::class, 1);
+    }
+
+    public function test_admin_cannot_approve_completed_payroll_while_a_shift_is_open(): void
+    {
+        CarbonImmutable::setTestNow('2026-07-20 12:00:00 Europe/London');
+        $admin = User::factory()->create(['role' => 'admin']);
+        $chatter = $this->chatter();
+        $sheet = app(ChatterPayrollService::class)->getOrCreate($chatter, CarbonImmutable::parse('2026-07-13', 'Europe/London'));
+        ChatterShift::create([
+            'user_id' => $chatter->id,
+            'active_user_id' => $chatter->id,
+            'clocked_in_at' => '2026-07-19 22:00:00',
+            'timezone' => 'Europe/London',
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.chatter-hours.timesheets.review', $sheet), ['decision' => 'approve'])
+            ->assertStatus(422);
+
+        $this->assertSame(ChatterTimesheet::STATUS_DRAFT, $sheet->fresh()->status);
     }
 
     public function test_admin_cannot_correct_a_shift_that_touches_another_approved_week(): void
