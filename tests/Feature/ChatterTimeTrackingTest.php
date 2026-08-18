@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\EnforceAuthenticatedSessionPolicy;
 use App\Mail\AdminActivityAlertMail;
 use App\Mail\ChatterInvitationMail;
 use App\Mail\ChatterWorkflowMail;
@@ -18,17 +19,17 @@ use App\Models\ChatterWorkRole;
 use App\Models\CommunityChannelAccess;
 use App\Models\Course;
 use App\Models\User;
-use App\Http\Middleware\EnforceAuthenticatedSessionPolicy;
+use App\Services\ChatterAccountService;
 use App\Services\ChatterPayrollService;
 use App\Services\CourseCommunityService;
 use App\Services\UsdPhpExchangeRateService;
 use App\Support\ChatterCurrency;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -326,7 +327,7 @@ class ChatterTimeTrackingTest extends TestCase
             'amount_pence' => 500,
             'label' => 'Bonus',
         ]);
-        app(\App\Services\ChatterAccountService::class)->sendInvitation($chatter);
+        app(ChatterAccountService::class)->sendInvitation($chatter);
         DB::table('sessions')->insert([
             'id' => 'chatter-session',
             'user_id' => $chatter->id,
@@ -871,10 +872,11 @@ class ChatterTimeTrackingTest extends TestCase
             'clocked_out_at' => '2026-07-13 09:00:00',
             'timezone' => 'Europe/London',
         ]);
-        app(ChatterPayrollService::class)->getOrCreate(
+        $payroll = app(ChatterPayrollService::class);
+        $payroll->refresh($payroll->getOrCreate(
             $chatter,
             CarbonImmutable::parse('2026-07-13', 'Europe/London'),
-        );
+        ));
 
         $this->actingAs($admin)->get(route('admin.chatter-hours.index'))
             ->assertOk()
@@ -901,6 +903,70 @@ class ChatterTimeTrackingTest extends TestCase
             ->assertSee('PH final pay')
             ->assertSee('Notes')
             ->assertSee('Status');
+    }
+
+    public function test_admin_attendance_and_payroll_tables_hide_zero_work_but_keep_payable_records(): void
+    {
+        CarbonImmutable::setTestNow('2026-07-20 12:00:00 Europe/London');
+        $admin = User::factory()->create(['role' => 'admin']);
+        $zeroChatter = $this->chatter();
+        $workingChatter = $this->chatter();
+        $adjustedChatter = $this->chatter();
+        $payroll = app(ChatterPayrollService::class);
+
+        $zeroShift = ChatterShift::create([
+            'user_id' => $zeroChatter->id,
+            'clocked_in_at' => '2026-07-13 08:00:00',
+            'clocked_out_at' => '2026-07-13 09:00:00',
+            'timezone' => 'Europe/London',
+        ]);
+        ChatterBreak::create([
+            'chatter_shift_id' => $zeroShift->id,
+            'started_at' => '2026-07-13 08:00:00',
+            'ended_at' => '2026-07-13 09:00:00',
+        ]);
+        $zeroTimesheet = $payroll->refresh($payroll->getOrCreate($zeroChatter, CarbonImmutable::parse('2026-07-13', 'Europe/London')));
+
+        $workedShift = ChatterShift::create([
+            'user_id' => $workingChatter->id,
+            'clocked_in_at' => '2026-07-13 10:00:00',
+            'clocked_out_at' => '2026-07-13 11:00:00',
+            'timezone' => 'Europe/London',
+        ]);
+        $workedTimesheet = $payroll->refresh($payroll->getOrCreate($workingChatter, CarbonImmutable::parse('2026-07-13', 'Europe/London')));
+
+        $adjustedTimesheet = $payroll->getOrCreate($adjustedChatter, CarbonImmutable::parse('2026-07-13', 'Europe/London'));
+        ChatterPayAdjustment::create([
+            'chatter_timesheet_id' => $adjustedTimesheet->id,
+            'created_by' => $admin->id,
+            'amount_pence' => 500,
+            'label' => 'Visibility bonus',
+        ]);
+        ChatterPayAdjustment::create([
+            'chatter_timesheet_id' => $adjustedTimesheet->id,
+            'created_by' => $admin->id,
+            'amount_pence' => -500,
+            'label' => 'Visibility deduction',
+        ]);
+        $adjustedTimesheet = $payroll->refresh($adjustedTimesheet);
+        $this->assertSame(0, $adjustedTimesheet->ordinary_minutes);
+        $this->assertSame(0, $adjustedTimesheet->gross_pay_pence);
+
+        $response = $this->actingAs($admin)->get(route('admin.chatter-hours.attendance'));
+        $response->assertOk();
+
+        $visibleShiftIds = $response->viewData('attendanceShifts')->getCollection()->pluck('id');
+        $this->assertFalse($visibleShiftIds->contains($zeroShift->id));
+        $this->assertTrue($visibleShiftIds->contains($workedShift->id));
+
+        $visibleTimesheetIds = $response->viewData('timesheets')->getCollection()->pluck('id');
+        $this->assertFalse($visibleTimesheetIds->contains($zeroTimesheet->id));
+        $this->assertTrue($visibleTimesheetIds->contains($workedTimesheet->id));
+        $this->assertTrue($visibleTimesheetIds->contains($adjustedTimesheet->id));
+
+        $this->actingAs($admin)
+            ->get(route('admin.chatter-hours.timesheets.show', $zeroTimesheet))
+            ->assertOk();
     }
 
     public function test_chatter_timesheets_use_automatic_workflow_labels_without_submission(): void
@@ -1278,6 +1344,74 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertStringContainsString('orientation="landscape"', $sheetXml);
         $this->assertStringContainsString('formatCode="[h]:mm:ss"', $stylesXml);
         $this->assertStringNotContainsString('Break Details', $sheetXml);
+    }
+
+    public function test_admin_payroll_export_excludes_zero_work_rows_and_keeps_payable_rows(): void
+    {
+        CarbonImmutable::setTestNow('2026-07-20 12:00:00 Europe/London');
+        $admin = User::factory()->create(['role' => 'admin']);
+        $zeroChatter = $this->chatter();
+        $zeroChatter->forceFill(['name' => 'Zero Payroll Export'])->save();
+        $adjustedChatter = $this->chatter();
+        $adjustedChatter->forceFill(['name' => 'Adjustment Payroll Export'])->save();
+        $workingChatter = $this->chatter();
+        $workingChatter->forceFill(['name' => 'Working Payroll Export'])->save();
+        $payroll = app(ChatterPayrollService::class);
+
+        $payroll->refresh($payroll->getOrCreate($zeroChatter, CarbonImmutable::parse('2026-07-13', 'Europe/London')));
+
+        $adjustedTimesheet = $payroll->getOrCreate($adjustedChatter, CarbonImmutable::parse('2026-07-13', 'Europe/London'));
+        ChatterPayAdjustment::create([
+            'chatter_timesheet_id' => $adjustedTimesheet->id,
+            'created_by' => $admin->id,
+            'amount_pence' => 500,
+            'label' => 'Export-only bonus',
+        ]);
+        $payroll->refresh($adjustedTimesheet);
+
+        $zeroShift = ChatterShift::create([
+            'user_id' => $workingChatter->id,
+            'clocked_in_at' => '2026-07-13 08:00:00',
+            'clocked_out_at' => '2026-07-13 09:00:00',
+            'timezone' => 'Europe/London',
+            'platform' => 'Hidden Zero Platform',
+        ]);
+        ChatterBreak::create([
+            'chatter_shift_id' => $zeroShift->id,
+            'started_at' => '2026-07-13 08:00:00',
+            'ended_at' => '2026-07-13 09:00:00',
+        ]);
+        ChatterShift::create([
+            'user_id' => $workingChatter->id,
+            'clocked_in_at' => '2026-07-13 10:00:00',
+            'clocked_out_at' => '2026-07-13 11:00:00',
+            'timezone' => 'Europe/London',
+            'platform' => 'Visible Work Platform',
+        ]);
+        $payroll->refresh($payroll->getOrCreate($workingChatter, CarbonImmutable::parse('2026-07-13', 'Europe/London')));
+
+        $response = $this->actingAs($admin)->get(route('admin.chatter-hours.export.xlsx', [
+            'from' => '2026-07-13',
+            'to' => '2026-07-19',
+        ]));
+        $response->assertOk();
+
+        $path = tempnam(sys_get_temp_dir(), 'payroll-zero-filter-test-');
+        $this->assertNotFalse($path);
+        file_put_contents($path, $response->streamedContent());
+
+        $archive = new ZipArchive;
+        $this->assertTrue($archive->open($path) === true);
+        $sheetXml = $archive->getFromName('xl/worksheets/sheet1.xml');
+        $archive->close();
+        @unlink($path);
+
+        $this->assertIsString($sheetXml);
+        $this->assertStringNotContainsString('Zero Payroll Export', $sheetXml);
+        $this->assertStringContainsString('Adjustment Payroll Export', $sheetXml);
+        $this->assertStringContainsString('Working Payroll Export', $sheetXml);
+        $this->assertStringNotContainsString('Hidden Zero Platform', $sheetXml);
+        $this->assertStringContainsString('Visible Work Platform', $sheetXml);
     }
 
     private function chatter(array $rateOverrides = []): User

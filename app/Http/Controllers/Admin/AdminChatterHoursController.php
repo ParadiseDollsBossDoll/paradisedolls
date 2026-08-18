@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Jobs\RefreshChatterPayrollForShift;
 use App\Mail\ChatterWorkflowMail;
 use App\Models\ChatterBreak;
+use App\Models\ChatterModelAssignment;
 use App\Models\ChatterModelReview;
 use App\Models\ChatterPayAdjustment;
 use App\Models\ChatterProfile;
-use App\Models\ChatterModelAssignment;
 use App\Models\ChatterRequest;
 use App\Models\ChatterRoleAssignment;
 use App\Models\ChatterShift;
@@ -30,6 +30,7 @@ use DateTimeZone;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -99,22 +100,35 @@ class AdminChatterHoursController extends Controller
             ->get(['id', 'name', 'email']);
         $workRoles = ChatterWorkRole::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
         $openShifts = ChatterShift::query()->whereNull('clocked_out_at')->with(['user', 'breaks', 'workRole', 'model:id,name,email'])->get();
-        $attendanceShifts = $this->attendanceQuery($filters)
+        $attendanceShiftResults = $this->attendanceQuery($filters)
             ->with(['user', 'breaks', 'workRole', 'model:id,name,email'])
             ->latest('clocked_in_at')
-            ->paginate(20, ['*'], 'attendance_page')
-            ->withQueryString();
-        $attendanceShifts->getCollection()->transform(function (ChatterShift $shift) use ($payroll) {
-            $totals = $payroll->shiftWorkedTotals(
-                $shift,
-                $shift->clocked_in_at,
-                $shift->clocked_out_at ?: now('UTC'),
-            );
-            $shift->setAttribute('worked_minutes', $totals['worked_minutes']);
-            $shift->setAttribute('break_minutes', $totals['break_minutes']);
+            ->get()
+            ->map(function (ChatterShift $shift) use ($payroll) {
+                $totals = $payroll->shiftWorkedTotals(
+                    $shift,
+                    $shift->clocked_in_at,
+                    $shift->clocked_out_at ?: now('UTC'),
+                );
+                $shift->setAttribute('worked_minutes', $totals['worked_minutes']);
+                $shift->setAttribute('break_minutes', $totals['break_minutes']);
 
-            return $shift;
-        });
+                return $shift;
+            })
+            ->filter(fn (ChatterShift $shift): bool => (int) $shift->getAttribute('worked_minutes') > 0)
+            ->values();
+        $attendancePage = LengthAwarePaginator::resolveCurrentPage('attendance_page');
+        $attendanceShifts = new LengthAwarePaginator(
+            $attendanceShiftResults->forPage($attendancePage, 20)->values(),
+            $attendanceShiftResults->count(),
+            20,
+            $attendancePage,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+                'pageName' => 'attendance_page',
+            ],
+        );
 
         // Clock actions and explicit mutations refresh draft payroll. A GET
         // request must remain read-only and must not recalculate every record.
@@ -250,8 +264,7 @@ class AdminChatterHoursController extends Controller
         Request $request,
         User $chatter,
         UserSessionService $sessions
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         $this->assertChatter($chatter);
         $validated = $request->validate(['employment_status' => ['required', Rule::in([ChatterProfile::STATUS_ACTIVE, ChatterProfile::STATUS_SUSPENDED])]]);
 
@@ -535,8 +548,7 @@ class AdminChatterHoursController extends Controller
             $originalEnd = CarbonImmutable::instance($lockedShift->clocked_out_at ?: now('UTC'))->utc();
             $this->assertPeriodsEditable($lockedTimesheet, [[$originalStart, $originalEnd], [$newStart, $newEnd]]);
 
-            if ($lockedShift->breaks->contains(fn (ChatterBreak $break) =>
-                $break->started_at->lt($newStart) || ($break->ended_at && $break->ended_at->gt($newEnd)))) {
+            if ($lockedShift->breaks->contains(fn (ChatterBreak $break) => $break->started_at->lt($newStart) || ($break->ended_at && $break->ended_at->gt($newEnd)))) {
                 throw ValidationException::withMessages(['clocked_in_at' => __('The corrected shift must still contain all recorded breaks.')]);
             }
 
@@ -833,8 +845,8 @@ class AdminChatterHoursController extends Controller
         return $this->resolveWorkRole(null, $name);
     }
 
-    /** @return \Illuminate\Support\Collection<int, array{value: string, label: string, search: string}> */
-    private function timezoneOptions(): \Illuminate\Support\Collection
+    /** @return Collection<int, array{value: string, label: string, search: string}> */
+    private function timezoneOptions(): Collection
     {
         $now = CarbonImmutable::now('UTC');
 
@@ -940,6 +952,12 @@ class AdminChatterHoursController extends Controller
     private function timesheetQuery(array $filters): Builder
     {
         return ChatterTimesheet::query()
+            ->where(function (Builder $query) {
+                $query->where('ordinary_minutes', '>', 0)
+                    ->orWhere('gross_pay_pence', '!=', 0)
+                    ->orWhere('adjustment_pence', '!=', 0)
+                    ->orWhereHas('adjustments', fn (Builder $adjustments) => $adjustments->where('amount_pence', '!=', 0));
+            })
             ->when($filters['search'], fn (Builder $query, string $search) => $query->whereHas('user', fn (Builder $userQuery) => $userQuery
                 ->where('name', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%")))

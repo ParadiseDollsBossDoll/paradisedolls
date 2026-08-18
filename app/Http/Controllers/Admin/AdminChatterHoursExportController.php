@@ -29,6 +29,7 @@ class AdminChatterHoursExportController extends Controller
                 'role' => trim(($shift['work_role'] ?? 'Chatter').(filled($shift['platform'] ?? null) ? ' - '.$shift['platform'] : '').(filled($shift['model_name'] ?? null) ? ' - '.$shift['model_name'] : '')),
                 'worked_minutes' => (int) ($shift['paid_minutes'] ?? 0),
             ]))
+            ->filter(fn (array $shift): bool => $shift['worked_minutes'] > 0)
             ->sortBy('clock_in')
             ->values();
         if ($attendance->count() > 10000) {
@@ -252,6 +253,12 @@ class AdminChatterHoursExportController extends Controller
 
         $query = ChatterTimesheet::query()
             ->with(['user', 'reviewer', 'adjustments.creator'])
+            ->where(function (Builder $query) {
+                $query->where('ordinary_minutes', '>', 0)
+                    ->orWhere('gross_pay_pence', '!=', 0)
+                    ->orWhere('adjustment_pence', '!=', 0)
+                    ->orWhereHas('adjustments', fn (Builder $adjustments) => $adjustments->where('amount_pence', '!=', 0));
+            })
             ->when(isset($validated['search']) && trim($validated['search']) !== '', fn (Builder $q) => $q->whereHas('user', fn (Builder $userQuery) => $userQuery
                 ->where('name', 'like', '%'.trim($validated['search']).'%')
                 ->orWhere('email', 'like', '%'.trim($validated['search']).'%')))
