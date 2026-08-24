@@ -101,22 +101,15 @@ class AdminChatterHoursController extends Controller
             ->get(['id', 'name', 'email']);
         $workRoles = ChatterWorkRole::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
         $openShifts = ChatterShift::query()->whereNull('clocked_out_at')->with(['user', 'breaks', 'workRole', 'model:id,name,email'])->get();
+        $attendanceWindow = $this->attendanceWindow($filters);
         $attendanceShiftResults = $this->attendanceQuery($filters)
             ->with(['user', 'breaks', 'workRole', 'model:id,name,email'])
             ->latest('clocked_in_at')
             ->get()
-            ->map(function (ChatterShift $shift) use ($payroll) {
-                $totals = $payroll->shiftWorkedTotals(
-                    $shift,
-                    $shift->clocked_in_at,
-                    $shift->clocked_out_at ?: now('UTC'),
-                );
-                $shift->setAttribute('worked_minutes', $totals['worked_minutes']);
-                $shift->setAttribute('break_minutes', $totals['break_minutes']);
-
-                return $shift;
-            })
+            ->map(fn (ChatterShift $shift) => $payroll->annotateShiftSegment($shift, $attendanceWindow['start'], $attendanceWindow['end']))
+            ->filter()
             ->filter(fn (ChatterShift $shift): bool => (int) $shift->getAttribute('worked_minutes') > 0)
+            ->sortByDesc(fn (ChatterShift $shift) => $shift->getAttribute('segment_clocked_in_at')?->getTimestamp() ?? 0)
             ->values();
         $attendancePage = LengthAwarePaginator::resolveCurrentPage('attendance_page');
         $attendanceShifts = new LengthAwarePaginator(
@@ -510,18 +503,21 @@ class AdminChatterHoursController extends Controller
         ]));
     }
 
-    public function showTimesheet(ChatterTimesheet $timesheet, ChatterCurrency $currency): View
+    public function showTimesheet(ChatterTimesheet $timesheet, ChatterCurrency $currency, ChatterPayrollService $payroll): View
     {
         $timesheet->load(['user.chatterProfile', 'reviewer', 'adjustments.creator', 'audits.actor']);
-        $startUtc = CarbonImmutable::parse($timesheet->period_start->toDateString(), ChatterPayrollService::REPORTING_TIMEZONE)->utc();
-        $endUtc = CarbonImmutable::parse($timesheet->period_end->toDateString(), ChatterPayrollService::REPORTING_TIMEZONE)->addDay()->utc();
+        $window = $payroll->reportingWindowFor($timesheet->period_start, $timesheet->period_end);
         $shifts = ChatterShift::query()
             ->where('user_id', $timesheet->user_id)
-            ->where('clocked_in_at', '<', $endUtc)
-            ->where(fn ($query) => $query->whereNull('clocked_out_at')->orWhere('clocked_out_at', '>', $startUtc))
+            ->where('clocked_in_at', '<', $window['end'])
+            ->where(fn ($query) => $query->whereNull('clocked_out_at')->orWhere('clocked_out_at', '>', $window['start']))
             ->with(['breaks', 'audits.actor', 'workRole', 'model:id,name,email'])
             ->orderBy('clocked_in_at')
-            ->get();
+            ->get()
+            ->map(fn (ChatterShift $shift) => $payroll->annotateShiftSegment($shift, $window['start'], $window['end']))
+            ->filter()
+            ->filter(fn (ChatterShift $shift): bool => (int) $shift->getAttribute('worked_minutes') > 0)
+            ->values();
 
         $usdToPhpRate = $currency->rateForTimesheet($timesheet);
         $grossPayPhpCentavos = $currency->phpCentavosForTimesheet($timesheet);
@@ -686,17 +682,6 @@ class AdminChatterHoursController extends Controller
                     ChatterTimesheet::STATUS_CHANGES_REQUESTED,
                 ], true), 422, 'This timesheet cannot be approved in its current state.');
                 abort_unless($lockedTimesheet->periodHasEnded(), 422, 'This payroll week is not complete yet.');
-
-                $periodEndUtc = CarbonImmutable::parse(
-                    $lockedTimesheet->period_end->toDateString().' 23:59:59',
-                    ChatterPayrollService::REPORTING_TIMEZONE,
-                )->addSecond()->utc();
-                $hasOpenShift = ChatterShift::query()
-                    ->where('user_id', $lockedTimesheet->user_id)
-                    ->whereNull('clocked_out_at')
-                    ->where('clocked_in_at', '<', $periodEndUtc)
-                    ->exists();
-                abort_if($hasOpenShift, 422, 'Clock out before approving this timesheet.');
 
                 $missingModelReviews = $this->missingWeeklyModelReviewCount($lockedTimesheet);
                 if ($missingModelReviews > 0) {
@@ -997,6 +982,15 @@ class AdminChatterHoursController extends Controller
                 $end = CarbonImmutable::parse($to, ChatterPayrollService::REPORTING_TIMEZONE)->addDay()->startOfDay()->utc();
                 $query->where('clocked_in_at', '<', $end);
             });
+    }
+
+    /** @return array{start: CarbonImmutable, end: CarbonImmutable} */
+    private function attendanceWindow(array $filters): array
+    {
+        return [
+            'start' => CarbonImmutable::parse($filters['from'], ChatterPayrollService::REPORTING_TIMEZONE)->startOfDay()->utc(),
+            'end' => CarbonImmutable::parse($filters['to'], ChatterPayrollService::REPORTING_TIMEZONE)->addDay()->startOfDay()->utc(),
+        ];
     }
 
     private function assertChatter(User $user): void

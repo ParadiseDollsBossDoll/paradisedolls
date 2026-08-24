@@ -40,13 +40,16 @@
                             @php
                                 $shiftStart = $shift->clocked_in_at->timezone('Europe/London');
                                 $shiftEnd = $shift->clocked_out_at?->timezone('Europe/London');
-                                $breakMinutes = $shift->breaks->sum(fn ($break) => $break->ended_at ? $break->started_at->diffInMinutes($break->ended_at) : 0);
+                                $segmentStart = ($shift->getAttribute('segment_clocked_in_at') ?? $shift->clocked_in_at)->timezone('Europe/London');
+                                $segmentEnd = $shift->getAttribute('segment_clocked_out_at')?->timezone('Europe/London');
+                                $segmentIsOpen = (bool) $shift->getAttribute('segment_is_open');
+                                $workedMinutes = (int) $shift->getAttribute('worked_minutes');
                             @endphp
                             <details class="group p-5" @if (!$editable) open @endif>
                                 <summary class="flex cursor-pointer list-none flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
                                         <div class="flex flex-wrap items-center gap-2">
-                                            <p class="font-semibold">{{ $shiftStart->format('D d M Y') }}</p>
+                                            <p class="font-semibold">{{ $segmentStart->format('D d M Y') }}</p>
                                             <span class="rounded-full bg-boss-gold/10 px-2 py-0.5 text-[0.65rem] text-boss-gold">
                                                 {{ $shift->workRole?->name ?? __('Chatter') }} - ${{ number_format(($shift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr
                                             </span>
@@ -62,10 +65,10 @@
                                             @endif
                                         </div>
                                         <p class="mt-1 text-xs text-boss-ivory/40">
-                                            {{ $shiftStart->format('g:i A') }} - {{ $shiftEnd?->format('g:i A') ?? __('Open') }} UK Time
+                                            {{ $segmentStart->format('g:i A') }} - {{ ($segmentEnd && ! $segmentIsOpen) ? $segmentEnd->format('g:i A') : __('Open') }} UK Time
                                         </p>
                                     </div>
-                                    <span class="text-xs text-boss-gold">{{ $shiftEnd ? number_format(max(0, $shiftStart->diffInMinutes($shiftEnd) - $breakMinutes) / 60, 2).'h' : __('Needs attention') }}</span>
+                                    <span class="text-xs text-boss-gold">{{ $segmentIsOpen ? __('Needs attention') : number_format($workedMinutes / 60, 2).'h' }}</span>
                                 </summary>
 
                                 @if ($editable && $shiftEnd)

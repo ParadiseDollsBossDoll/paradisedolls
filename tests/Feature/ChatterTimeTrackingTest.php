@@ -1146,13 +1146,21 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertSame(1200, $sheet->gross_pay_pence);
     }
 
-    public function test_overnight_shift_is_split_across_uk_payroll_weeks(): void
+    public function test_sunday_to_monday_shift_is_split_across_uk_payroll_weeks(): void
     {
+        $admin = User::factory()->create(['role' => 'admin']);
         $chatter = $this->chatter();
+        $role = ChatterWorkRole::query()->where('slug', 'admin-task')->firstOrFail();
+        $model = User::factory()->create(['role' => 'model', 'name' => 'Split Model']);
+        $model->modelProfile()->create(['verification_status' => 'verified']);
         $shift = ChatterShift::create([
             'user_id' => $chatter->id,
-            'clocked_in_at' => '2026-01-18 23:30:00',
-            'clocked_out_at' => '2026-01-19 01:30:00',
+            'chatter_work_role_id' => $role->id,
+            'hourly_rate_pence' => 300,
+            'platform' => 'Stripchat',
+            'model_id' => $model->id,
+            'clocked_in_at' => CarbonImmutable::parse('2026-07-19 22:00:00', 'Europe/London')->utc(),
+            'clocked_out_at' => CarbonImmutable::parse('2026-07-20 01:00:00', 'Europe/London')->utc(),
             'timezone' => 'Europe/London',
         ])->load('user');
 
@@ -1162,8 +1170,94 @@ class ChatterTimeTrackingTest extends TestCase
         $sheets = ChatterTimesheet::query()->where('user_id', $chatter->id)->get()->keyBy(
             fn (ChatterTimesheet $sheet) => $sheet->period_start->toDateString()
         );
-        $this->assertSame(30, $sheets->get('2026-01-12')?->ordinary_minutes);
-        $this->assertSame(90, $sheets->get('2026-01-19')?->ordinary_minutes);
+        $previousWeek = $sheets->get('2026-07-13');
+        $nextWeek = $sheets->get('2026-07-20');
+
+        $this->assertSame(120, $previousWeek?->ordinary_minutes);
+        $this->assertSame(600, $previousWeek?->gross_pay_pence);
+        $this->assertSame(60, $nextWeek?->ordinary_minutes);
+        $this->assertSame(300, $nextWeek?->gross_pay_pence);
+
+        $this->assertSame('Admin Task', data_get($previousWeek->calculation_snapshot, 'shifts.0.work_role'));
+        $this->assertSame('Stripchat', data_get($previousWeek->calculation_snapshot, 'shifts.0.platform'));
+        $this->assertSame($model->id, data_get($previousWeek->calculation_snapshot, 'shifts.0.model_id'));
+        $this->assertSame('Split Model', data_get($previousWeek->calculation_snapshot, 'shifts.0.model_name'));
+        $this->assertSame(300, data_get($previousWeek->calculation_snapshot, 'shifts.0.hourly_rate_pence'));
+        $this->assertSame('2026-07-19 22:00', CarbonImmutable::parse(data_get($previousWeek->calculation_snapshot, 'shifts.0.started_at'))->timezone('Europe/London')->format('Y-m-d H:i'));
+        $this->assertSame('2026-07-19 23:59', CarbonImmutable::parse(data_get($previousWeek->calculation_snapshot, 'shifts.0.ended_at'))->timezone('Europe/London')->format('Y-m-d H:i'));
+        $this->assertSame('2026-07-20 00:00', CarbonImmutable::parse(data_get($nextWeek->calculation_snapshot, 'shifts.0.started_at'))->timezone('Europe/London')->format('Y-m-d H:i'));
+        $this->assertSame('2026-07-20 01:00', CarbonImmutable::parse(data_get($nextWeek->calculation_snapshot, 'shifts.0.ended_at'))->timezone('Europe/London')->format('Y-m-d H:i'));
+
+        $previousAttendance = $this->actingAs($admin)->get(route('admin.chatter-hours.attendance', [
+            'from' => '2026-07-13',
+            'to' => '2026-07-19',
+        ]));
+        $previousAttendance->assertOk();
+        $previousSegment = $previousAttendance->viewData('attendanceShifts')->getCollection()->firstWhere('id', $shift->id);
+        $this->assertNotNull($previousSegment);
+        $this->assertSame(120, (int) $previousSegment->getAttribute('worked_minutes'));
+        $this->assertSame('2026-07-19 22:00', $previousSegment->getAttribute('segment_clocked_in_at')->timezone('Europe/London')->format('Y-m-d H:i'));
+        $this->assertSame('2026-07-19 23:59', $previousSegment->getAttribute('segment_clocked_out_at')->timezone('Europe/London')->format('Y-m-d H:i'));
+
+        $nextAttendance = $this->actingAs($admin)->get(route('admin.chatter-hours.attendance', [
+            'from' => '2026-07-20',
+            'to' => '2026-07-26',
+        ]));
+        $nextAttendance->assertOk();
+        $nextSegment = $nextAttendance->viewData('attendanceShifts')->getCollection()->firstWhere('id', $shift->id);
+        $this->assertNotNull($nextSegment);
+        $this->assertSame(60, (int) $nextSegment->getAttribute('worked_minutes'));
+        $this->assertSame('2026-07-20 00:00', $nextSegment->getAttribute('segment_clocked_in_at')->timezone('Europe/London')->format('Y-m-d H:i'));
+        $this->assertSame('2026-07-20 01:00', $nextSegment->getAttribute('segment_clocked_out_at')->timezone('Europe/London')->format('Y-m-d H:i'));
+
+        $previousExport = $this->actingAs($admin)->get(route('admin.chatter-hours.export.xlsx', [
+            'from' => '2026-07-13',
+            'to' => '2026-07-19',
+        ]));
+        $previousExport->assertOk();
+        $previousSheetXml = $this->sheetXmlFromStreamedResponse($previousExport);
+        $this->assertStringContainsString('Sunday, July 19, 2026 at', $previousSheetXml);
+        $this->assertStringContainsString('10:00 PM', $previousSheetXml);
+        $this->assertStringContainsString('11:59 PM', $previousSheetXml);
+        $this->assertStringContainsString('Admin Task - Stripchat - Split Model', $previousSheetXml);
+
+        $nextExport = $this->actingAs($admin)->get(route('admin.chatter-hours.export.xlsx', [
+            'from' => '2026-07-20',
+            'to' => '2026-07-26',
+        ]));
+        $nextExport->assertOk();
+        $nextSheetXml = $this->sheetXmlFromStreamedResponse($nextExport);
+        $this->assertStringContainsString('Monday, July 20, 2026 at', $nextSheetXml);
+        $this->assertStringContainsString('12:00 AM', $nextSheetXml);
+        $this->assertStringContainsString('1:00 AM', $nextSheetXml);
+    }
+
+    public function test_break_crossing_uk_payroll_cutoff_is_split_out_of_each_week(): void
+    {
+        $chatter = $this->chatter();
+        $shift = ChatterShift::create([
+            'user_id' => $chatter->id,
+            'clocked_in_at' => CarbonImmutable::parse('2026-07-19 22:00:00', 'Europe/London')->utc(),
+            'clocked_out_at' => CarbonImmutable::parse('2026-07-20 01:00:00', 'Europe/London')->utc(),
+            'timezone' => 'Europe/London',
+        ])->load('user');
+        ChatterBreak::create([
+            'chatter_shift_id' => $shift->id,
+            'started_at' => CarbonImmutable::parse('2026-07-19 23:50:00', 'Europe/London')->utc(),
+            'ended_at' => CarbonImmutable::parse('2026-07-20 00:10:00', 'Europe/London')->utc(),
+        ]);
+
+        $payroll = app(ChatterPayrollService::class);
+        $payroll->refreshPeriodsTouchedBy($shift);
+
+        $sheets = ChatterTimesheet::query()->where('user_id', $chatter->id)->get()->keyBy(
+            fn (ChatterTimesheet $sheet) => $sheet->period_start->toDateString()
+        );
+
+        $this->assertSame(110, $sheets->get('2026-07-13')?->ordinary_minutes);
+        $this->assertSame(10, $sheets->get('2026-07-13')?->break_minutes);
+        $this->assertSame(50, $sheets->get('2026-07-20')?->ordinary_minutes);
+        $this->assertSame(10, $sheets->get('2026-07-20')?->break_minutes);
     }
 
     public function test_uk_daylight_saving_transition_uses_real_elapsed_minutes(): void
@@ -1252,23 +1346,25 @@ class ChatterTimeTrackingTest extends TestCase
         Mail::assertQueued(ChatterWorkflowMail::class, 1);
     }
 
-    public function test_admin_cannot_approve_completed_payroll_while_a_shift_is_open(): void
+    public function test_admin_can_approve_completed_payroll_segment_while_boundary_crossing_shift_stays_open(): void
     {
-        CarbonImmutable::setTestNow('2026-07-20 12:00:00 Europe/London');
+        CarbonImmutable::setTestNow('2026-07-20 00:30:00 Europe/London');
         $admin = User::factory()->create(['role' => 'admin']);
         $chatter = $this->chatter();
         $sheet = app(ChatterPayrollService::class)->getOrCreate($chatter, CarbonImmutable::parse('2026-07-13', 'Europe/London'));
         ChatterShift::create([
             'user_id' => $chatter->id,
             'active_user_id' => $chatter->id,
-            'clocked_in_at' => '2026-07-19 22:00:00',
+            'clocked_in_at' => CarbonImmutable::parse('2026-07-19 22:00:00', 'Europe/London')->utc(),
             'timezone' => 'Europe/London',
         ]);
 
         $this->actingAs($admin)->post(route('admin.chatter-hours.timesheets.review', $sheet), ['decision' => 'approve'])
-            ->assertStatus(422);
+            ->assertSessionHasNoErrors();
 
-        $this->assertSame(ChatterTimesheet::STATUS_DRAFT, $sheet->fresh()->status);
+        $this->assertSame(ChatterTimesheet::STATUS_APPROVED, $sheet->fresh()->status);
+        $this->assertSame(120, $sheet->fresh()->ordinary_minutes);
+        $this->assertNull(ChatterShift::firstOrFail()->clocked_out_at);
     }
 
     public function test_admin_cannot_correct_a_shift_that_touches_another_approved_week(): void
@@ -1412,6 +1508,23 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertStringContainsString('Working Payroll Export', $sheetXml);
         $this->assertStringNotContainsString('Hidden Zero Platform', $sheetXml);
         $this->assertStringContainsString('Visible Work Platform', $sheetXml);
+    }
+
+    private function sheetXmlFromStreamedResponse($response): string
+    {
+        $path = tempnam(sys_get_temp_dir(), 'payroll-xlsx-test-');
+        $this->assertNotFalse($path);
+        file_put_contents($path, $response->streamedContent());
+
+        $archive = new ZipArchive;
+        $this->assertTrue($archive->open($path) === true);
+        $sheetXml = $archive->getFromName('xl/worksheets/sheet1.xml');
+        $archive->close();
+        @unlink($path);
+
+        $this->assertIsString($sheetXml);
+
+        return $sheetXml;
     }
 
     private function chatter(array $rateOverrides = []): User

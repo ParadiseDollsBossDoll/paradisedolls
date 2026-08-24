@@ -160,10 +160,13 @@
                             @php
                                 $activeBreak = $shift->breaks->firstWhere('ended_at', null);
                                 $overdue = !$shift->clocked_out_at && $shift->clocked_in_at->lt(now()->subHours(16));
+                                $segmentStart = $shift->getAttribute('segment_clocked_in_at') ?? $shift->clocked_in_at;
+                                $segmentEnd = $shift->getAttribute('segment_clocked_out_at') ?? $shift->clocked_out_at;
+                                $segmentIsOpen = (bool) $shift->getAttribute('segment_is_open');
                             @endphp
                             <tr class="hover:bg-white/[0.02]">
-                                <td class="whitespace-nowrap px-5 py-4"><p class="font-medium">{{ $shift->clocked_in_at->timezone('Europe/London')->format('D, d M Y') }}</p><p class="mt-0.5 text-xs text-boss-ivory/40">{{ $shift->clocked_in_at->timezone('Europe/London')->format('g:i A') }} UK Time</p></td>
-                                <td class="whitespace-nowrap px-4 py-4">@if($shift->clocked_out_at)<p>{{ $shift->clocked_out_at->timezone('Europe/London')->format('D, d M Y') }}</p><p class="mt-0.5 text-xs text-boss-ivory/40">{{ $shift->clocked_out_at->timezone('Europe/London')->format('g:i A') }} UK Time</p>@else<span class="text-emerald-200">{{ __('Still working') }}</span>@endif</td>
+                                <td class="whitespace-nowrap px-5 py-4"><p class="font-medium">{{ $segmentStart->timezone('Europe/London')->format('D, d M Y') }}</p><p class="mt-0.5 text-xs text-boss-ivory/40">{{ $segmentStart->timezone('Europe/London')->format('g:i A') }} UK Time</p></td>
+                                <td class="whitespace-nowrap px-4 py-4">@if($segmentEnd && ! $segmentIsOpen)<p>{{ $segmentEnd->timezone('Europe/London')->format('D, d M Y') }}</p><p class="mt-0.5 text-xs text-boss-ivory/40">{{ $segmentEnd->timezone('Europe/London')->format('g:i A') }} UK Time</p>@else<span class="text-emerald-200">{{ __('Still working') }}</span>@endif</td>
                                 <td class="px-4 py-4"><p class="font-medium">{{ $shift->user->name }}</p><p class="mt-0.5 text-xs text-boss-ivory/35">{{ $shift->user->email }}</p></td>
                                 <td class="px-4 py-4">
                                     <span class="rounded-full bg-boss-gold/10 px-2.5 py-1 text-xs text-boss-gold">{{ $shift->workRole?->name ?? __('Chatter') }}</span>

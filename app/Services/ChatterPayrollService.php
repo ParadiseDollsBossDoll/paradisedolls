@@ -128,6 +128,67 @@ class ChatterPayrollService
         }
     }
 
+    /** @return array{start: CarbonImmutable, end: CarbonImmutable} */
+    public function reportingWindowFor(CarbonInterface $periodStart, CarbonInterface $periodEnd): array
+    {
+        $startLocal = CarbonImmutable::parse($periodStart->toDateString().' 00:00:00', self::REPORTING_TIMEZONE);
+        $endExclusiveLocal = CarbonImmutable::parse($periodEnd->toDateString().' 00:00:00', self::REPORTING_TIMEZONE)->addDay();
+
+        return ['start' => $startLocal->utc()->startOfMinute(), 'end' => $endExclusiveLocal->utc()->startOfMinute()];
+    }
+
+    /** @return array{started_at: CarbonImmutable, ended_at: ?CarbonImmutable, ended_at_exclusive: CarbonImmutable, worked_minutes: int, paid_minutes: int, break_minutes: int, is_open: bool}|null */
+    public function shiftSegmentForWindow(ChatterShift $shift, CarbonInterface $start, CarbonInterface $end): ?array
+    {
+        $startUtc = CarbonImmutable::instance($start)->utc()->startOfMinute();
+        $endUtc = CarbonImmutable::instance($end)->utc()->startOfMinute();
+        $nowUtc = CarbonImmutable::now('UTC')->startOfMinute();
+        $shiftStart = CarbonImmutable::instance($shift->clocked_in_at)->utc()->startOfMinute()->max($startUtc);
+        $rawEnd = $shift->clocked_out_at
+            ? CarbonImmutable::instance($shift->clocked_out_at)->utc()->startOfMinute()
+            : $nowUtc;
+        $shiftEnd = $rawEnd->min($endUtc);
+
+        if ($shiftEnd->lessThanOrEqualTo($shiftStart)) {
+            return null;
+        }
+
+        $shift->loadMissing('breaks');
+        $breakMinutes = $this->breakMinutesWithin($shift->breaks, $shiftStart, $shiftEnd);
+        $elapsedMinutes = (int) $shiftStart->diffInMinutes($shiftEnd);
+        $paidMinutes = max(0, $elapsedMinutes - $breakMinutes);
+        $isOpen = $shift->clocked_out_at === null && $rawEnd->lessThan($endUtc);
+
+        return [
+            'started_at' => $shiftStart,
+            'ended_at' => $isOpen ? null : $this->displaySegmentEnd($shiftEnd, $rawEnd),
+            'ended_at_exclusive' => $shiftEnd,
+            'worked_minutes' => $paidMinutes,
+            'paid_minutes' => $paidMinutes,
+            'break_minutes' => $breakMinutes,
+            'is_open' => $isOpen,
+        ];
+    }
+
+    public function annotateShiftSegment(ChatterShift $shift, CarbonInterface $start, CarbonInterface $end): ?ChatterShift
+    {
+        $segment = $this->shiftSegmentForWindow($shift, $start, $end);
+
+        if ($segment === null) {
+            return null;
+        }
+
+        $shift->setAttribute('segment_clocked_in_at', $segment['started_at']);
+        $shift->setAttribute('segment_clocked_out_at', $segment['ended_at']);
+        $shift->setAttribute('segment_clocked_out_at_exclusive', $segment['ended_at_exclusive']);
+        $shift->setAttribute('segment_is_open', $segment['is_open']);
+        $shift->setAttribute('worked_minutes', $segment['worked_minutes']);
+        $shift->setAttribute('paid_minutes', $segment['paid_minutes']);
+        $shift->setAttribute('break_minutes', $segment['break_minutes']);
+
+        return $shift;
+    }
+
     /** @return array{worked_minutes: int, paid_minutes: int, break_minutes: int} */
     public function workedTotals(User $user, CarbonInterface $start, CarbonInterface $end): array
     {
@@ -171,28 +232,16 @@ class ChatterPayrollService
     /** @return array{worked_minutes: int, paid_minutes: int, break_minutes: int} */
     public function shiftWorkedTotals(ChatterShift $shift, CarbonInterface $start, CarbonInterface $end): array
     {
-        $startUtc = CarbonImmutable::instance($start)->utc()->startOfMinute();
-        $endUtc = CarbonImmutable::instance($end)->utc()->startOfMinute();
-        $nowUtc = CarbonImmutable::now('UTC')->startOfMinute();
-        $shiftStart = CarbonImmutable::instance($shift->clocked_in_at)->utc()->startOfMinute()->max($startUtc);
-        $rawEnd = $shift->clocked_out_at
-            ? CarbonImmutable::instance($shift->clocked_out_at)->utc()->startOfMinute()
-            : $nowUtc;
-        $shiftEnd = $rawEnd->min($endUtc);
+        $segment = $this->shiftSegmentForWindow($shift, $start, $end);
 
-        if ($shiftEnd->lessThanOrEqualTo($shiftStart)) {
+        if ($segment === null) {
             return ['worked_minutes' => 0, 'paid_minutes' => 0, 'break_minutes' => 0];
         }
 
-        $shift->loadMissing('breaks');
-        $breakMinutes = $this->breakMinutesWithin($shift->breaks, $shiftStart, $shiftEnd);
-        $elapsedMinutes = (int) $shiftStart->diffInMinutes($shiftEnd);
-        $paidMinutes = max(0, $elapsedMinutes - $breakMinutes);
-
         return [
-            'worked_minutes' => $paidMinutes,
-            'paid_minutes' => $paidMinutes,
-            'break_minutes' => $breakMinutes,
+            'worked_minutes' => $segment['worked_minutes'],
+            'paid_minutes' => $segment['paid_minutes'],
+            'break_minutes' => $segment['break_minutes'],
         ];
     }
 
@@ -245,10 +294,9 @@ class ChatterPayrollService
         CarbonInterface $periodEnd,
         ?ChatterTimesheet $timesheet = null,
     ): array {
-        $startLocal = CarbonImmutable::parse($periodStart->toDateString().' 00:00:00', self::REPORTING_TIMEZONE);
-        $endExclusiveLocal = CarbonImmutable::parse($periodEnd->toDateString().' 00:00:00', self::REPORTING_TIMEZONE)->addDay();
-        $startUtc = $startLocal->utc();
-        $endExclusiveUtc = $endExclusiveLocal->utc();
+        $window = $this->reportingWindowFor($periodStart, $periodEnd);
+        $startUtc = $window['start'];
+        $endExclusiveUtc = $window['end'];
         $nowUtc = CarbonImmutable::now('UTC')->startOfMinute();
 
         $shifts = ChatterShift::query()
@@ -296,7 +344,8 @@ class ChatterPayrollService
                 'model_email' => $shift->model?->email,
                 'hourly_rate_pence' => $shift->hourly_rate_pence,
                 'started_at' => $shiftStart->toIso8601String(),
-                'ended_at' => $shiftEnd->toIso8601String(),
+                'ended_at' => $this->displaySegmentEnd($shiftEnd, $rawEnd)->toIso8601String(),
+                'ended_at_exclusive' => $shiftEnd->toIso8601String(),
                 'paid_minutes' => 0,
                 'break_minutes' => 0,
                 'pay_pence' => 0,
@@ -418,6 +467,15 @@ class ChatterPayrollService
             fn (array $interval): int => (int) $interval[0]->diffInMinutes($interval[1]),
             $merged,
         ));
+    }
+
+    private function displaySegmentEnd(CarbonImmutable $segmentEnd, CarbonImmutable $rawEnd): CarbonImmutable
+    {
+        if ($rawEnd->greaterThan($segmentEnd)) {
+            return $segmentEnd->subMinute();
+        }
+
+        return $segmentEnd;
     }
 
     private function rateForDate(Collection $rates, CarbonImmutable $local): ?ChatterPayRate
