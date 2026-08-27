@@ -882,6 +882,9 @@ class ChatterTimeTrackingTest extends TestCase
             ->assertOk()
             ->assertSee('Chatter accounts')
             ->assertSee('Weekly attendance')
+            ->assertSee('Working now')
+            ->assertSee('No chatters currently working.')
+            ->assertSee('Account active')
             ->assertSee('Copy application link')
             ->assertSee(route('chatter.apply'))
             ->assertDontSee('Attendance log')
@@ -903,6 +906,55 @@ class ChatterTimeTrackingTest extends TestCase
             ->assertSee('PH final pay')
             ->assertSee('Notes')
             ->assertSee('Status');
+    }
+
+    public function test_admin_chatter_accounts_show_working_now_list_separate_from_account_status(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $workingChatter = $this->chatter();
+        $workingChatter->forceFill(['name' => 'Working Chatter', 'email' => 'working@example.com'])->save();
+        $closedChatter = $this->chatter();
+        $closedChatter->forceFill(['name' => 'Closed Chatter', 'email' => 'closed@example.com'])->save();
+        $suspendedChatter = $this->chatter();
+        $suspendedChatter->forceFill(['name' => 'Suspended Chatter', 'email' => 'suspended@example.com'])->save();
+        $suspendedChatter->chatterProfile->update(['employment_status' => ChatterProfile::STATUS_SUSPENDED]);
+        $role = ChatterWorkRole::query()->where('slug', 'admin-task')->firstOrFail();
+        $model = User::factory()->create(['role' => 'model', 'name' => 'Assigned Live Model']);
+        $model->modelProfile()->create(['verification_status' => 'verified']);
+
+        ChatterShift::create([
+            'user_id' => $workingChatter->id,
+            'active_user_id' => $workingChatter->id,
+            'chatter_work_role_id' => $role->id,
+            'hourly_rate_pence' => 300,
+            'clocked_in_at' => CarbonImmutable::parse('2026-07-13 09:15:00', 'Europe/London')->utc(),
+            'timezone' => 'Europe/London',
+            'platform' => 'Stripchat',
+            'model_id' => $model->id,
+        ]);
+        ChatterShift::create([
+            'user_id' => $closedChatter->id,
+            'chatter_work_role_id' => $role->id,
+            'hourly_rate_pence' => 300,
+            'clocked_in_at' => CarbonImmutable::parse('2026-07-13 08:00:00', 'Europe/London')->utc(),
+            'clocked_out_at' => CarbonImmutable::parse('2026-07-13 09:00:00', 'Europe/London')->utc(),
+            'timezone' => 'Europe/London',
+            'platform' => 'Hidden Closed Platform',
+            'model_id' => $model->id,
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.chatter-hours.index'))
+            ->assertOk()
+            ->assertSee('Working now')
+            ->assertSee('Working Chatter')
+            ->assertSee('Stripchat')
+            ->assertSee('Assigned Live Model')
+            ->assertSee('Mon, 13 Jul 9:15 AM')
+            ->assertSee('Admin Task')
+            ->assertSee('$3.00 USD/hr')
+            ->assertSee('Account active')
+            ->assertSee('Account suspended')
+            ->assertDontSee('Hidden Closed Platform');
     }
 
     public function test_admin_attendance_and_payroll_tables_hide_zero_work_but_keep_payable_records(): void

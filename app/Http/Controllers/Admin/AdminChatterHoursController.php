@@ -77,7 +77,11 @@ class AdminChatterHoursController extends Controller
             ->whereHas('modelProfile')
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
-        $openShifts = ChatterShift::query()->whereNull('clocked_out_at')->with(['user', 'breaks', 'workRole', 'model:id,name,email'])->get();
+        $openShifts = ChatterShift::query()
+            ->whereNull('clocked_out_at')
+            ->with(['user', 'breaks', 'workRole', 'model:id,name,email'])
+            ->latest('clocked_in_at')
+            ->get();
         $stats = [
             'chatters' => User::query()->where('role', 'chatter')->count(),
             'working' => $openShifts->count(),

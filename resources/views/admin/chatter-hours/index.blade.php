@@ -151,7 +151,7 @@
                 <p class="text-xs text-boss-ivory/35">{{ $attendanceShifts->total() }} {{ __('shifts') }} · {{ __('Times shown in UK time') }}</p>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[980px] text-left text-sm">
+                <table class="w-full min-w-[980px] text-left text-sm tabular-nums">
                     <thead class="border-b border-white/[0.06] text-[0.6rem] uppercase tracking-[0.13em] text-boss-ivory/35">
                         <tr><th class="px-5 py-3">{{ __('Date / time in') }}</th><th class="px-4 py-3">{{ __('Date / time out') }}</th><th class="px-4 py-3">{{ __('Employee') }}</th><th class="px-4 py-3">{{ __('Work role / site / model') }}</th><th class="px-4 py-3">{{ __('Hours worked') }}</th><th class="px-5 py-3">{{ __('Status') }}</th></tr>
                     </thead>
@@ -164,18 +164,18 @@
                                 $segmentEnd = $shift->getAttribute('segment_clocked_out_at') ?? $shift->clocked_out_at;
                                 $segmentIsOpen = (bool) $shift->getAttribute('segment_is_open');
                             @endphp
-                            <tr class="hover:bg-white/[0.02]">
+                            <tr class="align-top transition hover:bg-white/[0.02]">
                                 <td class="whitespace-nowrap px-5 py-4"><p class="font-medium">{{ $segmentStart->timezone('Europe/London')->format('D, d M Y') }}</p><p class="mt-0.5 text-xs text-boss-ivory/40">{{ $segmentStart->timezone('Europe/London')->format('g:i A') }} UK Time</p></td>
                                 <td class="whitespace-nowrap px-4 py-4">@if($segmentEnd && ! $segmentIsOpen)<p>{{ $segmentEnd->timezone('Europe/London')->format('D, d M Y') }}</p><p class="mt-0.5 text-xs text-boss-ivory/40">{{ $segmentEnd->timezone('Europe/London')->format('g:i A') }} UK Time</p>@else<span class="text-emerald-200">{{ __('Still working') }}</span>@endif</td>
-                                <td class="px-4 py-4"><p class="font-medium">{{ $shift->user->name }}</p><p class="mt-0.5 text-xs text-boss-ivory/35">{{ $shift->user->email }}</p></td>
-                                <td class="px-4 py-4">
-                                    <span class="rounded-full bg-boss-gold/10 px-2.5 py-1 text-xs text-boss-gold">{{ $shift->workRole?->name ?? __('Chatter') }}</span>
+                                <td class="px-4 py-4"><p class="max-w-[13rem] truncate font-medium" title="{{ $shift->user->name }}">{{ $shift->user->name }}</p><p class="mt-0.5 max-w-[13rem] truncate text-xs text-boss-ivory/35" title="{{ $shift->user->email }}">{{ $shift->user->email }}</p></td>
+                                <td class="min-w-[16rem] px-4 py-4">
+                                    <span class="inline-flex max-w-[15rem] rounded-full bg-boss-gold/10 px-2.5 py-1 text-xs text-boss-gold"><span class="truncate" title="{{ $shift->workRole?->name ?? __('Chatter') }}">{{ $shift->workRole?->name ?? __('Chatter') }}</span></span>
                                     <p class="mt-2 text-xs text-boss-ivory/40">${{ number_format(($shift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr</p>
                                     @if($shift->platform)
-                                        <p class="mt-1 text-xs text-boss-ivory/35">{{ $shift->platform }}</p>
+                                        <p class="mt-1 max-w-[15rem] truncate text-xs text-boss-ivory/35" title="{{ $shift->platform }}">{{ $shift->platform }}</p>
                                     @endif
                                     @if($shift->model)
-                                        <p class="mt-1 text-xs text-boss-ivory/35">{{ __('Model: :model', ['model' => $shift->model->name]) }}</p>
+                                        <p class="mt-1 max-w-[15rem] truncate text-xs text-boss-ivory/35" title="{{ $shift->model->name }}">{{ __('Model: :model', ['model' => $shift->model->name]) }}</p>
                                     @endif
                                 </td>
                                 <td class="px-4 py-4 font-semibold text-boss-gold">{{ $formatMinutes((int) $shift->getAttribute('worked_minutes')) }}</td>
@@ -196,21 +196,21 @@
                 <p class="text-xs text-boss-ivory/35">{{ $timesheets->total() }} {{ __('payroll periods') }}</p>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[1660px] text-left text-sm">
+                <table class="w-full min-w-[1500px] text-left text-sm tabular-nums">
                     <thead class="border-b border-white/[0.06] text-[0.6rem] uppercase tracking-[0.13em] text-boss-ivory/35">
                         <tr><th class="px-5 py-3">{{ __('Chatter') }}</th><th class="px-4 py-3">{{ __('Payroll week') }}</th><th class="px-4 py-3">{{ __('Total hours') }}</th><th class="px-4 py-3">{{ __('Rate') }}</th><th class="px-4 py-3">{{ __('Basic pay') }}</th><th class="px-4 py-3">{{ __('Additional') }}</th><th class="px-4 py-3">{{ __('US final pay') }}</th><th class="px-4 py-3">{{ __('PH final pay') }}</th><th class="px-4 py-3">{{ __('Notes') }}</th><th class="px-4 py-3">{{ __('Status') }}</th><th class="px-5 py-3 text-right">{{ __('Action') }}</th></tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.05]">
                         @forelse($timesheets as $sheet)
-                            <tr>
-                                <td class="px-5 py-4"><p class="font-medium">{{ $sheet->user->name }}</p><p class="mt-0.5 text-xs text-boss-ivory/35">{{ $sheet->user->email }}</p></td>
+                            <tr class="align-top transition hover:bg-white/[0.02]">
+                                <td class="px-5 py-4"><p class="max-w-[13rem] truncate font-medium" title="{{ $sheet->user->name }}">{{ $sheet->user->name }}</p><p class="mt-0.5 max-w-[13rem] truncate text-xs text-boss-ivory/35" title="{{ $sheet->user->email }}">{{ $sheet->user->email }}</p></td>
                                 <td class="whitespace-nowrap px-4 py-4">{{ $sheet->period_start->format('d M') }} - {{ $sheet->period_end->format('d M Y') }}</td>
                                 <td class="px-4 py-4 font-semibold">{{ $formatMinutes($sheet->ordinary_minutes) }}</td>
                                 <td class="px-4 py-4">
                                     <div class="space-y-2">
                                         @forelse($sheet->getAttribute('payroll_rates') as $rate)
-                                            <div class="whitespace-nowrap">
-                                                @if($rate['role'])<p class="text-xs text-boss-ivory/45">{{ $rate['role'] }}</p>@endif
+                                            <div class="min-w-0">
+                                                @if($rate['role'])<p class="max-w-[10rem] truncate text-xs text-boss-ivory/45" title="{{ $rate['role'] }}">{{ $rate['role'] }}</p>@endif
                                                 <p class="font-medium">${{ number_format($rate['hourly_rate_pence'] / 100, 2) }} USD/hr</p>
                                             </div>
                                         @empty
@@ -246,8 +246,8 @@
                                         @endforelse
                                     </div>
                                 </td>
-                                <td class="px-4 py-4"><span class="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs">{{ $sheet->workflowStatusLabel() }}</span></td>
-                                <td class="px-5 py-4 text-right"><a class="pd-btn-secondary inline-flex rounded-lg px-3 py-2 text-xs" href="{{ route('admin.chatter-hours.timesheets.show', $sheet) }}">{{ __('Manage payroll') }}</a></td>
+                                <td class="px-4 py-4"><span class="inline-flex rounded-full border border-white/[0.08] bg-white/[0.06] px-2.5 py-1 text-xs">{{ $sheet->workflowStatusLabel() }}</span></td>
+                                <td class="px-5 py-4 text-right"><a class="pd-btn-secondary inline-flex whitespace-nowrap rounded-lg px-3 py-2 text-xs" href="{{ route('admin.chatter-hours.timesheets.show', $sheet) }}">{{ __('Manage payroll') }}</a></td>
                             </tr>
                         @empty
                             <tr><td colspan="11" class="px-5 py-12 text-center text-boss-ivory/35">{{ __('No payroll periods match these filters yet.') }}</td></tr>
@@ -264,9 +264,15 @@
         </section>
 
         @else
-        <section class="grid gap-6 xl:grid-cols-[1.35fr_1fr]">
+        <section class="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,0.75fr)]">
             <div class="overflow-hidden rounded-lg border border-white/[0.07] bg-white/[0.025]">
-                <div class="border-b border-white/[0.06] px-5 py-4"><p class="pd-kicker">{{ __('Access & pay setup') }}</p><h2 class="mt-1 font-display text-xl">{{ __('Chatter accounts') }}</h2></div>
+                <div class="flex flex-col gap-2 border-b border-white/[0.06] px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p class="pd-kicker">{{ __('Access & pay setup') }}</p>
+                        <h2 class="mt-1 font-display text-xl">{{ __('Chatter accounts') }}</h2>
+                    </div>
+                    <p class="text-xs text-boss-ivory/35">{{ __('Account status is separate from live work status.') }}</p>
+                </div>
                 <div class="divide-y divide-white/[0.05]">
                     @forelse($chatters as $chatter)
                         @php
@@ -285,21 +291,27 @@
                             $profileTimezone = $profile?->timezone ?: 'Europe/London';
                             $profileTimezoneLabel = $timezoneOptions->firstWhere('value', $profileTimezone)['label'] ?? $profileTimezone;
                         @endphp
-                        <div class="px-5 py-4" x-data="{ accountOpen: false, deleteOpen: false }">
-                            <div class="flex items-center justify-between gap-3">
+                        <div class="px-5 py-4 transition hover:bg-white/[0.02]" x-data="{ accountOpen: false, deleteOpen: false }">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <button type="button" class="min-w-0 flex-1 text-left" @click="accountOpen = true">
-                                    <p class="truncate font-medium">{{ $chatter->name }}</p>
-                                    <p class="truncate text-xs text-boss-ivory/35">{{ $chatter->email }}</p>
+                                    <p class="truncate font-medium" title="{{ $chatter->name }}">{{ $chatter->name }}</p>
+                                    <p class="mt-0.5 truncate text-xs text-boss-ivory/35" title="{{ $chatter->email }}">{{ $chatter->email }}</p>
+                                    <p class="mt-2 flex flex-wrap gap-2 text-[0.68rem] text-boss-ivory/35">
+                                        <span class="rounded-full bg-white/[0.04] px-2 py-1">{{ $assignments->count() }} {{ trans_choice('role|roles', $assignments->count()) }}</span>
+                                        <span class="rounded-full bg-white/[0.04] px-2 py-1">{{ $profileTimezone }}</span>
+                                    </p>
                                 </button>
-                                <div class="flex items-center gap-2">
-                                    <span class="rounded-full px-2.5 py-1 text-[0.6rem] {{ $profile?->isActive() ? 'bg-emerald-400/15 text-emerald-200' : 'bg-red-400/15 text-red-200' }}">{{ ucfirst($profile?->employment_status ?? 'inactive') }}</span>
+                                <div class="flex shrink-0 items-center gap-2 self-start sm:self-center">
+                                    <span class="rounded-full border px-2.5 py-1 text-[0.6rem] font-semibold {{ $profile?->isActive() ? 'border-emerald-300/20 bg-emerald-400/10 text-emerald-200' : 'border-red-300/20 bg-red-400/10 text-red-200' }}">
+                                        {{ $profile?->isActive() ? __('Account active') : __('Account suspended') }}
+                                    </span>
                                     <button type="button" class="pd-btn-secondary rounded-lg px-3 py-2 text-xs" @click="accountOpen = true">{{ __('Manage') }}</button>
                                 </div>
                             </div>
                             <div x-show="accountOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="accountOpen = false">
                                 <div class="absolute inset-0 bg-black/75 backdrop-blur-sm" @click="accountOpen = false"></div>
-                                <div class="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg border border-white/[0.08] bg-boss-panel p-6 shadow-2xl">
-                                    <div class="flex items-start justify-between gap-4">
+                                <div class="relative max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-lg border border-white/[0.08] bg-boss-panel shadow-2xl">
+                                    <div class="flex items-start justify-between gap-4 border-b border-white/[0.06] p-6">
                                         <div class="min-w-0">
                                             <p class="pd-kicker">{{ __('Chatter account') }}</p>
                                             <h2 class="mt-1 truncate font-display text-2xl">{{ $chatter->name }}</h2>
@@ -307,9 +319,9 @@
                                         </div>
                                         <button type="button" class="text-xl text-boss-ivory/45" @click="accountOpen = false" aria-label="Close">&times;</button>
                                     </div>
-                                    <div class="mt-5 space-y-5 border-t border-white/[0.05] pt-5">
-                                <div class="grid gap-4 text-sm text-boss-ivory/55 sm:grid-cols-2">
-                                    <form method="POST" action="{{ route('admin.chatter-hours.chatters.timezone', $chatter) }}" class="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">@csrf @method('PATCH')
+                                    <div class="space-y-5 p-6">
+                                <div class="grid gap-4 text-sm text-boss-ivory/55 lg:grid-cols-2">
+                                    <form method="POST" action="{{ route('admin.chatter-hours.chatters.timezone', $chatter) }}" class="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">@csrf @method('PATCH')
                                         <span class="pd-label">{{ __('Timezone') }}</span>
                                         <div class="mt-2 grid min-w-0 gap-2 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
                                             <div class="relative min-w-0" x-data="{ open: false, search: @js($profileTimezoneLabel), selected: @js($profileTimezone), selectedLabel: @js($profileTimezoneLabel), timezones: @js($timezoneOptions), get filtered() { const q = this.search.trim().toLowerCase(); return q ? this.timezones.filter((timezone) => timezone.search.toLowerCase().includes(q)).slice(0, 40) : this.timezones.slice(0, 40); }, choose(timezone) { this.selected = timezone.value; this.selectedLabel = timezone.label; this.search = timezone.label; this.open = false; }, openDropdown() { this.open = true; this.$nextTick(() => this.$refs.timezoneSearch?.focus()); } }" @keydown.escape.window="open = false" @click.outside="open = false">
@@ -323,26 +335,46 @@
                                             <button class="pd-btn-secondary h-[43px] w-full rounded-lg px-3 text-xs xl:w-auto">{{ __('Save') }}</button>
                                         </div>
                                     </form>
-                                    <p>{{ __('Current shift') }}<span class="mt-1 block text-boss-ivory">{{ $open ? ($open->workRole?->name ?? __('Chatter')).($open->platform ? ' - '.$open->platform : '').($open->model ? ' - '.$open->model->name : '').' - '.$open->clocked_in_at->timezone('Europe/London')->format('d M g:i A').' UK Time' : __('Not working') }}</span></p>
+                                    <div class="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
+                                        <p class="pd-label">{{ __('Current shift') }}</p>
+                                        <p class="mt-2 break-words text-sm text-boss-ivory">{{ $open ? ($open->workRole?->name ?? __('Chatter')).($open->platform ? ' - '.$open->platform : '').($open->model ? ' - '.$open->model->name : '').' - '.$open->clocked_in_at->timezone('Europe/London')->format('d M g:i A').' UK Time' : __('Not working') }}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="pd-label">{{ __('Assigned work roles') }}</p>
-                                    <div class="mt-3 grid gap-3 lg:grid-cols-2">
+                                <div class="rounded-lg border border-white/[0.06] bg-white/[0.015] p-4">
+                                    <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                                        <div>
+                                            <p class="pd-label">{{ __('Assigned work roles') }}</p>
+                                            <p class="mt-1 text-xs text-boss-ivory/35">{{ __('Role names and USD/hr rates stay paired for future clock-ins.') }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 grid gap-3 xl:grid-cols-2">
                                         @foreach($assignments as $assignment)
-                                            <form method="POST" action="{{ route('admin.chatter-hours.chatters.roles', $chatter) }}" class="grid grid-cols-[minmax(0,1fr)_6rem_auto] items-start gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">@csrf
+                                            <form method="POST" action="{{ route('admin.chatter-hours.chatters.roles', $chatter) }}" class="grid gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3 md:grid-cols-[minmax(0,1.5fr)_7rem_auto] md:items-start">@csrf
                                                 <input type="hidden" name="work_role_id" value="{{ $assignment->chatter_work_role_id }}"><input type="hidden" name="is_active" value="0">
                                                 <div class="min-w-0">
                                                     <label class="block min-w-0"><span class="pd-label">{{ __('Role') }}</span><input class="pd-input mt-1 w-full min-w-0" name="work_role_name" list="chatter-work-role-options" value="{{ $assignment->workRole?->name }}" required></label>
                                                     <label class="mt-2 flex items-center gap-2 text-xs text-boss-ivory/45"><input class="shrink-0" type="checkbox" name="is_active" value="1" @checked($assignment->is_active)><span>{{ __('Available at clock-in') }}</span></label>
                                                 </div>
                                                 <label class="block min-w-0"><span class="pd-label">{{ __('USD/hr') }}</span><input class="pd-input mt-1 w-full" type="number" name="hourly_rate" step="0.01" min="0" value="{{ number_format($assignment->hourly_rate_pence / 100, 2, '.', '') }}" required></label>
-                                                <button class="pd-btn-secondary mt-5 h-[43px] rounded-lg px-3 text-xs">{{ __('Save') }}</button>
+                                                <button class="pd-btn-secondary h-[43px] w-full rounded-lg px-3 text-xs md:mt-5 md:w-auto">{{ __('Save') }}</button>
                                             </form>
                                         @endforeach
                                     </div>
-                                    <form method="POST" action="{{ route('admin.chatter-hours.chatters.roles', $chatter) }}" class="mt-3 grid grid-cols-[minmax(0,1fr)_6rem_auto] items-start gap-3 rounded-lg border border-dashed border-boss-gold/20 p-3">@csrf<input type="hidden" name="is_active" value="1"><label class="block min-w-0"><span class="pd-label">{{ __('Add another role') }}</span><input class="pd-input mt-1 w-full min-w-0" name="work_role_name" list="chatter-work-role-options" placeholder="{{ __('Role name') }}" required></label><label class="block min-w-0"><span class="pd-label">{{ __('USD/hr') }}</span><input class="pd-input mt-1 w-full" type="number" name="hourly_rate" step="0.01" min="0" value="{{ number_format(($rate?->base_rate_pence ?? 0) / 100, 2, '.', '') }}" required></label><button class="pd-btn-primary mt-5 h-[43px] rounded-lg px-3 text-xs">{{ __('Assign role') }}</button></form>
+                                    <form method="POST" action="{{ route('admin.chatter-hours.chatters.roles', $chatter) }}" class="mt-3 grid gap-3 rounded-lg border border-dashed border-boss-gold/20 bg-boss-gold/[0.025] p-3 md:grid-cols-[minmax(0,1.5fr)_7rem_auto] md:items-start">
+                                        @csrf
+                                        <input type="hidden" name="is_active" value="1">
+                                        <label class="block min-w-0">
+                                            <span class="pd-label">{{ __('Add another role') }}</span>
+                                            <input class="pd-input mt-1 w-full min-w-0" name="work_role_name" list="chatter-work-role-options" placeholder="{{ __('Role name') }}" required>
+                                        </label>
+                                        <label class="block min-w-0">
+                                            <span class="pd-label">{{ __('USD/hr') }}</span>
+                                            <input class="pd-input mt-1 w-full" type="number" name="hourly_rate" step="0.01" min="0" value="{{ number_format(($rate?->base_rate_pence ?? 0) / 100, 2, '.', '') }}" required>
+                                        </label>
+                                        <button class="pd-btn-primary h-[43px] w-full rounded-lg px-3 text-xs md:mt-5 md:w-auto">{{ __('Assign role') }}</button>
+                                    </form>
                                 </div>
-                                <div class="border-t border-white/[0.06] pt-5">
+                                <div class="rounded-lg border border-white/[0.06] bg-white/[0.015] p-4">
                                     <div class="flex items-start justify-between gap-3">
                                         <div>
                                             <p class="pd-label">{{ __('Course access') }}</p>
@@ -352,28 +384,30 @@
                                     </div>
                                     <div class="mt-3 space-y-2">
                                         @forelse($assignedCourses as $enrollment)
-                                            @php($course = $enrollment->course)
+                                            @php
+                                                $course = $enrollment->course;
+                                            @endphp
                                             <div class="flex flex-col gap-3 rounded-lg border border-white/[0.06] bg-white/[0.025] p-3 sm:flex-row sm:items-center sm:justify-between">
                                                 <div class="min-w-0">
-                                                    <p class="truncate font-medium">{{ $course->title }}</p>
-                                                    <p class="mt-0.5 text-xs text-boss-ivory/35">{{ $course->platform_label ?: __('General training') }}</p>
+                                                    <p class="truncate font-medium" title="{{ $course->title }}">{{ $course->title }}</p>
+                                                    <p class="mt-0.5 truncate text-xs text-boss-ivory/35">{{ $course->platform_label ?: __('General training') }}</p>
                                                 </div>
-                                                <form method="POST" action="{{ route('admin.chatter-hours.chatters.courses.destroy', [$chatter, $course]) }}" class="shrink-0">@csrf @method('DELETE')<button class="pd-btn-secondary rounded-lg px-3 py-2 text-xs">{{ __('Revoke') }}</button></form>
+                                                <form method="POST" action="{{ route('admin.chatter-hours.chatters.courses.destroy', [$chatter, $course]) }}" class="shrink-0">@csrf @method('DELETE')<button class="pd-btn-secondary w-full rounded-lg px-3 py-2 text-xs sm:w-auto">{{ __('Revoke') }}</button></form>
                                             </div>
                                         @empty
                                             <p class="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3 text-xs text-boss-ivory/35">{{ __('No course access unlocked yet.') }}</p>
                                         @endforelse
                                     </div>
                                     @if($availableCourses->isNotEmpty())
-                                        <form method="POST" action="{{ route('admin.chatter-hours.chatters.courses', $chatter) }}" class="mt-3 grid gap-2 rounded-lg border border-dashed border-boss-gold/20 p-3 sm:grid-cols-[1fr_auto] sm:items-end">@csrf
-                                            <label><span class="pd-label">{{ __('Unlock course') }}</span><select class="pd-input mt-1" name="course_id" required>@foreach($availableCourses as $course)<option value="{{ $course->id }}">{{ $course->title }} @if($course->platform_label) - {{ $course->platform_label }} @endif</option>@endforeach</select></label>
-                                            <button class="pd-btn-primary h-[43px] rounded-lg px-3 text-xs">{{ __('Grant access') }}</button>
+                                        <form method="POST" action="{{ route('admin.chatter-hours.chatters.courses', $chatter) }}" class="mt-3 grid gap-2 rounded-lg border border-dashed border-boss-gold/20 bg-boss-gold/[0.025] p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">@csrf
+                                            <label class="min-w-0"><span class="pd-label">{{ __('Unlock course') }}</span><select class="pd-input mt-1 w-full min-w-0" name="course_id" required>@foreach($availableCourses as $course)<option value="{{ $course->id }}">{{ $course->title }} @if($course->platform_label) - {{ $course->platform_label }} @endif</option>@endforeach</select></label>
+                                            <button class="pd-btn-primary h-[43px] w-full rounded-lg px-3 text-xs sm:w-auto">{{ __('Grant access') }}</button>
                                         </form>
                                     @else
                                         <p class="mt-3 text-xs text-boss-ivory/35">{{ __('All published courses are already unlocked for this chatter.') }}</p>
                                     @endif
                                 </div>
-                                <div class="border-t border-white/[0.06] pt-5">
+                                <div class="rounded-lg border border-white/[0.06] bg-white/[0.015] p-4">
                                     <div class="flex items-start justify-between gap-3">
                                         <div>
                                             <p class="pd-label">{{ __('Assigned models') }}</p>
@@ -385,22 +419,22 @@
                                         @forelse($assignedModels as $model)
                                             <div class="flex flex-col gap-3 rounded-lg border border-white/[0.06] bg-white/[0.025] p-3 sm:flex-row sm:items-center sm:justify-between">
                                                 <div class="min-w-0">
-                                                    <p class="truncate text-sm font-semibold">{{ $model->name }}</p>
-                                                    <p class="truncate text-xs text-boss-ivory/35">{{ $model->email }}</p>
+                                                    <p class="truncate text-sm font-semibold" title="{{ $model->name }}">{{ $model->name }}</p>
+                                                    <p class="truncate text-xs text-boss-ivory/35" title="{{ $model->email }}">{{ $model->email }}</p>
                                                 </div>
-                                                <form method="POST" action="{{ route('admin.chatter-hours.chatters.models.destroy', [$chatter, $model]) }}">@csrf @method('DELETE')<button class="pd-btn-secondary rounded-lg px-3 py-2 text-xs">{{ __('Remove') }}</button></form>
+                                                <form method="POST" action="{{ route('admin.chatter-hours.chatters.models.destroy', [$chatter, $model]) }}" class="shrink-0">@csrf @method('DELETE')<button class="pd-btn-secondary w-full rounded-lg px-3 py-2 text-xs sm:w-auto">{{ __('Remove') }}</button></form>
                                             </div>
                                         @empty
                                             <p class="rounded-lg border border-dashed border-white/[0.06] bg-white/[0.02] p-3 text-xs text-boss-ivory/40">{{ __('No models assigned yet. This chatter will not be asked for weekly model reviews until at least one model is assigned.') }}</p>
                                         @endforelse
                                     </div>
                                     @if($availableModels->isNotEmpty())
-                                        <form method="POST" action="{{ route('admin.chatter-hours.chatters.models', $chatter) }}" class="mt-3 grid gap-2 rounded-lg border border-dashed border-boss-gold/20 p-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                                        <form method="POST" action="{{ route('admin.chatter-hours.chatters.models', $chatter) }}" class="mt-3 grid gap-2 rounded-lg border border-dashed border-boss-gold/20 bg-boss-gold/[0.025] p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
                                             @csrf
-                                            <label>
+                                            <label class="min-w-0">
                                                 <span class="pd-label">{{ __('Assign model') }}</span>
                                                 <div
-                                                    class="relative mt-1"
+                                                        class="relative mt-1 min-w-0"
                                                     x-data="{
                                                         open: false,
                                                         search: '',
@@ -438,7 +472,7 @@
                                                     <input type="hidden" name="model_id" x-model="selected" required>
                                                     <button
                                                         type="button"
-                                                        class="pd-input pd-combobox-trigger"
+                                                        class="pd-input pd-combobox-trigger min-w-0"
                                                         aria-haspopup="listbox"
                                                         :aria-expanded="open.toString()"
                                                         @click="openDropdown()"
@@ -489,13 +523,13 @@
                                                     </div>
                                                 </div>
                                             </label>
-                                            <button class="pd-btn-primary h-[43px] rounded-lg px-3 text-xs">{{ __('Assign model') }}</button>
+                                            <button class="pd-btn-primary h-[43px] w-full rounded-lg px-3 text-xs sm:w-auto">{{ __('Assign model') }}</button>
                                         </form>
                                     @else
                                         <p class="mt-3 text-xs text-boss-ivory/35">{{ __('All available models are already assigned to this chatter.') }}</p>
                                     @endif
                                 </div>
-                                <div class="flex flex-wrap gap-2">
+                                <div class="flex flex-col gap-2 border-t border-white/[0.06] pt-5 sm:flex-row sm:flex-wrap sm:justify-end">
                                     <form method="POST" action="{{ route('admin.chatter-hours.chatters.invitation', $chatter) }}">@csrf<button class="pd-btn-secondary rounded-lg px-3 py-2 text-xs">{{ __('Resend invite') }}</button></form>
                                     <form method="POST" action="{{ route('admin.chatter-hours.chatters.status', $chatter) }}">@csrf @method('PATCH')<input type="hidden" name="employment_status" value="{{ $profile?->isActive() ? 'suspended' : 'active' }}"><input type="hidden" name="reason" value="{{ $profile?->isActive() ? 'Suspended from chatter account manager' : 'Reactivated from chatter account manager' }}"><button class="pd-btn-secondary rounded-lg px-3 py-2 text-xs">{{ $profile?->isActive() ? __('Suspend') : __('Reactivate') }}</button></form>
                                     <button type="button" class="rounded-lg border border-red-400/25 bg-red-400/10 px-3 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-400/15" @click="deleteOpen = true">{{ __('Delete account') }}</button>
@@ -523,9 +557,138 @@
                 @if($chatters->hasPages())<div class="border-t border-white/[0.06] px-5 py-4">{{ $chatters->links() }}</div>@endif
             </div>
 
-            <div class="overflow-hidden rounded-lg border border-white/[0.07] bg-white/[0.025]">
-                <div class="border-b border-white/[0.06] px-5 py-4"><p class="pd-kicker">{{ __('Registration') }}</p><h2 class="mt-1 font-display text-xl">{{ __('Chatter requests') }}</h2><div class="mt-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3"><p class="break-all text-xs text-boss-ivory/45">{{ $applicationUrl }}</p><button type="button" class="mt-2 text-xs font-semibold text-boss-gold" @click="copyApplicationLink()" x-text="copied ? @js(__('Copied')) : @js(__('Copy link'))"></button></div></div>
-                <div class="divide-y divide-white/[0.05]">@forelse($requests as $joinRequest)<div class="p-5"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><p class="truncate font-medium">{{ $joinRequest->name }}</p><p class="truncate text-xs text-boss-ivory/35">{{ $joinRequest->email }}</p><p class="mt-2 text-xs text-boss-ivory/35">{{ $joinRequest->timezone }} &middot; {{ $joinRequest->created_at->diffForHumans() }}</p></div><span class="shrink-0 rounded-full bg-white/[0.06] px-2 py-1 text-[0.6rem] capitalize">{{ $joinRequest->status }}</span></div>@if($joinRequest->status === 'pending')<div class="mt-4 space-y-3"><form method="POST" action="{{ route('admin.chatter-hours.requests.approve', $joinRequest) }}" class="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">@csrf<div><p class="pd-kicker">{{ __('Approval setup') }}</p><p class="mt-1 text-xs leading-5 text-boss-ivory/45">{{ __('Choose the starting role and fixed hourly rate before sending their account invite.') }}</p></div><div class="mt-4 grid gap-3 sm:grid-cols-2"><label><span class="pd-label">{{ __('Role') }}</span><input class="pd-input mt-2" name="work_role_name" list="chatter-work-role-options" value="{{ $workRoles->firstWhere('id', $defaultWorkRoleId)?->name ?? 'Chatter' }}" required></label><label><span class="pd-label">{{ __('Rate USD/hr') }}</span><div class="relative mt-2"><span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-boss-ivory/35">$</span><input class="pd-input pl-7" type="number" step="0.01" min="0" name="base_hourly_rate" value="3.00" aria-label="{{ __('Hourly rate in USD') }}" required></div></label></div><button class="pd-btn-primary mt-4 w-full justify-center rounded-lg px-3 py-2 text-xs">{{ __('Approve and send invite') }}</button></form><form method="POST" action="{{ route('admin.chatter-hours.requests.reject', $joinRequest) }}" class="grid gap-2 rounded-lg border border-red-400/10 bg-red-400/5 p-4 sm:grid-cols-[1fr_auto] sm:items-end">@csrf<label><span class="pd-label text-red-300">{{ __('Reject request') }}</span><input class="pd-input mt-2" name="admin_note" placeholder="{{ __('Reason required before rejecting') }}" required></label><button class="pd-btn-secondary rounded-lg px-4 py-2.5 text-xs">{{ __('Reject') }}</button></form></div>@elseif($joinRequest->admin_note)<p class="mt-3 text-xs text-boss-ivory/45">{{ $joinRequest->admin_note }}</p>@endif</div>@empty<p class="px-5 py-10 text-center text-sm text-boss-ivory/35">{{ __('No chatter requests yet.') }}</p>@endforelse</div>
+            <div class="space-y-6">
+                <div class="overflow-hidden rounded-lg border border-emerald-300/15 bg-emerald-400/[0.035]">
+                    <div class="border-b border-emerald-300/10 px-5 py-4">
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                            <div>
+                                <p class="pd-kicker text-emerald-700">{{ __('Live status') }}</p>
+                                <h2 class="mt-1 font-display text-xl text-boss-ink">{{ __('Working now') }}</h2>
+                            </div>
+                            <span class="w-fit rounded-full bg-emerald-300/20 px-2.5 py-1 text-[0.65rem] font-semibold text-emerald-700">{{ $openShifts->count() }} {{ trans_choice('open shift|open shifts', $openShifts->count()) }}</span>
+                        </div>
+                    </div>
+                    <div class="max-h-[32rem] divide-y divide-boss-rose/10 overflow-y-auto overscroll-contain">
+                        @forelse($openShifts as $shift)
+                            @php
+                                $activeBreak = $shift->breaks->firstWhere('ended_at', null);
+                                $clockedInUk = $shift->clocked_in_at->timezone('Europe/London');
+                            @endphp
+                            <details class="group px-5 py-3 transition hover:bg-emerald-300/[0.04] open:bg-black/10">
+                                <summary class="flex cursor-pointer list-none items-start justify-between gap-3">
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex min-w-0 items-center gap-2">
+                                            <p class="truncate font-medium" title="{{ $shift->user?->name ?? __('Unknown chatter') }}">{{ $shift->user?->name ?? __('Unknown chatter') }}</p>
+                                            <span class="shrink-0 rounded-full border px-2 py-0.5 text-[0.58rem] font-semibold {{ $activeBreak ? 'border-amber-300/30 bg-amber-400/15 text-amber-700' : 'border-emerald-300/30 bg-emerald-400/15 text-emerald-700' }}">
+                                                {{ $activeBreak ? __('On break') : __('Working') }}
+                                            </span>
+                                        </div>
+                                        <p class="mt-1 truncate text-xs text-boss-ink/55" title="{{ $shift->user?->email }}">{{ $shift->user?->email }}</p>
+                                        <p class="mt-2 truncate text-xs text-boss-ink/65" title="{{ trim(($shift->platform ?: __('Not recorded')).' - '.($shift->model?->name ?? __('No model selected'))) }}">
+                                            <span class="font-medium text-boss-ink/80">{{ $shift->platform ?: __('Not recorded') }}</span>
+                                            <span class="text-boss-ink/30"> / </span>
+                                            {{ $shift->model?->name ?? __('No model selected') }}
+                                        </p>
+                                        <p class="mt-1 text-xs text-boss-ink/55 tabular-nums">{{ $clockedInUk->format('g:i A') }} UK Time</p>
+                                    </div>
+                                    <svg class="mt-1 h-4 w-4 shrink-0 fill-none stroke-current text-boss-ink/45 transition group-open:rotate-180" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M4 6l4 4 4-4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </summary>
+                                <dl class="mt-3 grid gap-2 border-t border-boss-rose/10 pt-3 text-xs text-boss-ink/55 sm:grid-cols-2">
+                                    <div class="min-w-0 rounded-md bg-white/45 p-3">
+                                        <dt class="pd-label">{{ __('Clocked in') }}</dt>
+                                        <dd class="mt-1 text-boss-ink tabular-nums">{{ $clockedInUk->format('D, d M g:i A') }} UK Time</dd>
+                                    </div>
+                                    <div class="min-w-0 rounded-md bg-white/45 p-3">
+                                        <dt class="pd-label">{{ __('Role / rate') }}</dt>
+                                        <dd class="mt-1 truncate text-boss-ink">
+                                            {{ $shift->workRole?->name ?? __('Chatter') }}
+                                            @if(! is_null($shift->hourly_rate_pence))
+                                                - ${{ number_format($shift->hourly_rate_pence / 100, 2) }} USD/hr
+                                            @endif
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </details>
+                        @empty
+                            <p class="px-5 py-10 text-center text-sm text-boss-ink/45">{{ __('No chatters currently working.') }}</p>
+                        @endforelse
+                    </div>
+                    @if($openShifts->isNotEmpty())
+                        <div class="border-t border-emerald-300/10 px-5 py-3 text-right">
+                            <a href="{{ route('admin.chatter-hours.attendance') }}" class="text-xs font-semibold text-emerald-700 hover:text-emerald-800">{{ __('View full attendance') }}</a>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="overflow-hidden rounded-lg border border-white/[0.07] bg-white/[0.025]">
+                    <div class="border-b border-white/[0.06] px-5 py-4">
+                        <p class="pd-kicker">{{ __('Registration') }}</p>
+                        <h2 class="mt-1 font-display text-xl">{{ __('Chatter requests') }}</h2>
+                        <div class="mt-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                            <p class="break-all text-xs text-boss-ivory/45">{{ $applicationUrl }}</p>
+                            <button
+                                type="button"
+                                class="mt-2 text-xs font-semibold text-boss-gold"
+                                @click="copyApplicationLink()"
+                                x-text="copied ? @js(__('Copied')) : @js(__('Copy link'))"
+                            ></button>
+                        </div>
+                    </div>
+                    <div class="divide-y divide-white/[0.05]">
+                        @forelse($requests as $joinRequest)
+                            <div class="p-5">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="truncate font-medium">{{ $joinRequest->name }}</p>
+                                        <p class="truncate text-xs text-boss-ivory/35">{{ $joinRequest->email }}</p>
+                                        <p class="mt-2 text-xs text-boss-ivory/35">{{ $joinRequest->timezone }} &middot; {{ $joinRequest->created_at->diffForHumans() }}</p>
+                                    </div>
+                                    <span class="shrink-0 rounded-full bg-white/[0.06] px-2 py-1 text-[0.6rem] capitalize">{{ $joinRequest->status }}</span>
+                                </div>
+
+                                @if($joinRequest->status === 'pending')
+                                    <div class="mt-4 space-y-3">
+                                        <form method="POST" action="{{ route('admin.chatter-hours.requests.approve', $joinRequest) }}" class="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+                                            @csrf
+                                            <div>
+                                                <p class="pd-kicker">{{ __('Approval setup') }}</p>
+                                                <p class="mt-1 text-xs leading-5 text-boss-ivory/45">{{ __('Choose the starting role and fixed hourly rate before sending their account invite.') }}</p>
+                                            </div>
+                                            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                                                <label>
+                                                    <span class="pd-label">{{ __('Role') }}</span>
+                                                    <input class="pd-input mt-2" name="work_role_name" list="chatter-work-role-options" value="{{ $workRoles->firstWhere('id', $defaultWorkRoleId)?->name ?? 'Chatter' }}" required>
+                                                </label>
+                                                <label>
+                                                    <span class="pd-label">{{ __('Rate USD/hr') }}</span>
+                                                    <div class="relative mt-2">
+                                                        <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-boss-ivory/35">$</span>
+                                                        <input class="pd-input pl-7" type="number" step="0.01" min="0" name="base_hourly_rate" value="3.00" aria-label="{{ __('Hourly rate in USD') }}" required>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                            <button class="pd-btn-primary mt-4 w-full justify-center rounded-lg px-3 py-2 text-xs">{{ __('Approve and send invite') }}</button>
+                                        </form>
+                                        <form method="POST" action="{{ route('admin.chatter-hours.requests.reject', $joinRequest) }}" class="grid gap-2 rounded-lg border border-red-400/10 bg-red-400/5 p-4 sm:grid-cols-[1fr_auto] sm:items-end">
+                                            @csrf
+                                            <label>
+                                                <span class="pd-label text-red-300">{{ __('Reject request') }}</span>
+                                                <input class="pd-input mt-2" name="admin_note" placeholder="{{ __('Reason required before rejecting') }}" required>
+                                            </label>
+                                            <button class="pd-btn-secondary rounded-lg px-4 py-2.5 text-xs">{{ __('Reject') }}</button>
+                                        </form>
+                                    </div>
+                                @elseif($joinRequest->admin_note)
+                                    <p class="mt-3 text-xs text-boss-ivory/45">{{ $joinRequest->admin_note }}</p>
+                                @endif
+                            </div>
+                        @empty
+                            <p class="px-5 py-10 text-center text-sm text-boss-ivory/35">{{ __('No chatter requests yet.') }}</p>
+                        @endforelse
+                    </div>
+                </div>
             </div>
         </section>
 
