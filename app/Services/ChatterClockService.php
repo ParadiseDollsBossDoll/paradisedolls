@@ -14,11 +14,14 @@ use Illuminate\Validation\ValidationException;
 
 class ChatterClockService
 {
-    public function __construct(private readonly ChatterPayrollService $payroll) {}
+    public function __construct(
+        private readonly ChatterPayrollService $payroll,
+        private readonly ChatterPlatformEarnings $earnings,
+    ) {}
 
-    public function clockIn(User $user, ?int $workRoleId = null, string $platform = '', ?int $modelId = null): ChatterShift
+    public function clockIn(User $user, ?int $workRoleId = null, string $platform = '', ?int $modelId = null, mixed $clockInEarningBalance = null): ChatterShift
     {
-        return DB::transaction(function () use ($user, $workRoleId, $platform, $modelId) {
+        return DB::transaction(function () use ($user, $workRoleId, $platform, $modelId, $clockInEarningBalance) {
             $this->lockAndAssertActive($user);
             $this->assertNoOpenShift($user);
             $assignment = $this->resolveRoleAssignment($user, $workRoleId);
@@ -28,7 +31,8 @@ class ChatterClockService
                 throw ValidationException::withMessages(['platform' => __('Choose the website or platform you are working on.')]);
             }
             $now = now('UTC');
-            $shift = ChatterShift::create([
+            $earningSnapshot = $this->earnings->clockInSnapshot($platform, $clockInEarningBalance);
+            $shift = ChatterShift::create(array_merge([
                 'user_id' => $user->id,
                 'active_user_id' => $user->id,
                 'chatter_work_role_id' => $assignment->chatter_work_role_id,
@@ -37,7 +41,8 @@ class ChatterClockService
                 'timezone' => $user->chatterProfile->timezone,
                 'platform' => $platform,
                 'model_id' => $model?->id,
-            ]);
+                'commission_pence' => 0,
+            ], $earningSnapshot));
             $this->audit($shift, $user, 'clocked_in', null, null, [
                 'clocked_in_at' => $now->toIso8601String(),
                 'work_role_id' => $assignment->chatter_work_role_id,
@@ -45,6 +50,7 @@ class ChatterClockService
                 'platform' => $platform,
                 'model_id' => $model?->id,
                 'model_name' => $model?->name,
+                'earnings' => $earningSnapshot,
             ]);
 
             return $shift;
@@ -91,9 +97,9 @@ class ChatterClockService
         });
     }
 
-    public function clockOut(User $user): ChatterShift
+    public function clockOut(User $user, mixed $clockOutEarningBalance): ChatterShift
     {
-        $shift = DB::transaction(function () use ($user) {
+        $shift = DB::transaction(function () use ($user, $clockOutEarningBalance) {
             $this->lockAndAssertActive($user);
             $shift = $this->openShift($user, true);
             $now = now('UTC');
@@ -104,8 +110,15 @@ class ChatterClockService
                 $this->audit($shift, $user, 'break_ended_on_clock_out', null, null, ['ended_at' => $now->toIso8601String()]);
             }
 
-            $shift->forceFill(['clocked_out_at' => $now, 'active_user_id' => null])->save();
-            $this->audit($shift, $user, 'clocked_out', null, null, ['clocked_out_at' => $now->toIso8601String()]);
+            $earningSnapshot = $this->earnings->clockOutSnapshot($shift, $clockOutEarningBalance);
+            $shift->forceFill(array_merge([
+                'clocked_out_at' => $now,
+                'active_user_id' => null,
+            ], $earningSnapshot))->save();
+            $this->audit($shift, $user, 'clocked_out', null, null, [
+                'clocked_out_at' => $now->toIso8601String(),
+                'earnings' => $earningSnapshot,
+            ]);
 
             return $shift->load('user');
         });

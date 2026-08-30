@@ -21,6 +21,7 @@ use App\Models\CourseEnrollment;
 use App\Models\User;
 use App\Notifications\SystemNotification;
 use App\Services\ChatterAccountService;
+use App\Services\ChatterPlatformEarnings;
 use App\Services\ChatterPayrollService;
 use App\Services\UserSessionService;
 use App\Support\ChatterCurrency;
@@ -96,7 +97,7 @@ class AdminChatterHoursController extends Controller
         ));
     }
 
-    public function attendance(Request $request, ChatterPayrollService $payroll, ChatterCurrency $currency): View
+    public function attendance(Request $request, ChatterPayrollService $payroll, ChatterCurrency $currency, ChatterPlatformEarnings $earnings): View
     {
         $filters = $this->filters($request);
         $chatterOptions = User::query()
@@ -110,7 +111,21 @@ class AdminChatterHoursController extends Controller
             ->with(['user', 'breaks', 'workRole', 'model:id,name,email'])
             ->latest('clocked_in_at')
             ->get()
-            ->map(fn (ChatterShift $shift) => $payroll->annotateShiftSegment($shift, $attendanceWindow['start'], $attendanceWindow['end']))
+            ->map(function (ChatterShift $shift) use ($payroll, $attendanceWindow): ?ChatterShift {
+                $annotated = $payroll->annotateShiftSegment($shift, $attendanceWindow['start'], $attendanceWindow['end']);
+
+                if (! $annotated) {
+                    return null;
+                }
+
+                $commission = $this->shiftClockOutBelongsToWindow($annotated, $attendanceWindow)
+                    ? $payroll->commissionForShift($annotated)
+                    : ['currency' => $annotated->commission_currency ?: ChatterPlatformEarnings::CURRENCY_USD, 'pence' => 0];
+                $annotated->setAttribute('segment_commission_currency', $commission['currency']);
+                $annotated->setAttribute('segment_commission_pence', $commission['pence']);
+
+                return $annotated;
+            })
             ->filter()
             ->filter(fn (ChatterShift $shift): bool => (int) $shift->getAttribute('worked_minutes') > 0)
             ->sortByDesc(fn (ChatterShift $shift) => $shift->getAttribute('segment_clocked_in_at')?->getTimestamp() ?? 0)
@@ -131,12 +146,13 @@ class AdminChatterHoursController extends Controller
         // Clock actions and explicit mutations refresh draft payroll. A GET
         // request must remain read-only and must not recalculate every record.
         $reportTimesheets = $this->timesheetQuery($filters)->get();
+        $sourceShifts = $this->snapshotSourceShifts($reportTimesheets);
         $timesheets = $this->timesheetQuery($filters)
             ->with(['user.chatterProfile', 'reviewer', 'adjustments'])
             ->latest('period_start')
             ->paginate(15, ['*'], 'timesheets_page')
             ->withQueryString();
-        $timesheets->getCollection()->transform(function (ChatterTimesheet $sheet) {
+        $timesheets->getCollection()->transform(function (ChatterTimesheet $sheet) use ($payroll, $currency, $sourceShifts) {
             $snapshot = $sheet->calculation_snapshot ?? [];
             $rates = collect($snapshot['shifts'] ?? [])
                 ->filter(fn (array $shift) => isset($shift['hourly_rate_pence']))
@@ -159,10 +175,16 @@ class AdminChatterHoursController extends Controller
             }
 
             $sheet->setAttribute('payroll_rates', $rates);
-            $sheet->setAttribute('basic_pay_pence', (int) $sheet->gross_pay_pence - (int) $sheet->adjustment_pence);
+            $sheet->setAttribute('basic_pay_pence', (int) ($sheet->base_pay_pence ?? data_get($snapshot, 'base_pay_pence', (int) $sheet->gross_pay_pence - (int) $sheet->adjustment_pence - (int) $sheet->commission_pence)));
+            $sheet->setAttribute('earning_summary', $this->earningDisplaySummaryForTimesheet($sheet, $payroll, $sourceShifts));
+            $sheet->setAttribute('display_gross_pay_pence', $this->displayGrossPayPence($sheet, $sheet->getAttribute('earning_summary')));
+            $sheet->setAttribute('display_gross_pay_php_centavos', $sheet->status === ChatterTimesheet::STATUS_APPROVED
+                ? $currency->phpCentavosForTimesheet($sheet)
+                : $currency->phpCentavosFromUsdCents((int) $sheet->getAttribute('display_gross_pay_pence'), $currency->rateForTimesheet($sheet)));
 
             return $sheet;
         });
+        $earningSummary = $this->earningDisplaySummaryForTimesheets($reportTimesheets, $payroll, $sourceShifts);
         $stats = [
             'chatters' => User::query()->where('role', 'chatter')->count(),
             'working' => $openShifts->count(),
@@ -172,17 +194,31 @@ class AdminChatterHoursController extends Controller
             'requests' => ChatterRequest::query()->where('status', ChatterRequest::STATUS_PENDING)->count(),
             'total_minutes' => (int) $reportTimesheets->sum('ordinary_minutes'),
             'adjustment_pence' => (int) $reportTimesheets->sum('adjustment_pence'),
-            'basic_pay_pence' => (int) $reportTimesheets->sum(fn (ChatterTimesheet $sheet) => $sheet->gross_pay_pence - $sheet->adjustment_pence),
-            'gross_pay_pence' => (int) $reportTimesheets->sum('gross_pay_pence'),
-            'gross_pay_php_centavos' => (int) $reportTimesheets->sum(fn (ChatterTimesheet $sheet) => $currency->phpCentavosForTimesheet($sheet)),
+            'basic_pay_pence' => (int) $reportTimesheets->sum(fn (ChatterTimesheet $sheet) => $sheet->base_pay_pence ?? ($sheet->gross_pay_pence - $sheet->adjustment_pence - $sheet->commission_pence)),
+            'generated_usd_pence' => $earningSummary['generated_usd_pence'],
+            'generated_gbp_pence' => $earningSummary['generated_gbp_pence'],
+            'commission_pence' => $earningSummary['commission_usd_pence'],
+            'foreign_commission_pence' => $earningSummary['commission_gbp_pence'],
+            'gross_pay_pence' => (int) $reportTimesheets->sum(fn (ChatterTimesheet $sheet): int => $this->displayGrossPayPence($sheet, $this->earningDisplaySummaryForTimesheet($sheet, $payroll, $sourceShifts))),
+            'gross_pay_php_centavos' => (int) $reportTimesheets->sum(function (ChatterTimesheet $sheet) use ($currency, $payroll, $sourceShifts): int {
+                if ($sheet->status === ChatterTimesheet::STATUS_APPROVED) {
+                    return $currency->phpCentavosForTimesheet($sheet);
+                }
+
+                return $currency->phpCentavosFromUsdCents($this->displayGrossPayPence($sheet, $this->earningDisplaySummaryForTimesheet($sheet, $payroll, $sourceShifts)), $currency->rateForTimesheet($sheet));
+            }),
         ];
         $currencyDetails = $currency->usdToPhpDetails();
         $usdToPhpRate = $currencyDetails['rate'];
+        $ukNow = CarbonImmutable::now(ChatterPayrollService::REPORTING_TIMEZONE);
+        $payrollPeriodLabel = CarbonImmutable::parse($filters['from'], ChatterPayrollService::REPORTING_TIMEZONE)->format('d M Y')
+            .' - '
+            .CarbonImmutable::parse($filters['to'], ChatterPayrollService::REPORTING_TIMEZONE)->format('d M Y');
         $mode = 'attendance';
 
         return view('admin.chatter-hours.index', compact(
             'chatterOptions', 'timesheets', 'openShifts', 'attendanceShifts',
-            'workRoles', 'stats', 'filters', 'currency', 'currencyDetails', 'usdToPhpRate', 'mode'
+            'workRoles', 'stats', 'filters', 'currency', 'currencyDetails', 'usdToPhpRate', 'ukNow', 'payrollPeriodLabel', 'mode', 'earnings', 'payroll'
         ));
     }
 
@@ -507,10 +543,11 @@ class AdminChatterHoursController extends Controller
         ]));
     }
 
-    public function showTimesheet(ChatterTimesheet $timesheet, ChatterCurrency $currency, ChatterPayrollService $payroll): View
+    public function showTimesheet(ChatterTimesheet $timesheet, ChatterCurrency $currency, ChatterPayrollService $payroll, ChatterPlatformEarnings $earnings): View
     {
         $timesheet->load(['user.chatterProfile', 'reviewer', 'adjustments.creator', 'audits.actor']);
         $window = $payroll->reportingWindowFor($timesheet->period_start, $timesheet->period_end);
+        $snapshotShiftRows = collect($timesheet->calculation_snapshot['shifts'] ?? []);
         $shifts = ChatterShift::query()
             ->where('user_id', $timesheet->user_id)
             ->where('clocked_in_at', '<', $window['end'])
@@ -518,7 +555,32 @@ class AdminChatterHoursController extends Controller
             ->with(['breaks', 'audits.actor', 'workRole', 'model:id,name,email'])
             ->orderBy('clocked_in_at')
             ->get()
-            ->map(fn (ChatterShift $shift) => $payroll->annotateShiftSegment($shift, $window['start'], $window['end']))
+            ->map(function (ChatterShift $shift) use ($payroll, $window, $snapshotShiftRows): ?ChatterShift {
+                $annotated = $payroll->annotateShiftSegment($shift, $window['start'], $window['end']);
+
+                if (! $annotated) {
+                    return null;
+                }
+
+                $segmentStart = $annotated->getAttribute('segment_clocked_in_at');
+                $snapshotRow = $snapshotShiftRows->first(function (array $row) use ($annotated, $segmentStart): bool {
+                    if ((int) ($row['shift_id'] ?? 0) !== $annotated->id || ! $segmentStart || empty($row['started_at'])) {
+                        return false;
+                    }
+
+                    return CarbonImmutable::parse($row['started_at'])->utc()->equalTo(
+                        CarbonImmutable::instance($segmentStart)->utc(),
+                    );
+                });
+                $commission = is_array($snapshotRow)
+                    ? $payroll->commissionForSnapshotShift($snapshotRow)
+                    : $payroll->commissionForShift($annotated);
+                $annotated->setAttribute('segment_commission_pence', $commission['currency'] === ChatterPlatformEarnings::CURRENCY_GBP ? 0 : $commission['pence']);
+                $annotated->setAttribute('segment_foreign_commission_currency', $commission['currency'] === ChatterPlatformEarnings::CURRENCY_GBP ? ChatterPlatformEarnings::CURRENCY_GBP : null);
+                $annotated->setAttribute('segment_foreign_commission_pence', $commission['currency'] === ChatterPlatformEarnings::CURRENCY_GBP ? $commission['pence'] : 0);
+
+                return $annotated;
+            })
             ->filter()
             ->filter(fn (ChatterShift $shift): bool => (int) $shift->getAttribute('worked_minutes') > 0)
             ->values();
@@ -526,8 +588,14 @@ class AdminChatterHoursController extends Controller
         $usdToPhpRate = $currency->rateForTimesheet($timesheet);
         $grossPayPhpCentavos = $currency->phpCentavosForTimesheet($timesheet);
         $missingModelReviews = $this->missingWeeklyModelReviewCount($timesheet);
+        $earningSummary = $this->earningDisplaySummaryForTimesheet($timesheet, $payroll, $shifts->keyBy('id'));
+        $timesheet->setAttribute('earning_summary', $earningSummary);
+        $timesheet->setAttribute('display_gross_pay_pence', $this->displayGrossPayPence($timesheet, $earningSummary));
+        $timesheet->setAttribute('display_gross_pay_php_centavos', $timesheet->status === ChatterTimesheet::STATUS_APPROVED
+            ? $grossPayPhpCentavos
+            : $currency->phpCentavosFromUsdCents((int) $timesheet->getAttribute('display_gross_pay_pence'), $currency->rateForTimesheet($timesheet)));
 
-        return view('admin.chatter-hours.show', compact('timesheet', 'shifts', 'currency', 'usdToPhpRate', 'grossPayPhpCentavos', 'missingModelReviews'));
+        return view('admin.chatter-hours.show', compact('timesheet', 'shifts', 'currency', 'earnings', 'usdToPhpRate', 'grossPayPhpCentavos', 'missingModelReviews'));
     }
 
     public function updateShift(Request $request, ChatterTimesheet $timesheet, ChatterShift $shift, ChatterPayrollService $payroll): RedirectResponse
@@ -920,7 +988,7 @@ class AdminChatterHoursController extends Controller
         $today = CarbonImmutable::now(ChatterPayrollService::REPORTING_TIMEZONE);
         $from = isset($validated['from'])
             ? CarbonImmutable::parse($validated['from'], ChatterPayrollService::REPORTING_TIMEZONE)
-            : $today->startOfWeek(CarbonInterface::MONDAY)->subWeeks(11);
+            : $today->startOfWeek(CarbonInterface::MONDAY);
         $to = isset($validated['to'])
             ? CarbonImmutable::parse($validated['to'], ChatterPayrollService::REPORTING_TIMEZONE)
             : $today->endOfWeek(CarbonInterface::SUNDAY);
@@ -946,6 +1014,8 @@ class AdminChatterHoursController extends Controller
                 $query->where('ordinary_minutes', '>', 0)
                     ->orWhere('gross_pay_pence', '!=', 0)
                     ->orWhere('adjustment_pence', '!=', 0)
+                    ->orWhere('commission_pence', '!=', 0)
+                    ->orWhere('foreign_commission_pence', '!=', 0)
                     ->orWhereHas('adjustments', fn (Builder $adjustments) => $adjustments->where('amount_pence', '!=', 0));
             })
             ->when($filters['search'], fn (Builder $query, string $search) => $query->whereHas('user', fn (Builder $userQuery) => $userQuery
@@ -995,6 +1065,104 @@ class AdminChatterHoursController extends Controller
             'start' => CarbonImmutable::parse($filters['from'], ChatterPayrollService::REPORTING_TIMEZONE)->startOfDay()->utc(),
             'end' => CarbonImmutable::parse($filters['to'], ChatterPayrollService::REPORTING_TIMEZONE)->addDay()->startOfDay()->utc(),
         ];
+    }
+
+    /** @return array{generated_usd_pence: int, generated_gbp_pence: int, commission_usd_pence: int, commission_gbp_pence: int} */
+    private function earningDisplaySummaryForTimesheet(ChatterTimesheet $timesheet, ChatterPayrollService $payroll, ?Collection $sourceShifts = null): array
+    {
+        $window = $payroll->reportingWindowFor($timesheet->period_start, $timesheet->period_end);
+        $summary = $payroll->earningSummaryForSnapshot(
+            $timesheet->calculation_snapshot ?? [],
+            fn (array $shift): bool => $this->snapshotCommissionCanBeDerived($shift, $window, $sourceShifts),
+        );
+
+        return [
+            'generated_usd_pence' => $summary['generated_usd_pence'],
+            'generated_gbp_pence' => $summary['generated_gbp_pence'],
+            'commission_usd_pence' => max((int) $timesheet->commission_pence, $summary['commission_usd_pence']),
+            'commission_gbp_pence' => max((int) $timesheet->foreign_commission_pence, $summary['commission_gbp_pence']),
+        ];
+    }
+
+    /** @return array{generated_usd_pence: int, generated_gbp_pence: int, commission_usd_pence: int, commission_gbp_pence: int} */
+    private function earningDisplaySummaryForTimesheets(Collection $timesheets, ChatterPayrollService $payroll, ?Collection $sourceShifts = null): array
+    {
+        return $timesheets->reduce(function (array $carry, ChatterTimesheet $timesheet) use ($payroll, $sourceShifts): array {
+            $summary = $this->earningDisplaySummaryForTimesheet($timesheet, $payroll, $sourceShifts);
+
+            foreach ($summary as $key => $value) {
+                $carry[$key] += $value;
+            }
+
+            return $carry;
+        }, [
+            'generated_usd_pence' => 0,
+            'generated_gbp_pence' => 0,
+            'commission_usd_pence' => 0,
+            'commission_gbp_pence' => 0,
+        ]);
+    }
+
+    private function snapshotSourceShifts(Collection $timesheets): Collection
+    {
+        $shiftIds = $timesheets
+            ->flatMap(fn (ChatterTimesheet $timesheet): array => collect($timesheet->calculation_snapshot['shifts'] ?? [])->pluck('shift_id')->filter()->all())
+            ->unique()
+            ->values();
+
+        if ($shiftIds->isEmpty()) {
+            return collect();
+        }
+
+        return ChatterShift::query()
+            ->whereIn('id', $shiftIds)
+            ->get(['id', 'clocked_out_at', 'commission_currency'])
+            ->keyBy('id');
+    }
+
+    /** @param array{start: CarbonImmutable, end: CarbonImmutable} $window */
+    private function snapshotCommissionCanBeDerived(array $shift, array $window, ?Collection $sourceShifts): bool
+    {
+        if ((int) ($shift['commission_pence'] ?? 0) > 0 || (int) ($shift['foreign_commission_pence'] ?? 0) > 0) {
+            return true;
+        }
+
+        if (! $sourceShifts || ! isset($shift['shift_id'])) {
+            return true;
+        }
+
+        $sourceShift = $sourceShifts->get((int) $shift['shift_id']);
+
+        if (! $sourceShift) {
+            return true;
+        }
+
+        return $this->shiftClockOutBelongsToWindow($sourceShift, $window);
+    }
+
+    /** @param array{start: CarbonImmutable, end: CarbonImmutable} $window */
+    private function shiftClockOutBelongsToWindow(ChatterShift $shift, array $window): bool
+    {
+        if (! $shift->clocked_out_at) {
+            return false;
+        }
+
+        $clockedOutAt = CarbonImmutable::instance($shift->clocked_out_at)->utc()->startOfMinute();
+
+        return $clockedOutAt->greaterThan($window['start']) && $clockedOutAt->lessThanOrEqualTo($window['end']);
+    }
+
+    /** @param array{commission_usd_pence: int} $summary */
+    private function displayGrossPayPence(ChatterTimesheet $timesheet, array $summary): int
+    {
+        if ($timesheet->status === ChatterTimesheet::STATUS_APPROVED) {
+            return (int) $timesheet->gross_pay_pence;
+        }
+
+        $basePayPence = (int) ($timesheet->base_pay_pence
+            ?? data_get($timesheet->calculation_snapshot, 'base_pay_pence', (int) $timesheet->gross_pay_pence - (int) $timesheet->adjustment_pence - (int) $timesheet->commission_pence));
+
+        return $basePayPence + (int) $summary['commission_usd_pence'] + (int) $timesheet->adjustment_pence;
     }
 
     private function assertChatter(User $user): void

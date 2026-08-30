@@ -5,6 +5,10 @@
         $applicationUrl = route('chatter.apply');
         $defaultWorkRoleId = $workRoles->firstWhere('slug', 'chatter')?->id ?? $workRoles->first()?->id;
         $timezoneOptions = $timezoneOptions ?? collect();
+        $earningsFormatter = $earnings ?? app(\App\Services\ChatterPlatformEarnings::class);
+        $exportQuery = $mode === 'attendance'
+            ? collect($filters ?? [])->except('role_id')->filter(fn ($value) => filled($value))->all()
+            : request()->query();
     @endphp
     <div
         class="mx-auto max-w-[1500px] space-y-6 text-boss-ivory"
@@ -39,7 +43,7 @@
             <div class="grid gap-2 sm:grid-cols-2 xl:flex xl:flex-wrap xl:justify-end">
                 @if ($mode === 'attendance')
                     <a href="{{ route('admin.chatter-hours.index') }}" class="pd-btn-secondary inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-xs">{{ __('Chatter accounts') }}</a>
-                    <a href="{{ route('admin.chatter-hours.export.xlsx', request()->query()) }}" class="pd-btn-secondary inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-xs">{{ __('Export Excel') }}</a>
+                    <a href="{{ route('admin.chatter-hours.export.xlsx', $exportQuery) }}" class="pd-btn-secondary inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-xs">{{ __('Export Excel') }}</a>
                 @else
                     <button type="button" class="pd-btn-secondary inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-xs" @click="copyApplicationLink()">
                         <svg class="h-4 w-4 fill-none stroke-current" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"/></svg>
@@ -74,6 +78,9 @@
                         [__('Pending review'), $stats['pending']],
                         [__('Join requests'), $stats['requests']],
                         [__('Filtered hours'), $formatMinutes($stats['total_minutes'])],
+                        [__('Generated USD'), '$'.number_format(($stats['generated_usd_pence'] ?? 0) / 100, 2)],
+                        [__('Commission USD'), '$'.number_format(($stats['commission_pence'] ?? 0) / 100, 2)],
+                        [__('Commission GBP'), 'GBP '.number_format(($stats['foreign_commission_pence'] ?? 0) / 100, 2)],
                         [__('Gross USD'), '$'.number_format($stats['gross_pay_pence'] / 100, 2)],
                         [__('Gross PHP'), 'PHP '.number_format($stats['gross_pay_php_centavos'] / 100, 2)],
                     ]
@@ -83,16 +90,7 @@
                         [__('Join requests'), $stats['requests']],
                     ];
             @endphp
-            <section class="grid grid-cols-2 gap-3 md:grid-cols-3 {{ $mode === 'attendance' ? 'xl:grid-cols-7' : 'xl:grid-cols-3' }}">
-            {{-- @foreach ([
-                [__('Chatters'), $stats['chatters']],
-                [__('Working now'), $stats['working']],
-                [__('Pending review'), $stats['pending']],
-                [__('Join requests'), $stats['requests']],
-                [__('Filtered hours'), $formatMinutes($stats['total_minutes'])],
-                [__('Gross USD'), '$'.number_format($stats['gross_pay_pence'] / 100, 2)],
-                [__('Gross PHP'), '₱'.number_format($stats['gross_pay_php_centavos'] / 100, 2)],
-            ] as [$label, $value]) --}}
+            <section class="grid grid-cols-2 gap-3 md:grid-cols-3 {{ $mode === 'attendance' ? 'xl:grid-cols-10' : 'xl:grid-cols-3' }}">
             @foreach ($statCards as [$label, $value])
                 <article class="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
                     <p class="text-[0.58rem] uppercase tracking-[0.14em] text-boss-ivory/35">{{ $label }}</p>
@@ -129,9 +127,16 @@
         </section>
 
         <section class="rounded-lg border border-white/[0.07] bg-white/[0.025] p-5">
-            <div class="mb-4">
-                <p class="pd-kicker">{{ __('Report controls') }}</p>
-                <h2 class="mt-1 font-display text-xl">{{ __('Filter attendance and payroll') }}</h2>
+            <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <p class="pd-kicker">{{ __('Report controls') }}</p>
+                    <h2 class="mt-1 font-display text-xl">{{ __('Filter attendance and payroll') }}</h2>
+                </div>
+                <div class="min-w-0 rounded-lg border border-boss-gold/20 bg-boss-gold/10 px-4 py-3 text-sm lg:text-right">
+                    <p class="pd-label">{{ __('UK payroll time') }}</p>
+                    <p class="mt-1 font-semibold text-boss-gold">{{ $ukNow->format('D, d M Y g:i A') }} {{ __('UK Time') }}</p>
+                    <p class="mt-1 text-xs text-boss-ivory/45">{{ __('Viewing payroll week: :period', ['period' => $payrollPeriodLabel]) }}</p>
+                </div>
             </div>
             <form method="GET" action="{{ route('admin.chatter-hours.attendance') }}" class="grid gap-3 md:grid-cols-2 xl:grid-cols-[1.3fr_1fr_1fr_1fr_0.8fr_0.8fr_auto] xl:items-end">
                 <label><span class="pd-label">{{ __('Search') }}</span><input class="pd-input mt-2" name="search" value="{{ $filters['search'] }}" placeholder="{{ __('Name or email') }}"></label>
@@ -151,9 +156,9 @@
                 <p class="text-xs text-boss-ivory/35">{{ $attendanceShifts->total() }} {{ __('shifts') }} · {{ __('Times shown in UK time') }}</p>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[980px] text-left text-sm tabular-nums">
+                <table class="w-full min-w-[1240px] text-left text-sm tabular-nums">
                     <thead class="border-b border-white/[0.06] text-[0.6rem] uppercase tracking-[0.13em] text-boss-ivory/35">
-                        <tr><th class="px-5 py-3">{{ __('Date / time in') }}</th><th class="px-4 py-3">{{ __('Date / time out') }}</th><th class="px-4 py-3">{{ __('Employee') }}</th><th class="px-4 py-3">{{ __('Work role / site / model') }}</th><th class="px-4 py-3">{{ __('Hours worked') }}</th><th class="px-5 py-3">{{ __('Status') }}</th></tr>
+                        <tr><th class="px-5 py-3">{{ __('Date / time in') }}</th><th class="px-4 py-3">{{ __('Date / time out') }}</th><th class="px-4 py-3">{{ __('Employee') }}</th><th class="px-4 py-3">{{ __('Work role / site / model') }}</th><th class="px-4 py-3">{{ __('Earnings') }}</th><th class="px-4 py-3">{{ __('Hours worked') }}</th><th class="px-5 py-3">{{ __('Status') }}</th></tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.05]">
                         @forelse($attendanceShifts as $shift)
@@ -163,6 +168,10 @@
                                 $segmentStart = $shift->getAttribute('segment_clocked_in_at') ?? $shift->clocked_in_at;
                                 $segmentEnd = $shift->getAttribute('segment_clocked_out_at') ?? $shift->clocked_out_at;
                                 $segmentIsOpen = (bool) $shift->getAttribute('segment_is_open');
+                                $shiftCommission = [
+                                    'currency' => $shift->getAttribute('segment_commission_currency') ?: ($shift->commission_currency ?? 'USD'),
+                                    'pence' => (int) $shift->getAttribute('segment_commission_pence'),
+                                ];
                             @endphp
                             <tr class="align-top transition hover:bg-white/[0.02]">
                                 <td class="whitespace-nowrap px-5 py-4"><p class="font-medium">{{ $segmentStart->timezone('Europe/London')->format('D, d M Y') }}</p><p class="mt-0.5 text-xs text-boss-ivory/40">{{ $segmentStart->timezone('Europe/London')->format('g:i A') }} UK Time</p></td>
@@ -178,11 +187,19 @@
                                         <p class="mt-1 max-w-[15rem] truncate text-xs text-boss-ivory/35" title="{{ $shift->model->name }}">{{ __('Model: :model', ['model' => $shift->model->name]) }}</p>
                                     @endif
                                 </td>
+                                <td class="min-w-[15rem] px-4 py-4">
+                                    <div class="grid gap-1.5 text-xs text-boss-ivory/45">
+                                        <p class="flex min-w-0 items-center justify-between gap-3"><span>{{ __('Balance in') }}</span><span class="truncate text-right text-boss-ivory" title="{{ $earningsFormatter->formatBalance($shift->clock_in_earning_balance_minor, $shift->earning_unit, $shift->earning_currency) }}">{{ $earningsFormatter->formatBalance($shift->clock_in_earning_balance_minor, $shift->earning_unit, $shift->earning_currency) }}</span></p>
+                                        <p class="flex min-w-0 items-center justify-between gap-3"><span>{{ __('Balance out') }}</span><span class="truncate text-right text-boss-ivory" title="{{ $earningsFormatter->formatBalance($shift->clock_out_earning_balance_minor, $shift->earning_unit, $shift->earning_currency) }}">{{ $earningsFormatter->formatBalance($shift->clock_out_earning_balance_minor, $shift->earning_unit, $shift->earning_currency) }}</span></p>
+                                        <p class="flex min-w-0 items-center justify-between gap-3"><span>{{ __('Generated') }}</span><span class="truncate text-right text-boss-ivory" title="{{ $earningsFormatter->formatGenerated($shift->generated_earning_units, $shift->generated_earning_pence, $shift->earning_unit, $shift->earning_currency) }}">{{ $earningsFormatter->formatGenerated($shift->generated_earning_units, $shift->generated_earning_pence, $shift->earning_unit, $shift->earning_currency) }}</span></p>
+                                        <p class="flex min-w-0 items-center justify-between gap-3 font-semibold"><span>{{ __('Commission') }}</span><span class="truncate text-right text-emerald-200" title="{{ $earningsFormatter->formatCommission($shiftCommission['pence'], $shiftCommission['currency']) }}">{{ $earningsFormatter->formatCommission($shiftCommission['pence'], $shiftCommission['currency']) }}</span></p>
+                                    </div>
+                                </td>
                                 <td class="px-4 py-4 font-semibold text-boss-gold">{{ $formatMinutes((int) $shift->getAttribute('worked_minutes')) }}</td>
                                 <td class="px-5 py-4"><span class="rounded-full px-2.5 py-1 text-[0.65rem] font-semibold {{ $overdue ? 'bg-red-400/15 text-red-200' : ($activeBreak ? 'bg-amber-400/15 text-amber-200' : ($shift->clocked_out_at ? 'bg-white/[0.06] text-boss-ivory/55' : 'bg-emerald-400/15 text-emerald-200')) }}">{{ $overdue ? __('Overdue') : ($activeBreak ? __('On break') : ($shift->clocked_out_at ? __('Completed') : __('Working'))) }}</span></td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="px-5 py-12 text-center text-boss-ivory/35">{{ __('No attendance records match these filters.') }}</td></tr>
+                            <tr><td colspan="7" class="px-5 py-12 text-center text-boss-ivory/35">{{ __('No attendance records match these filters.') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -196,12 +213,19 @@
                 <p class="text-xs text-boss-ivory/35">{{ $timesheets->total() }} {{ __('payroll periods') }}</p>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[1500px] text-left text-sm tabular-nums">
+                <table class="w-full min-w-[1720px] text-left text-sm tabular-nums">
                     <thead class="border-b border-white/[0.06] text-[0.6rem] uppercase tracking-[0.13em] text-boss-ivory/35">
-                        <tr><th class="px-5 py-3">{{ __('Chatter') }}</th><th class="px-4 py-3">{{ __('Payroll week') }}</th><th class="px-4 py-3">{{ __('Total hours') }}</th><th class="px-4 py-3">{{ __('Rate') }}</th><th class="px-4 py-3">{{ __('Basic pay') }}</th><th class="px-4 py-3">{{ __('Additional') }}</th><th class="px-4 py-3">{{ __('US final pay') }}</th><th class="px-4 py-3">{{ __('PH final pay') }}</th><th class="px-4 py-3">{{ __('Notes') }}</th><th class="px-4 py-3">{{ __('Status') }}</th><th class="px-5 py-3 text-right">{{ __('Action') }}</th></tr>
+                        <tr><th class="px-5 py-3">{{ __('Chatter') }}</th><th class="px-4 py-3">{{ __('Payroll week') }}</th><th class="px-4 py-3">{{ __('Total hours') }}</th><th class="px-4 py-3">{{ __('Rate') }}</th><th class="px-4 py-3">{{ __('Base pay') }}</th><th class="px-4 py-3">{{ __('USD commission') }}</th><th class="px-4 py-3">{{ __('GBP commission') }}</th><th class="px-4 py-3">{{ __('Additional') }}</th><th class="px-4 py-3">{{ __('US final pay') }}</th><th class="px-4 py-3">{{ __('PH final pay') }}</th><th class="px-4 py-3">{{ __('Notes') }}</th><th class="px-4 py-3">{{ __('Status') }}</th><th class="px-5 py-3 text-right">{{ __('Action') }}</th></tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.05]">
                         @forelse($timesheets as $sheet)
+                            @php
+                                $earningSummary = $sheet->getAttribute('earning_summary') ?? [];
+                                $displayCommissionPence = (int) ($earningSummary['commission_usd_pence'] ?? $sheet->commission_pence ?? 0);
+                                $displayForeignCommissionPence = (int) ($earningSummary['commission_gbp_pence'] ?? $sheet->foreign_commission_pence ?? 0);
+                                $generatedUsdPence = (int) ($earningSummary['generated_usd_pence'] ?? 0);
+                                $generatedGbpPence = (int) ($earningSummary['generated_gbp_pence'] ?? 0);
+                            @endphp
                             <tr class="align-top transition hover:bg-white/[0.02]">
                                 <td class="px-5 py-4"><p class="max-w-[13rem] truncate font-medium" title="{{ $sheet->user->name }}">{{ $sheet->user->name }}</p><p class="mt-0.5 max-w-[13rem] truncate text-xs text-boss-ivory/35" title="{{ $sheet->user->email }}">{{ $sheet->user->email }}</p></td>
                                 <td class="whitespace-nowrap px-4 py-4">{{ $sheet->period_start->format('d M') }} - {{ $sheet->period_end->format('d M Y') }}</td>
@@ -218,7 +242,9 @@
                                         @endforelse
                                     </div>
                                 </td>
-                                <td class="px-4 py-4"><p class="font-semibold">${{ number_format($sheet->getAttribute('basic_pay_pence') / 100, 2) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Before manual adjustments') }}</p></td>
+                                <td class="px-4 py-4"><p class="font-semibold">${{ number_format($sheet->getAttribute('basic_pay_pence') / 100, 2) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Hourly only') }}</p></td>
+                                <td class="px-4 py-4"><p class="font-semibold text-emerald-200">${{ number_format($displayCommissionPence / 100, 2) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Generated: $:amount USD', ['amount' => number_format($generatedUsdPence / 100, 2)]) }}</p></td>
+                                <td class="px-4 py-4"><p class="font-semibold text-emerald-200">GBP {{ number_format($displayForeignCommissionPence / 100, 2) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Generated: GBP :amount', ['amount' => number_format($generatedGbpPence / 100, 2)]) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/30">{{ __('Not in USD total') }}</p></td>
                                 @php
                                     $additionalPence = (int) $sheet->adjustment_pence;
                                 @endphp
@@ -229,10 +255,10 @@
                                         {{ $additionalPence > 0 ? '+' : '-' }}${{ number_format(abs($additionalPence) / 100, 2) }}
                                     @endif
                                 </td>
-                                <td class="px-4 py-4 font-semibold text-boss-gold">${{ number_format($sheet->gross_pay_pence / 100, 2) }}</td>
+                                <td class="px-4 py-4 font-semibold text-boss-gold">${{ number_format(($sheet->getAttribute('display_gross_pay_pence') ?? $sheet->gross_pay_pence) / 100, 2) }}</td>
                                 <td class="px-4 py-4">
-                                    <p class="font-semibold text-emerald-200">₱{{ number_format($currency->phpCentavosForTimesheet($sheet) / 100, 2) }}</p>
-                                    <p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('1 USD = ₱:rate', ['rate' => $currency->rateForTimesheet($sheet)]) }}</p>
+                                    <p class="font-semibold text-emerald-200">PHP {{ number_format(($sheet->getAttribute('display_gross_pay_php_centavos') ?? $currency->phpCentavosForTimesheet($sheet)) / 100, 2) }}</p>
+                                    <p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('1 USD = PHP :rate', ['rate' => $currency->rateForTimesheet($sheet)]) }}</p>
                                 </td>
                                 <td class="px-4 py-4">
                                     <div class="max-w-xs space-y-2">
@@ -250,12 +276,12 @@
                                 <td class="px-5 py-4 text-right"><a class="pd-btn-secondary inline-flex whitespace-nowrap rounded-lg px-3 py-2 text-xs" href="{{ route('admin.chatter-hours.timesheets.show', $sheet) }}">{{ __('Manage payroll') }}</a></td>
                             </tr>
                         @empty
-                            <tr><td colspan="11" class="px-5 py-12 text-center text-boss-ivory/35">{{ __('No payroll periods match these filters yet.') }}</td></tr>
+                            <tr><td colspan="13" class="px-5 py-12 text-center text-boss-ivory/35">{{ __('No payroll periods match these filters yet.') }}</td></tr>
                         @endforelse
                     </tbody>
                     @if($timesheets->total() > 0)
                         <tfoot class="border-t border-white/[0.08] bg-boss-gold/[0.05] font-semibold">
-                            <tr><td class="px-5 py-4" colspan="2">{{ __('Filtered total') }}</td><td class="px-4 py-4">{{ $formatMinutes($stats['total_minutes']) }}</td><td></td><td class="px-4 py-4">${{ number_format($stats['basic_pay_pence'] / 100, 2) }}</td><td class="px-4 py-4">${{ number_format($stats['adjustment_pence'] / 100, 2) }}</td><td class="px-4 py-4 text-boss-gold">${{ number_format($stats['gross_pay_pence'] / 100, 2) }}</td><td class="px-4 py-4 text-emerald-200">₱{{ number_format($stats['gross_pay_php_centavos'] / 100, 2) }}</td><td colspan="3"></td></tr>
+                            <tr><td class="px-5 py-4" colspan="2">{{ __('Filtered total') }}</td><td class="px-4 py-4">{{ $formatMinutes($stats['total_minutes']) }}</td><td></td><td class="px-4 py-4">${{ number_format($stats['basic_pay_pence'] / 100, 2) }}</td><td class="px-4 py-4 text-emerald-200"><p>${{ number_format(($stats['commission_pence'] ?? 0) / 100, 2) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Generated: $:amount USD', ['amount' => number_format(($stats['generated_usd_pence'] ?? 0) / 100, 2)]) }}</p></td><td class="px-4 py-4 text-emerald-200"><p>GBP {{ number_format(($stats['foreign_commission_pence'] ?? 0) / 100, 2) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Generated: GBP :amount', ['amount' => number_format(($stats['generated_gbp_pence'] ?? 0) / 100, 2)]) }}</p></td><td class="px-4 py-4">${{ number_format($stats['adjustment_pence'] / 100, 2) }}</td><td class="px-4 py-4 text-boss-gold">${{ number_format($stats['gross_pay_pence'] / 100, 2) }}</td><td class="px-4 py-4 text-emerald-200">PHP {{ number_format($stats['gross_pay_php_centavos'] / 100, 2) }}</td><td colspan="3"></td></tr>
                         </tfoot>
                     @endif
                 </table>

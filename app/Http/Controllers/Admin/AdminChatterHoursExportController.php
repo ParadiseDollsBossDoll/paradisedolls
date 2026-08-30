@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ChatterShift;
 use App\Models\ChatterTimesheet;
+use App\Services\ChatterPlatformEarnings;
 use App\Services\ChatterPayrollService;
 use App\Support\ChatterCurrency;
 use App\Support\DesignedXlsxWorkbook;
@@ -18,17 +20,30 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminChatterHoursExportController extends Controller
 {
-    public function xlsx(Request $request, ChatterCurrency $currency): StreamedResponse
+    public function xlsx(Request $request, ChatterCurrency $currency, ChatterPlatformEarnings $earnings, ChatterPayrollService $payroll): StreamedResponse
     {
+        [$periodStart, $periodEnd] = $this->exportDateRange($request);
         $timesheets = $this->timesheets($request);
+        $sourceShifts = $this->snapshotSourceShifts($timesheets);
         $attendance = $timesheets
-            ->flatMap(fn (ChatterTimesheet $timesheet) => collect($timesheet->calculation_snapshot['shifts'] ?? [])->map(fn (array $shift) => [
-                'clock_in' => $this->excelDateText($shift['started_at'] ?? null),
-                'clock_out' => $this->excelDateText($shift['ended_at'] ?? null),
-                'employee' => $timesheet->user->name,
-                'role' => trim(($shift['work_role'] ?? 'Chatter').(filled($shift['platform'] ?? null) ? ' - '.$shift['platform'] : '').(filled($shift['model_name'] ?? null) ? ' - '.$shift['model_name'] : '')),
-                'worked_minutes' => (int) ($shift['paid_minutes'] ?? 0),
-            ]))
+            ->flatMap(fn (ChatterTimesheet $timesheet) => collect($timesheet->calculation_snapshot['shifts'] ?? [])->map(function (array $shift) use ($timesheet, $earnings, $payroll, $sourceShifts): array {
+                $commission = $payroll->commissionForSnapshotShift(
+                    $shift,
+                    $this->snapshotCommissionCanBeDerived($shift, $timesheet, $payroll, $sourceShifts),
+                );
+
+                return [
+                    'clock_in' => $this->excelDateText($shift['started_at'] ?? null),
+                    'clock_out' => $this->excelDateText($shift['ended_at'] ?? null),
+                    'employee' => $timesheet->user->name,
+                    'role' => trim(($shift['work_role'] ?? 'Chatter').(filled($shift['platform'] ?? null) ? ' - '.$shift['platform'] : '').(filled($shift['model_name'] ?? null) ? ' - '.$shift['model_name'] : '')),
+                    'clock_in_balance' => $earnings->formatBalance($shift['clock_in_earning_balance_minor'] ?? null, $shift['earning_unit'] ?? null, $shift['earning_currency'] ?? null),
+                    'clock_out_balance' => $earnings->formatBalance($shift['clock_out_earning_balance_minor'] ?? null, $shift['earning_unit'] ?? null, $shift['earning_currency'] ?? null),
+                    'generated' => $earnings->formatGenerated($shift['generated_earning_units'] ?? null, $shift['generated_earning_pence'] ?? null, $shift['earning_unit'] ?? null, $shift['earning_currency'] ?? null),
+                    'commission' => $earnings->formatCommission($commission['pence'], $commission['currency']),
+                    'worked_minutes' => (int) ($shift['paid_minutes'] ?? 0),
+                ];
+            }))
             ->filter(fn (array $shift): bool => $shift['worked_minutes'] > 0)
             ->sortBy('clock_in')
             ->values();
@@ -39,7 +54,7 @@ class AdminChatterHoursExportController extends Controller
         }
         $payrollRows = $timesheets
             ->groupBy('user_id')
-            ->map(function ($employeeTimesheets) use ($currency): array {
+            ->map(function ($employeeTimesheets) use ($currency, $payroll, $sourceShifts): array {
                 $minutes = (int) $employeeTimesheets->sum('ordinary_minutes');
                 $rateMinuteCents = (int) $employeeTimesheets->sum(function (ChatterTimesheet $timesheet): int {
                     return collect($timesheet->calculation_snapshot['shifts'] ?? [])->sum(
@@ -47,8 +62,16 @@ class AdminChatterHoursExportController extends Controller
                     );
                 });
                 $additionalCents = (int) $employeeTimesheets->sum('adjustment_pence');
-                $finalCents = (int) $employeeTimesheets->sum('gross_pay_pence');
-                $basicCents = $finalCents - $additionalCents;
+                $displaySummaries = $employeeTimesheets->map(fn (ChatterTimesheet $timesheet): array => $this->earningDisplaySummaryForTimesheet($timesheet, $payroll, $sourceShifts));
+                $commissionCents = (int) $displaySummaries->sum('commission_usd_pence');
+                $foreignCommissionCents = (int) $displaySummaries->sum('commission_gbp_pence');
+                $finalCents = (int) $employeeTimesheets->sum(fn (ChatterTimesheet $timesheet): int => $this->displayGrossPayPence(
+                    $timesheet,
+                    $this->earningDisplaySummaryForTimesheet($timesheet, $payroll, $sourceShifts),
+                ));
+                $basicCents = (int) $employeeTimesheets->sum(
+                    fn (ChatterTimesheet $timesheet): int => $timesheet->base_pay_pence ?? ($timesheet->gross_pay_pence - $timesheet->adjustment_pence - $timesheet->commission_pence),
+                );
                 $statuses = $employeeTimesheets->map->workflowStatusLabel()->unique()->values();
                 $notes = $employeeTimesheets->flatMap(fn (ChatterTimesheet $timesheet) => $timesheet->adjustments->map(function ($adjustment): string {
                     return trim($adjustment->label.($adjustment->note ? ': '.$adjustment->note : ''));
@@ -59,33 +82,35 @@ class AdminChatterHoursExportController extends Controller
                     'minutes' => $minutes,
                     'rate' => $minutes > 0 ? round($rateMinuteCents / ($minutes * 100), 2) : 0,
                     'basic' => $basicCents / 100,
+                    'commission' => $commissionCents / 100,
+                    'foreign_commission' => 'GBP '.number_format($foreignCommissionCents / 100, 2),
+                    'foreign_commission_cents' => $foreignCommissionCents,
                     'additional' => $additionalCents / 100,
                     'final_usd' => $finalCents / 100,
-                    'final_php' => $employeeTimesheets->sum(fn (ChatterTimesheet $timesheet) => $currency->phpCentavosForTimesheet($timesheet)) / 100,
+                    'final_php' => $employeeTimesheets->sum(function (ChatterTimesheet $timesheet) use ($currency, $payroll, $sourceShifts): int {
+                        $summary = $this->earningDisplaySummaryForTimesheet($timesheet, $payroll, $sourceShifts);
+
+                        return $timesheet->status === ChatterTimesheet::STATUS_APPROVED
+                            ? $currency->phpCentavosForTimesheet($timesheet)
+                            : $currency->phpCentavosFromUsdCents($this->displayGrossPayPence($timesheet, $summary), $currency->rateForTimesheet($timesheet));
+                    }) / 100,
                     'notes' => $notes !== '' ? $notes : '-',
                     'status' => $statuses->count() === 1 ? $statuses->first() : 'Mixed',
                 ];
             })
             ->sortBy('employee')
             ->values();
-        $grossCents = (int) $timesheets->sum('gross_pay_pence');
-        $grossPhpCentavos = (int) $timesheets->sum(fn (ChatterTimesheet $timesheet) => $currency->phpCentavosForTimesheet($timesheet));
+        $grossCents = (int) $timesheets->sum(fn (ChatterTimesheet $timesheet): int => $this->displayGrossPayPence($timesheet, $this->earningDisplaySummaryForTimesheet($timesheet, $payroll, $sourceShifts)));
+        $grossPhpCentavos = (int) $timesheets->sum(function (ChatterTimesheet $timesheet) use ($currency, $payroll, $sourceShifts): int {
+            $summary = $this->earningDisplaySummaryForTimesheet($timesheet, $payroll, $sourceShifts);
+
+            return $timesheet->status === ChatterTimesheet::STATUS_APPROVED
+                ? $currency->phpCentavosForTimesheet($timesheet)
+                : $currency->phpCentavosFromUsdCents($this->displayGrossPayPence($timesheet, $summary), $currency->rateForTimesheet($timesheet));
+        });
         $exchangeRate = $grossCents !== 0
             ? abs($grossPhpCentavos / $grossCents)
             : (float) $currency->usdToPhpRate();
-        $firstTimesheet = $timesheets->sortBy('period_start')->first();
-        $lastTimesheet = $timesheets->sortByDesc('period_end')->first();
-        $periodStart = $firstTimesheet
-            ? CarbonImmutable::parse($firstTimesheet->period_start->toDateString(), ChatterPayrollService::REPORTING_TIMEZONE)
-            : ($request->filled('from')
-                ? CarbonImmutable::parse($request->input('from'), ChatterPayrollService::REPORTING_TIMEZONE)
-                : CarbonImmutable::now(ChatterPayrollService::REPORTING_TIMEZONE)->startOfWeek());
-        $periodEnd = $lastTimesheet
-            ? CarbonImmutable::parse($lastTimesheet->period_end->toDateString(), ChatterPayrollService::REPORTING_TIMEZONE)
-            : ($request->filled('to')
-                ? CarbonImmutable::parse($request->input('to'), ChatterPayrollService::REPORTING_TIMEZONE)
-                : $periodStart->endOfWeek());
-
         [$rows, $merges] = $this->payrollSheet(
             $attendance,
             $payrollRows,
@@ -94,7 +119,7 @@ class AdminChatterHoursExportController extends Controller
         );
         $workbook = new DesignedXlsxWorkbook([[
             'name' => 'Payroll',
-            'columns' => [13, 13, 13, 13, 13, 13, 10, 10, 18, 14],
+            'columns' => [13, 13, 13, 13, 13, 13, 16, 16, 13, 13, 14, 13, 14],
             'rows' => $rows,
             'merges' => $merges,
             'freezeRow' => 4,
@@ -106,15 +131,33 @@ class AdminChatterHoursExportController extends Controller
         return response()->streamDownload(fn () => print ($contents), 'paradise-dolls-payroll-'.$periodStart->format('Y-m-d').'-to-'.$periodEnd->format('Y-m-d').'.xlsx', $this->downloadHeaders('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'));
     }
 
+    /** @return array{0: CarbonImmutable, 1: CarbonImmutable} */
+    private function exportDateRange(Request $request): array
+    {
+        $validated = $request->validate([
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+        ]);
+        $today = CarbonImmutable::now(ChatterPayrollService::REPORTING_TIMEZONE);
+        $from = isset($validated['from'])
+            ? CarbonImmutable::parse($validated['from'], ChatterPayrollService::REPORTING_TIMEZONE)
+            : $today->startOfWeek(CarbonInterface::MONDAY);
+        $to = isset($validated['to'])
+            ? CarbonImmutable::parse($validated['to'], ChatterPayrollService::REPORTING_TIMEZONE)
+            : $today->endOfWeek(CarbonInterface::SUNDAY);
+
+        return [$from, $to];
+    }
+
     private function payrollSheet(Collection $attendance, Collection $payrollRows, string $periodLabel, float $exchangeRate): array
     {
         $rows = [
             $this->row(1, $this->styledRow('PARADISE DOLLS', 24), 30),
             $this->row(2, $this->styledRow(null, 24), 30),
             $this->row(3, $this->styledRow('Payroll contact: '.config('paradise.onboarding_email'), 25), 20),
-            $this->row(4, $this->cells(['DATE/TIME IN', null, 'DATE/TIME OUT', null, 'EMPLOYEE', null, 'ROLE / SITE / MODEL', null, 'BONUS', 'HOURS WORKED'], 26), 26),
+            $this->row(4, $this->cells(['DATE/TIME IN', null, 'DATE/TIME OUT', null, 'EMPLOYEE', null, 'ROLE / SITE / MODEL', null, 'BALANCE IN', 'BALANCE OUT', 'GENERATED', 'COMMISSION', 'HOURS WORKED'], 26), 26),
         ];
-        $merges = ['A1:J2', 'A3:J3', 'A4:B4', 'C4:D4', 'E4:F4', 'G4:H4'];
+        $merges = ['A1:M2', 'A3:M3', 'A4:B4', 'C4:D4', 'E4:F4', 'G4:H4'];
         $rowNumber = 5;
 
         foreach ($attendance as $index => $shift) {
@@ -122,14 +165,16 @@ class AdminChatterHoursExportController extends Controller
             $textStyle = $pale ? 27 : 28;
             $dateStyle = $pale ? 29 : 30;
             $durationStyle = $pale ? 31 : 32;
-            $usdStyle = $pale ? 52 : 53;
             $rows[] = $this->row($rowNumber, [
                 $this->cell(1, $shift['clock_in'], $dateStyle), $this->cell(2, null, $dateStyle),
                 $this->cell(3, $shift['clock_out'], $dateStyle), $this->cell(4, null, $dateStyle),
                 $this->cell(5, $shift['employee'], $textStyle), $this->cell(6, null, $textStyle),
                 $this->cell(7, $shift['role'], $textStyle), $this->cell(8, null, $textStyle),
-                $this->cell(9, null, $usdStyle),
-                $this->cell(10, $shift['worked_minutes'] / 1440, $durationStyle),
+                $this->cell(9, $shift['clock_in_balance'], $textStyle),
+                $this->cell(10, $shift['clock_out_balance'], $textStyle),
+                $this->cell(11, $shift['generated'], $textStyle),
+                $this->cell(12, $shift['commission'], $textStyle),
+                $this->cell(13, $shift['worked_minutes'] / 1440, $durationStyle),
             ], 34);
             $merges[] = "A{$rowNumber}:B{$rowNumber}";
             $merges[] = "C{$rowNumber}:D{$rowNumber}";
@@ -142,28 +187,29 @@ class AdminChatterHoursExportController extends Controller
         $attendanceEnd = $rowNumber - 1;
         $totalMinutes = (int) $attendance->sum('worked_minutes');
         $totalCells = $this->styledRow(null, 33);
-        $totalCells[8] = $this->cell(9, 'TOTAL HOURS', 33);
-        $totalCells[9] = $attendanceEnd >= $attendanceStart
-            ? $this->formulaCell(10, "SUM(J{$attendanceStart}:J{$attendanceEnd})", $totalMinutes / 1440, 34)
-            : $this->cell(10, 0, 34);
+        $totalCells[11] = $this->cell(12, 'TOTAL HOURS', 33);
+        $totalCells[12] = $attendanceEnd >= $attendanceStart
+            ? $this->formulaCell(13, "SUM(M{$attendanceStart}:M{$attendanceEnd})", $totalMinutes / 1440, 34)
+            : $this->cell(13, 0, 34);
         $rows[] = $this->row($rowNumber, $totalCells, 25);
-        $merges[] = "A{$rowNumber}:H{$rowNumber}";
+        $merges[] = "A{$rowNumber}:K{$rowNumber}";
         $rowNumber += 4;
         $payrollTitleRow = $rowNumber;
         $rows[] = $this->row($rowNumber, $this->styledRow('PAYROLL AS OF '.$periodLabel, 35), 30);
         $rows[] = $this->row(++$rowNumber, $this->styledRow(null, 35), 30);
-        $merges[] = "A{$payrollTitleRow}:J{$rowNumber}";
+        $merges[] = "A{$payrollTitleRow}:M{$rowNumber}";
         $rowNumber += 2;
         $rows[] = $this->row($rowNumber, [
             $this->cell(1, 'The currency conversion applied to this payroll was determined when the report was created.', 36),
-            ...array_map(fn (int $column) => $this->cell($column, null, 36), range(2, 6)),
-            $this->cell(7, 'USD/PHP', 37), $this->cell(8, 'Conversion', 37),
-            $this->cell(9, $exchangeRate, 38), $this->cell(10, null, 37),
+            ...array_map(fn (int $column) => $this->cell($column, null, 36), range(2, 9)),
+            $this->cell(10, 'USD/PHP', 37), $this->cell(11, 'Conversion', 37),
+            $this->cell(12, $exchangeRate, 38), $this->cell(13, null, 37),
         ], 24);
-        $merges[] = "A{$rowNumber}:F{$rowNumber}";
+        $merges[] = "A{$rowNumber}:I{$rowNumber}";
         $rowNumber += 2;
-        $rows[] = $this->row($rowNumber, $this->cells(['EMPLOYEES NAME', null, 'TOTAL HOURS', 'RATE', 'BASIC PAY', 'ADDITIONAL', 'US FINAL PAY', 'PH FINAL PAY', 'NOTES', 'STATUS'], 39), 27);
+        $rows[] = $this->row($rowNumber, $this->cells(['EMPLOYEES NAME', null, 'TOTAL HOURS', 'RATE', 'BASIC PAY', 'USD COMMISSION', 'GBP COMMISSION', 'ADDITIONAL', 'US FINAL PAY', 'PH FINAL PAY', 'NOTES', null, 'STATUS'], 39), 27);
         $merges[] = "A{$rowNumber}:B{$rowNumber}";
+        $merges[] = "K{$rowNumber}:L{$rowNumber}";
         $rowNumber++;
         $payrollStart = $rowNumber;
 
@@ -178,19 +224,24 @@ class AdminChatterHoursExportController extends Controller
                 $this->cell(3, $employee['minutes'] / 1440, $durationStyle),
                 $this->cell(4, $employee['rate'], $usdStyle),
                 $this->cell(5, $employee['basic'], $usdStyle),
-                $this->cell(6, $employee['additional'], $usdStyle),
-                $this->formulaCell(7, "E{$rowNumber}+F{$rowNumber}", $employee['final_usd'], $usdStyle),
-                $this->cell(8, $employee['final_php'], $phpStyle),
-                $this->cell(9, $employee['notes'], $textStyle),
-                $this->cell(10, $employee['status'], $textStyle),
+                $this->cell(6, $employee['commission'], $usdStyle),
+                $this->cell(7, $employee['foreign_commission'], $textStyle),
+                $this->cell(8, $employee['additional'], $usdStyle),
+                $this->formulaCell(9, "E{$rowNumber}+F{$rowNumber}+H{$rowNumber}", $employee['final_usd'], $usdStyle),
+                $this->cell(10, $employee['final_php'], $phpStyle),
+                $this->cell(11, $employee['notes'], $textStyle), $this->cell(12, null, $textStyle),
+                $this->cell(13, $employee['status'], $textStyle),
             ], 31);
             $merges[] = "A{$rowNumber}:B{$rowNumber}";
+            $merges[] = "K{$rowNumber}:L{$rowNumber}";
             $rowNumber++;
         }
 
         $payrollEnd = $rowNumber - 1;
         $totalHours = (int) $payrollRows->sum('minutes') / 1440;
         $totalBasic = (float) $payrollRows->sum('basic');
+        $totalCommission = (float) $payrollRows->sum('commission');
+        $totalForeignCommission = (int) $payrollRows->sum('foreign_commission_cents');
         $totalAdditional = (float) $payrollRows->sum('additional');
         $totalUsd = (float) $payrollRows->sum('final_usd');
         $totalPhp = (float) $payrollRows->sum('final_php');
@@ -199,12 +250,15 @@ class AdminChatterHoursExportController extends Controller
             $payrollEnd >= $payrollStart ? $this->formulaCell(3, "SUM(C{$payrollStart}:C{$payrollEnd})", $totalHours, 49) : $this->cell(3, 0, 49),
             $this->cell(4, null, 48),
             $payrollEnd >= $payrollStart ? $this->formulaCell(5, "SUM(E{$payrollStart}:E{$payrollEnd})", $totalBasic, 50) : $this->cell(5, 0, 50),
-            $payrollEnd >= $payrollStart ? $this->formulaCell(6, "SUM(F{$payrollStart}:F{$payrollEnd})", $totalAdditional, 50) : $this->cell(6, 0, 50),
-            $payrollEnd >= $payrollStart ? $this->formulaCell(7, "SUM(G{$payrollStart}:G{$payrollEnd})", $totalUsd, 50) : $this->cell(7, 0, 50),
-            $payrollEnd >= $payrollStart ? $this->formulaCell(8, "SUM(H{$payrollStart}:H{$payrollEnd})", $totalPhp, 51) : $this->cell(8, 0, 51),
-            $this->cell(9, null, 48), $this->cell(10, null, 48),
+            $payrollEnd >= $payrollStart ? $this->formulaCell(6, "SUM(F{$payrollStart}:F{$payrollEnd})", $totalCommission, 50) : $this->cell(6, 0, 50),
+            $this->cell(7, 'GBP '.number_format($totalForeignCommission / 100, 2), 48),
+            $payrollEnd >= $payrollStart ? $this->formulaCell(8, "SUM(H{$payrollStart}:H{$payrollEnd})", $totalAdditional, 50) : $this->cell(8, 0, 50),
+            $payrollEnd >= $payrollStart ? $this->formulaCell(9, "SUM(I{$payrollStart}:I{$payrollEnd})", $totalUsd, 50) : $this->cell(9, 0, 50),
+            $payrollEnd >= $payrollStart ? $this->formulaCell(10, "SUM(J{$payrollStart}:J{$payrollEnd})", $totalPhp, 51) : $this->cell(10, 0, 51),
+            $this->cell(11, null, 48), $this->cell(12, null, 48), $this->cell(13, null, 48),
         ], 25);
         $merges[] = "A{$rowNumber}:B{$rowNumber}";
+        $merges[] = "K{$rowNumber}:L{$rowNumber}";
 
         return [$rows, $merges];
     }
@@ -242,7 +296,7 @@ class AdminChatterHoursExportController extends Controller
         $today = CarbonImmutable::now(ChatterPayrollService::REPORTING_TIMEZONE);
         $from = isset($validated['from'])
             ? CarbonImmutable::parse($validated['from'], ChatterPayrollService::REPORTING_TIMEZONE)
-            : $today->startOfWeek(CarbonInterface::MONDAY)->subWeeks(11);
+            : $today->startOfWeek(CarbonInterface::MONDAY);
         $to = isset($validated['to'])
             ? CarbonImmutable::parse($validated['to'], ChatterPayrollService::REPORTING_TIMEZONE)
             : $today->endOfWeek(CarbonInterface::SUNDAY);
@@ -257,6 +311,8 @@ class AdminChatterHoursExportController extends Controller
                 $query->where('ordinary_minutes', '>', 0)
                     ->orWhere('gross_pay_pence', '!=', 0)
                     ->orWhere('adjustment_pence', '!=', 0)
+                    ->orWhere('commission_pence', '!=', 0)
+                    ->orWhere('foreign_commission_pence', '!=', 0)
                     ->orWhereHas('adjustments', fn (Builder $adjustments) => $adjustments->where('amount_pence', '!=', 0));
             })
             ->when(isset($validated['search']) && trim($validated['search']) !== '', fn (Builder $q) => $q->whereHas('user', fn (Builder $userQuery) => $userQuery
@@ -296,6 +352,79 @@ class AdminChatterHoursExportController extends Controller
         return $query;
     }
 
+    /** @return array{generated_usd_pence: int, generated_gbp_pence: int, commission_usd_pence: int, commission_gbp_pence: int} */
+    private function earningDisplaySummaryForTimesheet(ChatterTimesheet $timesheet, ChatterPayrollService $payroll, ?Collection $sourceShifts = null): array
+    {
+        $summary = $payroll->earningSummaryForSnapshot(
+            $timesheet->calculation_snapshot ?? [],
+            fn (array $shift): bool => $this->snapshotCommissionCanBeDerived($shift, $timesheet, $payroll, $sourceShifts),
+        );
+
+        return [
+            'generated_usd_pence' => $summary['generated_usd_pence'],
+            'generated_gbp_pence' => $summary['generated_gbp_pence'],
+            'commission_usd_pence' => max((int) $timesheet->commission_pence, $summary['commission_usd_pence']),
+            'commission_gbp_pence' => max((int) $timesheet->foreign_commission_pence, $summary['commission_gbp_pence']),
+        ];
+    }
+
+    private function snapshotSourceShifts(Collection $timesheets): Collection
+    {
+        $shiftIds = $timesheets
+            ->flatMap(fn (ChatterTimesheet $timesheet): array => collect($timesheet->calculation_snapshot['shifts'] ?? [])->pluck('shift_id')->filter()->all())
+            ->unique()
+            ->values();
+
+        if ($shiftIds->isEmpty()) {
+            return collect();
+        }
+
+        return ChatterShift::query()
+            ->whereIn('id', $shiftIds)
+            ->get(['id', 'clocked_out_at', 'commission_currency'])
+            ->keyBy('id');
+    }
+
+    private function snapshotCommissionCanBeDerived(array $shift, ChatterTimesheet $timesheet, ChatterPayrollService $payroll, ?Collection $sourceShifts): bool
+    {
+        if ((int) ($shift['commission_pence'] ?? 0) > 0 || (int) ($shift['foreign_commission_pence'] ?? 0) > 0) {
+            return true;
+        }
+
+        if (! $sourceShifts || ! isset($shift['shift_id'])) {
+            return true;
+        }
+
+        $sourceShift = $sourceShifts->get((int) $shift['shift_id']);
+
+        if (! $sourceShift) {
+            return true;
+        }
+
+        $window = $payroll->reportingWindowFor($timesheet->period_start, $timesheet->period_end);
+
+        if (! $sourceShift->clocked_out_at) {
+            return false;
+        }
+
+        $clockedOutAt = CarbonImmutable::instance($sourceShift->clocked_out_at)->utc()->startOfMinute();
+
+        return $clockedOutAt->greaterThan($window['start']) && $clockedOutAt->lessThanOrEqualTo($window['end']);
+    }
+
+    /** @param array{commission_usd_pence: int} $summary */
+    private function displayGrossPayPence(ChatterTimesheet $timesheet, array $summary): int
+    {
+        if ($timesheet->status === ChatterTimesheet::STATUS_APPROVED) {
+            return (int) $timesheet->gross_pay_pence;
+        }
+
+        $basePayPence = (int) ($timesheet->base_pay_pence
+            ?? data_get($timesheet->calculation_snapshot, 'base_pay_pence', (int) $timesheet->gross_pay_pence - (int) $timesheet->adjustment_pence - (int) $timesheet->commission_pence));
+
+        return $basePayPence + (int) $summary['commission_usd_pence'] + (int) $timesheet->adjustment_pence;
+    }
+
     private function row(int $number, array $cells, ?int $height = null): array
     {
         return ['r' => $number, 'height' => $height, 'cells' => $cells];
@@ -313,7 +442,7 @@ class AdminChatterHoursExportController extends Controller
 
     private function styledRow(mixed $firstValue, int $style): array
     {
-        return collect(range(1, 10))
+        return collect(range(1, 13))
             ->map(fn (int $column): array => $this->cell($column, $column === 1 ? $firstValue : null, $style))
             ->all();
     }

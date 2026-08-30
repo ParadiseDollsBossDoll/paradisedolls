@@ -2,6 +2,14 @@
     @php
         $snapshot = $timesheet->calculation_snapshot ?? [];
         $editable = $timesheet->status !== \App\Models\ChatterTimesheet::STATUS_APPROVED;
+        $earningsFormatter = $earnings ?? app(\App\Services\ChatterPlatformEarnings::class);
+        $earningSummary = $timesheet->getAttribute('earning_summary') ?? [];
+        $displayCommissionPence = (int) ($earningSummary['commission_usd_pence'] ?? $timesheet->commission_pence ?? 0);
+        $displayForeignCommissionPence = (int) ($earningSummary['commission_gbp_pence'] ?? $timesheet->foreign_commission_pence ?? 0);
+        $generatedUsdPence = (int) ($earningSummary['generated_usd_pence'] ?? 0);
+        $generatedGbpPence = (int) ($earningSummary['generated_gbp_pence'] ?? 0);
+        $displayGrossPayPence = (int) ($timesheet->getAttribute('display_gross_pay_pence') ?? $timesheet->gross_pay_pence);
+        $displayGrossPayPhpCentavos = (int) ($timesheet->getAttribute('display_gross_pay_php_centavos') ?? $grossPayPhpCentavos);
     @endphp
     <div class="mx-auto max-w-[1500px] space-y-6 text-boss-ivory">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -17,13 +25,19 @@
         @if (session('status'))<div class="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">{{ session('status') }}</div>@endif
         @if ($errors->any())<div class="rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200"><ul class="list-disc pl-5">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
 
-        <section class="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <section class="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-9">
             @php
+                $basePayPence = (int) ($timesheet->base_pay_pence ?? data_get($snapshot, 'base_pay_pence', $timesheet->gross_pay_pence - $timesheet->adjustment_pence - $timesheet->commission_pence));
                 $summary = [
                     [__('Paid hours'), number_format($timesheet->ordinary_minutes / 60, 2)],
+                    [__('Base pay USD'), '$'.number_format($basePayPence / 100, 2)],
+                    [__('Generated USD'), '$'.number_format($generatedUsdPence / 100, 2)],
+                    [__('Commission USD'), '$'.number_format($displayCommissionPence / 100, 2)],
+                    [__('Generated GBP'), 'GBP '.number_format($generatedGbpPence / 100, 2)],
+                    [__('Commission GBP'), 'GBP '.number_format($displayForeignCommissionPence / 100, 2)],
                     [__('Adjustments USD'), '$'.number_format($timesheet->adjustment_pence / 100, 2)],
-                    [__('Gross USD'), '$'.number_format($timesheet->gross_pay_pence / 100, 2)],
-                    [__('Final pay PHP'), '₱'.number_format($grossPayPhpCentavos / 100, 2)],
+                    [__('Gross USD'), '$'.number_format($displayGrossPayPence / 100, 2)],
+                    [__('Final pay PHP'), 'PHP '.number_format($displayGrossPayPhpCentavos / 100, 2)],
                 ];
             @endphp
             @foreach ($summary as [$label, $value])
@@ -53,6 +67,10 @@
                                 $segmentEnd = $shift->getAttribute('segment_clocked_out_at')?->timezone('Europe/London');
                                 $segmentIsOpen = (bool) $shift->getAttribute('segment_is_open');
                                 $workedMinutes = (int) $shift->getAttribute('worked_minutes');
+                                $segmentCommissionPence = (int) $shift->getAttribute('segment_commission_pence');
+                                $segmentForeignCommissionPence = (int) $shift->getAttribute('segment_foreign_commission_pence');
+                                $segmentCommissionCurrency = $shift->getAttribute('segment_foreign_commission_currency') ?: ($shift->commission_currency ?? 'USD');
+                                $displayCommissionPence = $segmentForeignCommissionPence > 0 ? $segmentForeignCommissionPence : $segmentCommissionPence;
                             @endphp
                             <details class="group p-5 transition open:bg-white/[0.015] hover:bg-white/[0.02]" @if (!$editable) open @endif>
                                 <summary class="flex cursor-pointer list-none flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -85,6 +103,25 @@
                                     </div>
                                     <span class="shrink-0 rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-boss-gold tabular-nums">{{ $segmentIsOpen ? __('Needs attention') : number_format($workedMinutes / 60, 2).'h' }}</span>
                                 </summary>
+
+                                <dl class="mt-4 grid gap-2 border-t border-white/[0.05] pt-4 text-xs sm:grid-cols-2 lg:grid-cols-4">
+                                    <div class="min-w-0 rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
+                                        <dt class="pd-label">{{ __('Clock-in balance') }}</dt>
+                                        <dd class="mt-1 truncate text-boss-ivory tabular-nums">{{ $earningsFormatter->formatBalance($shift->clock_in_earning_balance_minor, $shift->earning_unit, $shift->earning_currency) }}</dd>
+                                    </div>
+                                    <div class="min-w-0 rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
+                                        <dt class="pd-label">{{ __('Clock-out balance') }}</dt>
+                                        <dd class="mt-1 truncate text-boss-ivory tabular-nums">{{ $earningsFormatter->formatBalance($shift->clock_out_earning_balance_minor, $shift->earning_unit, $shift->earning_currency) }}</dd>
+                                    </div>
+                                    <div class="min-w-0 rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
+                                        <dt class="pd-label">{{ __('Generated earnings') }}</dt>
+                                        <dd class="mt-1 truncate text-boss-ivory tabular-nums">{{ $earningsFormatter->formatGenerated($shift->generated_earning_units, $shift->generated_earning_pence, $shift->earning_unit, $shift->earning_currency) }}</dd>
+                                    </div>
+                                    <div class="min-w-0 rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
+                                        <dt class="pd-label">{{ __('Commission') }}</dt>
+                                        <dd class="mt-1 truncate font-semibold text-emerald-200 tabular-nums">{{ $earningsFormatter->formatCommission($displayCommissionPence, $segmentCommissionCurrency) }}</dd>
+                                    </div>
+                                </dl>
 
                                 @if ($editable && $shiftEnd)
                                     <form method="POST" action="{{ route('admin.chatter-hours.shifts.update', [$timesheet, $shift]) }}" class="mt-5 grid gap-3 border-t border-white/[0.05] pt-5 sm:grid-cols-2">@csrf @method('PATCH')
@@ -198,8 +235,8 @@
                     <p class="mt-3 text-xs leading-relaxed text-boss-ivory/40">{{ __('Approved timesheets keep this calculated breakdown permanently, so later rate changes do not alter historical records.') }}</p>
                     <dl class="mt-4 space-y-2 text-sm text-boss-ivory/55 tabular-nums">
                         <div class="flex justify-between gap-3"><dt>{{ __('Base currency') }}</dt><dd class="text-boss-ivory">{{ $snapshot['currency'] ?? 'USD' }}</dd></div>
-                        <div class="flex justify-between gap-3"><dt>{{ __('USD to PHP rate') }}</dt><dd class="text-boss-ivory">₱{{ number_format((float) $usdToPhpRate, 4) }}</dd></div>
-                        <div class="flex justify-between gap-3"><dt>{{ __('Final pay PHP') }}</dt><dd class="font-semibold text-emerald-200">₱{{ number_format($grossPayPhpCentavos / 100, 2) }}</dd></div>
+                        <div class="flex justify-between gap-3"><dt>{{ __('USD to PHP rate') }}</dt><dd class="text-boss-ivory">PHP {{ number_format((float) $usdToPhpRate, 4) }}</dd></div>
+                        <div class="flex justify-between gap-3"><dt>{{ __('Final pay PHP') }}</dt><dd class="font-semibold text-emerald-200">PHP {{ number_format($grossPayPhpCentavos / 100, 2) }}</dd></div>
                         <div class="flex justify-between gap-3"><dt>{{ __('Calculated') }}</dt><dd class="text-right text-boss-ivory">{{ isset($snapshot['generated_at']) ? \Illuminate\Support\Carbon::parse($snapshot['generated_at'])->timezone('Europe/London')->format('d M Y H:i') : __('Pending') }}</dd></div>
                         <div class="flex justify-between gap-3"><dt>{{ __('Rate versions') }}</dt><dd class="text-boss-ivory">{{ count($snapshot['rate_versions'] ?? []) }}</dd></div>
                     </dl>

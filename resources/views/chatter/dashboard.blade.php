@@ -1,6 +1,7 @@
 <x-chatter-layout>
 @php
     $formatMinutes = fn(int $minutes) => intdiv($minutes, 60).'h '.str_pad((string)($minutes % 60), 2, '0', STR_PAD_LEFT).'m';
+    $earningsFormatter = app(\App\Services\ChatterPlatformEarnings::class);
 @endphp
 <div class="mx-auto max-w-7xl space-y-5 text-boss-ivory">
     @if(session('status'))<div class="rounded-md border border-emerald-400/25 bg-emerald-400/10 p-4 text-sm text-emerald-200">{{ session('status') }}</div>@endif
@@ -54,6 +55,9 @@
                             @endif
                             <span class="text-xs text-boss-ivory/40">${{ number_format(($openShift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr</span>
                         </div>
+                        <p class="mt-2 text-xs text-boss-ivory/40 tabular-nums">
+                            {{ __('Starting balance: :balance', ['balance' => $earningsFormatter->formatBalance($openShift->clock_in_earning_balance_minor, $openShift->earning_unit, $openShift->earning_currency)]) }}
+                        </p>
                         <p class="mt-2 text-sm text-boss-ivory/45">{{ __('Clocked in :time', ['time' => $openShift->clocked_in_at->timezone($tz)->format('D, j M - g:i A T')]) }}</p>
                         <p class="mt-1 text-xs text-boss-ivory/35">{{ __('Worked time excludes breaks and is recalculated from server records after refresh.') }}</p>
                     @endif
@@ -202,6 +206,10 @@
                         <div class="rounded-md border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">{{ __('Ask admin to assign at least one model before clocking in.') }}</div>
                     @endif
                     <label class="block"><span class="pd-label">{{ __('Website / platform') }}</span><input class="pd-input mt-2" name="platform" list="chatter-platform-options" placeholder="{{ __('Type the site you are working on') }}" required><datalist id="chatter-platform-options"><option value="Chaturbate"></option><option value="Stripchat"></option><option value="Babestation"></option><option value="OnlyFans"></option><option value="Fansly"></option><option value="ManyVids"></option></datalist></label>
+                    <label class="block">
+                        <span class="pd-label">{{ __('Starting earning balance') }}</span>
+                        <input class="pd-input mt-2" type="text" name="clock_in_earning_balance" inputmode="decimal" value="{{ old('clock_in_earning_balance') }}" placeholder="{{ __('Tokens, or GBP amount for Babestation') }}" required>
+                    </label>
                     @if($availableWorkRoles->count() > 1)
                         <label class="block"><span class="pd-label">{{ __('What are you working on?') }}</span><select class="pd-input mt-2" name="work_role_id" required>@foreach($availableWorkRoles as $assignment)<option value="{{ $assignment->chatter_work_role_id }}">{{ $assignment->workRole->name }} - ${{ number_format($assignment->hourly_rate_pence / 100, 2) }} USD/hr</option>@endforeach</select></label>
                     @elseif($availableWorkRoles->isNotEmpty())
@@ -210,7 +218,13 @@
                     @endif
                     <button class="pd-btn-primary h-12 w-full" @disabled($availableModels->isEmpty())>{{ __('Clock In') }}</button></form>@else
                     @if($activeBreak)<form method="POST" action="{{ route('chatter.breaks.end') }}">@csrf<button class="pd-btn-secondary h-12 w-full">{{ __('Resume Work') }}</button></form>@else<form method="POST" action="{{ route('chatter.breaks.start') }}">@csrf<button class="pd-btn-secondary h-12 w-full">{{ __('Start Break') }}</button></form>@endif
-                    <form method="POST" action="{{ route('chatter.clock-out') }}">@csrf<button class="h-12 w-full rounded-md border border-red-400/30 bg-red-400/10 px-5 text-sm font-bold text-red-200 transition hover:bg-red-400/20">{{ __('Clock Out') }}</button></form>
+                    <form method="POST" action="{{ route('chatter.clock-out') }}" class="space-y-3 sm:col-span-2">@csrf
+                        <label class="block">
+                            <span class="pd-label">{{ __('Ending earning balance') }}</span>
+                            <input class="pd-input mt-2" type="text" name="clock_out_earning_balance" inputmode="decimal" value="{{ old('clock_out_earning_balance') }}" placeholder="{{ __('Tokens, or GBP amount for Babestation') }}" required>
+                        </label>
+                        <button class="h-12 w-full rounded-md border border-red-400/30 bg-red-400/10 px-5 text-sm font-bold text-red-200 transition hover:bg-red-400/20">{{ __('Clock Out') }}</button>
+                    </form>
                 @endif
             </div>
         </div>
@@ -220,7 +234,7 @@
     </section>
 
     <section class="rounded-md border border-white/[0.08] bg-white/[0.025] p-5"><div class="flex flex-wrap items-end justify-between gap-3"><div><p class="pd-kicker">{{ __('Current Week') }}</p><h2 class="mt-1 font-display text-2xl">{{ $currentTimesheet->period_start->format('j M') }} - {{ $currentTimesheet->period_end->format('j M Y') }}</h2></div><span class="rounded-full border border-white/10 px-3 py-1 text-xs text-boss-ivory/50">{{ $currentTimesheet->workflowStatusLabel() }}</span></div>
-        <div class="mt-5 overflow-x-auto"><table class="pd-table min-w-[1020px]"><thead><tr><th>{{ __('Date') }}</th><th>{{ __('Work role') }}</th><th>{{ __('Model') }}</th><th>{{ __('Platform') }}</th><th>{{ __('Clock in') }}</th><th>{{ __('Clock out') }}</th><th>{{ __('Hours Worked') }}</th><th>{{ __('Status') }}</th></tr></thead><tbody>@forelse($currentShifts as $shift)<tr><td>{{ $shift->clocked_in_at->timezone($tz)->format('D, j M') }}</td><td><span class="font-medium">{{ $shift->workRole?->name ?? __('Chatter') }}</span><span class="mt-0.5 block text-xs text-boss-ivory/35">${{ number_format(($shift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr</span></td><td>{{ $shift->model?->name ?? '-' }}</td><td>{{ $shift->platform ?? '-' }}</td><td>{{ $shift->clocked_in_at->timezone($tz)->format('g:i A') }}</td><td>{{ $shift->clocked_out_at?->timezone($tz)->format('g:i A') ?? __('Active') }}</td><td>{{ $formatMinutes((int) $shift->getAttribute('worked_minutes')) }}</td><td>{{ $shift->isOpen() ? ($activeBreak && $openShift?->is($shift) ? __('On break') : __('In progress')) : __('Recorded') }}</td></tr>@empty<tr><td colspan="8" class="text-center text-boss-ivory/40">{{ __('No shifts recorded this week.') }}</td></tr>@endforelse</tbody></table></div>
+        <div class="mt-5 overflow-x-auto"><table class="pd-table min-w-[1240px]"><thead><tr><th>{{ __('Date') }}</th><th>{{ __('Work role') }}</th><th>{{ __('Model') }}</th><th>{{ __('Platform') }}</th><th>{{ __('Clock in') }}</th><th>{{ __('Clock out') }}</th><th>{{ __('Generated') }}</th><th>{{ __('Commission') }}</th><th>{{ __('Hours Worked') }}</th><th>{{ __('Status') }}</th></tr></thead><tbody>@forelse($currentShifts as $shift)<tr><td>{{ $shift->clocked_in_at->timezone($tz)->format('D, j M') }}</td><td><span class="font-medium">{{ $shift->workRole?->name ?? __('Chatter') }}</span><span class="mt-0.5 block text-xs text-boss-ivory/35">${{ number_format(($shift->hourly_rate_pence ?? 0) / 100, 2) }} USD/hr</span></td><td>{{ $shift->model?->name ?? '-' }}</td><td>{{ $shift->platform ?? '-' }}</td><td>{{ $shift->clocked_in_at->timezone($tz)->format('g:i A') }}</td><td>{{ $shift->clocked_out_at?->timezone($tz)->format('g:i A') ?? __('Active') }}</td><td>{{ $earningsFormatter->formatGenerated($shift->generated_earning_units, $shift->generated_earning_pence, $shift->earning_unit, $shift->earning_currency) }}</td><td>{{ $earningsFormatter->formatCommission($shift->commission_pence, $shift->commission_currency) }}</td><td>{{ $formatMinutes((int) $shift->getAttribute('worked_minutes')) }}</td><td>{{ $shift->isOpen() ? ($activeBreak && $openShift?->is($shift) ? __('On break') : __('In progress')) : __('Recorded') }}</td></tr>@empty<tr><td colspan="10" class="text-center text-boss-ivory/40">{{ __('No shifts recorded this week.') }}</td></tr>@endforelse</tbody></table></div>
     </section>
 
     <section class="rounded-md border border-white/[0.08] bg-white/[0.025] p-5">

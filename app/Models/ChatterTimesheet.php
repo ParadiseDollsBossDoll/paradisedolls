@@ -30,7 +30,9 @@ class ChatterTimesheet extends Model
     protected $fillable = [
         'user_id', 'period_start', 'period_end', 'status', 'submitted_at', 'reviewed_by', 'reviewed_at',
         'review_note', 'ordinary_minutes', 'break_minutes', 'night_minutes', 'weekend_minutes',
-        'overtime_minutes', 'adjustment_pence', 'gross_pay_pence', 'calculation_snapshot',
+        'overtime_minutes', 'adjustment_pence', 'base_pay_pence', 'commission_pence',
+        'foreign_commission_currency', 'foreign_commission_pence',
+        'gross_pay_pence', 'calculation_snapshot',
     ];
 
     protected function casts(): array
@@ -38,6 +40,8 @@ class ChatterTimesheet extends Model
         return [
             'period_start' => 'date', 'period_end' => 'date', 'submitted_at' => 'datetime',
             'reviewed_at' => 'datetime', 'calculation_snapshot' => 'array',
+            'base_pay_pence' => 'integer', 'commission_pence' => 'integer',
+            'foreign_commission_pence' => 'integer', 'gross_pay_pence' => 'integer',
         ];
     }
 

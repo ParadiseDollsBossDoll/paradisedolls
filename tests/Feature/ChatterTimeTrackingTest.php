@@ -310,7 +310,7 @@ class ChatterTimeTrackingTest extends TestCase
             'clocked_in_at' => '2026-07-13 08:00:00',
             'clocked_out_at' => '2026-07-13 10:00:00',
             'timezone' => 'Europe/London',
-        ]);
+        ] + $this->tokenEarningSnapshot());
         ChatterBreak::create([
             'chatter_shift_id' => $shift->id,
             'started_at' => '2026-07-13 09:00:00',
@@ -524,8 +524,8 @@ class ChatterTimeTrackingTest extends TestCase
         $chatter = $this->chatter();
         CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
 
-        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate'])->assertSessionHasNoErrors();
-        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate'])->assertSessionHasErrors('shift');
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate', 'clock_in_earning_balance' => '1000'])->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate', 'clock_in_earning_balance' => '1000'])->assertSessionHasErrors('shift');
         $this->actingAs($chatter)->post(route('chatter.breaks.end'))->assertSessionHasErrors('shift');
 
         CarbonImmutable::setTestNow('2026-07-13 10:00:00 UTC');
@@ -533,7 +533,7 @@ class ChatterTimeTrackingTest extends TestCase
         $this->actingAs($chatter)->post(route('chatter.breaks.start'))->assertSessionHasErrors('shift');
 
         CarbonImmutable::setTestNow('2026-07-13 10:30:00 UTC');
-        $this->actingAs($chatter)->post(route('chatter.clock-out'))->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-out'), ['clock_out_earning_balance' => '1000'])->assertSessionHasNoErrors();
 
         $shift = ChatterShift::firstOrFail();
         $break = ChatterBreak::firstOrFail();
@@ -543,7 +543,7 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertNull($break->active_shift_id);
         $this->assertDatabaseHas('chatter_time_audits', ['action' => 'break_ended_on_clock_out']);
 
-        $this->actingAs($chatter)->post(route('chatter.clock-out'))->assertSessionHasErrors('shift');
+        $this->actingAs($chatter)->post(route('chatter.clock-out'), ['clock_out_earning_balance' => '1000'])->assertSessionHasErrors('shift');
     }
 
     public function test_logging_out_warns_an_active_chatter_and_clocks_out_the_shift(): void
@@ -551,7 +551,7 @@ class ChatterTimeTrackingTest extends TestCase
         $chatter = $this->chatter();
         CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
 
-        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate'])->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate', 'clock_in_earning_balance' => '1000'])->assertSessionHasNoErrors();
 
         CarbonImmutable::setTestNow('2026-07-13 08:30:00 UTC');
         $this->actingAs($chatter)->post(route('chatter.breaks.start'))->assertSessionHasNoErrors();
@@ -584,7 +584,7 @@ class ChatterTimeTrackingTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $chatter = $this->chatter();
         CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
-        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate'])->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate', 'clock_in_earning_balance' => '1000'])->assertSessionHasNoErrors();
         CarbonImmutable::setTestNow('2026-07-13 08:30:00 UTC');
         $this->actingAs($chatter)->post(route('chatter.breaks.start'))->assertSessionHasNoErrors();
         DB::table('sessions')->insert([
@@ -614,7 +614,7 @@ class ChatterTimeTrackingTest extends TestCase
         $chatter = $this->chatter();
         CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
 
-        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate'])->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate', 'clock_in_earning_balance' => '1000'])->assertSessionHasNoErrors();
 
         CarbonImmutable::setTestNow('2026-07-13 08:30:00 UTC');
         $this->actingAs($chatter)->post(route('chatter.breaks.start'))->assertSessionHasNoErrors();
@@ -643,7 +643,7 @@ class ChatterTimeTrackingTest extends TestCase
             ->assertSee('initialTimerRunning: true', false);
 
         CarbonImmutable::setTestNow('2026-07-13 10:00:00 UTC');
-        $this->actingAs($chatter)->post(route('chatter.clock-out'))->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-out'), ['clock_out_earning_balance' => '1000'])->assertSessionHasNoErrors();
 
         $sheet = app(ChatterPayrollService::class)
             ->refresh(app(ChatterPayrollService::class)->getOrCreate($chatter, CarbonImmutable::parse('2026-07-13', 'Europe/London')));
@@ -666,7 +666,7 @@ class ChatterTimeTrackingTest extends TestCase
         $chatter = $this->chatter();
         CarbonImmutable::setTestNow('2026-07-13 08:00:10 UTC');
 
-        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate'])->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate', 'clock_in_earning_balance' => '1000'])->assertSessionHasNoErrors();
 
         CarbonImmutable::setTestNow('2026-07-13 08:30:20 UTC');
         $this->actingAs($chatter)->post(route('chatter.breaks.start'))->assertSessionHasNoErrors();
@@ -695,7 +695,7 @@ class ChatterTimeTrackingTest extends TestCase
         $chatter = $this->chatter();
         CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
 
-        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate'])->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), ['platform' => 'Chaturbate', 'clock_in_earning_balance' => '1000'])->assertSessionHasNoErrors();
 
         CarbonImmutable::setTestNow('2026-07-13 08:30:00 UTC');
         $this->actingAs($chatter)->post(route('chatter.breaks.start'))->assertSessionHasNoErrors();
@@ -775,10 +775,11 @@ class ChatterTimeTrackingTest extends TestCase
         $this->actingAs($chatter)->post(route('chatter.clock-in'), [
             'work_role_id' => $adminTask->id,
             'platform' => 'Stripchat',
+            'clock_in_earning_balance' => '1000',
         ])->assertSessionHasNoErrors();
 
         CarbonImmutable::setTestNow('2026-07-13 09:00:00 UTC');
-        $this->actingAs($chatter)->post(route('chatter.clock-out'))->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-out'), ['clock_out_earning_balance' => '1000'])->assertSessionHasNoErrors();
 
         $shift = ChatterShift::query()->firstOrFail();
         $this->assertSame($adminTask->id, $shift->chatter_work_role_id);
@@ -810,6 +811,7 @@ class ChatterTimeTrackingTest extends TestCase
         $this->actingAs($chatter)->post(route('chatter.clock-in'), [
             'work_role_id' => $adminTask->id,
             'platform' => 'Stripchat',
+            'clock_in_earning_balance' => '1000',
         ])->assertSessionHasErrors('work_role_id');
 
         $this->assertDatabaseCount('chatter_shifts', 0);
@@ -835,20 +837,23 @@ class ChatterTimeTrackingTest extends TestCase
         CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
         $this->actingAs($chatter)->post(route('chatter.clock-in'), [
             'platform' => 'Stripchat',
+            'clock_in_earning_balance' => '1000',
         ])->assertSessionHasErrors('model_id');
 
         $this->actingAs($chatter)->post(route('chatter.clock-in'), [
             'platform' => 'Stripchat',
             'model_id' => $otherModel->id,
+            'clock_in_earning_balance' => '1000',
         ])->assertSessionHasErrors('model_id');
 
         $this->actingAs($chatter)->post(route('chatter.clock-in'), [
             'platform' => 'Stripchat',
             'model_id' => $assignedModel->id,
+            'clock_in_earning_balance' => '1000',
         ])->assertSessionHasNoErrors();
 
         CarbonImmutable::setTestNow('2026-07-13 09:00:00 UTC');
-        $this->actingAs($chatter)->post(route('chatter.clock-out'))->assertSessionHasNoErrors();
+        $this->actingAs($chatter)->post(route('chatter.clock-out'), ['clock_out_earning_balance' => '1000'])->assertSessionHasNoErrors();
 
         $shift = ChatterShift::query()->firstOrFail();
         $this->assertSame('Stripchat', $shift->platform);
@@ -860,6 +865,283 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertSame($assignedModel->id, data_get($sheet->calculation_snapshot, 'shifts.0.model_id'));
         $this->assertSame('Assigned Model', data_get($sheet->calculation_snapshot, 'shifts.0.model_name'));
         $this->assertSame('Stripchat', data_get($sheet->calculation_snapshot, 'shifts.0.platform'));
+    }
+
+    public function test_chatter_must_enter_earning_balances_when_clocking_in_and_out(): void
+    {
+        $chatter = $this->chatter();
+
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), [
+            'platform' => 'Chaturbate',
+        ])->assertSessionHasErrors('clock_in_earning_balance');
+
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), [
+            'platform' => 'Chaturbate',
+            'clock_in_earning_balance' => '1000',
+        ])->assertSessionHasNoErrors();
+
+        $this->actingAs($chatter)
+            ->post(route('chatter.clock-out'))
+            ->assertSessionHasErrors('clock_out_earning_balance');
+
+        $this->actingAs($chatter)
+            ->post(route('chatter.clock-out'), ['clock_out_earning_balance' => '999'])
+            ->assertSessionHasErrors('clock_out_earning_balance');
+
+        $this->actingAs($chatter)
+            ->post(route('chatter.clock-out'), ['clock_out_earning_balance' => '2000'])
+            ->assertSessionHasNoErrors();
+
+        $shift = ChatterShift::query()->firstOrFail();
+        $this->assertSame(1000, $shift->clock_in_earning_balance_minor);
+        $this->assertSame(2000, $shift->clock_out_earning_balance_minor);
+        $this->assertSame(1000, $shift->generated_earning_units);
+    }
+
+    public function test_chatter_token_commission_is_calculated_per_shift_and_added_to_payroll(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $chatter = $this->chatter();
+        $assignedModel = User::factory()->create(['role' => 'model', 'name' => 'Commission Model']);
+        $assignedModel->modelProfile()->create(['verification_status' => 'verified']);
+        ChatterModelAssignment::create([
+            'chatter_id' => $chatter->id,
+            'model_id' => $assignedModel->id,
+            'assigned_at' => now(),
+        ]);
+
+        CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), [
+            'platform' => 'Stripchat',
+            'model_id' => $assignedModel->id,
+            'clock_in_earning_balance' => '1000',
+        ])->assertSessionHasNoErrors();
+
+        CarbonImmutable::setTestNow('2026-07-13 09:00:00 UTC');
+        $this->actingAs($chatter)
+            ->post(route('chatter.clock-out'), ['clock_out_earning_balance' => '2000'])
+            ->assertSessionHasNoErrors();
+
+        $shift = ChatterShift::query()->with('workRole', 'model')->firstOrFail();
+        $this->assertSame(1000, $shift->generated_earning_units);
+        $this->assertSame(5000, $shift->generated_earning_pence);
+        $this->assertSame(300, $shift->commission_bps);
+        $this->assertSame('USD', $shift->commission_currency);
+        $this->assertSame(50000, $shift->earning_unit_value_usd_micro);
+        $this->assertSame(150, $shift->commission_pence);
+        $this->assertSame('Stripchat', $shift->platform);
+        $this->assertSame($assignedModel->id, $shift->model_id);
+
+        $sheet = app(ChatterPayrollService::class)
+            ->refresh(app(ChatterPayrollService::class)->getOrCreate($chatter, CarbonImmutable::parse('2026-07-13', 'Europe/London')));
+
+        $this->assertSame(60, $sheet->ordinary_minutes);
+        $this->assertSame(1200, $sheet->base_pay_pence);
+        $this->assertSame(150, $sheet->commission_pence);
+        $this->assertSame(1350, $sheet->gross_pay_pence);
+        $this->assertSame(1000, data_get($sheet->calculation_snapshot, 'shifts.0.clock_in_earning_balance_minor'));
+        $this->assertSame(2000, data_get($sheet->calculation_snapshot, 'shifts.0.clock_out_earning_balance_minor'));
+        $this->assertSame(1000, data_get($sheet->calculation_snapshot, 'shifts.0.generated_earning_units'));
+        $this->assertSame(5000, data_get($sheet->calculation_snapshot, 'shifts.0.generated_earning_pence'));
+        $this->assertSame(150, data_get($sheet->calculation_snapshot, 'shifts.0.commission_pence'));
+        $this->assertSame('Commission Model', data_get($sheet->calculation_snapshot, 'shifts.0.model_name'));
+
+        $this->actingAs($admin)
+            ->get(route('admin.chatter-hours.timesheets.show', $sheet))
+            ->assertOk()
+            ->assertSee('Clock-in balance')
+            ->assertSee('1,000')
+            ->assertSee('Clock-out balance')
+            ->assertSee('2,000')
+            ->assertSee('Generated earnings')
+            ->assertSee('$1.50 USD');
+    }
+
+    public function test_platform_specific_token_values_calculate_commission_correctly(): void
+    {
+        $cases = [
+            ['Stripchat', 5000, 150],
+            ['SC', 5000, 150],
+            ['Chaturbate', 5000, 150],
+            ['CB', 5000, 150],
+            ['Camsoda', 5000, 150],
+            ['MyFreeCams', 5000, 150],
+            ['MFC', 5000, 150],
+            ['CAM4', 10000, 300],
+            ['Bongacams', 2500, 75],
+        ];
+
+        foreach ($cases as [$platform, $generatedCents, $commissionCents]) {
+            $chatter = $this->chatter();
+
+            CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
+            $this->actingAs($chatter)->post(route('chatter.clock-in'), [
+                'platform' => $platform,
+                'clock_in_earning_balance' => '1000',
+            ])->assertSessionHasNoErrors();
+
+            CarbonImmutable::setTestNow('2026-07-13 09:00:00 UTC');
+            $this->actingAs($chatter)->post(route('chatter.clock-out'), [
+                'clock_out_earning_balance' => '2000',
+            ])->assertSessionHasNoErrors();
+
+            $shift = ChatterShift::query()->where('user_id', $chatter->id)->firstOrFail();
+            $this->assertSame('tokens', $shift->earning_unit);
+            $this->assertSame('USD', $shift->earning_currency);
+            $this->assertSame(1000, $shift->generated_earning_units);
+            $this->assertSame($generatedCents, $shift->generated_earning_pence);
+            $this->assertSame('USD', $shift->commission_currency);
+            $this->assertSame($commissionCents, $shift->commission_pence);
+        }
+    }
+
+    public function test_generated_earnings_recover_commission_for_payroll_snapshot_and_admin_display(): void
+    {
+        CarbonImmutable::setTestNow('2026-08-31 12:00:00 Europe/London');
+        $admin = User::factory()->create(['role' => 'admin']);
+        $chatter = $this->chatter(['base_rate_pence' => 300]);
+        $model = User::factory()->create(['role' => 'model', 'name' => 'Token Test Model']);
+        $model->modelProfile()->create(['verification_status' => 'verified']);
+        $role = ChatterWorkRole::query()->where('slug', 'chatter')->firstOrFail();
+
+        ChatterShift::create(array_merge([
+            'user_id' => $chatter->id,
+            'chatter_work_role_id' => $role->id,
+            'hourly_rate_pence' => 300,
+            'clocked_in_at' => CarbonImmutable::parse('2026-08-31 19:35:00', 'Europe/London')->utc(),
+            'clocked_out_at' => CarbonImmutable::parse('2026-08-31 22:07:00', 'Europe/London')->utc(),
+            'timezone' => 'Europe/London',
+            'platform' => 'Stripchat',
+            'model_id' => $model->id,
+        ], $this->tokenEarningSnapshot(1300, 5000), [
+            'commission_pence' => 0,
+        ]));
+
+        $payroll = app(ChatterPayrollService::class);
+        $sheet = $payroll->refresh($payroll->getOrCreate($chatter, CarbonImmutable::parse('2026-08-31', 'Europe/London')));
+
+        $this->assertSame(3700, data_get($sheet->calculation_snapshot, 'shifts.0.generated_earning_units'));
+        $this->assertSame(18500, data_get($sheet->calculation_snapshot, 'shifts.0.generated_earning_pence'));
+        $this->assertSame(555, data_get($sheet->calculation_snapshot, 'shifts.0.commission_pence'));
+        $this->assertSame(555, $sheet->commission_pence);
+
+        $this->actingAs($admin)->get(route('admin.chatter-hours.attendance', [
+            'from' => '2026-08-31',
+            'to' => '2026-09-06',
+        ]))
+            ->assertOk()
+            ->assertSee('Balance in')
+            ->assertSee('1,300 tokens')
+            ->assertSee('Balance out')
+            ->assertSee('5,000 tokens')
+            ->assertSee('3,700 tokens / $185.00 USD')
+            ->assertSee('$5.55 USD')
+            ->assertSee('Generated: $185.00 USD')
+            ->assertSee('Token Test Model');
+    }
+
+    public function test_export_derives_commission_when_saved_snapshot_commission_is_zero(): void
+    {
+        CarbonImmutable::setTestNow('2026-08-31 12:00:00 Europe/London');
+        $admin = User::factory()->create(['role' => 'admin']);
+        $chatter = $this->chatter(['base_rate_pence' => 300]);
+
+        ChatterShift::create([
+            'user_id' => $chatter->id,
+            'clocked_in_at' => CarbonImmutable::parse('2026-08-31 19:35:00', 'Europe/London')->utc(),
+            'clocked_out_at' => CarbonImmutable::parse('2026-08-31 22:07:00', 'Europe/London')->utc(),
+            'timezone' => 'Europe/London',
+            'platform' => 'Stripchat',
+        ] + $this->tokenEarningSnapshot(1300, 5000));
+
+        $payroll = app(ChatterPayrollService::class);
+        $sheet = $payroll->refresh($payroll->getOrCreate($chatter, CarbonImmutable::parse('2026-08-31', 'Europe/London')));
+        $snapshot = $sheet->calculation_snapshot;
+        data_set($snapshot, 'shifts.0.commission_pence', 0);
+        $sheet->forceFill([
+            'commission_pence' => 0,
+            'gross_pay_pence' => (int) $sheet->base_pay_pence,
+            'calculation_snapshot' => $snapshot,
+        ])->save();
+
+        $sheetXml = $this->sheetXmlFromStreamedResponse(
+            $this->actingAs($admin)->get(route('admin.chatter-hours.export.xlsx')),
+        );
+
+        $this->assertStringContainsString('3,700 tokens / $185.00 USD', $sheetXml);
+        $this->assertStringContainsString('$5.55 USD', $sheetXml);
+        $this->assertStringContainsString('USD COMMISSION', $sheetXml);
+    }
+
+    public function test_babestation_commission_is_calculated_in_gbp_and_not_added_to_usd_payroll(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $chatter = $this->chatter(['base_rate_pence' => 200]);
+
+        CarbonImmutable::setTestNow('2026-07-13 08:00:00 UTC');
+        $this->actingAs($chatter)->post(route('chatter.clock-in'), [
+            'platform' => 'Babestation',
+            'clock_in_earning_balance' => '100.00',
+        ])->assertSessionHasNoErrors();
+
+        CarbonImmutable::setTestNow('2026-07-13 09:00:00 UTC');
+        $this->actingAs($chatter)->post(route('chatter.clock-out'), [
+            'clock_out_earning_balance' => '200.00',
+        ])->assertSessionHasNoErrors();
+
+        $shift = ChatterShift::query()->firstOrFail();
+        $this->assertSame('gbp', $shift->earning_unit);
+        $this->assertSame('GBP', $shift->earning_currency);
+        $this->assertNull($shift->earning_unit_value_usd_micro);
+        $this->assertSame(10000, $shift->generated_earning_units);
+        $this->assertSame(10000, $shift->generated_earning_pence);
+        $this->assertSame('GBP', $shift->commission_currency);
+        $this->assertSame(300, $shift->commission_pence);
+
+        $sheet = app(ChatterPayrollService::class)
+            ->refresh(app(ChatterPayrollService::class)->getOrCreate($chatter, CarbonImmutable::parse('2026-07-13', 'Europe/London')));
+
+        $this->assertSame(60, $sheet->ordinary_minutes);
+        $this->assertSame(200, $sheet->base_pay_pence);
+        $this->assertSame(0, $sheet->commission_pence);
+        $this->assertSame('GBP', $sheet->foreign_commission_currency);
+        $this->assertSame(300, $sheet->foreign_commission_pence);
+        $this->assertSame(200, $sheet->gross_pay_pence);
+
+        $this->actingAs($admin)
+            ->get(route('admin.chatter-hours.timesheets.show', $sheet))
+            ->assertOk()
+            ->assertSee('GBP 100.00')
+            ->assertSee('GBP 3.00')
+            ->assertSee('Commission GBP');
+
+        $sheetXml = $this->sheetXmlFromStreamedResponse(
+            $this->actingAs($admin)->get(route('admin.chatter-hours.export.xlsx', ['chatter_id' => $chatter->id])),
+        );
+        $this->assertStringContainsString('BALANCE IN', $sheetXml);
+        $this->assertStringContainsString('GBP 100.00', $sheetXml);
+        $this->assertStringContainsString('GBP 3.00', $sheetXml);
+        $this->assertStringContainsString('GBP COMMISSION', $sheetXml);
+    }
+
+    public function test_missing_shift_earning_balances_receive_zero_commission(): void
+    {
+        $chatter = $this->chatter();
+        ChatterShift::create([
+            'user_id' => $chatter->id,
+            'clocked_in_at' => '2026-07-13 08:00:00',
+            'clocked_out_at' => '2026-07-13 09:00:00',
+            'timezone' => 'Europe/London',
+        ]);
+
+        $sheet = app(ChatterPayrollService::class)
+            ->refresh(app(ChatterPayrollService::class)->getOrCreate($chatter, CarbonImmutable::parse('2026-07-13', 'Europe/London')));
+
+        $this->assertSame(1200, $sheet->base_pay_pence);
+        $this->assertSame(0, $sheet->commission_pence);
+        $this->assertSame(1200, $sheet->gross_pay_pence);
+        $this->assertNull(data_get($sheet->calculation_snapshot, 'shifts.0.generated_earning_units'));
+        $this->assertSame(0, data_get($sheet->calculation_snapshot, 'shifts.0.commission_pence'));
     }
 
     public function test_admin_chatter_hours_pages_separate_accounts_from_attendance_and_payroll(): void
@@ -890,7 +1172,10 @@ class ChatterTimeTrackingTest extends TestCase
             ->assertDontSee('Attendance log')
             ->assertDontSee('Payroll summary');
 
-        $this->actingAs($admin)->get(route('admin.chatter-hours.attendance'))
+        $this->actingAs($admin)->get(route('admin.chatter-hours.attendance', [
+            'from' => '2026-07-13',
+            'to' => '2026-07-19',
+        ]))
             ->assertOk()
             ->assertSee('Attendance log')
             ->assertSee('Weekly payroll')
@@ -900,7 +1185,8 @@ class ChatterTimeTrackingTest extends TestCase
             ->assertSee('Currency conversion')
             ->assertSee('Total hours')
             ->assertSee('Rate')
-            ->assertSee('Basic pay')
+            ->assertSee('Base pay')
+            ->assertSee('Commission')
             ->assertSee('Additional')
             ->assertSee('US final pay')
             ->assertSee('PH final pay')
@@ -1004,7 +1290,10 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertSame(0, $adjustedTimesheet->ordinary_minutes);
         $this->assertSame(0, $adjustedTimesheet->gross_pay_pence);
 
-        $response = $this->actingAs($admin)->get(route('admin.chatter-hours.attendance'));
+        $response = $this->actingAs($admin)->get(route('admin.chatter-hours.attendance', [
+            'from' => '2026-07-13',
+            'to' => '2026-07-19',
+        ]));
         $response->assertOk();
 
         $visibleShiftIds = $response->viewData('attendanceShifts')->getCollection()->pluck('id');
@@ -1019,6 +1308,102 @@ class ChatterTimeTrackingTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.chatter-hours.timesheets.show', $zeroTimesheet))
             ->assertOk();
+    }
+
+    public function test_admin_attendance_and_export_default_to_current_uk_payroll_week(): void
+    {
+        CarbonImmutable::setTestNow('2026-08-31 00:05:00 Europe/London');
+        $admin = User::factory()->create(['role' => 'admin']);
+        $oldChatter = $this->chatter();
+        $oldChatter->forceFill(['name' => 'Old Week Chatter'])->save();
+        $currentChatter = $this->chatter();
+        $currentChatter->forceFill(['name' => 'Current Week Chatter'])->save();
+        $payroll = app(ChatterPayrollService::class);
+
+        ChatterShift::create([
+            'user_id' => $oldChatter->id,
+            'clocked_in_at' => CarbonImmutable::parse('2026-08-24 10:00:00', 'Europe/London')->utc(),
+            'clocked_out_at' => CarbonImmutable::parse('2026-08-24 11:00:00', 'Europe/London')->utc(),
+            'timezone' => 'Europe/London',
+            'platform' => 'Old Week Platform',
+        ] + $this->tokenEarningSnapshot());
+        $payroll->refresh($payroll->getOrCreate($oldChatter, CarbonImmutable::parse('2026-08-24', 'Europe/London')));
+
+        ChatterShift::create([
+            'user_id' => $currentChatter->id,
+            'clocked_in_at' => CarbonImmutable::parse('2026-08-31 10:00:00', 'Europe/London')->utc(),
+            'clocked_out_at' => CarbonImmutable::parse('2026-08-31 11:00:00', 'Europe/London')->utc(),
+            'timezone' => 'Europe/London',
+            'platform' => 'Current Week Platform',
+        ] + $this->tokenEarningSnapshot());
+        $payroll->refresh($payroll->getOrCreate($currentChatter, CarbonImmutable::parse('2026-08-31', 'Europe/London')));
+
+        $defaultResponse = $this->actingAs($admin)->get(route('admin.chatter-hours.attendance'));
+        $defaultResponse->assertOk()
+            ->assertSee('Current Week Platform')
+            ->assertDontSee('Old Week Platform');
+        $this->assertSame('2026-08-31', $defaultResponse->viewData('filters')['from']);
+        $this->assertSame('2026-09-06', $defaultResponse->viewData('filters')['to']);
+        $defaultResponse->assertSee('name="from" value="2026-08-31"', false);
+        $defaultResponse->assertSee('name="to" value="2026-09-06"', false);
+        $defaultResponse->assertSee('UK payroll time');
+        $defaultResponse->assertSee('Mon, 31 Aug 2026 12:05 AM UK Time');
+        $defaultResponse->assertSee('Viewing payroll week: 31 Aug 2026 - 06 Sep 2026');
+        $defaultResponse->assertSee(e(route('admin.chatter-hours.export.xlsx', [
+            'from' => '2026-08-31',
+            'to' => '2026-09-06',
+        ])), false);
+
+        $filteredResponse = $this->actingAs($admin)->get(route('admin.chatter-hours.attendance', [
+            'from' => '2026-08-24',
+            'to' => '2026-08-30',
+        ]));
+        $filteredResponse->assertOk()
+            ->assertSee('Old Week Platform')
+            ->assertDontSee('Current Week Platform');
+        $filteredResponse->assertSee(e(route('admin.chatter-hours.export.xlsx', [
+            'from' => '2026-08-24',
+            'to' => '2026-08-30',
+        ])), false);
+
+        $defaultExportResponse = $this->actingAs($admin)->get(route('admin.chatter-hours.export.xlsx'));
+        $defaultExportResponse->assertOk();
+        $this->assertStringContainsString(
+            'paradise-dolls-payroll-2026-08-31-to-2026-09-06.xlsx',
+            (string) $defaultExportResponse->headers->get('content-disposition'),
+        );
+        $defaultExport = $this->sheetXmlFromStreamedResponse($defaultExportResponse);
+        $this->assertStringContainsString('Current Week Platform', $defaultExport);
+        $this->assertStringNotContainsString('Old Week Platform', $defaultExport);
+        $this->assertStringContainsString('PAYROLL AS OF 08/31/2026 - 09/06/2026', $defaultExport);
+
+        $filteredExportResponse = $this->actingAs($admin)->get(route('admin.chatter-hours.export.xlsx', [
+            'from' => '2026-08-24',
+            'to' => '2026-08-30',
+        ]));
+        $filteredExportResponse->assertOk();
+        $this->assertStringContainsString(
+            'paradise-dolls-payroll-2026-08-24-to-2026-08-30.xlsx',
+            (string) $filteredExportResponse->headers->get('content-disposition'),
+        );
+        $filteredExport = $this->sheetXmlFromStreamedResponse($filteredExportResponse);
+        $this->assertStringContainsString('Old Week Platform', $filteredExport);
+        $this->assertStringNotContainsString('Current Week Platform', $filteredExport);
+        $this->assertStringContainsString('PAYROLL AS OF 08/24/2026 - 08/30/2026', $filteredExport);
+
+        $mixedBoundaryExportResponse = $this->actingAs($admin)->get(route('admin.chatter-hours.export.xlsx', [
+            'from' => '2026-08-30',
+            'to' => '2026-09-06',
+        ]));
+        $mixedBoundaryExportResponse->assertOk();
+        $this->assertStringContainsString(
+            'paradise-dolls-payroll-2026-08-30-to-2026-09-06.xlsx',
+            (string) $mixedBoundaryExportResponse->headers->get('content-disposition'),
+        );
+        $this->assertStringContainsString(
+            'PAYROLL AS OF 08/30/2026 - 09/06/2026',
+            $this->sheetXmlFromStreamedResponse($mixedBoundaryExportResponse),
+        );
     }
 
     public function test_chatter_timesheets_use_automatic_workflow_labels_without_submission(): void
@@ -1110,7 +1495,10 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertSame('60.2500', $currency->rateForTimesheet($sheet->fresh()));
         $this->assertSame(60250, $currency->phpCentavosForTimesheet($sheet->fresh()));
 
-        $this->actingAs($admin)->get(route('admin.chatter-hours.attendance'))
+        $this->actingAs($admin)->get(route('admin.chatter-hours.attendance', [
+            'from' => '2026-07-13',
+            'to' => '2026-07-19',
+        ]))
             ->assertOk()
             ->assertSee('Automatic reference rate')
             ->assertSee('62.0000')
@@ -1155,10 +1543,14 @@ class ChatterTimeTrackingTest extends TestCase
         ]);
         $payroll->refresh($sheet);
 
-        $this->actingAs($admin)->get(route('admin.chatter-hours.attendance'))
+        $this->actingAs($admin)->get(route('admin.chatter-hours.attendance', [
+            'from' => '2026-07-13',
+            'to' => '2026-07-19',
+        ]))
             ->assertOk()
             ->assertSee('Weekly payroll')
-            ->assertSee('Basic pay')
+            ->assertSee('Base pay')
+            ->assertSee('Commission')
             ->assertSee('Additional')
             ->assertSee('US final pay')
             ->assertSee('PH final pay')
@@ -1345,13 +1737,21 @@ class ChatterTimeTrackingTest extends TestCase
             ->assertSessionHasNoErrors();
         $sheet->refresh();
         $approvedPay = $sheet->gross_pay_pence;
+        $approvedCommission = $sheet->commission_pence;
         $this->assertSame(ChatterTimesheet::STATUS_APPROVED, $sheet->status);
         $this->assertNotEmpty($sheet->calculation_snapshot);
         Mail::assertQueued(ChatterWorkflowMail::class);
 
         ChatterPayRate::where('user_id', $chatter->id)->update(['base_rate_pence' => 9999]);
+        $shift->forceFill([
+            'clock_out_earning_balance_minor' => 3000,
+            'generated_earning_units' => 2000,
+            'generated_earning_pence' => 10000,
+            'commission_pence' => 300,
+        ])->save();
         $payroll->refresh($sheet);
         $this->assertSame($approvedPay, $sheet->fresh()->gross_pay_pence);
+        $this->assertSame($approvedCommission, $sheet->fresh()->commission_pence);
 
         $this->actingAs($chatter)->post(route('chatter.timesheets.problem', $sheet), ['reason' => 'My finish time needs checking.'])
             ->assertSessionHasNoErrors();
@@ -1453,11 +1853,15 @@ class ChatterTimeTrackingTest extends TestCase
             'clocked_in_at' => '2026-07-13 08:00:00',
             'clocked_out_at' => '2026-07-13 10:00:00',
             'timezone' => 'Europe/London',
-        ]);
+        ] + $this->tokenEarningSnapshot());
         $payroll = app(ChatterPayrollService::class);
         $payroll->refresh($payroll->getOrCreate($chatter, CarbonImmutable::parse('2026-07-13', 'Europe/London')));
 
-        $response = $this->actingAs($admin)->get(route('admin.chatter-hours.export.xlsx', ['chatter_id' => $chatter->id]));
+        $response = $this->actingAs($admin)->get(route('admin.chatter-hours.export.xlsx', [
+            'chatter_id' => $chatter->id,
+            'from' => '2026-07-13',
+            'to' => '2026-07-19',
+        ]));
         $response
             ->assertOk()
             ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -1480,12 +1884,19 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertStringContainsString('name="Payroll"', $workbookXml);
         $this->assertStringContainsString('PARADISE DOLLS', $sheetXml);
         $this->assertStringContainsString('DATE/TIME IN', $sheetXml);
+        $this->assertStringContainsString('BALANCE IN', $sheetXml);
+        $this->assertStringContainsString('BALANCE OUT', $sheetXml);
+        $this->assertStringContainsString('GENERATED', $sheetXml);
+        $this->assertStringContainsString('COMMISSION', $sheetXml);
+        $this->assertStringContainsString('USD COMMISSION', $sheetXml);
+        $this->assertStringContainsString('GBP COMMISSION', $sheetXml);
         $this->assertStringContainsString('HOURS WORKED', $sheetXml);
         $this->assertStringContainsString('Monday, July 13, 2026 at', $sheetXml);
         $this->assertStringContainsString('9:00 AM', $sheetXml);
         $this->assertStringNotContainsString('BST', $sheetXml);
         $this->assertStringContainsString('PAYROLL AS OF', $sheetXml);
         $this->assertStringContainsString('EMPLOYEES NAME', $sheetXml);
+        $this->assertStringContainsString('BASIC PAY', $sheetXml);
         $this->assertStringContainsString('US FINAL PAY', $sheetXml);
         $this->assertStringContainsString('PH FINAL PAY', $sheetXml);
         $this->assertStringContainsString('TOTAL HOURS', $sheetXml);
@@ -1577,6 +1988,45 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertIsString($sheetXml);
 
         return $sheetXml;
+    }
+
+    private function tokenEarningSnapshot(int $clockIn = 1000, int $clockOut = 2000, int $unitValueUsdMicro = 50000, string $platformKey = 'stripchat'): array
+    {
+        $generatedUnits = $clockOut - $clockIn;
+        $generatedCents = intdiv(($generatedUnits * $unitValueUsdMicro) + 5000, 10000);
+
+        return [
+            'earning_platform_key' => $platformKey,
+            'earning_unit' => 'tokens',
+            'earning_currency' => 'USD',
+            'earning_unit_value_usd_micro' => $unitValueUsdMicro,
+            'clock_in_earning_balance_minor' => $clockIn,
+            'clock_out_earning_balance_minor' => $clockOut,
+            'generated_earning_units' => $generatedUnits,
+            'generated_earning_pence' => $generatedCents,
+            'commission_bps' => 300,
+            'commission_currency' => 'USD',
+            'commission_pence' => intdiv(($generatedCents * 300) + 5000, 10000),
+        ];
+    }
+
+    private function gbpEarningSnapshot(int $clockInPence = 10000, int $clockOutPence = 20000): array
+    {
+        $generatedPence = $clockOutPence - $clockInPence;
+
+        return [
+            'earning_platform_key' => 'babestation',
+            'earning_unit' => 'gbp',
+            'earning_currency' => 'GBP',
+            'earning_unit_value_usd_micro' => null,
+            'clock_in_earning_balance_minor' => $clockInPence,
+            'clock_out_earning_balance_minor' => $clockOutPence,
+            'generated_earning_units' => $generatedPence,
+            'generated_earning_pence' => $generatedPence,
+            'commission_bps' => 300,
+            'commission_currency' => 'GBP',
+            'commission_pence' => intdiv(($generatedPence * 300) + 5000, 10000),
+        ];
     }
 
     private function chatter(array $rateOverrides = []): User

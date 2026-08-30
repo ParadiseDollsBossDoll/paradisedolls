@@ -107,6 +107,10 @@ class ChatterPayrollService
             'weekend_minutes' => $calculation['weekend_minutes'],
             'overtime_minutes' => $calculation['overtime_minutes'],
             'adjustment_pence' => $calculation['adjustment_pence'],
+            'base_pay_pence' => $calculation['base_pay_pence'],
+            'commission_pence' => $calculation['commission_pence'],
+            'foreign_commission_currency' => $calculation['foreign_commission_currency'],
+            'foreign_commission_pence' => $calculation['foreign_commission_pence'],
             'gross_pay_pence' => $calculation['gross_pay_pence'],
             'calculation_snapshot' => $calculation['snapshot'],
         ])->save();
@@ -287,6 +291,89 @@ class ChatterPayrollService
         return max(0, (int) $start->diffInSeconds($end) - $breakSeconds);
     }
 
+    /** @return array{currency: string, pence: int} */
+    public function commissionForShift(ChatterShift $shift): array
+    {
+        $currency = $shift->commission_currency
+            ?: $shift->earning_currency
+            ?: ChatterPlatformEarnings::CURRENCY_USD;
+        $storedPence = max(0, (int) $shift->commission_pence);
+
+        if ($storedPence > 0) {
+            return ['currency' => $currency, 'pence' => $storedPence];
+        }
+
+        return [
+            'currency' => $currency,
+            'pence' => $this->commissionFromGenerated(
+                (int) $shift->generated_earning_pence,
+                (int) ($shift->commission_bps ?: 300),
+            ),
+        ];
+    }
+
+    /** @param array<string, mixed> $shift */
+    public function commissionForSnapshotShift(array $shift, bool $deriveMissing = true): array
+    {
+        $currency = (string) ($shift['foreign_commission_currency']
+            ?? $shift['commission_currency']
+            ?? $shift['earning_currency']
+            ?? ChatterPlatformEarnings::CURRENCY_USD);
+        $storedPence = $currency === ChatterPlatformEarnings::CURRENCY_GBP
+            ? (int) ($shift['foreign_commission_pence'] ?? $shift['commission_pence'] ?? 0)
+            : (int) ($shift['commission_pence'] ?? 0);
+
+        if ($storedPence > 0) {
+            return ['currency' => $currency, 'pence' => $storedPence];
+        }
+
+        if (! $deriveMissing) {
+            return ['currency' => $currency, 'pence' => 0];
+        }
+
+        return [
+            'currency' => $currency,
+            'pence' => $this->commissionFromGenerated(
+                (int) ($shift['generated_earning_pence'] ?? 0),
+                (int) (($shift['commission_bps'] ?? 0) ?: 300),
+            ),
+        ];
+    }
+
+    /** @param array<string, mixed> $snapshot */
+    public function earningSummaryForSnapshot(array $snapshot, ?callable $shouldDeriveMissing = null): array
+    {
+        $summary = [
+            'generated_usd_pence' => 0,
+            'generated_gbp_pence' => 0,
+            'commission_usd_pence' => 0,
+            'commission_gbp_pence' => 0,
+        ];
+
+        foreach (($snapshot['shifts'] ?? []) as $shift) {
+            if (! is_array($shift)) {
+                continue;
+            }
+
+            $deriveMissing = $shouldDeriveMissing ? (bool) $shouldDeriveMissing($shift) : true;
+            $commission = $this->commissionForSnapshotShift($shift, $deriveMissing);
+
+            if ($commission['pence'] <= 0) {
+                continue;
+            }
+
+            if ($commission['currency'] === ChatterPlatformEarnings::CURRENCY_GBP) {
+                $summary['generated_gbp_pence'] += max(0, (int) ($shift['generated_earning_pence'] ?? 0));
+                $summary['commission_gbp_pence'] += $commission['pence'];
+            } else {
+                $summary['generated_usd_pence'] += max(0, (int) ($shift['generated_earning_pence'] ?? 0));
+                $summary['commission_usd_pence'] += $commission['pence'];
+            }
+        }
+
+        return $summary;
+    }
+
     /** @return array<string, mixed> */
     public function calculate(
         User $user,
@@ -321,6 +408,9 @@ class ChatterPayrollService
         $weekendMinutes = 0;
         $overtimeMinutes = 0;
         $payNumerator = 0;
+        $commissionPence = 0;
+        $foreignCommissionCurrency = null;
+        $foreignCommissionPence = 0;
         $shiftRows = [];
 
         foreach ($shifts as $shift) {
@@ -343,6 +433,19 @@ class ChatterPayrollService
                 'model_name' => $shift->model?->name,
                 'model_email' => $shift->model?->email,
                 'hourly_rate_pence' => $shift->hourly_rate_pence,
+                'earning_platform_key' => $shift->earning_platform_key,
+                'earning_unit' => $shift->earning_unit,
+                'earning_currency' => $shift->earning_currency,
+                'earning_unit_value_usd_micro' => $shift->earning_unit_value_usd_micro,
+                'clock_in_earning_balance_minor' => $shift->clock_in_earning_balance_minor,
+                'clock_out_earning_balance_minor' => $shift->clock_out_earning_balance_minor,
+                'generated_earning_units' => $shift->generated_earning_units,
+                'generated_earning_pence' => $shift->generated_earning_pence,
+                'commission_bps' => $shift->commission_bps,
+                'commission_currency' => $shift->commission_currency,
+                'commission_pence' => 0,
+                'foreign_commission_currency' => null,
+                'foreign_commission_pence' => 0,
                 'started_at' => $shiftStart->toIso8601String(),
                 'ended_at' => $this->displaySegmentEnd($shiftEnd, $rawEnd)->toIso8601String(),
                 'ended_at_exclusive' => $shiftEnd->toIso8601String(),
@@ -376,11 +479,26 @@ class ChatterPayrollService
             }
 
             $row['pay_pence'] = $this->roundPay($rowPayNumerator);
+            if ($this->commissionBelongsToWindow($shift, $startUtc, $endExclusiveUtc)) {
+                $shiftCommission = $this->commissionForShift($shift);
+
+                if ($shiftCommission['currency'] === ChatterPlatformEarnings::CURRENCY_GBP) {
+                    $row['foreign_commission_currency'] = ChatterPlatformEarnings::CURRENCY_GBP;
+                    $row['foreign_commission_pence'] = $shiftCommission['pence'];
+                    $foreignCommissionCurrency = ChatterPlatformEarnings::CURRENCY_GBP;
+                    $foreignCommissionPence += $shiftCommission['pence'];
+                } else {
+                    $row['commission_currency'] = ChatterPlatformEarnings::CURRENCY_USD;
+                    $row['commission_pence'] = $shiftCommission['pence'];
+                    $commissionPence += $shiftCommission['pence'];
+                }
+            }
             $shiftRows[] = $row;
         }
 
         $adjustmentPence = $timesheet?->adjustments->sum('amount_pence') ?? 0;
-        $grossPayPence = $this->roundPay($payNumerator) + $adjustmentPence;
+        $basePayPence = $this->roundPay($payNumerator);
+        $grossPayPence = $basePayPence + $commissionPence + $adjustmentPence;
         $currencyDetails = $this->currency->usdToPhpDetails();
         $usdToPhpRate = $currencyDetails['rate'];
         $grossPayPhpCentavos = $this->currency->phpCentavosFromUsdCents($grossPayPence, $usdToPhpRate);
@@ -392,6 +510,10 @@ class ChatterPayrollService
             'weekend_minutes' => $weekendMinutes,
             'overtime_minutes' => $overtimeMinutes,
             'adjustment_pence' => $adjustmentPence,
+            'base_pay_pence' => $basePayPence,
+            'commission_pence' => $commissionPence,
+            'foreign_commission_currency' => $foreignCommissionCurrency,
+            'foreign_commission_pence' => $foreignCommissionPence,
             'gross_pay_pence' => $grossPayPence,
             'snapshot' => [
                 'currency' => 'USD',
@@ -401,6 +523,12 @@ class ChatterPayrollService
                 'usd_to_php_rate_fetched_at' => $currencyDetails['fetched_at'],
                 'usd_to_php_rate_provider' => $currencyDetails['provider'],
                 'gross_pay_php_centavos' => $grossPayPhpCentavos,
+                'base_pay_pence' => $basePayPence,
+                'commission_pence' => $commissionPence,
+                'foreign_commission_currency' => $foreignCommissionCurrency,
+                'foreign_commission_pence' => $foreignCommissionPence,
+                'adjustment_pence' => $adjustmentPence,
+                'commission_allocation' => 'full_shift_commission_is_counted_in_the_payroll_week_that_contains_clock_out; gbp_commission_is_tracked_separately_until_a_gbp_to_usd_rule_is_confirmed',
                 'reporting_timezone' => self::REPORTING_TIMEZONE,
                 'period_start' => $periodStart->toDateString(),
                 'period_end' => $periodEnd->toDateString(),
@@ -478,6 +606,17 @@ class ChatterPayrollService
         return $segmentEnd;
     }
 
+    private function commissionBelongsToWindow(ChatterShift $shift, CarbonImmutable $startUtc, CarbonImmutable $endExclusiveUtc): bool
+    {
+        if (! $shift->clocked_out_at) {
+            return false;
+        }
+
+        $clockedOutAt = CarbonImmutable::instance($shift->clocked_out_at)->utc()->startOfMinute();
+
+        return $clockedOutAt->greaterThan($startUtc) && $clockedOutAt->lessThanOrEqualTo($endExclusiveUtc);
+    }
+
     private function rateForDate(Collection $rates, CarbonImmutable $local): ?ChatterPayRate
     {
         return $rates->last(fn (ChatterPayRate $rate) => $rate->effective_from->toDateString() <= $local->toDateString());
@@ -486,5 +625,14 @@ class ChatterPayrollService
     private function roundPay(int $numerator): int
     {
         return intdiv($numerator + intdiv(self::PAY_DENOMINATOR, 2), self::PAY_DENOMINATOR);
+    }
+
+    private function commissionFromGenerated(int $generatedPence, int $commissionBps): int
+    {
+        if ($generatedPence <= 0 || $commissionBps <= 0) {
+            return 0;
+        }
+
+        return intdiv(($generatedPence * $commissionBps) + intdiv(self::BASIS_POINTS, 2), self::BASIS_POINTS);
     }
 }
