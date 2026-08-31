@@ -73,28 +73,35 @@
             @php
                 $statCards = $mode === 'attendance'
                     ? [
-                        [__('Chatters'), $stats['chatters']],
-                        [__('Working now'), $stats['working']],
-                        [__('Pending review'), $stats['pending']],
-                        [__('Join requests'), $stats['requests']],
-                        [__('Filtered hours'), $formatMinutes($stats['total_minutes'])],
-                        [__('Generated USD'), '$'.number_format(($stats['generated_usd_pence'] ?? 0) / 100, 2)],
-                        [__('Commission USD'), '$'.number_format(($stats['commission_pence'] ?? 0) / 100, 2)],
-                        [__('Commission GBP'), 'GBP '.number_format(($stats['foreign_commission_pence'] ?? 0) / 100, 2)],
-                        [__('Gross USD'), '$'.number_format($stats['gross_pay_pence'] / 100, 2)],
-                        [__('Gross PHP'), 'PHP '.number_format($stats['gross_pay_php_centavos'] / 100, 2)],
+                        ['label' => __('Chatters'), 'value' => $stats['chatters']],
+                        ['label' => __('Working now'), 'value' => $stats['working']],
+                        ['label' => __('Pending review'), 'value' => $stats['pending']],
+                        ['label' => __('Join requests'), 'value' => $stats['requests']],
+                        ['label' => __('Filtered hours'), 'value' => $formatMinutes($stats['total_minutes'])],
+                        ['label' => __('Generated USD'), 'value' => '$'.number_format(($stats['generated_usd_pence'] ?? 0) / 100, 2)],
+                        ['label' => __('Commission USD'), 'value' => '$'.number_format(($stats['commission_pence'] ?? 0) / 100, 2)],
+                        [
+                            'label' => __('Commission GBP'),
+                            'value' => 'GBP '.number_format(($stats['foreign_commission_pence'] ?? 0) / 100, 2),
+                            'meta' => '$'.number_format(($stats['foreign_commission_usd_pence'] ?? 0) / 100, 2).' USD converted',
+                        ],
+                        ['label' => __('Total pay USD'), 'value' => '$'.number_format($stats['gross_pay_pence'] / 100, 2)],
+                        ['label' => __('Total pay PHP'), 'value' => 'PHP '.number_format($stats['gross_pay_php_centavos'] / 100, 2)],
                     ]
                     : [
-                        [__('Chatters'), $stats['chatters']],
-                        [__('Working now'), $stats['working']],
-                        [__('Join requests'), $stats['requests']],
+                        ['label' => __('Chatters'), 'value' => $stats['chatters']],
+                        ['label' => __('Working now'), 'value' => $stats['working']],
+                        ['label' => __('Join requests'), 'value' => $stats['requests']],
                     ];
             @endphp
-            <section class="grid grid-cols-2 gap-3 md:grid-cols-3 {{ $mode === 'attendance' ? 'xl:grid-cols-10' : 'xl:grid-cols-3' }}">
-            @foreach ($statCards as [$label, $value])
-                <article class="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
-                    <p class="text-[0.58rem] uppercase tracking-[0.14em] text-boss-ivory/35">{{ $label }}</p>
-                    <p class="mt-2 font-display text-xl text-boss-gold sm:text-2xl">{{ $value }}</p>
+            <section class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 {{ $mode === 'attendance' ? '2xl:grid-cols-10' : 'xl:grid-cols-3' }}">
+            @foreach ($statCards as $card)
+                <article class="min-w-0 rounded-lg border border-white/[0.07] bg-white/[0.025] px-3 py-3">
+                    <p class="truncate text-[0.56rem] uppercase tracking-[0.14em] text-boss-ivory/35" title="{{ $card['label'] }}">{{ $card['label'] }}</p>
+                    <p class="mt-2 truncate font-display text-lg leading-none text-boss-gold tabular-nums sm:text-xl" title="{{ $card['value'] }}">{{ $card['value'] }}</p>
+                    @if (! empty($card['meta']))
+                        <p class="mt-1 truncate text-[0.66rem] font-medium text-boss-ivory/40" title="{{ $card['meta'] }}">{{ $card['meta'] }}</p>
+                    @endif
                 </article>
             @endforeach
         </section>
@@ -104,12 +111,13 @@
             <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <p class="pd-kicker">{{ __('Currency conversion') }}</p>
-                    <h2 class="mt-1 font-display text-xl">{{ __('USD to Philippine peso') }}</h2>
-                    <p class="mt-2 text-xs text-boss-ivory/40">{{ __('The latest reference rate is refreshed automatically. Approved timesheets keep the exact rate and PHP total saved at approval.') }}</p>
+                    <h2 class="mt-1 font-display text-xl">{{ __('Automatic payroll currency rates') }}</h2>
+                    <p class="mt-2 text-xs text-boss-ivory/40">{{ __('Reference rates are refreshed automatically. Approved timesheets keep the exact rates and PHP total saved at approval.') }}</p>
                 </div>
                 <div class="min-w-0 rounded-lg border border-white/[0.07] bg-black/10 px-4 py-3 text-left lg:min-w-[300px] lg:text-right">
                     <p class="pd-label">{{ __('Automatic reference rate') }}</p>
                     <p class="mt-1 text-lg font-semibold text-boss-gold">{{ __('1 USD = :rate PHP', ['rate' => $usdToPhpRate]) }}</p>
+                    <p class="mt-1 text-sm font-semibold text-boss-gold">{{ __('1 GBP = :rate USD', ['rate' => $gbpToUsdDetails['rate'] ?? '1.2700']) }}</p>
                     @if ($currencyDetails['is_fallback'])
                         <p class="mt-1 text-xs text-amber-200/80">{{ __('Protected fallback rate in use. Automatic refresh will retry shortly.') }}</p>
                     @elseif ($currencyDetails['is_stale'])
@@ -215,7 +223,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[1720px] text-left text-sm tabular-nums">
                     <thead class="border-b border-white/[0.06] text-[0.6rem] uppercase tracking-[0.13em] text-boss-ivory/35">
-                        <tr><th class="px-5 py-3">{{ __('Chatter') }}</th><th class="px-4 py-3">{{ __('Payroll week') }}</th><th class="px-4 py-3">{{ __('Total hours') }}</th><th class="px-4 py-3">{{ __('Rate') }}</th><th class="px-4 py-3">{{ __('Base pay') }}</th><th class="px-4 py-3">{{ __('USD commission') }}</th><th class="px-4 py-3">{{ __('GBP commission') }}</th><th class="px-4 py-3">{{ __('Additional') }}</th><th class="px-4 py-3">{{ __('US final pay') }}</th><th class="px-4 py-3">{{ __('PH final pay') }}</th><th class="px-4 py-3">{{ __('Notes') }}</th><th class="px-4 py-3">{{ __('Status') }}</th><th class="px-5 py-3 text-right">{{ __('Action') }}</th></tr>
+                        <tr><th class="px-5 py-3">{{ __('Chatter') }}</th><th class="px-4 py-3">{{ __('Payroll week') }}</th><th class="px-4 py-3">{{ __('Total hours') }}</th><th class="px-4 py-3">{{ __('Rate') }}</th><th class="px-4 py-3">{{ __('Base pay') }}</th><th class="px-4 py-3">{{ __('USD commission') }}</th><th class="px-4 py-3">{{ __('GBP commission') }}</th><th class="px-4 py-3">{{ __('Additional') }}</th><th class="px-4 py-3">{{ __('Total pay USD') }}</th><th class="px-4 py-3">{{ __('Total pay PHP') }}</th><th class="px-4 py-3">{{ __('Notes') }}</th><th class="px-4 py-3">{{ __('Status') }}</th><th class="px-5 py-3 text-right">{{ __('Action') }}</th></tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.05]">
                         @forelse($timesheets as $sheet)
@@ -223,6 +231,7 @@
                                 $earningSummary = $sheet->getAttribute('earning_summary') ?? [];
                                 $displayCommissionPence = (int) ($earningSummary['commission_usd_pence'] ?? $sheet->commission_pence ?? 0);
                                 $displayForeignCommissionPence = (int) ($earningSummary['commission_gbp_pence'] ?? $sheet->foreign_commission_pence ?? 0);
+                                $displayForeignCommissionUsdPence = (int) ($earningSummary['commission_gbp_usd_pence'] ?? $sheet->foreign_commission_usd_pence ?? 0);
                                 $generatedUsdPence = (int) ($earningSummary['generated_usd_pence'] ?? 0);
                                 $generatedGbpPence = (int) ($earningSummary['generated_gbp_pence'] ?? 0);
                             @endphp
@@ -244,7 +253,7 @@
                                 </td>
                                 <td class="px-4 py-4"><p class="font-semibold">${{ number_format($sheet->getAttribute('basic_pay_pence') / 100, 2) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Hourly only') }}</p></td>
                                 <td class="px-4 py-4"><p class="font-semibold text-emerald-200">${{ number_format($displayCommissionPence / 100, 2) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Generated: $:amount USD', ['amount' => number_format($generatedUsdPence / 100, 2)]) }}</p></td>
-                                <td class="px-4 py-4"><p class="font-semibold text-emerald-200">GBP {{ number_format($displayForeignCommissionPence / 100, 2) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Generated: GBP :amount', ['amount' => number_format($generatedGbpPence / 100, 2)]) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/30">{{ __('Not in USD total') }}</p></td>
+                                <td class="px-4 py-4"><p class="font-semibold text-emerald-200">GBP {{ number_format($displayForeignCommissionPence / 100, 2) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Generated: GBP :amount', ['amount' => number_format($generatedGbpPence / 100, 2)]) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/30">{{ __('Included as $:amount USD', ['amount' => number_format($displayForeignCommissionUsdPence / 100, 2)]) }}</p></td>
                                 @php
                                     $additionalPence = (int) $sheet->adjustment_pence;
                                 @endphp
@@ -255,10 +264,13 @@
                                         {{ $additionalPence > 0 ? '+' : '-' }}${{ number_format(abs($additionalPence) / 100, 2) }}
                                     @endif
                                 </td>
-                                <td class="px-4 py-4 font-semibold text-boss-gold">${{ number_format(($sheet->getAttribute('display_gross_pay_pence') ?? $sheet->gross_pay_pence) / 100, 2) }}</td>
+                                <td class="px-4 py-4">
+                                    <p class="font-semibold text-boss-gold">${{ number_format(($sheet->getAttribute('display_gross_pay_pence') ?? $sheet->gross_pay_pence) / 100, 2) }}</p>
+                                    <p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Base + USD commission + GBP converted + adjustments') }}</p>
+                                </td>
                                 <td class="px-4 py-4">
                                     <p class="font-semibold text-emerald-200">PHP {{ number_format(($sheet->getAttribute('display_gross_pay_php_centavos') ?? $currency->phpCentavosForTimesheet($sheet)) / 100, 2) }}</p>
-                                    <p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('1 USD = PHP :rate', ['rate' => $currency->rateForTimesheet($sheet)]) }}</p>
+                                    <p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Converted from total USD at 1 USD = PHP :rate', ['rate' => $currency->rateForTimesheet($sheet)]) }}</p>
                                 </td>
                                 <td class="px-4 py-4">
                                     <div class="max-w-xs space-y-2">
@@ -281,7 +293,7 @@
                     </tbody>
                     @if($timesheets->total() > 0)
                         <tfoot class="border-t border-white/[0.08] bg-boss-gold/[0.05] font-semibold">
-                            <tr><td class="px-5 py-4" colspan="2">{{ __('Filtered total') }}</td><td class="px-4 py-4">{{ $formatMinutes($stats['total_minutes']) }}</td><td></td><td class="px-4 py-4">${{ number_format($stats['basic_pay_pence'] / 100, 2) }}</td><td class="px-4 py-4 text-emerald-200"><p>${{ number_format(($stats['commission_pence'] ?? 0) / 100, 2) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Generated: $:amount USD', ['amount' => number_format(($stats['generated_usd_pence'] ?? 0) / 100, 2)]) }}</p></td><td class="px-4 py-4 text-emerald-200"><p>GBP {{ number_format(($stats['foreign_commission_pence'] ?? 0) / 100, 2) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Generated: GBP :amount', ['amount' => number_format(($stats['generated_gbp_pence'] ?? 0) / 100, 2)]) }}</p></td><td class="px-4 py-4">${{ number_format($stats['adjustment_pence'] / 100, 2) }}</td><td class="px-4 py-4 text-boss-gold">${{ number_format($stats['gross_pay_pence'] / 100, 2) }}</td><td class="px-4 py-4 text-emerald-200">PHP {{ number_format($stats['gross_pay_php_centavos'] / 100, 2) }}</td><td colspan="3"></td></tr>
+                            <tr><td class="px-5 py-4" colspan="2">{{ __('Filtered total') }}</td><td class="px-4 py-4">{{ $formatMinutes($stats['total_minutes']) }}</td><td></td><td class="px-4 py-4">${{ number_format($stats['basic_pay_pence'] / 100, 2) }}</td><td class="px-4 py-4 text-emerald-200"><p>${{ number_format(($stats['commission_pence'] ?? 0) / 100, 2) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Generated: $:amount USD', ['amount' => number_format(($stats['generated_usd_pence'] ?? 0) / 100, 2)]) }}</p></td><td class="px-4 py-4 text-emerald-200"><p>GBP {{ number_format(($stats['foreign_commission_pence'] ?? 0) / 100, 2) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Generated: GBP :amount', ['amount' => number_format(($stats['generated_gbp_pence'] ?? 0) / 100, 2)]) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Included as $:amount USD', ['amount' => number_format(($stats['foreign_commission_usd_pence'] ?? 0) / 100, 2)]) }}</p></td><td class="px-4 py-4">${{ number_format($stats['adjustment_pence'] / 100, 2) }}</td><td class="px-4 py-4 text-boss-gold"><p>${{ number_format($stats['gross_pay_pence'] / 100, 2) }}</p><p class="mt-1 text-[0.65rem] text-boss-ivory/35">{{ __('Base + USD commission + GBP converted + adjustments') }}</p></td><td class="px-4 py-4 text-emerald-200">PHP {{ number_format($stats['gross_pay_php_centavos'] / 100, 2) }}</td><td colspan="3"></td></tr>
                         </tfoot>
                     @endif
                 </table>

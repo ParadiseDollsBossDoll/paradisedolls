@@ -82,6 +82,7 @@ return [
         'exchange_rate_retry_minutes' => env('CHATTER_EXCHANGE_RATE_RETRY_MINUTES', 15),
         'exchange_rate_timeout' => env('CHATTER_EXCHANGE_RATE_TIMEOUT', 5),
         'usd_to_php_rate_fallback' => env('CHATTER_USD_TO_PHP_RATE', '61.40'),
+        'gbp_to_usd_rate_fallback' => env('CHATTER_GBP_TO_USD_RATE', '1.2700'),
     ],
 
 ];

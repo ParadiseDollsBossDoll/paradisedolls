@@ -1024,6 +1024,8 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertSame(18500, data_get($sheet->calculation_snapshot, 'shifts.0.generated_earning_pence'));
         $this->assertSame(555, data_get($sheet->calculation_snapshot, 'shifts.0.commission_pence'));
         $this->assertSame(555, $sheet->commission_pence);
+        $this->assertSame(760, $sheet->base_pay_pence);
+        $this->assertSame(1315, $sheet->gross_pay_pence);
 
         $this->actingAs($admin)->get(route('admin.chatter-hours.attendance', [
             'from' => '2026-08-31',
@@ -1037,6 +1039,9 @@ class ChatterTimeTrackingTest extends TestCase
             ->assertSee('3,700 tokens / $185.00 USD')
             ->assertSee('$5.55 USD')
             ->assertSee('Generated: $185.00 USD')
+            ->assertSee('Total pay USD')
+            ->assertSee('Base + USD commission + GBP converted + adjustments')
+            ->assertSee('$13.15')
             ->assertSee('Token Test Model');
     }
 
@@ -1073,8 +1078,10 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertStringContainsString('USD COMMISSION', $sheetXml);
     }
 
-    public function test_babestation_commission_is_calculated_in_gbp_and_not_added_to_usd_payroll(): void
+    public function test_babestation_commission_is_calculated_in_gbp_and_converted_into_usd_payroll(): void
     {
+        config()->set('services.chatter_payroll.exchange_rate_enabled', false);
+        config()->set('services.chatter_payroll.gbp_to_usd_rate_fallback', '1.2500');
         $admin = User::factory()->create(['role' => 'admin']);
         $chatter = $this->chatter(['base_rate_pence' => 200]);
 
@@ -1106,14 +1113,19 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertSame(0, $sheet->commission_pence);
         $this->assertSame('GBP', $sheet->foreign_commission_currency);
         $this->assertSame(300, $sheet->foreign_commission_pence);
-        $this->assertSame(200, $sheet->gross_pay_pence);
+        $this->assertSame(375, $sheet->foreign_commission_usd_pence);
+        $this->assertSame(575, $sheet->gross_pay_pence);
+        $this->assertSame('1.2500', data_get($sheet->calculation_snapshot, 'gbp_to_usd_rate'));
+        $this->assertSame(375, data_get($sheet->calculation_snapshot, 'foreign_commission_usd_pence'));
 
         $this->actingAs($admin)
             ->get(route('admin.chatter-hours.timesheets.show', $sheet))
             ->assertOk()
             ->assertSee('GBP 100.00')
             ->assertSee('GBP 3.00')
-            ->assertSee('Commission GBP');
+            ->assertSee('Commission GBP')
+            ->assertSee('GBP as USD')
+            ->assertSee('$3.75');
 
         $sheetXml = $this->sheetXmlFromStreamedResponse(
             $this->actingAs($admin)->get(route('admin.chatter-hours.export.xlsx', ['chatter_id' => $chatter->id])),
@@ -1121,7 +1133,9 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertStringContainsString('BALANCE IN', $sheetXml);
         $this->assertStringContainsString('GBP 100.00', $sheetXml);
         $this->assertStringContainsString('GBP 3.00', $sheetXml);
+        $this->assertStringContainsString('$3.75 USD', $sheetXml);
         $this->assertStringContainsString('GBP COMMISSION', $sheetXml);
+        $this->assertStringContainsString('GBP/USD', $sheetXml);
     }
 
     public function test_missing_shift_earning_balances_receive_zero_commission(): void
@@ -1188,8 +1202,8 @@ class ChatterTimeTrackingTest extends TestCase
             ->assertSee('Base pay')
             ->assertSee('Commission')
             ->assertSee('Additional')
-            ->assertSee('US final pay')
-            ->assertSee('PH final pay')
+            ->assertSee('Total pay USD')
+            ->assertSee('Total pay PHP')
             ->assertSee('Notes')
             ->assertSee('Status');
     }
@@ -1552,8 +1566,9 @@ class ChatterTimeTrackingTest extends TestCase
             ->assertSee('Base pay')
             ->assertSee('Commission')
             ->assertSee('Additional')
-            ->assertSee('US final pay')
-            ->assertSee('PH final pay')
+            ->assertSee('Total pay USD')
+            ->assertSee('Total pay PHP')
+            ->assertSee('Base + USD commission + GBP converted + adjustments')
             ->assertSee('$12.00 USD/hr')
             ->assertSee('$12.00')
             ->assertSee('+$5.00')
@@ -1897,8 +1912,8 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertStringContainsString('PAYROLL AS OF', $sheetXml);
         $this->assertStringContainsString('EMPLOYEES NAME', $sheetXml);
         $this->assertStringContainsString('BASIC PAY', $sheetXml);
-        $this->assertStringContainsString('US FINAL PAY', $sheetXml);
-        $this->assertStringContainsString('PH FINAL PAY', $sheetXml);
+        $this->assertStringContainsString('TOTAL PAY USD', $sheetXml);
+        $this->assertStringContainsString('TOTAL PAY PHP', $sheetXml);
         $this->assertStringContainsString('TOTAL HOURS', $sheetXml);
         $this->assertStringContainsString('orientation="landscape"', $sheetXml);
         $this->assertStringContainsString('formatCode="[h]:mm:ss"', $stylesXml);

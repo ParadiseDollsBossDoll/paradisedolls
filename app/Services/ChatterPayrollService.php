@@ -111,6 +111,11 @@ class ChatterPayrollService
             'commission_pence' => $calculation['commission_pence'],
             'foreign_commission_currency' => $calculation['foreign_commission_currency'],
             'foreign_commission_pence' => $calculation['foreign_commission_pence'],
+            'foreign_commission_usd_pence' => $calculation['foreign_commission_usd_pence'],
+            'gbp_to_usd_rate' => $calculation['gbp_to_usd_rate'],
+            'gbp_to_usd_rate_date' => $calculation['gbp_to_usd_rate_date'],
+            'gbp_to_usd_rate_fetched_at' => $calculation['gbp_to_usd_rate_fetched_at'],
+            'gbp_to_usd_rate_provider' => $calculation['gbp_to_usd_rate_provider'],
             'gross_pay_pence' => $calculation['gross_pay_pence'],
             'calculation_snapshot' => $calculation['snapshot'],
         ])->save();
@@ -498,7 +503,14 @@ class ChatterPayrollService
 
         $adjustmentPence = $timesheet?->adjustments->sum('amount_pence') ?? 0;
         $basePayPence = $this->roundPay($payNumerator);
-        $grossPayPence = $basePayPence + $commissionPence + $adjustmentPence;
+        $gbpToUsdDetails = $foreignCommissionPence > 0 && $foreignCommissionCurrency === ChatterPlatformEarnings::CURRENCY_GBP
+            ? $this->currency->gbpToUsdDetails()
+            : null;
+        $gbpToUsdRate = $gbpToUsdDetails['rate'] ?? null;
+        $foreignCommissionUsdPence = $gbpToUsdRate
+            ? $this->currency->usdCentsFromGbpPence($foreignCommissionPence, $gbpToUsdRate)
+            : 0;
+        $grossPayPence = $basePayPence + $commissionPence + $foreignCommissionUsdPence + $adjustmentPence;
         $currencyDetails = $this->currency->usdToPhpDetails();
         $usdToPhpRate = $currencyDetails['rate'];
         $grossPayPhpCentavos = $this->currency->phpCentavosFromUsdCents($grossPayPence, $usdToPhpRate);
@@ -514,10 +526,19 @@ class ChatterPayrollService
             'commission_pence' => $commissionPence,
             'foreign_commission_currency' => $foreignCommissionCurrency,
             'foreign_commission_pence' => $foreignCommissionPence,
+            'foreign_commission_usd_pence' => $foreignCommissionUsdPence,
+            'gbp_to_usd_rate' => $gbpToUsdRate,
+            'gbp_to_usd_rate_date' => $gbpToUsdDetails['rate_date'] ?? null,
+            'gbp_to_usd_rate_fetched_at' => $gbpToUsdDetails['fetched_at'] ?? null,
+            'gbp_to_usd_rate_provider' => $gbpToUsdDetails['provider'] ?? null,
             'gross_pay_pence' => $grossPayPence,
             'snapshot' => [
                 'currency' => 'USD',
                 'base_currency_minor_unit' => 'cent',
+                'gbp_to_usd_rate' => $gbpToUsdRate,
+                'gbp_to_usd_rate_date' => $gbpToUsdDetails['rate_date'] ?? null,
+                'gbp_to_usd_rate_fetched_at' => $gbpToUsdDetails['fetched_at'] ?? null,
+                'gbp_to_usd_rate_provider' => $gbpToUsdDetails['provider'] ?? null,
                 'usd_to_php_rate' => $usdToPhpRate,
                 'usd_to_php_rate_date' => $currencyDetails['rate_date'],
                 'usd_to_php_rate_fetched_at' => $currencyDetails['fetched_at'],
@@ -527,8 +548,9 @@ class ChatterPayrollService
                 'commission_pence' => $commissionPence,
                 'foreign_commission_currency' => $foreignCommissionCurrency,
                 'foreign_commission_pence' => $foreignCommissionPence,
+                'foreign_commission_usd_pence' => $foreignCommissionUsdPence,
                 'adjustment_pence' => $adjustmentPence,
-                'commission_allocation' => 'full_shift_commission_is_counted_in_the_payroll_week_that_contains_clock_out; gbp_commission_is_tracked_separately_until_a_gbp_to_usd_rule_is_confirmed',
+                'commission_allocation' => 'full_shift_commission_is_counted_in_the_payroll_week_that_contains_clock_out; gbp_commission_is_converted_to_usd_for_total_pay_using_the_payroll_gbp_to_usd_reference_rate',
                 'reporting_timezone' => self::REPORTING_TIMEZONE,
                 'period_start' => $periodStart->toDateString(),
                 'period_end' => $periodEnd->toDateString(),
@@ -541,6 +563,29 @@ class ChatterPayrollService
                 ])->values()->all(),
             ],
         ];
+    }
+
+    /** @param array{commission_gbp_pence?: int} $summary */
+    public function foreignCommissionUsdPenceForTimesheet(ChatterTimesheet $timesheet, array $summary): int
+    {
+        if ($timesheet->status === ChatterTimesheet::STATUS_APPROVED) {
+            return (int) data_get(
+                $timesheet->calculation_snapshot,
+                'foreign_commission_usd_pence',
+                (int) $timesheet->foreign_commission_usd_pence,
+            );
+        }
+
+        $stored = (int) $timesheet->foreign_commission_usd_pence;
+        if ($stored > 0) {
+            return $stored;
+        }
+
+        $gbpPence = (int) ($summary['commission_gbp_pence'] ?? $timesheet->foreign_commission_pence ?? 0);
+
+        return $gbpPence > 0
+            ? $this->currency->usdCentsFromGbpPence($gbpPence)
+            : 0;
     }
 
     private function minuteIsBreak(CarbonImmutable $minute, Collection $breaks, CarbonImmutable $shiftEnd): bool

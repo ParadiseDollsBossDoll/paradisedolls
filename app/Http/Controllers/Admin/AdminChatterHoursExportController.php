@@ -65,9 +65,11 @@ class AdminChatterHoursExportController extends Controller
                 $displaySummaries = $employeeTimesheets->map(fn (ChatterTimesheet $timesheet): array => $this->earningDisplaySummaryForTimesheet($timesheet, $payroll, $sourceShifts));
                 $commissionCents = (int) $displaySummaries->sum('commission_usd_pence');
                 $foreignCommissionCents = (int) $displaySummaries->sum('commission_gbp_pence');
+                $foreignCommissionUsdCents = (int) $displaySummaries->sum('commission_gbp_usd_pence');
                 $finalCents = (int) $employeeTimesheets->sum(fn (ChatterTimesheet $timesheet): int => $this->displayGrossPayPence(
                     $timesheet,
                     $this->earningDisplaySummaryForTimesheet($timesheet, $payroll, $sourceShifts),
+                    $payroll,
                 ));
                 $basicCents = (int) $employeeTimesheets->sum(
                     fn (ChatterTimesheet $timesheet): int => $timesheet->base_pay_pence ?? ($timesheet->gross_pay_pence - $timesheet->adjustment_pence - $timesheet->commission_pence),
@@ -83,8 +85,11 @@ class AdminChatterHoursExportController extends Controller
                     'rate' => $minutes > 0 ? round($rateMinuteCents / ($minutes * 100), 2) : 0,
                     'basic' => $basicCents / 100,
                     'commission' => $commissionCents / 100,
-                    'foreign_commission' => 'GBP '.number_format($foreignCommissionCents / 100, 2),
+                    'foreign_commission' => $foreignCommissionCents > 0
+                        ? 'GBP '.number_format($foreignCommissionCents / 100, 2).' / $'.number_format($foreignCommissionUsdCents / 100, 2).' USD'
+                        : 'GBP 0.00',
                     'foreign_commission_cents' => $foreignCommissionCents,
+                    'foreign_commission_usd_cents' => $foreignCommissionUsdCents,
                     'additional' => $additionalCents / 100,
                     'final_usd' => $finalCents / 100,
                     'final_php' => $employeeTimesheets->sum(function (ChatterTimesheet $timesheet) use ($currency, $payroll, $sourceShifts): int {
@@ -92,7 +97,7 @@ class AdminChatterHoursExportController extends Controller
 
                         return $timesheet->status === ChatterTimesheet::STATUS_APPROVED
                             ? $currency->phpCentavosForTimesheet($timesheet)
-                            : $currency->phpCentavosFromUsdCents($this->displayGrossPayPence($timesheet, $summary), $currency->rateForTimesheet($timesheet));
+                            : $currency->phpCentavosFromUsdCents($this->displayGrossPayPence($timesheet, $summary, $payroll), $currency->rateForTimesheet($timesheet));
                     }) / 100,
                     'notes' => $notes !== '' ? $notes : '-',
                     'status' => $statuses->count() === 1 ? $statuses->first() : 'Mixed',
@@ -100,22 +105,28 @@ class AdminChatterHoursExportController extends Controller
             })
             ->sortBy('employee')
             ->values();
-        $grossCents = (int) $timesheets->sum(fn (ChatterTimesheet $timesheet): int => $this->displayGrossPayPence($timesheet, $this->earningDisplaySummaryForTimesheet($timesheet, $payroll, $sourceShifts)));
+        $grossCents = (int) $timesheets->sum(fn (ChatterTimesheet $timesheet): int => $this->displayGrossPayPence($timesheet, $this->earningDisplaySummaryForTimesheet($timesheet, $payroll, $sourceShifts), $payroll));
         $grossPhpCentavos = (int) $timesheets->sum(function (ChatterTimesheet $timesheet) use ($currency, $payroll, $sourceShifts): int {
             $summary = $this->earningDisplaySummaryForTimesheet($timesheet, $payroll, $sourceShifts);
 
             return $timesheet->status === ChatterTimesheet::STATUS_APPROVED
                 ? $currency->phpCentavosForTimesheet($timesheet)
-                : $currency->phpCentavosFromUsdCents($this->displayGrossPayPence($timesheet, $summary), $currency->rateForTimesheet($timesheet));
+                : $currency->phpCentavosFromUsdCents($this->displayGrossPayPence($timesheet, $summary, $payroll), $currency->rateForTimesheet($timesheet));
         });
         $exchangeRate = $grossCents !== 0
             ? abs($grossPhpCentavos / $grossCents)
             : (float) $currency->usdToPhpRate();
+        $foreignCommissionCents = (int) $payrollRows->sum('foreign_commission_cents');
+        $foreignCommissionUsdCents = (int) $payrollRows->sum('foreign_commission_usd_cents');
+        $gbpToUsdRate = $foreignCommissionCents !== 0
+            ? abs($foreignCommissionUsdCents / $foreignCommissionCents)
+            : (float) $currency->gbpToUsdRate();
         [$rows, $merges] = $this->payrollSheet(
             $attendance,
             $payrollRows,
             $periodStart->format('m/d/Y').' - '.$periodEnd->format('m/d/Y'),
             $exchangeRate,
+            $gbpToUsdRate,
         );
         $workbook = new DesignedXlsxWorkbook([[
             'name' => 'Payroll',
@@ -149,7 +160,7 @@ class AdminChatterHoursExportController extends Controller
         return [$from, $to];
     }
 
-    private function payrollSheet(Collection $attendance, Collection $payrollRows, string $periodLabel, float $exchangeRate): array
+    private function payrollSheet(Collection $attendance, Collection $payrollRows, string $periodLabel, float $exchangeRate, float $gbpToUsdRate): array
     {
         $rows = [
             $this->row(1, $this->styledRow('PARADISE DOLLS', 24), 30),
@@ -201,13 +212,13 @@ class AdminChatterHoursExportController extends Controller
         $rowNumber += 2;
         $rows[] = $this->row($rowNumber, [
             $this->cell(1, 'The currency conversion applied to this payroll was determined when the report was created.', 36),
-            ...array_map(fn (int $column) => $this->cell($column, null, 36), range(2, 9)),
-            $this->cell(10, 'USD/PHP', 37), $this->cell(11, 'Conversion', 37),
-            $this->cell(12, $exchangeRate, 38), $this->cell(13, null, 37),
+            ...array_map(fn (int $column) => $this->cell($column, null, 36), range(2, 8)),
+            $this->cell(9, 'USD/PHP', 37), $this->cell(10, $exchangeRate, 38),
+            $this->cell(11, 'GBP/USD', 37), $this->cell(12, $gbpToUsdRate, 38), $this->cell(13, null, 37),
         ], 24);
-        $merges[] = "A{$rowNumber}:I{$rowNumber}";
+        $merges[] = "A{$rowNumber}:H{$rowNumber}";
         $rowNumber += 2;
-        $rows[] = $this->row($rowNumber, $this->cells(['EMPLOYEES NAME', null, 'TOTAL HOURS', 'RATE', 'BASIC PAY', 'USD COMMISSION', 'GBP COMMISSION', 'ADDITIONAL', 'US FINAL PAY', 'PH FINAL PAY', 'NOTES', null, 'STATUS'], 39), 27);
+        $rows[] = $this->row($rowNumber, $this->cells(['EMPLOYEES NAME', null, 'TOTAL HOURS', 'RATE', 'BASIC PAY', 'USD COMMISSION', 'GBP COMMISSION', 'ADDITIONAL', 'TOTAL PAY USD', 'TOTAL PAY PHP', 'NOTES', null, 'STATUS'], 39), 27);
         $merges[] = "A{$rowNumber}:B{$rowNumber}";
         $merges[] = "K{$rowNumber}:L{$rowNumber}";
         $rowNumber++;
@@ -227,7 +238,7 @@ class AdminChatterHoursExportController extends Controller
                 $this->cell(6, $employee['commission'], $usdStyle),
                 $this->cell(7, $employee['foreign_commission'], $textStyle),
                 $this->cell(8, $employee['additional'], $usdStyle),
-                $this->formulaCell(9, "E{$rowNumber}+F{$rowNumber}+H{$rowNumber}", $employee['final_usd'], $usdStyle),
+                $this->cell(9, $employee['final_usd'], $usdStyle),
                 $this->cell(10, $employee['final_php'], $phpStyle),
                 $this->cell(11, $employee['notes'], $textStyle), $this->cell(12, null, $textStyle),
                 $this->cell(13, $employee['status'], $textStyle),
@@ -242,6 +253,7 @@ class AdminChatterHoursExportController extends Controller
         $totalBasic = (float) $payrollRows->sum('basic');
         $totalCommission = (float) $payrollRows->sum('commission');
         $totalForeignCommission = (int) $payrollRows->sum('foreign_commission_cents');
+        $totalForeignCommissionUsd = (int) $payrollRows->sum('foreign_commission_usd_cents');
         $totalAdditional = (float) $payrollRows->sum('additional');
         $totalUsd = (float) $payrollRows->sum('final_usd');
         $totalPhp = (float) $payrollRows->sum('final_php');
@@ -251,7 +263,7 @@ class AdminChatterHoursExportController extends Controller
             $this->cell(4, null, 48),
             $payrollEnd >= $payrollStart ? $this->formulaCell(5, "SUM(E{$payrollStart}:E{$payrollEnd})", $totalBasic, 50) : $this->cell(5, 0, 50),
             $payrollEnd >= $payrollStart ? $this->formulaCell(6, "SUM(F{$payrollStart}:F{$payrollEnd})", $totalCommission, 50) : $this->cell(6, 0, 50),
-            $this->cell(7, 'GBP '.number_format($totalForeignCommission / 100, 2), 48),
+            $this->cell(7, $totalForeignCommission > 0 ? 'GBP '.number_format($totalForeignCommission / 100, 2).' / $'.number_format($totalForeignCommissionUsd / 100, 2).' USD' : 'GBP 0.00', 48),
             $payrollEnd >= $payrollStart ? $this->formulaCell(8, "SUM(H{$payrollStart}:H{$payrollEnd})", $totalAdditional, 50) : $this->cell(8, 0, 50),
             $payrollEnd >= $payrollStart ? $this->formulaCell(9, "SUM(I{$payrollStart}:I{$payrollEnd})", $totalUsd, 50) : $this->cell(9, 0, 50),
             $payrollEnd >= $payrollStart ? $this->formulaCell(10, "SUM(J{$payrollStart}:J{$payrollEnd})", $totalPhp, 51) : $this->cell(10, 0, 51),
@@ -352,7 +364,7 @@ class AdminChatterHoursExportController extends Controller
         return $query;
     }
 
-    /** @return array{generated_usd_pence: int, generated_gbp_pence: int, commission_usd_pence: int, commission_gbp_pence: int} */
+    /** @return array{generated_usd_pence: int, generated_gbp_pence: int, commission_usd_pence: int, commission_gbp_pence: int, commission_gbp_usd_pence: int} */
     private function earningDisplaySummaryForTimesheet(ChatterTimesheet $timesheet, ChatterPayrollService $payroll, ?Collection $sourceShifts = null): array
     {
         $summary = $payroll->earningSummaryForSnapshot(
@@ -360,12 +372,15 @@ class AdminChatterHoursExportController extends Controller
             fn (array $shift): bool => $this->snapshotCommissionCanBeDerived($shift, $timesheet, $payroll, $sourceShifts),
         );
 
-        return [
+        $result = [
             'generated_usd_pence' => $summary['generated_usd_pence'],
             'generated_gbp_pence' => $summary['generated_gbp_pence'],
             'commission_usd_pence' => max((int) $timesheet->commission_pence, $summary['commission_usd_pence']),
             'commission_gbp_pence' => max((int) $timesheet->foreign_commission_pence, $summary['commission_gbp_pence']),
         ];
+        $result['commission_gbp_usd_pence'] = $payroll->foreignCommissionUsdPenceForTimesheet($timesheet, $result);
+
+        return $result;
     }
 
     private function snapshotSourceShifts(Collection $timesheets): Collection
@@ -412,8 +427,8 @@ class AdminChatterHoursExportController extends Controller
         return $clockedOutAt->greaterThan($window['start']) && $clockedOutAt->lessThanOrEqualTo($window['end']);
     }
 
-    /** @param array{commission_usd_pence: int} $summary */
-    private function displayGrossPayPence(ChatterTimesheet $timesheet, array $summary): int
+    /** @param array{commission_usd_pence: int, commission_gbp_pence?: int} $summary */
+    private function displayGrossPayPence(ChatterTimesheet $timesheet, array $summary, ChatterPayrollService $payroll): int
     {
         if ($timesheet->status === ChatterTimesheet::STATUS_APPROVED) {
             return (int) $timesheet->gross_pay_pence;
@@ -422,7 +437,10 @@ class AdminChatterHoursExportController extends Controller
         $basePayPence = (int) ($timesheet->base_pay_pence
             ?? data_get($timesheet->calculation_snapshot, 'base_pay_pence', (int) $timesheet->gross_pay_pence - (int) $timesheet->adjustment_pence - (int) $timesheet->commission_pence));
 
-        return $basePayPence + (int) $summary['commission_usd_pence'] + (int) $timesheet->adjustment_pence;
+        return $basePayPence
+            + (int) $summary['commission_usd_pence']
+            + $payroll->foreignCommissionUsdPenceForTimesheet($timesheet, $summary)
+            + (int) $timesheet->adjustment_pence;
     }
 
     private function row(int $number, array $cells, ?int $height = null): array

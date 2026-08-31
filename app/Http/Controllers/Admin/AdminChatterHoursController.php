@@ -177,7 +177,7 @@ class AdminChatterHoursController extends Controller
             $sheet->setAttribute('payroll_rates', $rates);
             $sheet->setAttribute('basic_pay_pence', (int) ($sheet->base_pay_pence ?? data_get($snapshot, 'base_pay_pence', (int) $sheet->gross_pay_pence - (int) $sheet->adjustment_pence - (int) $sheet->commission_pence)));
             $sheet->setAttribute('earning_summary', $this->earningDisplaySummaryForTimesheet($sheet, $payroll, $sourceShifts));
-            $sheet->setAttribute('display_gross_pay_pence', $this->displayGrossPayPence($sheet, $sheet->getAttribute('earning_summary')));
+            $sheet->setAttribute('display_gross_pay_pence', $this->displayGrossPayPence($sheet, $sheet->getAttribute('earning_summary'), $payroll));
             $sheet->setAttribute('display_gross_pay_php_centavos', $sheet->status === ChatterTimesheet::STATUS_APPROVED
                 ? $currency->phpCentavosForTimesheet($sheet)
                 : $currency->phpCentavosFromUsdCents((int) $sheet->getAttribute('display_gross_pay_pence'), $currency->rateForTimesheet($sheet)));
@@ -199,16 +199,18 @@ class AdminChatterHoursController extends Controller
             'generated_gbp_pence' => $earningSummary['generated_gbp_pence'],
             'commission_pence' => $earningSummary['commission_usd_pence'],
             'foreign_commission_pence' => $earningSummary['commission_gbp_pence'],
-            'gross_pay_pence' => (int) $reportTimesheets->sum(fn (ChatterTimesheet $sheet): int => $this->displayGrossPayPence($sheet, $this->earningDisplaySummaryForTimesheet($sheet, $payroll, $sourceShifts))),
+            'foreign_commission_usd_pence' => $earningSummary['commission_gbp_usd_pence'],
+            'gross_pay_pence' => (int) $reportTimesheets->sum(fn (ChatterTimesheet $sheet): int => $this->displayGrossPayPence($sheet, $this->earningDisplaySummaryForTimesheet($sheet, $payroll, $sourceShifts), $payroll)),
             'gross_pay_php_centavos' => (int) $reportTimesheets->sum(function (ChatterTimesheet $sheet) use ($currency, $payroll, $sourceShifts): int {
                 if ($sheet->status === ChatterTimesheet::STATUS_APPROVED) {
                     return $currency->phpCentavosForTimesheet($sheet);
                 }
 
-                return $currency->phpCentavosFromUsdCents($this->displayGrossPayPence($sheet, $this->earningDisplaySummaryForTimesheet($sheet, $payroll, $sourceShifts)), $currency->rateForTimesheet($sheet));
+                return $currency->phpCentavosFromUsdCents($this->displayGrossPayPence($sheet, $this->earningDisplaySummaryForTimesheet($sheet, $payroll, $sourceShifts), $payroll), $currency->rateForTimesheet($sheet));
             }),
         ];
         $currencyDetails = $currency->usdToPhpDetails();
+        $gbpToUsdDetails = $currency->gbpToUsdDetails();
         $usdToPhpRate = $currencyDetails['rate'];
         $ukNow = CarbonImmutable::now(ChatterPayrollService::REPORTING_TIMEZONE);
         $payrollPeriodLabel = CarbonImmutable::parse($filters['from'], ChatterPayrollService::REPORTING_TIMEZONE)->format('d M Y')
@@ -218,7 +220,7 @@ class AdminChatterHoursController extends Controller
 
         return view('admin.chatter-hours.index', compact(
             'chatterOptions', 'timesheets', 'openShifts', 'attendanceShifts',
-            'workRoles', 'stats', 'filters', 'currency', 'currencyDetails', 'usdToPhpRate', 'ukNow', 'payrollPeriodLabel', 'mode', 'earnings', 'payroll'
+            'workRoles', 'stats', 'filters', 'currency', 'currencyDetails', 'gbpToUsdDetails', 'usdToPhpRate', 'ukNow', 'payrollPeriodLabel', 'mode', 'earnings', 'payroll'
         ));
     }
 
@@ -590,12 +592,14 @@ class AdminChatterHoursController extends Controller
         $missingModelReviews = $this->missingWeeklyModelReviewCount($timesheet);
         $earningSummary = $this->earningDisplaySummaryForTimesheet($timesheet, $payroll, $shifts->keyBy('id'));
         $timesheet->setAttribute('earning_summary', $earningSummary);
-        $timesheet->setAttribute('display_gross_pay_pence', $this->displayGrossPayPence($timesheet, $earningSummary));
+        $timesheet->setAttribute('display_gross_pay_pence', $this->displayGrossPayPence($timesheet, $earningSummary, $payroll));
         $timesheet->setAttribute('display_gross_pay_php_centavos', $timesheet->status === ChatterTimesheet::STATUS_APPROVED
             ? $grossPayPhpCentavos
             : $currency->phpCentavosFromUsdCents((int) $timesheet->getAttribute('display_gross_pay_pence'), $currency->rateForTimesheet($timesheet)));
 
-        return view('admin.chatter-hours.show', compact('timesheet', 'shifts', 'currency', 'earnings', 'usdToPhpRate', 'grossPayPhpCentavos', 'missingModelReviews'));
+        $gbpToUsdDetails = $currency->gbpToUsdDetails();
+
+        return view('admin.chatter-hours.show', compact('timesheet', 'shifts', 'currency', 'earnings', 'usdToPhpRate', 'gbpToUsdDetails', 'grossPayPhpCentavos', 'missingModelReviews'));
     }
 
     public function updateShift(Request $request, ChatterTimesheet $timesheet, ChatterShift $shift, ChatterPayrollService $payroll): RedirectResponse
@@ -1067,7 +1071,7 @@ class AdminChatterHoursController extends Controller
         ];
     }
 
-    /** @return array{generated_usd_pence: int, generated_gbp_pence: int, commission_usd_pence: int, commission_gbp_pence: int} */
+    /** @return array{generated_usd_pence: int, generated_gbp_pence: int, commission_usd_pence: int, commission_gbp_pence: int, commission_gbp_usd_pence: int} */
     private function earningDisplaySummaryForTimesheet(ChatterTimesheet $timesheet, ChatterPayrollService $payroll, ?Collection $sourceShifts = null): array
     {
         $window = $payroll->reportingWindowFor($timesheet->period_start, $timesheet->period_end);
@@ -1076,15 +1080,18 @@ class AdminChatterHoursController extends Controller
             fn (array $shift): bool => $this->snapshotCommissionCanBeDerived($shift, $window, $sourceShifts),
         );
 
-        return [
+        $result = [
             'generated_usd_pence' => $summary['generated_usd_pence'],
             'generated_gbp_pence' => $summary['generated_gbp_pence'],
             'commission_usd_pence' => max((int) $timesheet->commission_pence, $summary['commission_usd_pence']),
             'commission_gbp_pence' => max((int) $timesheet->foreign_commission_pence, $summary['commission_gbp_pence']),
         ];
+        $result['commission_gbp_usd_pence'] = $payroll->foreignCommissionUsdPenceForTimesheet($timesheet, $result);
+
+        return $result;
     }
 
-    /** @return array{generated_usd_pence: int, generated_gbp_pence: int, commission_usd_pence: int, commission_gbp_pence: int} */
+    /** @return array{generated_usd_pence: int, generated_gbp_pence: int, commission_usd_pence: int, commission_gbp_pence: int, commission_gbp_usd_pence: int} */
     private function earningDisplaySummaryForTimesheets(Collection $timesheets, ChatterPayrollService $payroll, ?Collection $sourceShifts = null): array
     {
         return $timesheets->reduce(function (array $carry, ChatterTimesheet $timesheet) use ($payroll, $sourceShifts): array {
@@ -1100,6 +1107,7 @@ class AdminChatterHoursController extends Controller
             'generated_gbp_pence' => 0,
             'commission_usd_pence' => 0,
             'commission_gbp_pence' => 0,
+            'commission_gbp_usd_pence' => 0,
         ]);
     }
 
@@ -1152,8 +1160,8 @@ class AdminChatterHoursController extends Controller
         return $clockedOutAt->greaterThan($window['start']) && $clockedOutAt->lessThanOrEqualTo($window['end']);
     }
 
-    /** @param array{commission_usd_pence: int} $summary */
-    private function displayGrossPayPence(ChatterTimesheet $timesheet, array $summary): int
+    /** @param array{commission_usd_pence: int, commission_gbp_pence?: int} $summary */
+    private function displayGrossPayPence(ChatterTimesheet $timesheet, array $summary, ChatterPayrollService $payroll): int
     {
         if ($timesheet->status === ChatterTimesheet::STATUS_APPROVED) {
             return (int) $timesheet->gross_pay_pence;
@@ -1162,7 +1170,10 @@ class AdminChatterHoursController extends Controller
         $basePayPence = (int) ($timesheet->base_pay_pence
             ?? data_get($timesheet->calculation_snapshot, 'base_pay_pence', (int) $timesheet->gross_pay_pence - (int) $timesheet->adjustment_pence - (int) $timesheet->commission_pence));
 
-        return $basePayPence + (int) $summary['commission_usd_pence'] + (int) $timesheet->adjustment_pence;
+        return $basePayPence
+            + (int) $summary['commission_usd_pence']
+            + $payroll->foreignCommissionUsdPenceForTimesheet($timesheet, $summary)
+            + (int) $timesheet->adjustment_pence;
     }
 
     private function assertChatter(User $user): void

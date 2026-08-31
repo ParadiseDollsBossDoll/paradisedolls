@@ -3,13 +3,17 @@
 namespace App\Support;
 
 use App\Models\ChatterTimesheet;
+use App\Services\GbpUsdExchangeRateService;
 use App\Services\UsdPhpExchangeRateService;
 
 class ChatterCurrency
 {
     private const RATE_SCALE = 10000;
 
-    public function __construct(private readonly UsdPhpExchangeRateService $exchangeRates) {}
+    public function __construct(
+        private readonly UsdPhpExchangeRateService $exchangeRates,
+        private readonly GbpUsdExchangeRateService $gbpUsdExchangeRates,
+    ) {}
 
     public function usdToPhpRate(): string
     {
@@ -20,6 +24,25 @@ class ChatterCurrency
     public function usdToPhpDetails(): array
     {
         return $this->exchangeRates->current();
+    }
+
+    public function gbpToUsdRate(): string
+    {
+        return $this->gbpUsdExchangeRates->current()['rate'];
+    }
+
+    /** @return array{rate: string, rate_date: ?string, fetched_at: ?string, provider: string, is_fallback: bool, is_stale: bool} */
+    public function gbpToUsdDetails(): array
+    {
+        return $this->gbpUsdExchangeRates->current();
+    }
+
+    public function usdCentsFromGbpPence(int $gbpPence, string|float|null $rate = null): int
+    {
+        $scaledRate = (int) round(((float) ($rate ?? $this->gbpToUsdRate())) * self::RATE_SCALE);
+        $absolute = intdiv((abs($gbpPence) * $scaledRate) + intdiv(self::RATE_SCALE, 2), self::RATE_SCALE);
+
+        return $gbpPence < 0 ? -$absolute : $absolute;
     }
 
     public function phpCentavosFromUsdCents(int $usdCents, string|float|null $rate = null): int

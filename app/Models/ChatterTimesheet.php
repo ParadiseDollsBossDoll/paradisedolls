@@ -31,7 +31,8 @@ class ChatterTimesheet extends Model
         'user_id', 'period_start', 'period_end', 'status', 'submitted_at', 'reviewed_by', 'reviewed_at',
         'review_note', 'ordinary_minutes', 'break_minutes', 'night_minutes', 'weekend_minutes',
         'overtime_minutes', 'adjustment_pence', 'base_pay_pence', 'commission_pence',
-        'foreign_commission_currency', 'foreign_commission_pence',
+        'foreign_commission_currency', 'foreign_commission_pence', 'foreign_commission_usd_pence',
+        'gbp_to_usd_rate', 'gbp_to_usd_rate_date', 'gbp_to_usd_rate_fetched_at', 'gbp_to_usd_rate_provider',
         'gross_pay_pence', 'calculation_snapshot',
     ];
 
@@ -41,7 +42,10 @@ class ChatterTimesheet extends Model
             'period_start' => 'date', 'period_end' => 'date', 'submitted_at' => 'datetime',
             'reviewed_at' => 'datetime', 'calculation_snapshot' => 'array',
             'base_pay_pence' => 'integer', 'commission_pence' => 'integer',
-            'foreign_commission_pence' => 'integer', 'gross_pay_pence' => 'integer',
+            'foreign_commission_pence' => 'integer', 'foreign_commission_usd_pence' => 'integer',
+            'gbp_to_usd_rate' => 'decimal:6',
+            'gbp_to_usd_rate_date' => 'date', 'gbp_to_usd_rate_fetched_at' => 'datetime',
+            'gross_pay_pence' => 'integer',
         ];
     }
 
