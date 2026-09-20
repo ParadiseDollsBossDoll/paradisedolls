@@ -11,6 +11,7 @@
         ['route' => 'work-from-paradise', 'label' => marketing_content('shared.nav.work_from_paradise_label')],
         ['route' => 'perks', 'label' => marketing_content('shared.nav.perks_label')],
         ['route' => 'multistreaming', 'label' => marketing_content('shared.nav.multistreaming_label')],
+        ['route' => 'webcam-jobs', 'label' => __('Webcam Jobs')],
         ['route' => 'success-stories', 'label' => marketing_content('shared.nav.success_stories_label')],
         ['route' => $memberRoute, 'label' => marketing_content('shared.nav.members_label'), 'auth' => true],
     ];

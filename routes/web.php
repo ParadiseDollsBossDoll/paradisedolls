@@ -65,6 +65,9 @@ Route::view('/work-from-home', 'marketing.work-from-home')->name('work-from-home
 Route::view('/work-from-paradise', 'marketing.work-from-paradise')->name('work-from-paradise');
 Route::view('/perks', 'marketing.perks')->name('perks');
 Route::view('/multistreaming', 'marketing.multistreaming')->name('multistreaming');
+Route::view('/webcam-jobs', 'marketing.webcam-jobs')->name('webcam-jobs');
+Route::view('/webcam-agency', 'marketing.webcam-agency')->name('webcam-agency');
+Route::view('/model-agency', 'marketing.model-agency')->name('model-agency');
 Route::get('/success-stories', TestimonialController::class)->name('success-stories');
 Route::get('/profile-photos/{user}', ProfilePhotoController::class)
     ->whereNumber('user')

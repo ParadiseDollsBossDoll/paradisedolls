@@ -1,4 +1,9 @@
-<x-layouts.marketing :transparentNav="true" :title="__('Home')">
+<x-layouts.marketing
+    :transparentNav="true"
+    :title="__('Paradise Dolls Webcam Model Agency & Online Model Jobs')"
+    :description="__('Paradise Dolls is a luxury webcam model agency for women seeking online model jobs, webcam jobs, remote training, multistreaming support, and private onboarding.')"
+    :keywords="['Paradise Dolls', 'webcam jobs', 'webcam agency', 'model agency', 'online model jobs', 'webcam model agency']"
+>
     @php
         $heroImg = marketing_image('home.hero.image');
         $workspaceImg = marketing_image('home.intro.image');

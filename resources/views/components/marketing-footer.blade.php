@@ -10,6 +10,9 @@
         ['route' => 'work-from-paradise', 'label' => marketing_content('shared.nav.work_from_paradise_label')],
         ['route' => 'perks', 'label' => marketing_content('shared.nav.perks_label')],
         ['route' => 'multistreaming', 'label' => marketing_content('shared.nav.multistreaming_label')],
+        ['route' => 'webcam-jobs', 'label' => __('Webcam Jobs')],
+        ['route' => 'webcam-agency', 'label' => __('Webcam Agency')],
+        ['route' => 'model-agency', 'label' => __('Model Agency')],
         ['route' => 'success-stories', 'label' => marketing_content('shared.nav.success_stories_label')],
     ];
 
