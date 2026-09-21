@@ -57,6 +57,29 @@ class MarketingSeoPageTest extends TestCase
             ->assertDontSeeText('Related search');
     }
 
+    public function test_webcam_agency_page_explains_services_terms_and_responsibilities(): void
+    {
+        config(['app.url' => 'https://getrichwithparadisedolls.com']);
+
+        $this->get(route('webcam-agency'))
+            ->assertOk()
+            ->assertSeeText('What a webcam agency should actually do')
+            ->assertSeeText('What Paradise Dolls provides')
+            ->assertSeeText('Agency support without hiding your responsibilities')
+            ->assertSeeText('Built from more than 15 years in the industry')
+            ->assertSeeText('Understand the terms, not just the benefits')
+            ->assertSeeText('six-month agency term')
+            ->assertSeeText('Does a webcam agency guarantee earnings?')
+            ->assertSee('Webcam Agency for Women - Paradise Dolls', false)
+            ->assertSee('https://getrichwithparadisedolls.com/webcam-agency', false)
+            ->assertSee('"@type":"WebPage"', false)
+            ->assertSee('"@type":"BreadcrumbList"', false)
+            ->assertSee('"@type":"FAQPage"', false)
+            ->assertSee('<meta property="og:image"', false)
+            ->assertDontSeeText('Search Focus')
+            ->assertDontSeeText('Related search');
+    }
+
     public function test_marketing_navigation_keeps_primary_and_secondary_links_accessible(): void
     {
         $this->get(route('webcam-jobs'))
