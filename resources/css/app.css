@@ -2223,10 +2223,10 @@ html.light-mode .pd-marketing-image-hero-eyebrow {
         0 0 18px rgba(0, 0, 0, 0.45);
 }
 
-/* Public navbar: translated labels can be much longer than English. */
+/* Public navbar: keep the primary journey calm and move secondary pages into a menu. */
 .pd-marketing-navbar-row {
     min-width: 0;
-    gap: clamp(0.75rem, 1.35vw, 1.75rem);
+    gap: clamp(1rem, 2vw, 2.5rem);
 }
 
 .pd-marketing-navbar-logo {
@@ -2237,37 +2237,38 @@ html.light-mode .pd-marketing-image-hero-eyebrow {
     min-width: 0;
     flex: 1 1 auto;
     justify-content: center;
-    gap: clamp(0.65rem, 1.15vw, 1.4rem);
+    gap: clamp(1rem, 1.8vw, 2rem);
 }
 
 .pd-marketing-navbar-link {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    max-width: none;
-    min-width: 0;
-    overflow: visible;
-    line-height: 1.25;
+    min-height: 2.75rem;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    line-height: 1;
     text-align: center;
-    text-overflow: clip;
-    white-space: normal;
+    white-space: nowrap;
 }
 
 .pd-marketing-navbar-actions {
     min-width: 0;
-    flex: 0 1 auto;
-    gap: clamp(0.5rem, 0.8vw, 0.75rem);
+    flex: 0 0 auto;
+    gap: 0.75rem;
 }
 
 .pd-marketing-navbar-action {
     align-items: center;
     justify-content: center;
-    min-height: 2.25rem;
-    overflow: visible;
-    line-height: 1.2;
+    min-height: 2.75rem;
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    line-height: 1;
     text-align: center;
-    text-overflow: clip;
-    white-space: normal;
+    white-space: nowrap;
 }
 
 .pd-marketing-navbar-login {
@@ -2276,65 +2277,21 @@ html.light-mode .pd-marketing-image-hero-eyebrow {
 }
 
 .pd-marketing-navbar-apply {
-    max-width: 12rem;
+    min-width: 7.75rem;
 }
 
 html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-links {
-    gap: clamp(0.55rem, 1vw, 1.05rem);
+    gap: clamp(0.75rem, 1.25vw, 1.25rem);
 }
 
 html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-link {
-    max-width: none;
-    font-size: 0.56rem !important;
-    letter-spacing: 0.075em !important;
+    font-size: 0.61rem !important;
+    letter-spacing: 0.08em !important;
 }
 
 html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-action {
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
-    font-size: 0.56rem !important;
-    letter-spacing: 0.075em !important;
-}
-
-html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-login {
-    max-width: none;
-}
-
-html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-apply {
-    max-width: 10.25rem;
-}
-
-@media (min-width: 1280px) and (max-width: 1380px) {
-    .pd-marketing-navbar-row {
-        gap: 0.55rem;
-    }
-
-    .pd-marketing-navbar-logo img {
-        width: 7.25rem;
-    }
-
-    .pd-marketing-navbar-links,
-    html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-links {
-        gap: 0.5rem;
-    }
-
-    .pd-marketing-navbar-link {
-        font-size: 0.57rem !important;
-        letter-spacing: 0.08em !important;
-    }
-
-    .pd-marketing-navbar-action,
-    html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-action {
-        padding-left: 0.65rem !important;
-        padding-right: 0.65rem !important;
-        font-size: 0.55rem !important;
-        letter-spacing: 0.07em !important;
-    }
-
-    .pd-marketing-navbar-apply,
-    html[data-pd-language]:not([data-pd-language="en"]) .pd-marketing-navbar-apply {
-        max-width: 8.75rem;
-    }
+    font-size: 0.6rem !important;
+    letter-spacing: 0.08em !important;
 }
 
 /* Course library cards: keep the course accent visible on titles. */

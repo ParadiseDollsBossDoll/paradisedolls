@@ -18,7 +18,7 @@
     :description="$description"
     :keywords="$keywords"
 >
-    <section class="pd-marketing-image-hero relative flex min-h-[68vh] items-center overflow-hidden pt-24">
+    <section class="pd-marketing-image-hero relative flex min-h-[clamp(660px,82svh,780px)] items-center overflow-hidden pb-16 pt-28 sm:pb-20 sm:pt-32">
         <img src="{{ $heroImage }}" alt="" class="absolute inset-0 h-full w-full object-cover" aria-hidden="true">
         <div class="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-boss-dark/95"></div>
 
@@ -27,9 +27,9 @@
                 <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-[#F2C7D2]">{{ $eyebrow }}</p>
                 <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.85rem,7vw,5.6rem)] leading-[0.98] text-[#FFF8F6]">{{ $headline }}</h1>
                 <p class="pd-marketing-image-hero-body mt-7 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFF8F6]/90">{{ $intro }}</p>
-                <div class="mt-10 flex flex-wrap gap-3">
-                    <a href="{{ route('apply') }}" class="rounded-md bg-[#EEB4C3] px-9 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Apply Now') }}</a>
-                    <a href="{{ route('multistreaming') }}" class="rounded-md border border-white/40 px-9 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white hover:text-boss-dark">{{ __('Learn The System') }}</a>
+                <div class="mt-10 grid w-full max-w-[26rem] grid-cols-1 gap-3 sm:w-auto sm:grid-cols-[minmax(9.5rem,auto)_minmax(12.75rem,auto)]">
+                    <a href="{{ route('apply') }}" class="inline-flex min-h-12 items-center justify-center rounded-md bg-[#EEB4C3] px-7 py-3 text-center text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-boss-dark transition-colors hover:bg-[#e0a0b5]">{{ __('Apply Now') }}</a>
+                    <a href="{{ route('multistreaming') }}" class="inline-flex min-h-12 items-center justify-center rounded-md border border-white/40 px-7 py-3 text-center text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white hover:text-boss-dark">{{ __('Learn The System') }}</a>
                 </div>
             </div>
         </div>

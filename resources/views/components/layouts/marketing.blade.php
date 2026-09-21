@@ -3,6 +3,8 @@
     'title' => null,
     'description' => null,
     'keywords' => [],
+    'image' => null,
+    'structuredData' => [],
 ])
 @php
     try {
@@ -17,6 +19,8 @@
     $canonicalUrl = $canonicalBase.($canonicalPath === '/' ? '' : '/'.$canonicalPath);
     $metaDescription = $description ?: 'Paradise Dolls is a luxury webcam model agency and training community for women building online income with professional support, onboarding, and education.';
     $metaKeywords = collect($keywords)->filter()->implode(', ');
+    $metaImage = $image ?: asset('images/brand/get-rich-with-paradise-dolls-logo.png');
+    $structuredDataItems = collect($structuredData)->filter(fn ($item) => is_array($item) && $item !== []);
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -35,10 +39,16 @@
         <meta property="og:site_name" content="{{ config('app.name') }}">
         <meta property="og:title" content="{{ $title ? $title.' - '.config('app.name') : config('app.name') }}">
         <meta property="og:description" content="{{ $metaDescription }}">
+        <meta property="og:image" content="{{ $metaImage }}">
         <meta property="og:type" content="website">
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="{{ $title ? $title.' - '.config('app.name') : config('app.name') }}">
         <meta name="twitter:description" content="{{ $metaDescription }}">
+        <meta name="twitter:image" content="{{ $metaImage }}">
+
+        @foreach ($structuredDataItems as $structuredDataItem)
+            <script type="application/ld+json">{!! json_encode($structuredDataItem, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+        @endforeach
 
         <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
@@ -50,7 +60,7 @@
     <body
         class="font-sans antialiased text-boss-dark bg-white overflow-x-hidden"
         data-pd-translation-root
-        x-data="{ scrolled: false, navOpen: false, transparent: {{ $transparentNav ? 'true' : 'false' }} }"
+        x-data="{ scrolled: false, navOpen: false, exploreOpen: false, transparent: {{ $transparentNav ? 'true' : 'false' }} }"
         @scroll.window="scrolled = (window.pageYOffset || document.documentElement.scrollTop) > 60"
     >
         @include('partials.google-tag-manager-body')
