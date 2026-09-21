@@ -305,7 +305,7 @@
                 @foreach ([
                     ['route' => 'webcam-jobs', 'label' => 'Webcam jobs explained', 'detail' => 'Role, requirements, self-employed status, and application guidance'],
                     ['route' => 'webcam-agency', 'label' => 'How the webcam agency works', 'detail' => 'Services, responsibilities, training terms, and management support'],
-                    ['route' => 'success-stories', 'label' => 'Paradise Dolls success stories', 'detail' => 'Read approved experiences shared by members'],
+                    ['route' => 'guides', 'label' => 'Paradise Dolls guides', 'detail' => 'Research safety, remote work, agency choices, earnings, and multistreaming'],
                 ] as $link)
                     <a href="{{ route($link['route']) }}" class="group flex min-h-20 items-center justify-between gap-6 py-4 transition-colors hover:text-boss-gold">
                         <span>

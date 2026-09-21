@@ -298,9 +298,9 @@
             </div>
             <nav aria-label="Webcam agency guidance" class="divide-y divide-white/10 border-y border-white/10">
                 @foreach ([
-                    ['route' => 'webcam-jobs', 'label' => 'Webcam jobs explained', 'detail' => 'Role, eligibility, self-employed status, and application guidance'],
-                    ['route' => 'work-from-home', 'label' => 'Working from home', 'detail' => 'Workspace, privacy, equipment, and remote routines'],
-                    ['route' => 'multistreaming', 'label' => 'How multistreaming works', 'detail' => 'Why models may use more than one live platform'],
+                    ['route' => 'webcam-agency-vs-independent', 'label' => 'Agency vs independent modelling', 'detail' => 'Compare support, control, fees, contracts, and account ownership'],
+                    ['route' => 'webcam-model-earnings-payments', 'label' => 'Earnings and payments', 'detail' => 'Understand gross earnings, deductions, records, and variable income'],
+                    ['route' => 'webcam-model-safety-privacy', 'label' => 'Safety and privacy', 'detail' => 'Review anonymity limits, secure accounts, boundaries, and incident support'],
                 ] as $link)
                     <a href="{{ route($link['route']) }}" class="group flex min-h-20 items-center justify-between gap-6 py-4 transition-colors hover:text-boss-gold">
                         <span>

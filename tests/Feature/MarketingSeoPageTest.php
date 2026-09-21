@@ -17,6 +17,12 @@ class MarketingSeoPageTest extends TestCase
             '/webcam-jobs' => ['Webcam jobs', 'webcam model jobs'],
             '/webcam-agency' => ['Webcam agency', 'webcam model agency'],
             '/model-agency' => ['Model agency', 'online model agency'],
+            '/work-from-home' => ['Work from home webcam jobs', 'remote webcam model jobs'],
+            '/multistreaming' => ['Multistreaming for webcam models', 'webcam streaming setup'],
+            '/how-to-become-a-webcam-model' => ['How to become a webcam model', 'webcam modelling for beginners'],
+            '/webcam-model-safety-privacy' => ['Webcam model safety and privacy', 'is webcam modelling safe'],
+            '/webcam-agency-vs-independent' => ['Webcam agency vs independent', 'webcam agency contract'],
+            '/webcam-model-earnings-payments' => ['Webcam model earnings and payments', 'how do webcam models get paid'],
         ];
 
         foreach ($pages as $path => [$headline, $relatedKeyword]) {
@@ -112,8 +118,77 @@ class MarketingSeoPageTest extends TestCase
             ->assertSee('id="marketing-mobile-menu"', false)
             ->assertSeeText('Home')
             ->assertSeeText('Webcam Jobs')
+            ->assertSeeText('Guides')
             ->assertSeeText('Our Story')
             ->assertSeeText('Work From Paradise')
             ->assertSeeText('Become A Doll');
+    }
+
+    public function test_guides_hub_exposes_the_topic_library_and_structured_data(): void
+    {
+        config(['app.url' => 'https://getrichwithparadisedolls.com']);
+
+        $this->get(route('guides'))
+            ->assertOk()
+            ->assertSeeText('Webcam model guides for informed decisions')
+            ->assertSeeText('How to become a webcam model')
+            ->assertSeeText('Webcam model safety and privacy')
+            ->assertSeeText('Webcam agency vs independent')
+            ->assertSeeText('Webcam model earnings and payments')
+            ->assertSee('https://getrichwithparadisedolls.com/guides', false)
+            ->assertSee('"@type":"CollectionPage"', false)
+            ->assertSee('"@type":"ItemList"', false)
+            ->assertSee('"@type":"BreadcrumbList"', false);
+    }
+
+    public function test_beginner_guides_render_people_first_advice_and_faq_schema(): void
+    {
+        config(['app.url' => 'https://getrichwithparadisedolls.com']);
+
+        $guides = [
+            'how-to-become-a-webcam-model' => [
+                'Understand the work before creating accounts',
+                'Can I become a webcam model without showing my face?',
+            ],
+            'webcam-model-safety-privacy' => [
+                'Privacy can be strengthened, but anonymity cannot be guaranteed',
+                'What should I do if someone threatens to expose me?',
+            ],
+            'webcam-agency-vs-independent' => [
+                'Understand agency fees, contracts, and account ownership',
+                'How can I find a legitimate webcam agency?',
+            ],
+            'webcam-model-earnings-payments' => [
+                'Separate gross activity from final take-home pay',
+                'Are tokens the same as cash?',
+            ],
+        ];
+
+        foreach ($guides as $routeName => [$section, $question]) {
+            $this->get(route($routeName))
+                ->assertOk()
+                ->assertSeeText($section)
+                ->assertSeeText($question)
+                ->assertSee('"@type":"WebPage"', false)
+                ->assertSee('"@type":"FAQPage"', false)
+                ->assertSee('"@type":"BreadcrumbList"', false);
+        }
+    }
+
+    public function test_work_from_home_and_multistreaming_pages_use_current_focused_guidance(): void
+    {
+        $this->get(route('work-from-home'))
+            ->assertOk()
+            ->assertSeeText('Work from home webcam jobs, explained honestly')
+            ->assertSeeText('Build a setup that is private, stable, and comfortable')
+            ->assertSeeText('Can webcam models work from home?')
+            ->assertSee('"@type":"FAQPage"', false);
+
+        $this->get(route('multistreaming'))
+            ->assertOk()
+            ->assertSeeText('Multistreaming for webcam models without losing control')
+            ->assertSeeText('Learn one workflow before adding more platforms')
+            ->assertSeeText('Do all webcam platforms allow multistreaming?')
+            ->assertSee('"@type":"FAQPage"', false);
     }
 }

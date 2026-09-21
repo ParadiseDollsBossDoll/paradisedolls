@@ -6,6 +6,7 @@
 
     $explore = [
         ['route' => 'our-story', 'label' => marketing_content('shared.nav.our_story_label')],
+        ['route' => 'guides', 'label' => __('Guides')],
         ['route' => 'work-from-home', 'label' => marketing_content('shared.nav.work_from_home_label')],
         ['route' => 'work-from-paradise', 'label' => marketing_content('shared.nav.work_from_paradise_label')],
         ['route' => 'perks', 'label' => marketing_content('shared.nav.perks_label')],

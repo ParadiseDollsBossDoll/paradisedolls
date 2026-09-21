@@ -220,13 +220,14 @@
             <div>
                 <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Learn before you apply') }}</p>
                 <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight">{{ __('Understand the work and the agency') }}</h2>
-                <p class="mt-5 max-w-xl text-[0.94rem] leading-7 text-boss-ivory/60">{{ __('Explore how remote work, multistreaming, and the Paradise Dolls story fit together before deciding whether the opportunity is right for you.') }}</p>
+                <p class="mt-5 max-w-xl text-[0.94rem] leading-7 text-boss-ivory/60">{{ __('Explore the beginner process, remote setup, safety, and professional systems before deciding whether the opportunity is right for you.') }}</p>
             </div>
             <nav aria-label="Webcam job guidance" class="divide-y divide-white/10 border-y border-white/10">
                 @foreach ([
+                    ['route' => 'how-to-become-a-webcam-model', 'label' => 'How to become a webcam model', 'detail' => 'A careful beginner path from research to a first live session'],
                     ['route' => 'work-from-home', 'label' => 'Working from home', 'detail' => 'Workspace, privacy, equipment, and flexible scheduling'],
-                    ['route' => 'multistreaming', 'label' => 'How multistreaming works', 'detail' => 'Learn why models use more than one platform'],
-                    ['route' => 'our-story', 'label' => 'About Paradise Dolls', 'detail' => 'Read the experience and purpose behind the agency'],
+                    ['route' => 'webcam-model-safety-privacy', 'label' => 'Safety and privacy', 'detail' => 'Identity separation, account security, boundaries, and incident response'],
+                    ['route' => 'guides', 'label' => 'Browse all guides', 'detail' => 'Agency choices, earnings, payments, multistreaming, and more'],
                 ] as $link)
                     <a href="{{ route($link['route']) }}" class="group flex min-h-20 items-center justify-between gap-6 py-4 transition-colors hover:text-boss-gold">
                         <span>

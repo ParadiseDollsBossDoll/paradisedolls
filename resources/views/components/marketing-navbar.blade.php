@@ -14,13 +14,22 @@
     ];
 
     $exploreLinks = [
+        ['route' => 'guides', 'label' => __('Guides')],
         ['route' => 'work-from-home', 'label' => marketing_content('shared.nav.work_from_home_label')],
         ['route' => 'work-from-paradise', 'label' => marketing_content('shared.nav.work_from_paradise_label')],
         ['route' => 'perks', 'label' => marketing_content('shared.nav.perks_label')],
         ['route' => 'multistreaming', 'label' => marketing_content('shared.nav.multistreaming_label')],
     ];
 
-    $exploreIsActive = collect($exploreLinks)->contains(fn ($link) => request()->routeIs($link['route']));
+    $guideRoutes = [
+        'how-to-become-a-webcam-model',
+        'webcam-model-safety-privacy',
+        'webcam-agency-vs-independent',
+        'webcam-model-earnings-payments',
+    ];
+
+    $exploreIsActive = collect($exploreLinks)->contains(fn ($link) => request()->routeIs($link['route']))
+        || request()->routeIs(...$guideRoutes);
 
     $applyUrl = marketing_link('shared.nav.apply_url', route('home').'#apply');
 @endphp
