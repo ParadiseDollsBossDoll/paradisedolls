@@ -80,6 +80,29 @@ class MarketingSeoPageTest extends TestCase
             ->assertDontSeeText('Related search');
     }
 
+    public function test_model_agency_page_explains_online_representation_and_global_eligibility(): void
+    {
+        config(['app.url' => 'https://getrichwithparadisedolls.com']);
+
+        $this->get(route('model-agency'))
+            ->assertOk()
+            ->assertSeeText('A model agency built for online creators')
+            ->assertSeeText('Online model management, not fashion casting')
+            ->assertSeeText('An international application does not mean automatic acceptance')
+            ->assertSeeText('What the Paradise Dolls agency provides')
+            ->assertSeeText('Questions every model should ask an agency')
+            ->assertSeeText('Can women apply from outside the United Kingdom?')
+            ->assertSeeText('minimum six-month term')
+            ->assertSee('Online Model Agency for Women - Paradise Dolls', false)
+            ->assertSee('https://getrichwithparadisedolls.com/model-agency', false)
+            ->assertSee('"@type":"WebPage"', false)
+            ->assertSee('"@type":"BreadcrumbList"', false)
+            ->assertSee('"@type":"FAQPage"', false)
+            ->assertSee('<meta property="og:image"', false)
+            ->assertDontSeeText('Search Focus')
+            ->assertDontSeeText('Related search');
+    }
+
     public function test_marketing_navigation_keeps_primary_and_secondary_links_accessible(): void
     {
         $this->get(route('webcam-jobs'))
