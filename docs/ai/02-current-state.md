@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-09-22
+Last updated: 2026-10-04
 
 ## Production Context
 
@@ -9,13 +9,10 @@ Last updated: 2026-09-22
 - Production server path: `/var/www/paradisedollz`.
 - Hostinger VPS uses Nginx, PHP-FPM, Supervisor queue/scheduler/Reverb services.
 - Google Analytics and Google Tag Manager are installed through environment/configured partials.
-- The public marketing site has dedicated organic SEO landing pages for `webcam jobs`, `webcam agency`, and `model agency`, plus a Guides hub and focused beginner guides for becoming a webcam model, safety/privacy, agency-vs-independent decisions, and earnings/payments.
-- The Work From Home and Multistreaming pages now target their own search intents with complete practical guidance, FAQ structured data, and links into the guide cluster.
-- The marketing topic cluster uses one primary intent per URL, visible people-first guidance, candid adult/self-employed/privacy/income caveats, responsive guide layouts, canonical metadata, breadcrumb/FAQ structured data where supported, and sitemap coverage.
-- The Webcam Jobs page is a people-first applicant guide covering the adult creator role, 18+ eligibility, self-employed status, requirements, agency support, application steps, earning limitations, and FAQs. It includes Organization, WebPage, BreadcrumbList, and FAQPage structured data; JobPosting markup is intentionally withheld until a specific verifiable vacancy can provide every required field.
-- The Webcam Agency page is a people-first agency guide covering services, model/agency responsibilities, adult and self-employed status, founder experience, application steps, training commitment, earning limitations, internal guidance links, and supported Organization, WebPage, BreadcrumbList, and FAQPage structured data.
-- The Model Agency page targets the accurate international-facing `online model agency` category. It distinguishes Paradise Dolls from fashion casting, explains country/platform eligibility, services, self-employed status, founder experience, application and training terms, agency-comparison questions, and supported Organization, WebPage, BreadcrumbList, and FAQPage structured data.
-- The public marketing header uses a focused desktop navigation with secondary discovery pages grouped under Explore, including the Guides hub, plus a scroll-safe responsive menu for tablet and mobile.
+- Prepared on `codex/withdraw-unapproved-marketing`, not deployed: withdraw Webcam Jobs, Guides, four dedicated guides, Webcam Agency, and Model Agency pending client/head-office approval. Direct URLs return 404 with noindex; navigation/footer and sitemap omit them.
+- Content remains in Blade source and Git history for private review. Work From Home and Multistreaming are restored to their pre-guide-cluster templates from `5bee4c8^`; existing site-editor values remain in use.
+- Client/head-office approval is required before publishing or restoring marketing copy. Earlier September SEO publication decisions are superseded by this withdrawal.
+- Production remains unchanged until an explicitly authorized deployment. Pushing `main` triggers production deployment; use the review branch.
 
 ## Recent Work In Progress
 

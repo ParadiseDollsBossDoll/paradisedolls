@@ -1,6 +1,6 @@
 # Feature Index
 
-Last updated: 2026-09-22
+Last updated: 2026-10-04
 
 Use this file as the first stop before changing a feature. Read the matching entry, inspect the "Start here" files first, then expand only to the related files named by the code.
 
@@ -27,6 +27,8 @@ Related:
 - `docs/google-translation-cost-explanation.md`
 
 Notes: Handles homepage, public story/lifestyle pages, success stories, SEO landing pages, the public Guides hub and beginner topic cluster, navigation/footer, structured data, GTM/GA partials, sitemap/domain context, and `.net` to `.com` marketing migration.
+
+Withdrawal pending deployment (2026-10-04): eight SEO/guide URLs are disabled in the review branch; templates remain for private review. See `tests/Feature/MarketingWithdrawalTest.php` and the current-state note. Client/head-office approval is required before restoration.
 
 ## Applications And Applicant Review
 

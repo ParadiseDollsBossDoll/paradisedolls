@@ -1,95 +1,163 @@
 @php
-    $heroImage = asset('images/14.jpeg');
-
-    $sections = [
-        [
-            'id' => 'how-it-works',
-            'eyebrow' => 'The basic idea',
-            'title' => 'How multistreaming works for webcam models',
-            'intro' => 'Multistreaming sends one live camera feed to more than one compatible platform. The aim is to reach separate audiences without running completely separate broadcasts.',
-            'paragraphs' => [
-                'A multistreaming tool manages the video feeds, but the model still needs to watch multiple chats, understand each platform interface, and follow every site\'s rules. It is an operating method, not an automatic income system.',
-                'Some platforms, account types, exclusivity agreements, or promotional programmes may restrict simultaneous streaming. Models should check current terms and obtain agency guidance before connecting accounts.',
-            ],
-            'items' => [
-                ['title' => 'One production setup', 'body' => 'The same camera, lighting, scene, and performance can be delivered to supported sites.'],
-                ['title' => 'Separate platform activity', 'body' => 'Chat, goals, private requests, balances, and moderation still need to be managed per platform.'],
-                ['title' => 'Higher technical demand', 'body' => 'The computer, upload connection, and streaming software must remain stable under a heavier workload.'],
-                ['title' => 'More operational attention', 'body' => 'A wider audience only helps when viewers on every active platform still receive responsive service.'],
-            ],
-        ],
-        [
-            'id' => 'when-to-start',
-            'eyebrow' => 'Begin in the right order',
-            'title' => 'Learn one workflow before adding more platforms',
-            'intro' => 'A complete beginner may learn faster by understanding one platform, one set of controls, and one audience before expanding.',
-            'items' => [
-                ['title' => 'First, master the room', 'body' => 'Know how to start and end sessions, moderate chat, protect boundaries, and respond to technical problems.'],
-                ['title' => 'Then, document the routine', 'body' => 'Create a repeatable pre-stream checklist for accounts, lighting, audio, camera framing, goals, and privacy.'],
-                ['title' => 'Next, test capacity', 'body' => 'Measure CPU use, memory, dropped frames, and upload stability before adding another live destination.'],
-                ['title' => 'Finally, expand gradually', 'body' => 'Add one compatible platform at a time and review whether the extra audience justifies the extra attention.'],
-            ],
-        ],
-        [
-            'id' => 'technical-checklist',
-            'eyebrow' => 'Technical checklist',
-            'title' => 'Prepare for stability, not just picture quality',
-            'intro' => 'A polished image is useful, but stability and control are what keep a multistream running safely.',
-            'items' => [
-                'Use a computer capable of running the camera, encoding software, browser tabs, and chat tools together.',
-                'Prefer a wired internet connection and leave upload capacity above the combined stream requirement.',
-                'Use clear audio monitoring so notifications or overlapping platform sounds do not disrupt the session.',
-                'Keep dashboards arranged so every active chat, private request, and moderation alert can be seen.',
-                'Have a fast stop procedure for one platform or the entire stream if privacy or technical issues occur.',
-            ],
-            'note_title' => 'Platform rules come first',
-            'note' => 'Compatibility and terms can change. Always verify current rules for every account before multistreaming, especially where exclusivity, private sessions, or promotional programmes are involved.',
-        ],
-        [
-            'id' => 'performance-and-safety',
-            'eyebrow' => 'Professional operation',
-            'title' => 'Protect viewer experience and personal boundaries',
-            'intro' => 'More platforms create more opportunities for missed messages, conflicting requests, accidental disclosures, and fatigue.',
-            'items' => [
-                ['title' => 'Set one clear boundary standard', 'body' => 'Do not let pressure from one room change limits that apply everywhere else.'],
-                ['title' => 'Acknowledge each audience', 'body' => 'Avoid making one platform feel ignored while attention is focused on another.'],
-                ['title' => 'Track earnings separately', 'body' => 'Platform balances, fees, payment timing, and records should remain distinct even when the live production is shared.'],
-                ['title' => 'Stop before quality collapses', 'body' => 'A controlled session on fewer sites is better than an unstable session that damages every audience.'],
-            ],
-        ],
-    ];
-
-    $faqs = [
-        ['question' => 'What is multistreaming for webcam models?', 'answer' => 'Multistreaming is the practice of broadcasting one live production to more than one compatible webcam platform at the same time while managing each platform\'s chat, requests, and rules.'],
-        ['question' => 'Does multistreaming guarantee more earnings?', 'answer' => 'No. It can increase audience reach, but earnings still depend on consistency, viewer engagement, platform conditions, and the model\'s ability to manage each room well.'],
-        ['question' => 'Can beginners multistream immediately?', 'answer' => 'It is usually safer to understand one platform and build a stable live routine before adding more. Paradise Dolls training can help approved models decide when expansion is appropriate.'],
-        ['question' => 'What internet connection is needed for multistreaming?', 'answer' => 'The exact requirement depends on video quality, encoding method, and number of destinations. A stable wired connection with upload capacity comfortably above the total stream demand is preferable.'],
-        ['question' => 'Do all webcam platforms allow multistreaming?', 'answer' => 'No assumption should be made. Platform terms, account programmes, and private-session rules can differ and change, so each current agreement must be checked first.'],
-    ];
+    $heroImg = marketing_image('multistreaming.hero.image');
+    $differentCards = marketing_items('multistreaming.different.cards');
+    $strategyCards = marketing_items('multistreaming.strategy.cards');
+    $builtCards = marketing_items('multistreaming.built.cards');
 @endphp
+<x-layouts.marketing :transparentNav="true" :title="marketing_content('multistreaming.hero.title')">
+    <section class="pd-marketing-image-hero relative flex min-h-[60vh] items-center justify-center overflow-hidden pt-24">
+        <img src="{{ $heroImg }}" alt="" class="absolute inset-0 h-full w-full object-cover" aria-hidden="true">
+        <div class="absolute inset-0 bg-black/60"></div>
+        <div class="relative z-10 mx-auto max-w-3xl px-4 text-center text-white">
+            <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-[#F2C7D2]">{{ marketing_content('multistreaming.hero.eyebrow') }}</p>
+            <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.7rem,7vw,5rem)] leading-tight text-[#FFF8F6]">{{ marketing_content('multistreaming.hero.title') }}</h1>
+            <p class="pd-marketing-image-hero-body mx-auto mt-6 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFF8F6]/90">{{ marketing_content('multistreaming.hero.body') }}</p>
+        </div>
+    </section>
 
-<x-marketing-guide-page
-    route-name="multistreaming"
-    title="Multistreaming for Webcam Models"
-    description="A practical guide to multistreaming for webcam models: how it works, when beginners should start, technical requirements, platform rules, safety, and workflow."
-    :keywords="['multistreaming for webcam models', 'webcam multistreaming', 'webcam streaming setup', 'professional webcam modelling']"
-    eyebrow="Professional streaming guide"
-    heading="Multistreaming for webcam models without losing control"
-    lead="Understand how simultaneous streaming works, what equipment and workflow it needs, and why platform rules, viewer attention, and personal boundaries must come before expansion."
-    :hero-image="$heroImage"
-    hero-alt="Paradise Dolls creators learning a multistreaming workflow with cameras and laptops"
-    answer="Multistreaming can widen audience reach, but it works only when the model can maintain stable technology, responsive chats, accurate records, and the rules and boundaries of every platform."
-    :facts="[
-        ['label' => 'Best starting point', 'value' => 'One stable platform'],
-        ['label' => 'Main requirement', 'value' => 'Reliable upload speed'],
-        ['label' => 'Core skill', 'value' => 'Multi-room attention'],
-        ['label' => 'First check', 'value' => 'Current platform terms'],
-    ]"
-    :sections="$sections"
-    :faqs="$faqs"
-    :related="[
-        ['route' => 'work-from-home', 'label' => 'Work-from-home webcam jobs', 'detail' => 'Build the private, reliable workspace a live routine needs'],
-        ['route' => 'how-to-become-a-webcam-model', 'label' => 'How to become a webcam model', 'detail' => 'Follow the beginner path before adding technical complexity'],
-        ['route' => 'webcam-model-earnings-payments', 'label' => 'Webcam model earnings and payments', 'detail' => 'Understand balances, fees, records, and variable income'],
-    ]"
-/>
+    <section class="bg-white py-24">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="grid gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+                <div>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ marketing_content('multistreaming.different.eyebrow') }}</p>
+                    <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ marketing_content('multistreaming.different.title') }}</h2>
+                    <div class="mt-8 space-y-5 text-[0.95rem] leading-relaxed text-boss-dark/65">
+                        @foreach (marketing_paragraphs('multistreaming.different.body') as $paragraph)
+                            <p>{{ $paragraph }}</p>
+                        @endforeach
+                    </div>
+                    <a href="{{ marketing_link('multistreaming.different.cta_url', route('home').'#apply') }}" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-10 py-3.5 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ marketing_content('multistreaming.different.cta_label') }}</a>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+                    @foreach ($differentCards as $item)
+                        <div class="border border-boss-pink/60 bg-boss-muted p-5">
+                            <p class="font-display text-[1.1rem] text-boss-dark">{{ $item['title'] ?? '' }}</p>
+                            <p class="mt-3 text-[0.84rem] leading-relaxed text-boss-dark/58">{{ $item['body'] ?? '' }}</p>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-boss-cream py-24">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="mb-14 max-w-3xl">
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ marketing_content('multistreaming.industry.eyebrow') }}</p>
+                <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ marketing_content('multistreaming.industry.title') }}</h2>
+                <p class="mt-6 text-[0.95rem] leading-relaxed text-boss-dark/65">{{ marketing_content('multistreaming.industry.body') }}</p>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="bg-white p-8 shadow-luxe">
+                    <div class="mb-6 inline-block bg-boss-pink px-4 py-1.5">
+                        <p class="text-[0.65rem] uppercase tracking-[0.2em] text-boss-dark">{{ marketing_content('multistreaming.freemium.label') }}</p>
+                    </div>
+                    <h3 class="font-display text-[1.45rem] text-boss-dark">{{ marketing_content('multistreaming.freemium.title') }}</h3>
+                    <p class="mt-4 text-[0.9rem] leading-relaxed text-boss-dark/62">{{ marketing_content('multistreaming.freemium.body') }}</p>
+                    <div class="mt-6 grid gap-3 sm:grid-cols-2">
+                        <div>
+                            <p class="mb-3 text-[0.65rem] uppercase tracking-[0.18em] text-boss-rose">{{ marketing_content('multistreaming.freemium.platform_label') }}</p>
+                            <ul class="space-y-1.5 text-[0.86rem] text-boss-dark/65">
+                                @foreach (marketing_items('multistreaming.freemium.platforms') as $p)
+                                    <li class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-boss-rose shrink-0"></span>{{ $p }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        <div>
+                            <p class="mb-3 text-[0.65rem] uppercase tracking-[0.18em] text-boss-rose">{{ marketing_content('multistreaming.freemium.best_label') }}</p>
+                            <ul class="space-y-1.5 text-[0.86rem] text-boss-dark/65">
+                                @foreach (marketing_items('multistreaming.freemium.best_for') as $b)
+                                    <li class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-boss-rose shrink-0"></span>{{ $b }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-boss-dark p-8 shadow-luxe text-boss-ivory">
+                    <div class="mb-6 inline-block bg-boss-gold/20 border border-boss-gold/30 px-4 py-1.5">
+                        <p class="text-[0.65rem] uppercase tracking-[0.2em] text-boss-gold">{{ marketing_content('multistreaming.premium.label') }}</p>
+                    </div>
+                    <h3 class="font-display text-[1.45rem] text-boss-ivory">{{ marketing_content('multistreaming.premium.title') }}</h3>
+                    <p class="mt-4 text-[0.9rem] leading-relaxed text-boss-ivory/55">{{ marketing_content('multistreaming.premium.body') }}</p>
+                    <div class="mt-6 grid gap-3 sm:grid-cols-2">
+                        <div>
+                            <p class="mb-3 text-[0.65rem] uppercase tracking-[0.18em] text-boss-gold">{{ marketing_content('multistreaming.premium.platform_label') }}</p>
+                            <ul class="space-y-1.5 text-[0.86rem] text-boss-ivory/60">
+                                @foreach (marketing_items('multistreaming.premium.platforms') as $p)
+                                    <li class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-boss-gold shrink-0"></span>{{ $p }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        <div>
+                            <p class="mb-3 text-[0.65rem] uppercase tracking-[0.18em] text-boss-gold">{{ marketing_content('multistreaming.premium.best_label') }}</p>
+                            <ul class="space-y-1.5 text-[0.86rem] text-boss-ivory/60">
+                                @foreach (marketing_items('multistreaming.premium.best_for') as $b)
+                                    <li class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-boss-gold shrink-0"></span>{{ $b }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-white py-24">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+                <div>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ marketing_content('multistreaming.change.eyebrow') }}</p>
+                    <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ marketing_content('multistreaming.change.title') }}</h2>
+                    <div class="mt-8 space-y-5 text-[0.95rem] leading-relaxed text-boss-dark/65">
+                        @foreach (marketing_paragraphs('multistreaming.change.body') as $paragraph)
+                            <p>{{ $paragraph }}</p>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="border border-boss-pink/40 bg-boss-muted p-8">
+                    <p class="mb-6 text-[0.7rem] uppercase tracking-[0.2em] text-boss-rose">{{ marketing_content('multistreaming.strategy.eyebrow') }}</p>
+                    <div class="space-y-5">
+                        @foreach ($strategyCards as $step)
+                            <div class="flex gap-5">
+                                <span class="font-display text-[2rem] leading-none text-boss-pink shrink-0">{{ sprintf('%02d', $loop->iteration) }}</span>
+                                <div>
+                                    <p class="font-medium text-boss-dark text-[0.9rem]">{{ $step['title'] ?? '' }}</p>
+                                    <p class="mt-1 text-[0.86rem] leading-relaxed text-boss-dark/60">{{ $step['body'] ?? '' }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-boss-dark py-24 text-boss-ivory">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="mb-12 text-center">
+                <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ marketing_content('multistreaming.built.eyebrow') }}</p>
+                <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight">{{ marketing_content('multistreaming.built.title') }}</h2>
+                <p class="mx-auto mt-5 max-w-2xl text-[0.95rem] leading-relaxed text-boss-ivory/55">{{ marketing_content('multistreaming.built.body') }}</p>
+            </div>
+            <div class="mx-auto grid max-w-4xl gap-4 sm:grid-cols-3">
+                @foreach ($builtCards as $item)
+                    <div class="border border-white/[0.07] bg-white/[0.03] p-6">
+                        <h3 class="font-display text-[1.1rem] text-boss-gold-light">{{ $item['title'] ?? '' }}</h3>
+                        <p class="mt-3 text-[0.84rem] leading-relaxed text-boss-ivory/45">{{ $item['body'] ?? '' }}</p>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-boss-pink py-20 text-center">
+        <div class="mx-auto max-w-2xl px-4">
+            <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ marketing_content('multistreaming.cta.eyebrow') }}</p>
+            <h2 class="font-display text-[clamp(2rem,4vw,3rem)] text-boss-dark">{{ marketing_content('multistreaming.cta.title') }}</h2>
+            <a href="{{ marketing_link('multistreaming.cta.url', route('home').'#apply') }}" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ marketing_content('multistreaming.cta.label') }}</a>
+        </div>
+    </section>
+</x-layouts.marketing>

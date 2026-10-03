@@ -1,5 +1,9 @@
 # Decisions Log
 
+## 2026-10-04 - Client Approval Before Marketing Publication
+
+- The client requested withdrawal of unapproved Webcam Jobs and Guides content. Withdraw the related SEO landing pages and dedicated guides, preserve source for private review, and restore the two established pages rewritten by the guide-cluster commit. Do not publish new/revised marketing copy or restore withdrawn pages without client/head-office approval. This supersedes the September SEO publication decisions. Deployment still requires the user's explicit instruction.
+
 ## 2026-09-22 - People-First Webcam Guide Topic Cluster
 
 - Paradise Dolls will build organic visibility through a connected learning centre rather than placing every target keyword on one landing page.

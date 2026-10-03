@@ -1,95 +1,92 @@
 @php
-    $heroImage = asset('images/2.jpeg');
-
-    $sections = [
-        [
-            'id' => 'what-remote-work-means',
-            'eyebrow' => 'Remote work explained',
-            'title' => 'What work-from-home webcam modelling actually involves',
-            'intro' => 'A remote webcam model runs live sessions from a private space, communicates with viewers, manages an online profile, and follows the rules of each platform she uses.',
-            'paragraphs' => [
-                'It offers location flexibility, but it is still structured work. A reliable routine, preparation, audience communication, account security, and consistent boundaries matter more than simply switching on a camera.',
-                'Paradise Dolls supports approved models with onboarding, platform education, professional training, and ongoing guidance. Models work on a self-employed basis and remain responsible for their own legal and tax obligations.',
-            ],
-            'items' => [
-                ['title' => 'Private workspace', 'body' => 'Use a room where interruptions, identifying documents, family photographs, and location clues can be kept out of view.'],
-                ['title' => 'Reliable connection', 'body' => 'Stable upload speed and a wired connection where possible reduce dropped streams and protect the viewer experience.'],
-                ['title' => 'Professional routine', 'body' => 'Allow time for preparation, live work, breaks, messages, records, and a clear finish to the working day.'],
-                ['title' => 'Personal boundaries', 'body' => 'Decide what you will and will not do before going live, and use platform tools to enforce those limits.'],
-            ],
-        ],
-        [
-            'id' => 'home-setup',
-            'eyebrow' => 'Workspace essentials',
-            'title' => 'Build a setup that is private, stable, and comfortable',
-            'intro' => 'Beginners do not need the most expensive equipment on day one, but the basics must be dependable and suitable for live video.',
-            'items' => [
-                ['title' => 'Computer and camera', 'body' => 'Use equipment that can handle the chosen streaming software and produce a clear, stable picture.'],
-                ['title' => 'Lighting and sound', 'body' => 'Soft front lighting and clean audio usually improve a stream more than decorative equipment.'],
-                ['title' => 'Internet and backup plan', 'body' => 'Test upload speed before each session and know what you will do if the connection or platform fails.'],
-                ['title' => 'Comfort and ergonomics', 'body' => 'Choose seating, camera height, ventilation, water, and scheduled breaks that make longer sessions sustainable.'],
-            ],
-            'note_title' => 'Start with privacy',
-            'note' => 'Before testing camera quality, inspect the full frame for windows, mail, school or workplace items, photographs, reflections, and anything else that could reveal personal information.',
-        ],
-        [
-            'id' => 'schedule-and-safety',
-            'eyebrow' => 'Flexible, not unstructured',
-            'title' => 'Plan working hours without giving up your safety',
-            'intro' => 'Working from home can make scheduling easier, but healthy boundaries protect both performance and wellbeing.',
-            'items' => [
-                'Use separate creator contact details and strong, unique passwords with two-factor authentication.',
-                'Tell trusted people when you are working without sharing public details about your exact schedule or address.',
-                'Keep platform conversations and payments inside approved systems unless trained otherwise.',
-                'Schedule breaks, meals, sleep, and days away from live work instead of treating every free hour as working time.',
-                'Block and report harassment, threats, doxxing attempts, or pressure to cross a stated boundary.',
-            ],
-        ],
-        [
-            'id' => 'before-applying',
-            'eyebrow' => 'Before you apply',
-            'title' => 'Check whether remote webcam work fits your circumstances',
-            'intro' => 'The opportunity may suit women who value independence and can work consistently, but it is adult creator work and should be considered carefully.',
-            'items' => [
-                ['title' => 'You must be 18 or older', 'body' => 'Age and identity verification are mandatory. Eligibility also depends on your country and the platforms available there.'],
-                ['title' => 'You need genuine privacy', 'body' => 'A shared home or unsafe environment may make live work unsuitable until a secure arrangement is available.'],
-                ['title' => 'Income varies', 'body' => 'Hours online do not guarantee a fixed result. Performance depends on consistency, engagement, platform conditions, and many other factors.'],
-                ['title' => 'The work is self-employed', 'body' => 'You must understand your local tax, legal, record-keeping, and financial responsibilities.'],
-            ],
-        ],
-    ];
-
-    $faqs = [
-        ['question' => 'Can webcam models work from home?', 'answer' => 'Yes. Many webcam models work remotely, provided they have a private and safe room, reliable internet, suitable equipment, and legal access to the platforms they plan to use.'],
-        ['question' => 'Do I need experience for a work-from-home webcam job?', 'answer' => 'No previous webcam experience is required to apply to Paradise Dolls. Approved beginners complete onboarding and training before they begin working.'],
-        ['question' => 'Can I choose my own hours?', 'answer' => 'Remote work offers flexibility, but consistent planned sessions usually create a more professional routine than logging on only occasionally. Any agency expectations should be understood before accepting terms.'],
-        ['question' => 'Can I do webcam modelling without showing my home?', 'answer' => 'You can control the camera frame and use a neutral background, but no setup can promise complete anonymity. Remove location clues and use privacy and blocking tools carefully.'],
-        ['question' => 'Is work-from-home webcam modelling guaranteed income?', 'answer' => 'No. Earnings vary and are never guaranteed. Results depend on factors including time, consistency, viewer engagement, platform performance, and market conditions.'],
-    ];
+    $heroImg = marketing_image('work_from_home.hero.image');
+    $setupImg = marketing_image('work_from_home.main.image');
+    $flexImg = marketing_image('work_from_home.technical.image');
+    $benefits = marketing_items('work_from_home.main.benefits');
+    $teamItems = marketing_items('work_from_home.team.items');
+    $technicalCards = marketing_items('work_from_home.technical.cards');
 @endphp
+<x-layouts.marketing :transparentNav="true" :title="marketing_content('work_from_home.hero.title')">
+    <section class="pd-marketing-image-hero relative flex min-h-[62vh] items-center justify-center overflow-hidden pt-24">
+        <img src="{{ $heroImg }}" alt="" class="absolute inset-0 h-full w-full object-cover" aria-hidden="true">
+        <div class="absolute inset-0 bg-black/55"></div>
+        <div class="relative z-10 mx-auto max-w-3xl px-4 text-center text-white">
+            <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-[#F2C7D2]">{{ marketing_content('work_from_home.hero.eyebrow') }}</p>
+            <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.7rem,7vw,5rem)] leading-tight text-[#FFF8F6]">{{ marketing_content('work_from_home.hero.title') }}</h1>
+            <p class="pd-marketing-image-hero-body mx-auto mt-6 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFF8F6]/90">{{ marketing_content('work_from_home.hero.body') }}</p>
+        </div>
+    </section>
 
-<x-marketing-guide-page
-    route-name="work-from-home"
-    title="Work From Home Webcam Jobs"
-    description="Learn how work-from-home webcam jobs operate, including private setup, equipment, safety, scheduling, self-employed responsibilities, and support for beginners."
-    :keywords="['webcam jobs from home', 'work from home webcam jobs', 'remote webcam model jobs', 'online model jobs for women']"
-    eyebrow="Remote webcam work for women 18+"
-    heading="Work from home webcam jobs, explained honestly"
-    lead="Learn what remote webcam modelling requires, how to prepare a private home setup, and which practical, safety, and self-employed responsibilities to understand before applying."
-    :hero-image="$heroImage"
-    hero-alt="Woman preparing a private home workspace with a laptop, camera, and ring light"
-    answer="Webcam modelling can be done from home, but it needs a private workspace, reliable equipment, strong boundaries, platform compliance, and a consistent professional routine."
-    :facts="[
-        ['label' => 'Minimum age', 'value' => '18+ only'],
-        ['label' => 'Work location', 'value' => 'Private remote setup'],
-        ['label' => 'Experience', 'value' => 'Beginners may apply'],
-        ['label' => 'Work status', 'value' => 'Self-employed'],
-    ]"
-    :sections="$sections"
-    :faqs="$faqs"
-    :related="[
-        ['route' => 'how-to-become-a-webcam-model', 'label' => 'How to become a webcam model', 'detail' => 'A practical beginner path from research to a first live session'],
-        ['route' => 'webcam-model-safety-privacy', 'label' => 'Webcam model safety and privacy', 'detail' => 'Protect your identity, accounts, location, and personal boundaries'],
-        ['route' => 'multistreaming', 'label' => 'Multistreaming for webcam models', 'detail' => 'Understand the technology before adding more than one platform'],
-    ]"
-/>
+    <section class="bg-white py-24">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="grid gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+                <div>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ marketing_content('work_from_home.main.eyebrow') }}</p>
+                    <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ marketing_content('work_from_home.main.title') }}</h2>
+                    <p class="mt-6 text-[0.95rem] leading-relaxed text-boss-dark/65">{{ marketing_content('work_from_home.main.body') }}</p>
+
+                    <div class="mt-10 space-y-4">
+                        @foreach ($benefits as $benefit)
+                            <div class="flex gap-5 border border-boss-pink/50 bg-boss-muted p-5">
+                                <span class="mt-2 h-2 w-2 shrink-0 rounded-full bg-boss-rose"></span>
+                                <div>
+                                    <p class="font-medium text-boss-dark text-[0.9rem]">{{ $benefit['title'] ?? '' }}</p>
+                                    <p class="mt-1 text-[0.84rem] leading-relaxed text-boss-dark/58">{{ $benefit['body'] ?? '' }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="space-y-5 lg:pt-10">
+                    <div class="overflow-hidden shadow-luxe">
+                        <img src="{{ $setupImg }}" alt="" class="h-full w-full object-cover">
+                    </div>
+                    <div class="border border-boss-pink/40 bg-boss-muted p-6">
+                        <p class="mb-3 text-[0.65rem] uppercase tracking-[0.18em] text-boss-rose">{{ marketing_content('work_from_home.team.title') }}</p>
+                        <ul class="space-y-3 text-[0.86rem] text-boss-dark/65">
+                            @foreach ($teamItems as $item)
+                                <li class="flex items-center gap-3">
+                                    <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-boss-rose"></span>
+                                    {{ $item }}
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-boss-cream py-24">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+                <div>
+                    <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ marketing_content('work_from_home.technical.eyebrow') }}</p>
+                    <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ marketing_content('work_from_home.technical.title') }}</h2>
+                    <p class="mt-6 text-[0.95rem] leading-relaxed text-boss-dark/65">{{ marketing_content('work_from_home.technical.body') }}</p>
+                    <div class="mt-8 grid gap-4 sm:grid-cols-2">
+                        @foreach ($technicalCards as $item)
+                            <div class="bg-white p-5 shadow-luxe">
+                                <h3 class="font-display text-[1.1rem] text-boss-dark">{{ $item['title'] ?? '' }}</h3>
+                                <p class="mt-2 text-[0.84rem] leading-relaxed text-boss-dark/58">{{ $item['body'] ?? '' }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="overflow-hidden shadow-luxe">
+                    <img src="{{ $flexImg }}" alt="" class="h-full w-full object-cover">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-boss-dark py-20 text-center text-boss-ivory">
+        <div class="mx-auto max-w-2xl px-4">
+            <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ marketing_content('work_from_home.cta.eyebrow') }}</p>
+            <h2 class="font-display text-[clamp(2rem,4vw,3rem)]">{{ marketing_content('work_from_home.cta.title') }}</h2>
+            <p class="mx-auto mt-5 max-w-xl text-[0.95rem] leading-relaxed text-boss-ivory/55">{{ marketing_content('work_from_home.cta.body') }}</p>
+            <a href="{{ marketing_link('work_from_home.cta.url', route('home').'#apply') }}" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ marketing_content('work_from_home.cta.label') }}</a>
+        </div>
+    </section>
+</x-layouts.marketing>

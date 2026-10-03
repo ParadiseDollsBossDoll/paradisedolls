@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-10-04 - Marketing Withdrawal Prepared (Not Live)
+
+- Prepared eight SEO/guide URLs to return 404 with noindex, removed their navigation/footer links and sitemap entries, and restored Work From Home and Multistreaming from `5bee4c8^`. Templates/history are retained for review. Added direct GET/HEAD, public-link, sitemap and established-page regression coverage. Deployment is pending; this entry does not claim a live takedown.
+
 ## 2026-09-22
 
 - Added a public Webcam Model Guides hub with grouped paths for getting started, safety/support, and operations/earnings, plus CollectionPage, BreadcrumbList, and ItemList structured data.

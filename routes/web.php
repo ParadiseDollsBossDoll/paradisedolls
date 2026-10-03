@@ -35,8 +35,8 @@ use App\Http\Controllers\MarketingPreferenceController;
 use App\Http\Controllers\Member\CourseAssetController;
 use App\Http\Controllers\Member\CourseChatController;
 use App\Http\Controllers\Member\LessonProgressController;
-use App\Http\Controllers\Member\MemberCourseController;
 use App\Http\Controllers\Member\MemberChatterPerformanceReviewController;
+use App\Http\Controllers\Member\MemberCourseController;
 use App\Http\Controllers\Member\MemberDashboardController;
 use App\Http\Controllers\Member\MemberOnboardingController;
 use App\Http\Controllers\Member\MemberReferralController;
@@ -61,18 +61,26 @@ Route::post('/email-preferences/unsubscribe/{user}', [MarketingPreferenceControl
 Route::redirect('/about', '/our-story');
 
 Route::view('/our-story', 'marketing.our-story')->name('our-story');
-Route::view('/guides', 'marketing.guides')->name('guides');
 Route::view('/work-from-home', 'marketing.work-from-home')->name('work-from-home');
 Route::view('/work-from-paradise', 'marketing.work-from-paradise')->name('work-from-paradise');
 Route::view('/perks', 'marketing.perks')->name('perks');
 Route::view('/multistreaming', 'marketing.multistreaming')->name('multistreaming');
-Route::view('/how-to-become-a-webcam-model', 'marketing.how-to-become-a-webcam-model')->name('how-to-become-a-webcam-model');
-Route::view('/webcam-model-safety-privacy', 'marketing.webcam-model-safety-privacy')->name('webcam-model-safety-privacy');
-Route::view('/webcam-agency-vs-independent', 'marketing.webcam-agency-vs-independent')->name('webcam-agency-vs-independent');
-Route::view('/webcam-model-earnings-payments', 'marketing.webcam-model-earnings-payments')->name('webcam-model-earnings-payments');
-Route::view('/webcam-jobs', 'marketing.webcam-jobs')->name('webcam-jobs');
-Route::view('/webcam-agency', 'marketing.webcam-agency')->name('webcam-agency');
-Route::view('/model-agency', 'marketing.model-agency')->name('model-agency');
+// Withdrawn pending client/head-office approval; retain templates for private review.
+foreach ([
+    'webcam-jobs',
+    'guides',
+    'how-to-become-a-webcam-model',
+    'webcam-model-safety-privacy',
+    'webcam-agency-vs-independent',
+    'webcam-model-earnings-payments',
+    'webcam-agency',
+    'model-agency',
+] as $withdrawnPage) {
+    Route::get('/'.$withdrawnPage, function () {
+        return response('Not Found', 404, ['X-Robots-Tag' => 'noindex, nofollow']);
+    })->name($withdrawnPage);
+}
+
 Route::get('/success-stories', TestimonialController::class)->name('success-stories');
 Route::get('/profile-photos/{user}', ProfilePhotoController::class)
     ->whereNumber('user')
