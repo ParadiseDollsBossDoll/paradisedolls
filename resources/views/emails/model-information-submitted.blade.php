@@ -12,7 +12,7 @@
     <p style="margin: 0 0 0.65rem;">{{ __('If you have any questions in the meantime, we’re always here to help:') }}</p>
     <p style="margin: 0 0 0.5rem;">📧 <a href="mailto:admin@getrichwithparadisedolls.com" style="color: #b94f72;">admin@getrichwithparadisedolls.com</a> – {{ __('Speak with one of our friendly advisors.') }}</p>
     <p style="margin: 0 0 1.5rem;">📧 <a href="mailto:bossdoll@getrichwithparadisedolls.com" style="color: #b94f72;">bossdoll@getrichwithparadisedolls.com</a> – {{ __('Speak directly with Kayla.') }}</p>
-    <p style="margin: 0 0 1rem;">{{ __('We can’t wait to welcome you to the Paradise Dolls family! 💖✨') }}</p>
-    <p style="margin: 0;">{{ __('With love,') }}<br><strong>{{ __('The Paradise Dolls Team 💕') }}</strong></p>
+    <p style="margin: 0 0 1rem;">{{ __('We can’t wait to welcome you to the Boss Doll Creators family! 💖✨') }}</p>
+    <p style="margin: 0;">{{ __('With love,') }}<br><strong>{{ __('The Boss Doll Creators Team 💕') }}</strong></p>
 </body>
 </html>

@@ -1,5 +1,5 @@
 @php
-    $description = 'Paradise Dolls is an online model agency for women, offering remote applications, private onboarding, platform preparation, structured training, and ongoing creator management.';
+    $description = 'Boss Doll Creators is an online model agency for women, offering remote applications, private onboarding, platform preparation, structured training, and ongoing creator management.';
     $heroImage = asset('images/18.jpeg');
 
     $services = [
@@ -20,8 +20,8 @@
 
     $faqs = [
         [
-            'question' => 'Is Paradise Dolls a traditional fashion model agency?',
-            'answer' => 'No. Paradise Dolls is an online model management agency for adult creators working remotely on digital live-streaming platforms. It does not offer runway, editorial, commercial casting, or fashion-model placement.',
+            'question' => 'Is Boss Doll Creators a traditional fashion model agency?',
+            'answer' => 'No. Boss Doll Creators is an online model management agency for adult creators working remotely on digital live-streaming platforms. It does not offer runway, editorial, commercial casting, or fashion-model placement.',
         ],
         [
             'question' => 'Can women apply from outside the United Kingdom?',
@@ -36,15 +36,15 @@
             'answer' => 'No. Beginners and experienced creators can apply. Approved beginners receive structured onboarding and training before they begin working online.',
         ],
         [
-            'question' => 'Will I be an employee of Paradise Dolls?',
-            'answer' => 'No. Models work as self-employed online creators and remain responsible for their own tax and legal obligations. Paradise Dolls provides agency management, training, and support.',
+            'question' => 'Will I be an employee of Boss Doll Creators?',
+            'answer' => 'No. Models work as self-employed online creators and remain responsible for their own tax and legal obligations. Boss Doll Creators provides agency management, training, and support.',
         ],
         [
             'question' => 'Can an online model agency guarantee income?',
-            'answer' => 'No. Paradise Dolls does not guarantee earnings or success. Results vary according to effort, consistency, hours, audience engagement, platform performance, and market conditions.',
+            'answer' => 'No. Boss Doll Creators does not guarantee earnings or success. Results vary according to effort, consistency, hours, audience engagement, platform performance, and market conditions.',
         ],
         [
-            'question' => 'What does the Paradise Dolls training cost?',
+            'question' => 'What does the Boss Doll Creators training cost?',
             'answer' => 'There is no fee to submit an application. Approved agency models receive the training programme without an upfront charge subject to the agency agreement and a minimum six-month term. Leaving early to continue independently or with another agency may require reimbursement of the programme\'s stated £1,799 value.',
         ],
         [
@@ -58,20 +58,20 @@
             '@context' => 'https://schema.org',
             '@type' => 'Organization',
             '@id' => route('home').'#organization',
-            'name' => 'Paradise Dolls',
+            'name' => 'Boss Doll Creators',
             'url' => route('home'),
-            'logo' => asset('images/brand/get-rich-with-paradise-dolls-logo.png'),
+            'logo' => asset(config('brand.logos.horizontal_pink')),
         ],
         [
             '@context' => 'https://schema.org',
             '@type' => 'WebPage',
             '@id' => route('model-agency').'#webpage',
             'url' => route('model-agency'),
-            'name' => 'Online Model Agency for Women | Paradise Dolls',
+            'name' => 'Online Model Agency for Women | Boss Doll Creators',
             'description' => $description,
             'isPartOf' => [
                 '@type' => 'WebSite',
-                'name' => 'Paradise Dolls',
+                'name' => 'Boss Doll Creators',
                 'url' => route('home'),
             ],
             'about' => [
@@ -111,16 +111,16 @@
     :structuredData="$structuredData"
 >
     <section class="pd-marketing-image-hero relative flex min-h-[clamp(680px,84svh,820px)] items-center overflow-hidden pb-16 pt-28 sm:pb-20 sm:pt-32">
-        <img src="{{ $heroImage }}" alt="Woman represented by the Paradise Dolls online model agency" class="absolute inset-0 h-full w-full object-cover">
+        <img src="{{ $heroImage }}" alt="Woman represented by the Boss Doll Creators online model agency" class="absolute inset-0 h-full w-full object-cover">
         <div class="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-boss-dark/95"></div>
 
         <div class="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="max-w-3xl text-white">
                 <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-[#F2C7D2]">{{ __('Online model agency for women 18+') }}</p>
-                <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.85rem,7vw,5.6rem)] leading-[0.98] text-[#FFF8F6]">{{ __('A model agency built for online creators') }}</h1>
-                <p class="pd-marketing-image-hero-body mt-7 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFF8F6]/90">{{ __('Paradise Dolls supports women working remotely on digital live-streaming platforms through private onboarding, structured training, platform preparation, and ongoing management.') }}</p>
+                <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.85rem,7vw,5.6rem)] leading-[0.98] text-[#FFFFFF]">{{ __('A model agency built for online creators') }}</h1>
+                <p class="pd-marketing-image-hero-body mt-7 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFFFFF]/90">{{ __('Boss Doll Creators supports women working remotely on digital live-streaming platforms through private onboarding, structured training, platform preparation, and ongoing management.') }}</p>
                 <div class="mt-10 grid w-full max-w-[27rem] grid-cols-1 gap-3 sm:w-auto sm:grid-cols-[minmax(9.5rem,auto)_minmax(13.5rem,auto)]">
-                    <a href="{{ route('apply') }}" class="inline-flex min-h-12 items-center justify-center rounded-md bg-[#EEB4C3] px-7 py-3 text-center text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-boss-dark transition-colors hover:bg-[#e0a0b5]">{{ __('Apply Privately') }}</a>
+                    <a href="{{ route('apply') }}" class="pd-cta-primary px-7 py-3">{{ __('Apply Privately') }}</a>
                     <a href="#agency-type" class="inline-flex min-h-12 items-center justify-center rounded-md border border-white/40 px-7 py-3 text-center text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white hover:text-boss-dark">{{ __('Understand The Agency') }}</a>
                 </div>
             </div>
@@ -151,8 +151,8 @@
             </div>
             <div class="space-y-5 text-[0.98rem] leading-8 text-boss-dark/68">
                 <p>{{ __('The phrase “model agency” can describe very different businesses. Traditional agencies represent fashion, runway, editorial, commercial, or photographic talent and arrange castings with outside clients.') }}</p>
-                <p>{{ __('Paradise Dolls focuses on adult online creators who work remotely on live-streaming platforms. The agency provides education, account and platform support, management, marketing guidance, and technical help rather than runway or fashion placements.') }}</p>
-                <p class="font-semibold text-boss-dark">{{ __('Applicants should choose the agency category that matches the work they actually want. Paradise Dolls does not advertise traditional fashion-modelling jobs.') }}</p>
+                <p>{{ __('Boss Doll Creators focuses on adult online creators who work remotely on live-streaming platforms. The agency provides education, account and platform support, management, marketing guidance, and technical help rather than runway or fashion placements.') }}</p>
+                <p class="font-semibold text-boss-dark">{{ __('Applicants should choose the agency category that matches the work they actually want. Boss Doll Creators does not advertise traditional fashion-modelling jobs.') }}</p>
             </div>
         </div>
     </section>
@@ -161,7 +161,7 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="max-w-3xl">
                 <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Model development') }}</p>
-                <h2 class="font-display text-[clamp(2rem,4vw,3.2rem)] leading-tight text-boss-dark">{{ __('What the Paradise Dolls agency provides') }}</h2>
+                <h2 class="font-display text-[clamp(2rem,4vw,3.2rem)] leading-tight text-boss-dark">{{ __('What the Boss Doll Creators agency provides') }}</h2>
                 <p class="mt-5 text-[0.96rem] leading-7 text-boss-dark/65">{{ __('The system is designed around preparation before launch and practical support after an approved model begins working online.') }}</p>
             </div>
 
@@ -182,7 +182,7 @@
             <div>
                 <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Remote applications') }}</p>
                 <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ __('An international application does not mean automatic acceptance') }}</h2>
-                <p class="mt-5 text-[0.94rem] leading-7 text-boss-dark/65">{{ __('Paradise Dolls accepts remote applications and supports international contact details, but online creator work is not identical in every country.') }}</p>
+                <p class="mt-5 text-[0.94rem] leading-7 text-boss-dark/65">{{ __('Boss Doll Creators accepts remote applications and supports international contact details, but online creator work is not identical in every country.') }}</p>
             </div>
 
             <div class="overflow-hidden border border-boss-pink/60">
@@ -207,7 +207,7 @@
             <div>
                 <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Agency experience') }}</p>
                 <h2 class="font-display text-[clamp(2rem,4vw,3.2rem)] leading-tight">{{ __('A remote agency still needs real people and real experience') }}</h2>
-                <p class="mt-6 max-w-xl text-[0.95rem] leading-7 text-boss-ivory/65">{{ __('Founder Kayla built Paradise Dolls from more than 15 years of industry experience, including online platforms, agencies, studios, model development, and the systems behind remote creator businesses.') }}</p>
+                <p class="mt-6 max-w-xl text-[0.95rem] leading-7 text-boss-ivory/65">{{ __('Founder Kayla built Boss Doll Creators from more than 15 years of industry experience, including online platforms, agencies, studios, model development, and the systems behind remote creator businesses.') }}</p>
                 <a href="{{ route('our-story') }}" class="mt-8 inline-flex min-h-11 items-center gap-3 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-boss-gold transition-colors hover:text-white">
                     {{ __('Read the founder story') }}
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
@@ -299,13 +299,13 @@
             <div>
                 <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Continue your research') }}</p>
                 <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight">{{ __('Understand the opportunity before applying') }}</h2>
-                <p class="mt-5 max-w-xl text-[0.94rem] leading-7 text-boss-ivory/60">{{ __('Explore the actual work, agency structure, and member experiences before deciding whether Paradise Dolls is right for you.') }}</p>
+                <p class="mt-5 max-w-xl text-[0.94rem] leading-7 text-boss-ivory/60">{{ __('Explore the actual work, agency structure, and member experiences before deciding whether Boss Doll Creators is right for you.') }}</p>
             </div>
             <nav aria-label="Online model agency guidance" class="divide-y divide-white/10 border-y border-white/10">
                 @foreach ([
                     ['route' => 'webcam-jobs', 'label' => 'Webcam jobs explained', 'detail' => 'Role, requirements, self-employed status, and application guidance'],
                     ['route' => 'webcam-agency', 'label' => 'How the webcam agency works', 'detail' => 'Services, responsibilities, training terms, and management support'],
-                    ['route' => 'guides', 'label' => 'Paradise Dolls guides', 'detail' => 'Research safety, remote work, agency choices, earnings, and multistreaming'],
+                    ['route' => 'guides', 'label' => 'Boss Doll Creators guides', 'detail' => 'Research safety, remote work, agency choices, earnings, and multistreaming'],
                 ] as $link)
                     <a href="{{ route($link['route']) }}" class="group flex min-h-20 items-center justify-between gap-6 py-4 transition-colors hover:text-boss-gold">
                         <span>
@@ -324,7 +324,7 @@
     <section class="bg-boss-pink py-16 text-center sm:py-20">
         <div class="mx-auto max-w-2xl px-4 sm:px-6">
             <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-dark/55">{{ __('Ready for a private review?') }}</p>
-            <h2 class="font-display text-[clamp(2rem,4vw,3rem)] text-boss-dark">{{ __('Apply to the Paradise Dolls online model agency') }}</h2>
+            <h2 class="font-display text-[clamp(2rem,4vw,3rem)] text-boss-dark">{{ __('Apply to the Boss Doll Creators online model agency') }}</h2>
             <p class="mx-auto mt-5 max-w-xl text-[0.95rem] leading-7 text-boss-dark/65">{{ __('You must be at least 18. Applications, platform availability, acceptance, and earnings are not guaranteed.') }}</p>
             <a href="{{ route('apply') }}" class="mt-9 inline-flex min-h-12 items-center justify-center rounded-md bg-boss-dark px-10 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-white transition-colors hover:bg-black">{{ __('Apply Now') }}</a>
         </div>

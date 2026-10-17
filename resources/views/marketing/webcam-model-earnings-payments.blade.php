@@ -51,7 +51,7 @@
                 ['title' => 'Business expenses', 'body' => 'Record equipment, approved software, internet, and professional costs according to local tax rules.'],
             ],
             'note_title' => 'Tax and legal guidance',
-            'note' => 'Paradise Dolls can explain its own payment records, but models should use a qualified local accountant or adviser for personal tax and legal decisions.',
+            'note' => 'Boss Doll Creators can explain its own payment records, but models should use a qualified local accountant or adviser for personal tax and legal decisions.',
         ],
         [
             'id' => 'improve-responsibly',
@@ -97,7 +97,7 @@
     :faqs="$faqs"
     :related="[
         ['route' => 'webcam-agency-vs-independent', 'label' => 'Webcam agency vs independent', 'detail' => 'Compare fees, control, services, and payment responsibilities'],
-        ['route' => 'webcam-agency', 'label' => 'Paradise Dolls webcam agency', 'detail' => 'Review the published agency support and applicant responsibilities'],
+        ['route' => 'webcam-agency', 'label' => 'Boss Doll Creators webcam agency', 'detail' => 'Review the published agency support and applicant responsibilities'],
         ['route' => 'multistreaming', 'label' => 'Multistreaming for webcam models', 'detail' => 'Learn how multi-platform work changes tracking and operations'],
     ]"
 />

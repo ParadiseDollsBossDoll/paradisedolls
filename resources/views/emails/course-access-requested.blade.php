@@ -11,7 +11,7 @@
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; max-width: 620px; overflow: hidden; border: 1px solid #f8cfd8; border-radius: 18px; background-color: #ffffff; box-shadow: 0 18px 45px rgba(105, 44, 64, 0.10);">
                     <tr>
                         <td style="padding: 28px 32px 22px; background-color: #fff0f4; border-bottom: 1px solid #f8cfd8;">
-                            <p style="margin: 0 0 8px; color: #c76887; font-size: 11px; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase;">{{ __('Paradise Dolls Admin') }}</p>
+                            <p style="margin: 0 0 8px; color: #c76887; font-size: 11px; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase;">{{ __('Boss Doll Creators Admin') }}</p>
                             <h1 style="margin: 0; color: #2a171f; font-family: Georgia, 'Times New Roman', serif; font-size: 30px; font-weight: 500; line-height: 1.15;">{{ __('Course access request') }}</h1>
                             <p style="margin: 14px 0 0; max-width: 520px; color: #6f5b64; font-size: 15px; line-height: 1.65;">{{ __('A model has requested access to a course. Review the details below, then unlock the course from the admin onboarding panel when approved.') }}</p>
                         </td>
@@ -90,7 +90,7 @@
 
                     <tr>
                         <td align="center" style="padding: 28px 32px 8px;">
-                            <a href="{{ $adminUrl }}" style="display: inline-block; min-width: 220px; border-radius: 10px; background-color: #EEB4C3; color: #181318; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; line-height: 1; padding: 16px 22px; text-align: center; text-decoration: none; text-transform: uppercase;">{{ __('Review request') }}</a>
+                            <a href="{{ $adminUrl }}" style="display: inline-block; min-width: 220px; border-radius: 10px; background-color: #FF0080; color: #181318; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; line-height: 1; padding: 16px 22px; text-align: center; text-decoration: none; text-transform: uppercase;">{{ __('Review request') }}</a>
                         </td>
                     </tr>
 

@@ -5,7 +5,7 @@
                 <p class="pd-kicker">{{ __('Chatter Feedback') }}</p>
                 <h1 class="pd-heading mt-2 text-[clamp(2rem,4vw,2.7rem)]">{{ __('Model Reviews') }}</h1>
                 <p class="mt-2 max-w-3xl text-[0.86rem] leading-relaxed text-boss-ivory/40">
-                    {{ __('Weekly reviews submitted by chatters about the models they worked with. These are private for Paradise Dolls management.') }}
+                    {{ __('Weekly reviews submitted by chatters about the models they worked with. These are private for Boss Doll Creators management.') }}
                 </p>
             </div>
         </header>

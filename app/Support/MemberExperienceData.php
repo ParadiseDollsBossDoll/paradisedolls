@@ -40,7 +40,7 @@ class MemberExperienceData
                 'slug' => $course->slug,
                 'title' => $course->title,
                 'platform' => $course->platform_label ?: __('Academy'),
-                'description' => $course->description ?: __('Training and guided lessons for the ParadiseDollz academy.'),
+                'description' => $course->description ?: __('Training and guided lessons for the Boss Doll Creators academy.'),
                 'total_lessons' => $totalLessons,
                 'completed_lessons' => $completedLessons,
                 'percent' => $percent,

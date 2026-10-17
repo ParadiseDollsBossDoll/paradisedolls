@@ -25,10 +25,10 @@
         <div class="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="max-w-3xl text-white">
                 <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-[#F2C7D2]">{{ $eyebrow }}</p>
-                <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.85rem,7vw,5.6rem)] leading-[0.98] text-[#FFF8F6]">{{ $headline }}</h1>
-                <p class="pd-marketing-image-hero-body mt-7 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFF8F6]/90">{{ $intro }}</p>
+                <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.85rem,7vw,5.6rem)] leading-[0.98] text-[#FFFFFF]">{{ $headline }}</h1>
+                <p class="pd-marketing-image-hero-body mt-7 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFFFFF]/90">{{ $intro }}</p>
                 <div class="mt-10 grid w-full max-w-[26rem] grid-cols-1 gap-3 sm:w-auto sm:grid-cols-[minmax(9.5rem,auto)_minmax(12.75rem,auto)]">
-                    <a href="{{ route('apply') }}" class="inline-flex min-h-12 items-center justify-center rounded-md bg-[#EEB4C3] px-7 py-3 text-center text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-boss-dark transition-colors hover:bg-[#e0a0b5]">{{ __('Apply Now') }}</a>
+                    <a href="{{ route('apply') }}" class="pd-cta-primary px-7 py-3">{{ __('Apply Now') }}</a>
                     <a href="{{ route('multistreaming') }}" class="inline-flex min-h-12 items-center justify-center rounded-md border border-white/40 px-7 py-3 text-center text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white hover:text-boss-dark">{{ __('Learn The System') }}</a>
                 </div>
             </div>
@@ -41,7 +41,7 @@
                 <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Search Focus') }}</p>
                 <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ $primaryKeyword }}</h2>
                 <p class="mt-6 text-[0.96rem] leading-relaxed text-boss-dark/62">
-                    {{ __('Paradise Dolls uses dedicated, useful pages for important searches instead of hiding keywords in a list. This page explains the opportunity clearly for applicants while helping search engines understand the topic.') }}
+                    {{ __('Boss Doll Creators uses dedicated, useful pages for important searches instead of hiding keywords in a list. This page explains the opportunity clearly for applicants while helping search engines understand the topic.') }}
                 </p>
             </div>
             <div class="grid gap-3 sm:grid-cols-2">
@@ -60,7 +60,7 @@
             <div class="grid gap-5 lg:grid-cols-3">
                 @foreach ($sections as $section)
                     <article class="border border-boss-pink/60 bg-white p-7 shadow-luxe">
-                        <p class="mb-4 text-[0.66rem] uppercase tracking-[0.22em] text-boss-rose">{{ $section['eyebrow'] ?? __('Paradise Dolls') }}</p>
+                        <p class="mb-4 text-[0.66rem] uppercase tracking-[0.22em] text-boss-rose">{{ $section['eyebrow'] ?? __('Boss Doll Creators') }}</p>
                         <h2 class="font-display text-[1.55rem] leading-tight text-boss-dark">{{ $section['title'] ?? '' }}</h2>
                         <p class="mt-4 text-[0.9rem] leading-relaxed text-boss-dark/60">{{ $section['body'] ?? '' }}</p>
                     </article>
@@ -89,9 +89,9 @@
     <section class="bg-boss-dark py-20 text-center text-boss-ivory">
         <div class="mx-auto max-w-2xl px-4">
             <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ __('Ready to start?') }}</p>
-            <h2 class="font-display text-[clamp(2rem,4vw,3rem)]">{{ __('Apply to Paradise Dolls') }}</h2>
+            <h2 class="font-display text-[clamp(2rem,4vw,3rem)]">{{ __('Apply to Boss Doll Creators') }}</h2>
             <p class="mx-auto mt-5 max-w-xl text-[0.95rem] leading-relaxed text-boss-ivory/55">{{ __('No experience is required. The team reviews applications privately and guides approved applicants through onboarding, setup, and training.') }}</p>
-            <a href="{{ route('apply') }}" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ __('Apply Now') }}</a>
+            <a href="{{ route('apply') }}" class="pd-cta-primary mt-10 px-12 py-4">{{ __('Apply Now') }}</a>
         </div>
     </section>
 </x-layouts.marketing>

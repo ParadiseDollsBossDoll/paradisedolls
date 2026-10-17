@@ -13,7 +13,7 @@ class MarketingSeoPageTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('Paradise Dolls Webcam Model Agency &amp; Online Model Jobs', false)
+            ->assertSee('Boss Doll Creators Webcam Model Agency &amp; Online Model Jobs', false)
             ->assertSee('webcam model agency', false)
             ->assertSee('online model jobs', false);
     }
@@ -29,7 +29,7 @@ class MarketingSeoPageTest extends TestCase
                 ->assertSeeText('Work From Paradise')
                 ->assertSeeText('Become A Doll')
                 ->assertDontSeeText('The short answer')
-                ->assertDontSeeText('Related Paradise Dolls guides');
+                ->assertDontSeeText('Related Boss Doll Creators guides');
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿<x-admin-layout>
+<x-admin-layout>
     @php
         $pageCollection  = $courses->getCollection();
         $publishedCount  = $pageCollection->where('is_published', true)->count();
@@ -80,7 +80,7 @@
                                 <div class="pd-admin-course-card-image-overlay absolute inset-0 bg-gradient-to-t from-boss-ink via-boss-ink/15 to-transparent"></div>
                             @else
                                 <div class="pd-admin-course-card-fallback absolute inset-0" style="background: linear-gradient(135deg, {{ $course->displayColorBackground(0.45) }}, rgba(8,8,15,0.95) 70%);"></div>
-                                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,rgba(238,180,195,0.10),transparent_55%)]"></div>
+                                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,rgba(255,0,128,0.10),transparent_55%)]"></div>
                                 <div class="absolute inset-0 flex items-center justify-center overflow-hidden px-6">
                                     <p class="select-none text-center font-display text-[2rem] font-bold leading-tight text-white opacity-[0.04]">{{ $course->title }}</p>
                                 </div>

@@ -8,7 +8,7 @@
             <div class="flex">
                 <div class="flex shrink-0 items-center">
                     <a href="{{ route('dashboard') }}" class="font-display text-[0.95rem] text-boss-gold">
-                        {{ config('app.name') }}
+                        {{ config('brand.name') }}
                     </a>
                 </div>
 

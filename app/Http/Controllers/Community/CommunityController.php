@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Community;
 use App\Http\Controllers\Controller;
 use App\Models\CommunityChannel;
 use App\Models\CommunityMessage;
+use App\Models\CommunityMessageRead;
 use App\Models\CommunityModerationLog;
 use App\Models\Course;
 use App\Models\User;
@@ -147,7 +148,7 @@ class CommunityController extends Controller
                     'profile_photo_url' => $user->profilePhotoUrl(),
                 ],
                 'server' => [
-                    'name' => __('Paradise Dolls Foundation'),
+                    'name' => __('Boss Doll Creators Foundation'),
                     'subtitle' => __('Foundation'),
                 ],
                 'progress' => [
@@ -258,7 +259,7 @@ class CommunityController extends Controller
         CommunityMessage::query()->firstOrCreate([
             'channel_id' => $general->id,
             'user_id' => $creatorId,
-            'message' => 'Welcome to #general. This is the start of the Paradise Dolls Foundation community.',
+            'message' => 'Welcome to #general. This is the start of the Boss Doll Creators Foundation community.',
         ]);
 
         $general->update(['last_message_at' => now()]);
@@ -337,7 +338,7 @@ class CommunityController extends Controller
 
         $now = now();
 
-        \App\Models\CommunityMessageRead::query()->upsert(
+        CommunityMessageRead::query()->upsert(
             array_map(fn (int $messageId) => [
                 'message_id' => $messageId,
                 'user_id' => $userId,

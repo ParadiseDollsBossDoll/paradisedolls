@@ -5,7 +5,7 @@
 <div class="grid gap-5 md:grid-cols-2">
     <div>
         <x-input-label for="name" :value="__('Display name')" />
-        <x-text-input id="name" name="name" type="text" class="mt-2" :value="old('name', $testimonial?->name)" required placeholder="{{ __('Kayla / Amber / Paradise Doll') }}" />
+        <x-text-input id="name" name="name" type="text" class="mt-2" :value="old('name', $testimonial?->name)" required placeholder="{{ __('Kayla / Amber / Boss Doll Creator') }}" />
         <p class="mt-1.5 text-[0.62rem] leading-relaxed text-boss-ivory/25">{{ __('Shown above the handle on the success story card.') }}</p>
         <x-input-error class="mt-2" :messages="$errors->get('name')" />
     </div>

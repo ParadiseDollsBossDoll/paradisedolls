@@ -1,5 +1,18 @@
 # Change Log
 
+## 2026-10-17 - Boss Doll Creators Rebrand Prepared
+
+- Replaced visible Paradise Dolls naming across public pages, application areas, emails, admin/member/chatter layouts, exports, seeded content, and metadata with Boss Doll Creators.
+- Added the supplied Boss Doll Creators horizontal and compact logos, centralized brand configuration/logo rendering, and applied the approved pink, blush, cream, white, and deep-ink palette with DejaVu Sans typography.
+- Unified public primary actions around a contrast-aware Boss Pink button, fixed washed-out dynamic hover colors, improved hero sizing and strategy-step readability, and made guest/authentication logos match their light or dark surface.
+- Bundled DejaVu Sans Regular and Bold locally, applied them through every shared layout, and rebalanced the home hero headline around the brand font instead of the browser fallback.
+- Added a shared premium UI treatment for glossy pink actions, secondary controls, panels, fields, badges, navigation surfaces, and short hero reveals with accessible focus and reduced-motion behavior.
+- Restored the marketing header's fully transparent top state over image heroes while retaining the polished solid header after scrolling or opening navigation.
+- Added shared responsive image-hero padding so descriptions and CTA rows have consistent breathing room above the next section on desktop and mobile.
+- Replaced the squeezed wide browser-tab icon with a dedicated square glossy pink heart/B favicon and connected it through the centralized brand configuration across every shared layout.
+- Added a migration for saved marketing content, course content, and site-theme values while retaining the existing domain, email addresses, social URLs, infrastructure identifiers, and legal agreement wording pending confirmed replacements.
+- Added regression coverage for visible branding, supplied logo usage, and retained contact/social identifiers.
+
 ## 2026-10-04 - Marketing Withdrawal Prepared (Not Live)
 
 - Prepared eight SEO/guide URLs to return 404 with noindex, removed their navigation/footer links and sitemap entries, and restored Work From Home and Multistreaming from `5bee4c8^`. Templates/history are retained for review. Added direct GET/HEAD, public-link, sitemap and established-page regression coverage. Deployment is pending; this entry does not claim a live takedown.

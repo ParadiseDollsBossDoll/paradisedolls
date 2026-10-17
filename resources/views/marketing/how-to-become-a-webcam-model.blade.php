@@ -29,8 +29,8 @@
                 ['title' => 'Reject pressure', 'body' => 'A legitimate agency should not rush identity documents, hide fees, promise guaranteed income, or push you beyond stated boundaries.'],
                 ['title' => 'Keep copies', 'body' => 'Save agreements, payout statements, platform messages, and any important agency instructions.'],
             ],
-            'note_title' => 'Paradise Dolls applications',
-            'note' => 'Paradise Dolls reviews applications privately. Acceptance is not automatic, and approved applicants should read the complete agency and training terms before agreeing to join.',
+            'note_title' => 'Boss Doll Creators applications',
+            'note' => 'Boss Doll Creators reviews applications privately. Acceptance is not automatic, and approved applicants should read the complete agency and training terms before agreeing to join.',
         ],
         [
             'id' => 'prepare-your-setup',

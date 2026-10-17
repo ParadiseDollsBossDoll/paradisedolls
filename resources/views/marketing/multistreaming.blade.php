@@ -10,8 +10,8 @@
         <div class="absolute inset-0 bg-black/60"></div>
         <div class="relative z-10 mx-auto max-w-3xl px-4 text-center text-white">
             <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-[#F2C7D2]">{{ marketing_content('multistreaming.hero.eyebrow') }}</p>
-            <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.7rem,7vw,5rem)] leading-tight text-[#FFF8F6]">{{ marketing_content('multistreaming.hero.title') }}</h1>
-            <p class="pd-marketing-image-hero-body mx-auto mt-6 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFF8F6]/90">{{ marketing_content('multistreaming.hero.body') }}</p>
+            <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.7rem,7vw,5rem)] leading-tight text-[#FFFFFF]">{{ marketing_content('multistreaming.hero.title') }}</h1>
+            <p class="pd-marketing-image-hero-body mx-auto mt-6 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFFFFF]/90">{{ marketing_content('multistreaming.hero.body') }}</p>
         </div>
     </section>
 
@@ -26,7 +26,7 @@
                             <p>{{ $paragraph }}</p>
                         @endforeach
                     </div>
-                    <a href="{{ marketing_link('multistreaming.different.cta_url', route('home').'#apply') }}" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-10 py-3.5 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ marketing_content('multistreaming.different.cta_label') }}</a>
+                    <a href="{{ marketing_link('multistreaming.different.cta_url', route('home').'#apply') }}" class="pd-cta-primary mt-10 px-10 py-3.5">{{ marketing_content('multistreaming.different.cta_label') }}</a>
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
@@ -121,8 +121,8 @@
                     <p class="mb-6 text-[0.7rem] uppercase tracking-[0.2em] text-boss-rose">{{ marketing_content('multistreaming.strategy.eyebrow') }}</p>
                     <div class="space-y-5">
                         @foreach ($strategyCards as $step)
-                            <div class="flex gap-5">
-                                <span class="font-display text-[2rem] leading-none text-boss-pink shrink-0">{{ sprintf('%02d', $loop->iteration) }}</span>
+                            <div class="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-4">
+                                <span class="pd-strategy-index">{{ sprintf('%02d', $loop->iteration) }}</span>
                                 <div>
                                     <p class="font-medium text-boss-dark text-[0.9rem]">{{ $step['title'] ?? '' }}</p>
                                     <p class="mt-1 text-[0.86rem] leading-relaxed text-boss-dark/60">{{ $step['body'] ?? '' }}</p>
@@ -157,7 +157,7 @@
         <div class="mx-auto max-w-2xl px-4">
             <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ marketing_content('multistreaming.cta.eyebrow') }}</p>
             <h2 class="font-display text-[clamp(2rem,4vw,3rem)] text-boss-dark">{{ marketing_content('multistreaming.cta.title') }}</h2>
-            <a href="{{ marketing_link('multistreaming.cta.url', route('home').'#apply') }}" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ marketing_content('multistreaming.cta.label') }}</a>
+            <a href="{{ marketing_link('multistreaming.cta.url', route('home').'#apply') }}" class="pd-cta-primary mt-10 px-12 py-4">{{ marketing_content('multistreaming.cta.label') }}</a>
         </div>
     </section>
 </x-layouts.marketing>

@@ -2,7 +2,7 @@
     <div class="mx-auto max-w-lg space-y-6 py-8 text-center">
         <div>
             <p class="text-xs uppercase tracking-[0.2em] text-boss-rose">{{ __('Email preferences') }}</p>
-            <h1 class="mt-3 font-display text-3xl text-boss-dark">{{ __('Paradise Dolls updates') }}</h1>
+            <h1 class="mt-3 font-display text-3xl text-boss-dark">{{ __('Boss Doll Creators updates') }}</h1>
         </div>
 
         @if (session('status') || $user->marketing_unsubscribed_at)

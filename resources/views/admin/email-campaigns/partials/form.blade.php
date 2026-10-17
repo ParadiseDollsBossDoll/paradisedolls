@@ -41,7 +41,7 @@
             type="text"
             class="mt-2"
             :value="old('subject', $campaign->subject)"
-            placeholder="{{ __('e.g. Your weekly Paradise Dolls update') }}"
+            placeholder="{{ __('e.g. Your weekly Boss Doll Creators update') }}"
             required
             maxlength="255"
         />

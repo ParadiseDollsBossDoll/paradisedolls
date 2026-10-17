@@ -1,11 +1,11 @@
-﻿<x-member-layout>
+<x-member-layout>
     <div class="mx-auto max-w-6xl space-y-7 text-boss-ivory">
         <header class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
                 <p class="pd-kicker">{{ __('Referrals') }}</p>
                 <h1 class="pd-heading mt-2 text-[clamp(2.1rem,4vw,3rem)]">{{ __('Refer a Model') }}</h1>
                 <p class="mt-3 max-w-2xl text-sm leading-6 text-boss-ivory/[0.45]">
-                    {{ __('Share Paradise Dolls with potential models and track when your referrals become reward eligible.') }}
+                    {{ __('Share Boss Doll Creators with potential models and track when your referrals become reward eligible.') }}
                 </p>
             </div>
 

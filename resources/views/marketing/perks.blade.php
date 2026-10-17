@@ -9,8 +9,8 @@
         <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-boss-dark/90"></div>
         <div class="relative z-10 mx-auto max-w-4xl px-4 text-center text-white">
             <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-[#F2C7D2]">{{ marketing_content('perks.hero.eyebrow') }}</p>
-            <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.7rem,6vw,5rem)] leading-tight text-[#FFF8F6]">{{ marketing_content('perks.hero.title') }}</h1>
-            <p class="pd-marketing-image-hero-body mx-auto mt-6 max-w-2xl text-[1rem] leading-relaxed text-[#FFF8F6]/90">{{ marketing_content('perks.hero.body') }}</p>
+            <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.7rem,6vw,5rem)] leading-tight text-[#FFFFFF]">{{ marketing_content('perks.hero.title') }}</h1>
+            <p class="pd-marketing-image-hero-body mx-auto mt-6 max-w-2xl text-[1rem] leading-relaxed text-[#FFFFFF]/90">{{ marketing_content('perks.hero.body') }}</p>
         </div>
     </section>
 
@@ -29,7 +29,7 @@
                             <img src="{{ \App\Support\MarketingContent::imageUrl($perk['image'] ?? '') }}" alt="" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105">
                         </div>
                         <div class="p-6">
-                            <p class="mb-2 text-[0.65rem] uppercase tracking-[0.18em] text-boss-rose">{{ config('app.name') }}</p>
+                            <p class="mb-2 text-[0.65rem] uppercase tracking-[0.18em] text-boss-rose">{{ config('brand.name') }}</p>
                             <h3 class="font-display text-[1.25rem] text-boss-dark">{{ $perk['title'] ?? '' }}</h3>
                             <p class="mt-3 text-[0.86rem] leading-relaxed text-boss-dark/58">{{ $perk['body'] ?? '' }}</p>
                         </div>
@@ -61,7 +61,7 @@
             <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ marketing_content('perks.cta.eyebrow') }}</p>
             <h2 class="font-display text-[clamp(2rem,4vw,3rem)]">{{ marketing_content('perks.cta.title') }}</h2>
             <p class="mx-auto mt-5 max-w-xl text-[0.95rem] leading-relaxed text-boss-ivory/55">{{ marketing_content('perks.cta.body') }}</p>
-            <a href="{{ marketing_link('perks.cta.url', route('home').'#apply') }}" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ marketing_content('perks.cta.label') }}</a>
+            <a href="{{ marketing_link('perks.cta.url', route('home').'#apply') }}" class="pd-cta-primary mt-10 px-12 py-4">{{ marketing_content('perks.cta.label') }}</a>
         </div>
     </section>
 </x-layouts.marketing>

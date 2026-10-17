@@ -11,8 +11,8 @@
         <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent"></div>
         <div class="relative z-10 mx-auto w-full max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
             <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.38em] text-[#F2C7D2]">{{ marketing_content('our_story.hero.eyebrow') }}</p>
-            <h1 class="pd-marketing-image-hero-title font-display text-[clamp(3rem,7vw,5.5rem)] leading-tight text-[#FFF8F6]">{{ marketing_content('our_story.hero.title') }}</h1>
-            <p class="pd-marketing-image-hero-body mt-5 max-w-xl text-[1rem] leading-relaxed text-[#FFF8F6]/90">{{ marketing_content('our_story.hero.body') }}</p>
+            <h1 class="pd-marketing-image-hero-title font-display text-[clamp(3rem,7vw,5.5rem)] leading-tight text-[#FFFFFF]">{{ marketing_content('our_story.hero.title') }}</h1>
+            <p class="pd-marketing-image-hero-body mt-5 max-w-xl text-[1rem] leading-relaxed text-[#FFFFFF]/90">{{ marketing_content('our_story.hero.body') }}</p>
         </div>
     </section>
 
@@ -82,7 +82,7 @@
                             'mt-5 text-[0.95rem] leading-relaxed text-boss-ivory/60' => ! $loop->first && ! $loop->last,
                         ])>{{ $paragraph }}</p>
                     @endforeach
-                    <a href="{{ marketing_link('our_story.mission.cta_url', route('home').'#apply') }}" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-10 py-3.5 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ marketing_content('our_story.mission.cta_label') }}</a>
+                    <a href="{{ marketing_link('our_story.mission.cta_url', route('home').'#apply') }}" class="pd-cta-primary mt-10 px-10 py-3.5">{{ marketing_content('our_story.mission.cta_label') }}</a>
                 </div>
                 <div class="grid gap-4">
                     @foreach ($missionCards as $item)
@@ -124,7 +124,7 @@
             <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ marketing_content('our_story.cta.eyebrow') }}</p>
             <h2 class="font-display text-[clamp(2rem,4vw,3rem)] text-boss-dark">{{ marketing_content('our_story.cta.title') }}</h2>
             <p class="mx-auto mt-5 max-w-xl text-[0.95rem] leading-relaxed text-boss-dark/65">{{ marketing_content('our_story.cta.body') }}</p>
-            <a href="{{ marketing_link('our_story.cta.url', route('home').'#apply') }}" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ marketing_content('our_story.cta.label') }}</a>
+            <a href="{{ marketing_link('our_story.cta.url', route('home').'#apply') }}" class="pd-cta-primary mt-10 px-12 py-4">{{ marketing_content('our_story.cta.label') }}</a>
         </div>
     </section>
 </x-layouts.marketing>

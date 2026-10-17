@@ -5,14 +5,14 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Paradise Dolls') }}</title>
+        <title>{{ config('brand.name') }}</title>
 
-        <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+        <link rel="icon" type="image/png" sizes="512x512" href="{{ asset(config('brand.favicon')) }}">
 
         @include('partials.google-tag-manager-head')
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased pd-dark-surface">
+    <body class="pd-premium-ui font-sans antialiased pd-dark-surface">
         @include('partials.google-tag-manager-body')
 
         <div class="min-h-screen">

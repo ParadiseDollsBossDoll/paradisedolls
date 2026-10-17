@@ -6,7 +6,7 @@
 </head>
 <body style="font-family: ui-sans-serif, system-ui, sans-serif; line-height: 1.6; color: #1a1a1a; max-width: 32rem; margin: 0 auto; padding: 1.5rem;">
     <p style="margin: 0 0 1rem;">{{ __('Hi :name,', ['name' => $profile->user->name]) }}</p>
-    <p style="margin: 0 0 1rem;">{{ __('The Paradise Dolls onboarding team needs an update before your verification can be approved.') }}</p>
+    <p style="margin: 0 0 1rem;">{{ __('The Boss Doll Creators onboarding team needs an update before your verification can be approved.') }}</p>
     <div style="margin: 0 0 1.5rem; border-left: 3px solid #c9a96e; padding: 0.75rem 1rem; background-color: #f8f3ea;">
         <p style="margin: 0 0 0.35rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #8a6a32;">{{ __('Resubmission instructions') }}</p>
         <p style="margin: 0; white-space: pre-line;">{{ $profile->verification_notes }}</p>

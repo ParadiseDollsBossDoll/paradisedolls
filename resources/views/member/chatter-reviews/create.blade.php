@@ -102,7 +102,7 @@
             'natural_speech' => __('Does your chatter understand how you would naturally speak to customers?'),
             'one_change' => __('If you could change one thing about your chatter, what would it be?'),
             'recognition' => __('Is there anything your chatter does exceptionally well that deserves recognition?'),
-            'anything_else' => __('Is there anything else you would like Paradise Dolls Management to know?'),
+            'anything_else' => __('Is there anything else you would like Boss Doll Creators Management to know?'),
         ];
     @endphp
 
@@ -111,7 +111,7 @@
             <div>
                 <p class="pd-kicker">{{ __('Confidential Internal Review') }}</p>
                 <h1 class="pd-heading pd-text-gradient mt-2 text-[clamp(2rem,4vw,2.7rem)]">{{ __('First Month Chatter Performance Review') }}</h1>
-                <p class="mt-2 max-w-3xl text-[0.86rem] leading-relaxed text-boss-ivory/45">{{ __('This private review helps Paradise Dolls recognise excellent chatter support, spot where extra training may be needed, and make sure every model receives the highest standard of service.') }}</p>
+                <p class="mt-2 max-w-3xl text-[0.86rem] leading-relaxed text-boss-ivory/45">{{ __('This private review helps Boss Doll Creators recognise excellent chatter support, spot where extra training may be needed, and make sure every model receives the highest standard of service.') }}</p>
             </div>
         </header>
 
@@ -135,7 +135,7 @@
                     <div>
                         <p class="pd-kicker">{{ __('Confidentiality & Anonymous Feedback') }}</p>
                         <h2 class="pd-heading mt-2 text-[1.45rem] text-boss-ivory">{{ __('Your identity choice') }}</h2>
-                        <p class="mt-2 text-[0.82rem] leading-relaxed text-boss-ivory/45">{{ __('You are welcome to complete this review either anonymously or with your name. Your honest feedback will never affect your position within Paradise Dolls.') }}</p>
+                        <p class="mt-2 text-[0.82rem] leading-relaxed text-boss-ivory/45">{{ __('You are welcome to complete this review either anonymously or with your name. Your honest feedback will never affect your position within Boss Doll Creators.') }}</p>
                     </div>
 
                     <div class="grid gap-3 sm:grid-cols-2">
@@ -283,7 +283,7 @@
                             </div>
                         </fieldset>
                         <fieldset class="rounded-sm border border-white/[0.06] bg-white/[0.025] p-4">
-                            <legend class="text-[0.82rem] font-semibold text-boss-ivory">{{ __('Would you recommend this chatter to another Paradise Dolls model?') }}</legend>
+                            <legend class="text-[0.82rem] font-semibold text-boss-ivory">{{ __('Would you recommend this chatter to another Boss Doll Creators model?') }}</legend>
                             <div class="mt-3 space-y-2">
                                 @foreach (['yes' => __('Yes'), 'maybe' => __('Maybe'), 'no' => __('No')] as $value => $label)
                                     <label class="flex items-center gap-2 text-[0.78rem] text-boss-ivory/70">

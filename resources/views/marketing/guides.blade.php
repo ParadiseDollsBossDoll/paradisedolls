@@ -1,5 +1,5 @@
 @php
-    $description = 'Explore candid Paradise Dolls guides about webcam jobs, becoming a webcam model, remote setup, privacy, agency choices, multistreaming, earnings, and payments.';
+    $description = 'Explore candid Boss Doll Creators guides about webcam jobs, becoming a webcam model, remote setup, privacy, agency choices, multistreaming, earnings, and payments.';
     $heroImage = asset('images/17.jpeg');
 
     $groups = [
@@ -20,7 +20,7 @@
             'items' => [
                 ['route' => 'webcam-model-safety-privacy', 'label' => 'Webcam model safety and privacy', 'detail' => 'Practical privacy layers without promises of complete anonymity', 'time' => '10 min read'],
                 ['route' => 'webcam-agency-vs-independent', 'label' => 'Webcam agency vs independent', 'detail' => 'Compare support, control, cost, account ownership, and contracts', 'time' => '9 min read'],
-                ['route' => 'webcam-agency', 'label' => 'What a webcam agency should do', 'detail' => 'Paradise Dolls services, responsibilities, process, and terms', 'time' => '8 min read'],
+                ['route' => 'webcam-agency', 'label' => 'What a webcam agency should do', 'detail' => 'Boss Doll Creators services, responsibilities, process, and terms', 'time' => '8 min read'],
             ],
         ],
         [
@@ -43,11 +43,11 @@
             '@type' => 'CollectionPage',
             '@id' => route('guides').'#webpage',
             'url' => route('guides'),
-            'name' => 'Webcam Model Guides | Paradise Dolls',
+            'name' => 'Webcam Model Guides | Boss Doll Creators',
             'description' => $description,
             'isPartOf' => [
                 '@type' => 'WebSite',
-                'name' => 'Paradise Dolls',
+                'name' => 'Boss Doll Creators',
                 'url' => route('home'),
             ],
         ],
@@ -86,9 +86,9 @@
 
         <div class="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="max-w-4xl text-white">
-                <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-[#F2C7D2]">{{ __('Paradise Dolls learning centre') }}</p>
-                <h1 class="pd-marketing-image-hero-title break-words font-display text-[clamp(2.35rem,7vw,5.5rem)] leading-[0.98] text-[#FFF8F6]">{{ __('Webcam model guides for informed decisions') }}</h1>
-                <p class="pd-marketing-image-hero-body mt-7 max-w-3xl text-[1.02rem] leading-8 text-[#FFF8F6]/90">{{ __('Candid guidance for adult women researching webcam work, from beginner eligibility and private home setup to agency terms, multistreaming, earnings, and payment records.') }}</p>
+                <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-[#F2C7D2]">{{ __('Boss Doll Creators learning centre') }}</p>
+                <h1 class="pd-marketing-image-hero-title break-words font-display text-[clamp(2.35rem,7vw,5.5rem)] leading-[0.98] text-[#FFFFFF]">{{ __('Webcam model guides for informed decisions') }}</h1>
+                <p class="pd-marketing-image-hero-body mt-7 max-w-3xl text-[1.02rem] leading-8 text-[#FFFFFF]/90">{{ __('Candid guidance for adult women researching webcam work, from beginner eligibility and private home setup to agency terms, multistreaming, earnings, and payment records.') }}</p>
                 <a href="#guide-library" class="mt-9 inline-flex min-h-12 items-center justify-center rounded-md border border-white/45 px-7 py-3 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white hover:text-boss-dark">{{ __('Browse all guides') }}</a>
             </div>
         </div>
@@ -148,7 +148,7 @@
                 <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight">{{ __('Built from real industry experience, without income promises') }}</h2>
             </div>
             <div class="space-y-5 text-[0.92rem] leading-7 text-boss-ivory/62">
-                <p>{{ __('Kayla built Paradise Dolls after more than 15 years in the industry. The learning centre reflects the agency\'s focus on structured training, platform understanding, privacy, professional standards, and informed applicant decisions.') }}</p>
+                <p>{{ __('Kayla built Boss Doll Creators after more than 15 years in the industry. The learning centre reflects the agency\'s focus on structured training, platform understanding, privacy, professional standards, and informed applicant decisions.') }}</p>
                 <p>{{ __('Platform rules, payment systems, and legal requirements can change. Applicants should verify current terms and use qualified local legal or tax advice where needed.') }}</p>
                 <a href="{{ route('our-story') }}" class="inline-flex min-h-11 items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-boss-gold transition-colors hover:text-boss-gold-light">
                     {{ __('Read the founder story') }}
@@ -163,7 +163,7 @@
     <section class="bg-boss-pink py-16 text-center sm:py-20">
         <div class="mx-auto max-w-2xl px-4 sm:px-6">
             <p class="mb-4 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-boss-dark/55">{{ __('After you have done the research') }}</p>
-            <h2 class="font-display text-[clamp(2rem,4vw,3rem)] text-boss-dark">{{ __('Apply privately to Paradise Dolls') }}</h2>
+            <h2 class="font-display text-[clamp(2rem,4vw,3rem)] text-boss-dark">{{ __('Apply privately to Boss Doll Creators') }}</h2>
             <p class="mx-auto mt-5 max-w-xl text-[0.94rem] leading-7 text-boss-dark/68">{{ __('You must be 18 or older. Every application is reviewed individually, and applying does not guarantee acceptance or earnings.') }}</p>
             <a href="{{ route('apply') }}" class="mt-9 inline-flex min-h-12 items-center justify-center rounded-md bg-boss-dark px-10 py-3 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-white transition-colors hover:bg-black">{{ __('Apply privately') }}</a>
         </div>

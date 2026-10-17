@@ -72,7 +72,7 @@ class MemberVerificationController extends Controller
 
         return redirect()
             ->route('member.dashboard')
-            ->with('status', __('Verification submitted. The Paradise Dolls team will review your documents privately.'));
+            ->with('status', __('Verification submitted. The Boss Doll Creators team will review your documents privately.'));
     }
 
     private function profile(): ModelProfile

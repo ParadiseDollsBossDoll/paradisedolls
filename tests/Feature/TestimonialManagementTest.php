@@ -92,8 +92,7 @@ class TestimonialManagementTest extends TestCase
         $notification = $admin->notifications()->first();
         $this->assertNotNull($notification);
         $this->assertSame('testimonial_submitted', $notification->data['category']);
-        Mail::assertQueued(AdminActivityAlertMail::class, fn (AdminActivityAlertMail $mail) =>
-            $mail->subjectLine === 'New testimonial awaiting review from '.$model->name
+        Mail::assertQueued(AdminActivityAlertMail::class, fn (AdminActivityAlertMail $mail) => $mail->subjectLine === 'New testimonial awaiting review from '.$model->name
             && $mail->actionLabel === 'Review testimonial'
         );
 
@@ -169,11 +168,11 @@ class TestimonialManagementTest extends TestCase
 
         $this->get(route('success-stories'))
             ->assertOk()
-            ->assertSeeText('PARADISE DOLLS COMMUNITY')
+            ->assertSeeText('BOSS DOLL CREATORS COMMUNITY')
             ->assertSeeText('Success Stories')
-            ->assertSeeText('Real Stories from Our Paradise Dolls')
+            ->assertSeeText('Real Stories from Our Boss Doll Creators')
             ->assertSeeText('Behind every success is a woman who had the courage to take the first step.')
-            ->assertSeeText('Every Paradise Doll’s journey is unique')
+            ->assertSeeText('Every Boss Doll Creator’s journey is unique')
             ->assertSeeText('success is about more than reaching your goals')
             ->assertSeeText('Your story starts with a single step')
             ->assertSee('pd-success-story-scroll', false)

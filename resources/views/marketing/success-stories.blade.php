@@ -5,8 +5,8 @@
         <div class="absolute inset-0 bg-black/55"></div>
         <div class="relative z-10 mx-auto max-w-5xl px-4 text-center text-white">
             <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-[#F2C7D2]">{{ marketing_content('success_stories.hero.eyebrow') }}</p>
-            <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.15rem,5vw,4rem)] leading-tight text-[#FFF8F6]">{{ marketing_content('success_stories.hero.title') }}</h1>
-            <div class="pd-marketing-image-hero-body mx-auto mt-5 max-w-3xl space-y-3 text-[0.78rem] leading-relaxed text-[#FFF8F6]/90 sm:text-[0.84rem]">
+            <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.15rem,5vw,4rem)] leading-tight text-[#FFFFFF]">{{ marketing_content('success_stories.hero.title') }}</h1>
+            <div class="pd-marketing-image-hero-body mx-auto mt-5 max-w-3xl space-y-3 text-[0.78rem] leading-relaxed text-[#FFFFFF]/90 sm:text-[0.84rem]">
                 @foreach (marketing_paragraphs('success_stories.hero.body') as $paragraph)
                     <p>{{ $paragraph }}</p>
                 @endforeach

@@ -15,7 +15,7 @@
                 <p class="pd-kicker">{{ __('Main Site') }}</p>
                 <h1 class="pd-heading mt-2 text-[clamp(1.9rem,4vw,2.8rem)]">{{ __('Site Editor') }}</h1>
                 <p class="mt-3 max-w-2xl text-[0.9rem] leading-relaxed text-boss-ivory/50">
-                    {{ __('Update the public website copy and images while keeping the current Paradise Dolls design intact.') }}
+                    {{ __('Update the public website copy and images while keeping the current Boss Doll Creators design intact.') }}
                 </p>
             </div>
 

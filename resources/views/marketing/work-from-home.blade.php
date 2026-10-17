@@ -12,8 +12,8 @@
         <div class="absolute inset-0 bg-black/55"></div>
         <div class="relative z-10 mx-auto max-w-3xl px-4 text-center text-white">
             <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-[#F2C7D2]">{{ marketing_content('work_from_home.hero.eyebrow') }}</p>
-            <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.7rem,7vw,5rem)] leading-tight text-[#FFF8F6]">{{ marketing_content('work_from_home.hero.title') }}</h1>
-            <p class="pd-marketing-image-hero-body mx-auto mt-6 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFF8F6]/90">{{ marketing_content('work_from_home.hero.body') }}</p>
+            <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.7rem,7vw,5rem)] leading-tight text-[#FFFFFF]">{{ marketing_content('work_from_home.hero.title') }}</h1>
+            <p class="pd-marketing-image-hero-body mx-auto mt-6 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFFFFF]/90">{{ marketing_content('work_from_home.hero.body') }}</p>
         </div>
     </section>
 
@@ -86,7 +86,7 @@
             <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-gold">{{ marketing_content('work_from_home.cta.eyebrow') }}</p>
             <h2 class="font-display text-[clamp(2rem,4vw,3rem)]">{{ marketing_content('work_from_home.cta.title') }}</h2>
             <p class="mx-auto mt-5 max-w-xl text-[0.95rem] leading-relaxed text-boss-ivory/55">{{ marketing_content('work_from_home.cta.body') }}</p>
-            <a href="{{ marketing_link('work_from_home.cta.url', route('home').'#apply') }}" class="mt-10 inline-block rounded-md bg-[#EEB4C3] px-12 py-4 text-[0.72rem] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#e0a0b5]">{{ marketing_content('work_from_home.cta.label') }}</a>
+            <a href="{{ marketing_link('work_from_home.cta.url', route('home').'#apply') }}" class="pd-cta-primary mt-10 px-12 py-4">{{ marketing_content('work_from_home.cta.label') }}</a>
         </div>
     </section>
 </x-layouts.marketing>

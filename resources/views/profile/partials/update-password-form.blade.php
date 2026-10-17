@@ -41,8 +41,8 @@
         {{-- Icon --}}
         <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors"
               :style="open
-                  ? 'background:rgba(196,104,122,0.14);border:1px solid rgba(196,104,122,0.25);color:#C4687A;'
-                  : 'background:rgba(196,104,122,0.08);border:1px solid rgba(196,104,122,0.15);color:#C4687A;'">
+                  ? 'background:rgba(176,0,88,0.14);border:1px solid rgba(176,0,88,0.25);color:#B00058;'
+                  : 'background:rgba(176,0,88,0.08);border:1px solid rgba(176,0,88,0.15);color:#B00058;'">
             <svg viewBox="0 0 16 16" class="h-4 w-4 fill-none stroke-current stroke-[1.6]">
                 <rect x="3" y="7" width="10" height="7" rx="1.5"/>
                 <path d="M5.5 7V5.2a2.5 2.5 0 015 0V7"/>
@@ -75,7 +75,7 @@
             class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[0.71rem] font-medium transition-all"
             :class="open
                 ? 'border-white/[0.08] bg-white/[0.04] text-boss-ivory/50 hover:text-boss-ivory'
-                : 'border-[rgba(196,104,122,0.22)] bg-[rgba(196,104,122,0.08)] text-[#C4687A] hover:bg-[rgba(196,104,122,0.14)]'"
+                : 'border-[rgba(176,0,88,0.22)] bg-[rgba(176,0,88,0.08)] text-[#B00058] hover:bg-[rgba(176,0,88,0.14)]'"
         >
             <span x-text="open ? '{{ __('Cancel') }}' : '{{ __('Change Password') }}'"></span>
             <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 fill-none stroke-current stroke-[2] transition-transform duration-200"
@@ -197,9 +197,9 @@
                             type="submit"
                             :disabled="saving || newPassword.length < 6"
                             class="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-[0.75rem] font-medium transition-all disabled:opacity-40"
-                            style="border-color:rgba(196,104,122,0.30);background:rgba(196,104,122,0.09);color:#C4687A;"
-                            onmouseover="if(!this.disabled)this.style.background='rgba(196,104,122,0.17)'"
-                            onmouseout="this.style.background='rgba(196,104,122,0.09)'"
+                            style="border-color:rgba(176,0,88,0.30);background:rgba(176,0,88,0.09);color:#B00058;"
+                            onmouseover="if(!this.disabled)this.style.background='rgba(176,0,88,0.17)'"
+                            onmouseout="this.style.background='rgba(176,0,88,0.09)'"
                         >
                             <svg x-show="saving" class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
                                 <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="32" stroke-dashoffset="12"/>

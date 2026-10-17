@@ -45,13 +45,13 @@ class DatabaseSeeder extends Seeder
                 'slug' => 'boss-doll-blueprint-orientation',
                 'platform_label' => 'Foundation',
                 'platform_color' => '#C9A96E',
-                'description' => 'Introduction to Kayla, Paradise Dolls, the community standards, and how the academy is structured.',
+                'description' => 'Introduction to Kayla, Boss Doll Creators, the community standards, and how the academy is structured.',
                 'is_published' => true,
                 'sort_order' => 1,
                 'lessons' => [
                     [
-                        'title' => 'Introduction to Kayla & Paradise Dolls',
-                        'body' => 'Meet the founder story, the mission behind Paradise Dolls, and the support structure members can expect.',
+                        'title' => 'Introduction to Kayla & Boss Doll Creators',
+                        'body' => 'Meet the founder story, the mission behind Boss Doll Creators, and the support structure members can expect.',
                         'duration' => '08:00',
                         'has_pdf' => true,
                         'sort_order' => 1,
@@ -174,5 +174,4 @@ class DatabaseSeeder extends Seeder
             ],
         ];
     }
-
 }

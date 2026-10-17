@@ -2,8 +2,8 @@
 @php
     $profilePhotoUrl = $user->profilePhotoUrl();
     $isAdmin         = $user->isAdmin();
-    $roleLabel       = $isAdmin ? __('Administrator') : ($user->isChatter() ? __('Chatter') : __('Paradise Dolls Member'));
-    $siteTheme       = \App\Models\SiteSetting::get('theme', ['mode'=>'dark','primary'=>'#EEB4C3','primaryLight'=>'#F3C3CF','preset'=>'pink-light']);
+    $roleLabel       = $isAdmin ? __('Administrator') : ($user->isChatter() ? __('Chatter') : __('Boss Doll Creators Member'));
+    $siteTheme       = \App\Models\SiteSetting::get('theme', ['mode'=>'light','primary'=>'#FF0080','primaryLight'=>'#FFE6F0','preset'=>'boss-light']);
 @endphp
 
 <div class="space-y-5 text-boss-ivory">
@@ -16,7 +16,7 @@
                 {{ __('My Profile') }}
             </h1>
         </div>
-        <span class="inline-flex items-center gap-2 rounded-full border border-[rgba(238,180,195,0.22)] bg-[rgba(238,180,195,0.07)] px-3.5 py-1.5 text-[0.63rem] uppercase tracking-[0.15em] text-[rgba(238,180,195,0.82)]">
+        <span class="inline-flex items-center gap-2 rounded-full border border-[rgba(255,0,128,0.22)] bg-[rgba(255,0,128,0.07)] px-3.5 py-1.5 text-[0.63rem] uppercase tracking-[0.15em] text-[rgba(255,0,128,0.82)]">
             <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
             {{ __('Account active') }}
         </span>
@@ -88,7 +88,7 @@
                 class="group relative mx-auto h-[84px] w-[84px] shrink-0 cursor-pointer rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-boss-gold sm:mx-0"
                 :title="previewUrl ? '{{ __('Change photo') }}' : '{{ __('Upload photo') }}'">
                 <div class="absolute inset-0 rounded-2xl p-[2px]"
-                     :class="selected ? 'bg-gradient-to-br from-boss-gold to-[#C4687A]' : 'bg-gradient-to-br from-[rgba(238,180,195,0.4)] to-[rgba(196,104,122,0.2)]'">
+                     :class="selected ? 'bg-gradient-to-br from-boss-gold to-[#B00058]' : 'bg-gradient-to-br from-[rgba(255,0,128,0.4)] to-[rgba(176,0,88,0.2)]'">
                     <div class="pd-avatar-inner flex h-full w-full items-center justify-center rounded-[14px]">
                         <span class="font-display text-2xl font-semibold text-boss-gold">{{ $user->initials() }}</span>
                     </div>
@@ -101,7 +101,7 @@
                     </svg>
                     <span class="text-[0.55rem] font-semibold uppercase tracking-widest text-white/80">{{ __('Edit') }}</span>
                 </div>
-                <span class="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-[#171016] bg-emerald-400"></span>
+                <span class="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-[#342A35] bg-emerald-400"></span>
             </label>
 
             {{-- Info --}}
@@ -117,7 +117,7 @@
             {{-- Photo actions --}}
             <div class="flex flex-wrap items-center justify-center gap-2 sm:flex-col sm:flex-nowrap sm:items-end sm:justify-start">
                 <label for="profile-photo-input"
-                    class="relative inline-flex cursor-pointer items-center gap-1.5 overflow-hidden rounded-lg border border-white/[0.09] bg-white/[0.04] px-3.5 py-2 text-[0.72rem] text-boss-ivory/55 transition-all hover:border-[rgba(238,180,195,0.28)] hover:bg-[rgba(238,180,195,0.08)] hover:text-boss-gold">
+                    class="relative inline-flex cursor-pointer items-center gap-1.5 overflow-hidden rounded-lg border border-white/[0.09] bg-white/[0.04] px-3.5 py-2 text-[0.72rem] text-boss-ivory/55 transition-all hover:border-[rgba(255,0,128,0.28)] hover:bg-[rgba(255,0,128,0.08)] hover:text-boss-gold">
                     <input
                         id="profile-photo-input"
                         type="file"
@@ -133,7 +133,7 @@
                     <span x-text="previewUrl ? '{{ __('Change Photo') }}' : '{{ __('Upload Photo') }}'"></span>
                 </label>
                 <button type="submit" x-show="selected" x-cloak :disabled="saving"
-                    class="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(238,180,195,0.33)] bg-[rgba(238,180,195,0.11)] px-3.5 py-2 text-[0.72rem] text-boss-gold transition-all hover:bg-[rgba(238,180,195,0.18)] disabled:opacity-50">
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(255,0,128,0.33)] bg-[rgba(255,0,128,0.11)] px-3.5 py-2 text-[0.72rem] text-boss-gold transition-all hover:bg-[rgba(255,0,128,0.18)] disabled:opacity-50">
                     <svg x-show="saving" class="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
                         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="32" stroke-dashoffset="12"/>
                     </svg>
@@ -151,7 +151,7 @@
                 @endif
                 <p class="w-full text-center text-[0.61rem] text-boss-ivory/22 sm:text-right">
                     <span x-show="!selected">{{ __('JPG, PNG, WEBP - 4 MB max') }}</span>
-                    <span x-show="selected" x-cloak x-text="fileName" class="text-[rgba(238,180,195,0.45)]"></span>
+                    <span x-show="selected" x-cloak x-text="fileName" class="text-[rgba(255,0,128,0.45)]"></span>
                 </p>
                 <p x-show="selected" x-cloak class="w-full text-center text-[0.62rem] font-medium text-boss-gold/75 sm:text-right">
                     {{ __('Tap Save Photo to finish.') }}
@@ -233,7 +233,7 @@
                             @click="selectPreset(preset)"
                             class="flex items-center gap-2.5 rounded-xl border p-3 text-left transition-all duration-150"
                             :class="active === preset.id
-                                ? 'border-boss-gold bg-[rgba(238,180,195,0.12)]'
+                                ? 'border-boss-gold bg-[rgba(255,0,128,0.12)]'
                                 : 'border-white/[0.08] bg-white/[0.025] hover:border-white/[0.16] hover:bg-white/[0.05]'"
                         >
                             <div class="flex shrink-0 gap-1">
@@ -304,17 +304,17 @@
     function pdThemeCustomizer() {
         return {
             presets: [
-                { id: 'pink-light',  name: 'Pink Light',  desc: 'Default',  mode: 'light', primary: '#EEB4C3', primaryLight: '#F3C3CF', colors: ['#FFF0F5', '#EEB4C3', '#DFA1B4'] },
-                { id: 'dark-gold',   name: 'Dark Gold',   desc: 'Classic',  mode: 'dark',  primary: '#C9A96E', primaryLight: '#E8C88A', colors: ['#09070A', '#C9A96E', '#E8C88A'] },
-                { id: 'rose-night',  name: 'Rose Night',  desc: '',         mode: 'dark',  primary: '#E07080', primaryLight: '#F09090', colors: ['#09070A', '#E07080', '#F09090'] },
-                { id: 'blush-dark',  name: 'Blush Dark',  desc: '',         mode: 'dark',  primary: '#DFA1B4', primaryLight: '#EEB4C3', colors: ['#09070A', '#DFA1B4', '#EEB4C3'] },
-                { id: 'berry-glam',  name: 'Berry Glam',  desc: '',         mode: 'dark',  primary: '#C060A0', primaryLight: '#D880B8', colors: ['#09070A', '#C060A0', '#D880B8'] },
+                { id: 'boss-light',  name: 'Boss Doll',   desc: 'Brand default', mode: 'light', primary: '#FF0080', primaryLight: '#FFE6F0', colors: ['#FFF7EF', '#FF0080', '#29212A'] },
+                { id: 'dark-gold',   name: 'Dark Gold',   desc: 'Classic',  mode: 'dark',  primary: '#C9A96E', primaryLight: '#E8C88A', colors: ['#29212A', '#C9A96E', '#E8C88A'] },
+                { id: 'rose-night',  name: 'Rose Night',  desc: '',         mode: 'dark',  primary: '#E07080', primaryLight: '#F09090', colors: ['#29212A', '#E07080', '#F09090'] },
+                { id: 'blush-dark',  name: 'Blush Dark',  desc: '',         mode: 'dark',  primary: '#D9006C', primaryLight: '#FF0080', colors: ['#29212A', '#D9006C', '#FF0080'] },
+                { id: 'berry-glam',  name: 'Berry Glam',  desc: '',         mode: 'dark',  primary: '#C060A0', primaryLight: '#D880B8', colors: ['#29212A', '#C060A0', '#D880B8'] },
                 { id: 'coral-light', name: 'Coral Light', desc: '',         mode: 'light', primary: '#F08070', primaryLight: '#F8A090', colors: ['#FFF5F0', '#F08070', '#F8A090'] },
             ],
-            active:       'pink-light',
+            active:       'boss-light',
             mode:         'light',
-            primary:      '#EEB4C3',
-            primaryLight: '#F3C3CF',
+            primary:      '#FF0080',
+            primaryLight: '#FFE6F0',
             saved:        false,
             savingTheme:  false,
             themeError:   '',
@@ -402,10 +402,10 @@
             },
 
             resetDefault() {
-                this.active       = 'pink-light';
+                this.active       = 'boss-light';
                 this.mode         = 'light';
-                this.primary      = '#EEB4C3';
-                this.primaryLight = '#F3C3CF';
+                this.primary      = '#FF0080';
+                this.primaryLight = '#FFE6F0';
                 this.applyLive();
             },
         };

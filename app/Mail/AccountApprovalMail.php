@@ -23,7 +23,7 @@ class AccountApprovalMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('Welcome to the Paradise Dolls Team!'),
+            subject: __('Welcome to the Boss Doll Creators Team!'),
         );
     }
 

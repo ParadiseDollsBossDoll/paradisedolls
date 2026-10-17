@@ -3,7 +3,7 @@
     'title',
     'description',
     'keywords' => [],
-    'eyebrow' => 'Paradise Dolls guide',
+    'eyebrow' => 'Boss Doll Creators guide',
     'heading',
     'lead',
     'heroImage',
@@ -13,7 +13,7 @@
     'sections' => [],
     'faqs' => [],
     'related' => [],
-    'ctaTitle' => 'Decide whether Paradise Dolls is right for you',
+    'ctaTitle' => 'Decide whether Boss Doll Creators is right for you',
     'ctaBody' => 'Applications are private, reviewed individually, and open only to adults aged 18 or older. Applying does not guarantee acceptance or earnings.',
 ])
 @php
@@ -22,20 +22,20 @@
             '@context' => 'https://schema.org',
             '@type' => 'Organization',
             '@id' => route('home').'#organization',
-            'name' => 'Paradise Dolls',
+            'name' => 'Boss Doll Creators',
             'url' => route('home'),
-            'logo' => asset('images/brand/get-rich-with-paradise-dolls-logo.png'),
+            'logo' => asset(config('brand.logos.horizontal_pink')),
         ],
         [
             '@context' => 'https://schema.org',
             '@type' => 'WebPage',
             '@id' => route($routeName).'#webpage',
             'url' => route($routeName),
-            'name' => $title.' | Paradise Dolls',
+            'name' => $title.' | Boss Doll Creators',
             'description' => $description,
             'isPartOf' => [
                 '@type' => 'WebSite',
-                'name' => 'Paradise Dolls',
+                'name' => 'Boss Doll Creators',
                 'url' => route('home'),
             ],
         ],
@@ -86,8 +86,8 @@
                     <span aria-current="page">{{ __($title) }}</span>
                 </nav>
                 <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-[#F2C7D2]">{{ __($eyebrow) }}</p>
-                <h1 class="pd-marketing-image-hero-title max-w-4xl break-words font-display text-[clamp(2.3rem,7vw,5.35rem)] leading-[0.98] text-[#FFF8F6]">{{ __($heading) }}</h1>
-                <p class="pd-marketing-image-hero-body mt-7 max-w-3xl text-[1.02rem] leading-8 text-[#FFF8F6]/90">{{ __($lead) }}</p>
+                <h1 class="pd-marketing-image-hero-title max-w-4xl break-words font-display text-[clamp(2.3rem,7vw,5.35rem)] leading-[0.98] text-[#FFFFFF]">{{ __($heading) }}</h1>
+                <p class="pd-marketing-image-hero-body mt-7 max-w-3xl text-[1.02rem] leading-8 text-[#FFFFFF]/90">{{ __($lead) }}</p>
                 <a href="#guide-start" class="mt-9 inline-flex min-h-12 items-center justify-center rounded-md border border-white/45 px-7 py-3 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white hover:text-boss-dark">{{ __('Read the guide') }}</a>
             </div>
         </div>
@@ -184,7 +184,7 @@
             <div class="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.72fr_1.28fr] lg:gap-20 lg:px-8">
                 <div>
                     <p class="mb-4 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-boss-gold">{{ __('Continue learning') }}</p>
-                    <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight">{{ __('Related Paradise Dolls guides') }}</h2>
+                    <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight">{{ __('Related Boss Doll Creators guides') }}</h2>
                 </div>
                 <nav aria-label="Related guides" class="divide-y divide-white/10 border-y border-white/10">
                     @foreach ($related as $link)

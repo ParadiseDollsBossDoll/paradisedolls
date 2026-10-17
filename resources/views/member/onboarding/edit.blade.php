@@ -1,4 +1,4 @@
-﻿<x-member-layout>
+<x-member-layout>
     @php
         $selectedPlatforms = old('platforms', $profile->platforms ?? []);
         $selectedPlatforms = is_array($selectedPlatforms) ? $selectedPlatforms : [];
@@ -627,7 +627,7 @@
                     <div class="rounded-xl border border-white/[0.07] bg-white/[0.025] p-4">
                         <div class="mb-4">
                             <p class="pd-label">{{ __('Bank account details') }}</p>
-                            <p class="mt-1 text-[0.7rem] leading-relaxed text-boss-ivory/38">{{ __('These details are stored securely and are only visible to authorised Paradise Dolls administrators.') }}</p>
+                            <p class="mt-1 text-[0.7rem] leading-relaxed text-boss-ivory/38">{{ __('These details are stored securely and are only visible to authorised Boss Doll Creators administrators.') }}</p>
                         </div>
                         <div class="grid gap-4 md:grid-cols-2">
                             <div>

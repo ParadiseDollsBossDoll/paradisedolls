@@ -1,4 +1,4 @@
-﻿@php
+@php
     $initialModules = old('modules', [[
         'id' => null,
         'client_key' => 'module-1',
@@ -48,7 +48,7 @@
         x-data="adminCourseForm({
             courseId: '',
             platform: @js(old('platform_label', '')),
-            platformColor: @js(old('platform_color', '#EEB4C3')),
+            platformColor: @js(old('platform_color', '#FF0080')),
             showSuggestions: true,
             hasCourseOutline: @js(old('has_course_outline', false)),
             hasIntro: @js(old('has_intro', false)),
@@ -155,7 +155,7 @@
                                             @click="platformColor = color"
                                         ></button>
                                     </template>
-                                    <input type="text" x-model="platformColor" class="w-24 rounded-lg border border-white/10 bg-white/[0.06] px-2.5 py-1.5 font-mono text-[0.72rem] text-boss-ivory focus:border-boss-gold/50 focus:outline-none" placeholder="#EEB4C3">
+                                    <input type="text" x-model="platformColor" class="w-24 rounded-lg border border-white/10 bg-white/[0.06] px-2.5 py-1.5 font-mono text-[0.72rem] text-boss-ivory focus:border-boss-gold/50 focus:outline-none" placeholder="#FF0080">
                                 </div>
                                 <x-input-error class="mt-2" :messages="$errors->get('platform_color')" />
                             </div>

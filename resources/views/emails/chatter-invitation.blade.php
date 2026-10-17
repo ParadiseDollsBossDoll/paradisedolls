@@ -9,7 +9,7 @@
         <div style="background:#fff;border:1px solid #f0d9e0;border-radius:8px;overflow:hidden;">
             <div style="height:7px;background:#eeb4c3;"></div>
             <div style="padding:30px;">
-                <p style="margin:0 0 8px;color:#c45f7d;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;">{{ __('Paradise Dolls Team') }}</p>
+                <p style="margin:0 0 8px;color:#c45f7d;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;">{{ __('Boss Doll Creators Team') }}</p>
                 <h1 style="margin:0 0 18px;font-family:Georgia,serif;font-size:28px;font-weight:500;">{{ __('Welcome, :name', ['name' => $chatter->name]) }}</h1>
                 <p style="margin:0 0 16px;line-height:1.65;">{{ __('Your chatter workspace is ready. Use it to clock in and out, record breaks, review your hours, and submit weekly timesheets.') }}</p>
                 <p style="margin:0 0 24px;line-height:1.65;">{{ __('Create your password using the secure button below. This invitation link expires automatically for your protection.') }}</p>

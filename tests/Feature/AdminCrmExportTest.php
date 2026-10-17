@@ -57,7 +57,7 @@ class AdminCrmExportTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertDownload('paradise-applications-'.now()->format('Y-m-d').'.csv');
+            ->assertDownload('boss-doll-creators-applications-'.now()->format('Y-m-d').'.csv');
 
         $csv = $response->streamedContent();
 
@@ -142,7 +142,7 @@ class AdminCrmExportTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertDownload('paradise-onboarding-all-models-'.now()->format('Y-m-d').'.xlsx');
+            ->assertDownload('boss-doll-creators-onboarding-all-models-'.now()->format('Y-m-d').'.xlsx');
 
         $text = $this->xlsxText($response->streamedContent());
 
@@ -192,7 +192,7 @@ class AdminCrmExportTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertDownload('paradise-onboarding-selected-crm-model-designed.xlsx');
+            ->assertDownload('boss-doll-creators-onboarding-selected-crm-model-designed.xlsx');
 
         $text = $this->xlsxText($response->streamedContent());
 
@@ -213,7 +213,7 @@ class AdminCrmExportTest extends TestCase
 
         file_put_contents($path, $contents);
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $this->assertTrue($zip->open($path));
 
         $text = '';

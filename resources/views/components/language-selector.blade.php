@@ -45,7 +45,7 @@
     <button
         type="button"
         data-pd-language-button
-        class="flex h-full w-full items-center justify-center gap-1.5 rounded-md px-2 text-[0.62rem] font-semibold uppercase tracking-[0.1em] outline-none transition hover:bg-current/5 focus-visible:ring-2 focus-visible:ring-[#EEB4C3]/45"
+        class="flex h-full w-full items-center justify-center gap-1.5 rounded-md px-2 text-[0.62rem] font-semibold uppercase tracking-[0.1em] outline-none transition hover:bg-current/5 focus-visible:ring-2 focus-visible:ring-[#FF0080]/45"
         aria-haspopup="listbox"
         aria-expanded="false"
         aria-label="{{ __('Language') }}"

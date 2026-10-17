@@ -18,7 +18,7 @@ class ChatterInvitationMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: __('Your Paradise Dolls chatter workspace is ready'));
+        return new Envelope(subject: __('Your Boss Doll Creators chatter workspace is ready'));
     }
 
     public function content(): Content

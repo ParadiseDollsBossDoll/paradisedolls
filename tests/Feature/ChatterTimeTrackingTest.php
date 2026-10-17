@@ -1383,7 +1383,7 @@ class ChatterTimeTrackingTest extends TestCase
         $defaultExportResponse = $this->actingAs($admin)->get(route('admin.chatter-hours.export.xlsx'));
         $defaultExportResponse->assertOk();
         $this->assertStringContainsString(
-            'paradise-dolls-payroll-2026-08-31-to-2026-09-06.xlsx',
+            'boss-doll-creators-payroll-2026-08-31-to-2026-09-06.xlsx',
             (string) $defaultExportResponse->headers->get('content-disposition'),
         );
         $defaultExport = $this->sheetXmlFromStreamedResponse($defaultExportResponse);
@@ -1397,7 +1397,7 @@ class ChatterTimeTrackingTest extends TestCase
         ]));
         $filteredExportResponse->assertOk();
         $this->assertStringContainsString(
-            'paradise-dolls-payroll-2026-08-24-to-2026-08-30.xlsx',
+            'boss-doll-creators-payroll-2026-08-24-to-2026-08-30.xlsx',
             (string) $filteredExportResponse->headers->get('content-disposition'),
         );
         $filteredExport = $this->sheetXmlFromStreamedResponse($filteredExportResponse);
@@ -1411,7 +1411,7 @@ class ChatterTimeTrackingTest extends TestCase
         ]));
         $mixedBoundaryExportResponse->assertOk();
         $this->assertStringContainsString(
-            'paradise-dolls-payroll-2026-08-30-to-2026-09-06.xlsx',
+            'boss-doll-creators-payroll-2026-08-30-to-2026-09-06.xlsx',
             (string) $mixedBoundaryExportResponse->headers->get('content-disposition'),
         );
         $this->assertStringContainsString(
@@ -1897,7 +1897,7 @@ class ChatterTimeTrackingTest extends TestCase
         $this->assertIsString($sheetXml);
         $this->assertIsString($stylesXml);
         $this->assertStringContainsString('name="Payroll"', $workbookXml);
-        $this->assertStringContainsString('PARADISE DOLLS', $sheetXml);
+        $this->assertStringContainsString('BOSS DOLL CREATORS', $sheetXml);
         $this->assertStringContainsString('DATE/TIME IN', $sheetXml);
         $this->assertStringContainsString('BALANCE IN', $sheetXml);
         $this->assertStringContainsString('BALANCE OUT', $sheetXml);

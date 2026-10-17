@@ -134,7 +134,7 @@ class ApplyController extends Controller
     {
         app(AdminActivityNotifier::class)->notify(
             title: __('New application submitted'),
-            body: __(':name submitted a new Paradise Dolls application.', ['name' => $application->name]),
+            body: __(':name submitted a new Boss Doll Creators application.', ['name' => $application->name]),
             actionUrl: route('admin.applications.index', absolute: false),
             category: 'application_submitted',
             sendEmail: false,

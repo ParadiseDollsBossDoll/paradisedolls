@@ -32,7 +32,7 @@
     <div class="mx-auto max-w-6xl space-y-6 text-boss-ivory">
         <header>
             <a href="{{ route('chatter.model-reviews.index') }}" class="text-sm text-boss-gold hover:text-boss-gold-light">{{ __('Back to model reviews') }}</a>
-            <p class="pd-kicker mt-5">{{ __('Paradise Dolls') }}</p>
+            <p class="pd-kicker mt-5">{{ __('Boss Doll Creators') }}</p>
             <h1 class="pd-heading mt-2 text-[clamp(2rem,4vw,3rem)]">{{ __('Weekly Chatter Model Review Form') }}</h1>
             <p class="mt-2 max-w-3xl text-sm leading-6 text-boss-ivory/45">
                 {{ __('This review is mandatory for every model you worked with during the week. Submit it every Sunday before 11:59 PM UK time.') }}

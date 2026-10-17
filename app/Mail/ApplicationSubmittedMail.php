@@ -22,7 +22,7 @@ class ApplicationSubmittedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('New Paradise Dolls application'),
+            subject: __('New Boss Doll Creators application'),
         );
     }
 

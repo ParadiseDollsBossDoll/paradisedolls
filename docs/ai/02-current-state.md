@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-10-04
+Last updated: 2026-10-17
 
 ## Production Context
 
@@ -16,6 +16,14 @@ Last updated: 2026-10-04
 
 ## Recent Work In Progress
 
+- The visible product brand is being changed to Boss Doll Creators using the supplied logo kit, Boss Pink (`#FF0080`), Doll Blush (`#FFE6F0`), Warm Cream (`#FFF7EF`), Deep Ink (`#29212A`), and DejaVu Sans typography.
+- DejaVu Sans Regular and Bold are now self-hosted under `public/fonts/dejavu` and loaded by the shared stylesheet, so public, guest, member, chatter, admin, and community layouts no longer depend on an unavailable system-font fallback.
+- Shared layouts opt into one restrained premium material system: glossy Boss Pink primary actions, glass-like secondary controls and panels, clearer focus states, short hero reveals, and reduced-motion fallbacks.
+- Marketing pages with image heroes render the fixed header fully transparent at the top, switch to the solid blurred header after scrolling or opening navigation, and use shared responsive hero padding so copy and CTA rows do not crowd the following section.
+- All shared layouts use a dedicated square Boss Doll Creators favicon built around the glossy pink heart/B mark; the wider brand mark remains available for larger display contexts but is no longer squeezed into browser-tab dimensions.
+- During the transition, retain the existing `getrichwithparadisedolls.com` domain, email addresses, social URLs, VPS/database identifiers, and Paradise Dolls legal agreement wording until Kayla supplies approved replacements.
+- A data migration updates database-backed marketing/course copy and the saved site theme; it deliberately does not rewrite legal or technical identifiers.
+- Public primary actions now use one contrast-aware Boss Pink button style, and runtime theme colors calculate a readable foreground and hover color instead of using Doll Blush as the hover state. Light guest/authentication screens use the pink Boss Doll logo; dark surfaces retain the white logo.
 - Email campaign audiences were expanded to separate application/onboarding/readiness/working-status groups.
 - Model profiles now distinguish:
   - Fully onboarded: real onboarding completion or manual full onboarding.

@@ -28,7 +28,7 @@ class MemberLifecycleEmailContentTest extends TestCase
         $this->assertStringContainsString('Amazing news', $html);
         $this->assertStringContainsString('Temporary123', $html);
         $this->assertStringContainsString('Complete Model Information Form', $html);
-        $this->assertStringContainsString('background-color: #EEB4C3', $html);
+        $this->assertStringContainsString('background-color: #FF0080', $html);
         $this->assertContactDetailsArePresent($html);
     }
 
@@ -59,7 +59,7 @@ class MemberLifecycleEmailContentTest extends TestCase
         $this->assertStringContainsString('Journey Model Doll', $approvalHtml);
         $this->assertStringContainsString('YOU DID IT', $approvalHtml);
         $this->assertStringContainsString('successfully approved', $approvalHtml);
-        $this->assertStringContainsString('background-color: #EEB4C3', $approvalHtml);
+        $this->assertStringContainsString('background-color: #FF0080', $approvalHtml);
         $this->assertStringContainsString('Join Our WhatsApp Community', $approvalHtml);
         $this->assertContactDetailsArePresent($approvalHtml);
     }
@@ -83,7 +83,7 @@ class MemberLifecycleEmailContentTest extends TestCase
         $this->assertStringContainsString('https://discord.gg/GvKNFmeRm', $html);
         $this->assertStringContainsString('Join Our WhatsApp Community', $html);
         $this->assertStringContainsString('https://chat.whatsapp.com/example', $html);
-        $this->assertStringContainsString('Kayla &amp; The Paradise Dolls Team', $html);
+        $this->assertStringContainsString('Kayla &amp; The Boss Doll Creators Team', $html);
     }
 
     private function assertContactDetailsArePresent(string $html): void

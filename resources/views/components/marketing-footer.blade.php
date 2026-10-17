@@ -66,11 +66,7 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="mb-12 grid grid-cols-1 gap-12 md:grid-cols-4">
             <div class="md:col-span-2">
-                <img
-                    src="{{ asset('images/brand/get-rich-with-paradise-dolls-logo.png') }}"
-                    alt="{{ config('app.name') }}"
-                    class="mb-4 h-auto w-[154px] object-contain"
-                >
+                <x-brand-logo variant="horizontal_white" class="mb-5 w-[190px] max-w-full" />
                 <p class="max-w-sm text-[0.875rem] leading-relaxed text-white/50">
                     {{ marketing_content('shared.footer.description') }}
                 </p>
@@ -171,7 +167,7 @@
         </div>
 
         <div class="flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 md:flex-row">
-            <p class="text-[0.75rem] text-white/25">&copy; {{ date('Y') }} {{ config('app.name') }}. {{ __('All rights reserved.') }}</p>
+            <p class="text-[0.75rem] text-white/25">&copy; {{ date('Y') }} {{ config('brand.name') }}. {{ __('All rights reserved.') }}</p>
             <div class="flex items-center gap-6">
                 <p class="text-[0.75rem] text-white/25">{{ marketing_content('shared.footer.made_with_care') }}</p>
                 @if ($user?->isAdmin())

@@ -13,27 +13,49 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class AdminCrmExportController extends Controller
 {
     private const STYLE_TITLE = 1;
+
     private const STYLE_SUBTITLE = 2;
+
     private const STYLE_GREEN_BANNER = 3;
+
     private const STYLE_BLUE_BANNER = 4;
+
     private const STYLE_SECTION = 5;
+
     private const STYLE_LABEL = 6;
+
     private const STYLE_VALUE = 7;
+
     private const STYLE_VALUE_ALT = 8;
+
     private const STYLE_TABLE_HEADER = 9;
+
     private const STYLE_SUCCESS = 10;
+
     private const STYLE_SUCCESS_ALT = 11;
+
     private const STYLE_WARNING = 12;
+
     private const STYLE_ACCENT_LABEL = 13;
+
     private const STYLE_CENTER = 14;
+
     private const STYLE_WRAP = 15;
+
     private const STYLE_GOOD = 16;
+
     private const STYLE_BAD = 17;
+
     private const STYLE_KPI_BLUE = 18;
+
     private const STYLE_KPI_GREEN = 19;
+
     private const STYLE_KPI_PURPLE = 20;
+
     private const STYLE_KPI_ORANGE = 21;
+
     private const STYLE_RED_SECTION = 22;
+
     private const STYLE_BAD_LEFT = 23;
 
     public function applications(): StreamedResponse
@@ -96,7 +118,7 @@ class AdminCrmExportController extends Controller
         ]);
 
         return $this->csvDownload(
-            'paradise-applications-'.now()->format('Y-m-d').'.csv',
+            'boss-doll-creators-applications-'.now()->format('Y-m-d').'.csv',
             $headers,
             $rows
         );
@@ -114,7 +136,7 @@ class AdminCrmExportController extends Controller
             ->get();
 
         return $this->xlsxDownload(
-            'paradise-onboarding-all-models-'.now()->format('Y-m-d').'.xlsx',
+            'boss-doll-creators-onboarding-all-models-'.now()->format('Y-m-d').'.xlsx',
             $this->allModelsWorkbook($members)
         );
     }
@@ -132,7 +154,7 @@ class AdminCrmExportController extends Controller
         abort_unless($member, 404);
 
         return $this->xlsxDownload(
-            'paradise-onboarding-'.$this->filenameSlug($member->name).'-designed.xlsx',
+            'boss-doll-creators-onboarding-'.$this->filenameSlug($member->name).'-designed.xlsx',
             $this->singleProfileWorkbook($profile, $member)
         );
     }
@@ -157,7 +179,7 @@ class AdminCrmExportController extends Controller
         $pending = max(0, $total - $approved);
 
         $rows = [
-            $this->sheetRow(1, [$this->cell(1, "\u{1F338} PARADISE DOLLS \u{2014} MODEL DIRECTORY", self::STYLE_TITLE)], 34),
+            $this->sheetRow(1, [$this->cell(1, "\u{1F338} BOSS DOLL CREATORS \u{2014} MODEL DIRECTORY", self::STYLE_TITLE)], 34),
             $this->sheetRow(2, [$this->cell(1, 'All registered models  |  Total: '.$total.'  |  Export date: '.now()->format('Y-m-d'), self::STYLE_SUBTITLE)], 16),
             $this->sheetRow(3, [
                 $this->cell(1, 'Total Models', self::STYLE_KPI_BLUE),
@@ -437,7 +459,7 @@ class AdminCrmExportController extends Controller
     {
         $application = $profile->application;
         $rows = [
-            $this->sheetRow(1, [$this->cell(1, "\u{1F338} PARADISE DOLLS \u{2014} MODEL ONBOARDING PROFILE", self::STYLE_TITLE)], 36),
+            $this->sheetRow(1, [$this->cell(1, "\u{1F338} BOSS DOLL CREATORS \u{2014} MODEL ONBOARDING PROFILE", self::STYLE_TITLE)], 36),
             $this->sheetRow(2, [$this->cell(1, 'Generated: '.now()->format('Y-m-d').'  |  Application ID: '.$this->valueOrDash($application?->id).'  |  Status: '.strtoupper($application?->status ?? 'unknown'), self::STYLE_SUBTITLE)], 18),
             $this->sheetRow(3, [
                 $this->cell(1, $this->applicationStatusLabel($application?->status, 'APPLICATION STATUS: '), $this->statusStyle($application?->status)),

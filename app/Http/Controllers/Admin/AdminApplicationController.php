@@ -99,7 +99,7 @@ class AdminApplicationController extends Controller
         $application->refresh()->load('user');
         $application->user?->notify(new SystemNotification(
             title: __('Application approved'),
-            body: __('Your Paradise Dolls application was approved. Complete your onboarding form to continue.'),
+            body: __('Your Boss Doll Creators application was approved. Complete your onboarding form to continue.'),
             actionUrl: route('member.onboarding.edit', absolute: false),
             category: 'application_approved',
         ));
@@ -135,8 +135,7 @@ class AdminApplicationController extends Controller
     public function resendApprovalEmail(
         ModelApplication $application,
         UserSessionService $sessions
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         if ($application->status !== ModelApplication::STATUS_APPROVED) {
             return redirect()->back()->withErrors(['application' => __('Approval emails can only be resent for approved applications.')]);
         }
@@ -212,8 +211,7 @@ class AdminApplicationController extends Controller
         ModelApplication $application,
         ModelEmailSyncService $emailSyncService,
         UserSessionService $sessions
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         $application->loadMissing(['user', 'profile', 'referral']);
         $member = $application->user;
 

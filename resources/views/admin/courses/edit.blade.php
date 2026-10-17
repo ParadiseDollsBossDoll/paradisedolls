@@ -1,4 +1,4 @@
-﻿@php
+@php
     $initialModules = old('modules', $course->modules->map(fn ($module) => [
         'id' => $module->id,
         'client_key' => 'module-'.$module->id,
@@ -283,7 +283,7 @@
                                             @click="platformColor = color"
                                         ></button>
                                     </template>
-                                    <input id="platform_color" type="text" x-model="platformColor" class="w-24 rounded-lg border border-white/10 bg-white/[0.06] px-2.5 py-1.5 font-mono text-[0.72rem] text-boss-ivory focus:border-boss-gold/50 focus:outline-none" placeholder="#EEB4C3">
+                                    <input id="platform_color" type="text" x-model="platformColor" class="w-24 rounded-lg border border-white/10 bg-white/[0.06] px-2.5 py-1.5 font-mono text-[0.72rem] text-boss-ivory focus:border-boss-gold/50 focus:outline-none" placeholder="#FF0080">
                                 </div>
                                 <x-input-error class="mt-2" :messages="$errors->get('platform_color')" />
                             </div>

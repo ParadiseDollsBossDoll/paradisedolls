@@ -24,7 +24,7 @@ class CommunityAccessMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('Welcome to the Paradise Dolls Community!'),
+            subject: __('Welcome to the Boss Doll Creators Community!'),
         );
     }
 

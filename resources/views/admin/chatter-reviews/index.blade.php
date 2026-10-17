@@ -14,7 +14,7 @@
             <div>
                 <p class="pd-kicker">{{ __('Confidential Feedback') }}</p>
                 <h1 class="pd-heading mt-2 text-[clamp(2rem,4vw,2.7rem)]">{{ __('Chatter Reviews') }}</h1>
-                <p class="mt-2 max-w-3xl text-[0.86rem] leading-relaxed text-boss-ivory/40">{{ __('Private first-month chatter performance reviews submitted by models. These are for Paradise Dolls management only.') }}</p>
+                <p class="mt-2 max-w-3xl text-[0.86rem] leading-relaxed text-boss-ivory/40">{{ __('Private first-month chatter performance reviews submitted by models. These are for Boss Doll Creators management only.') }}</p>
             </div>
             <button type="button" class="pd-btn-secondary shrink-0" data-copy-review-link="{{ $memberReviewLink }}">{{ __('Copy member review link') }}</button>
         </header>

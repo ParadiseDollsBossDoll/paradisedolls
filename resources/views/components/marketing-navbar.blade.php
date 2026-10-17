@@ -1,5 +1,6 @@
 @props([
     'user' => null,
+    'transparent' => false,
 ])
 @php
     $isAuthenticated = $user !== null;
@@ -26,8 +27,12 @@
 
 <nav
     data-pd-marketing-navbar
-    class="fixed left-0 right-0 top-0 z-50 transition-all duration-300"
-    x-bind:class="transparent && !scrolled && !navOpen ? 'bg-transparent' : 'bg-white/[0.97] backdrop-blur-md border-b border-boss-rose/15 shadow-sm'"
+    @class([
+        'fixed left-0 right-0 top-0 z-50 transition-all duration-300',
+        'pd-marketing-navbar--transparent' => $transparent,
+        'pd-marketing-navbar--solid' => ! $transparent,
+    ])
+    x-bind:class="{ 'pd-marketing-navbar--solid': !transparent || scrolled || navOpen }"
     @keydown.escape.window="navOpen = false; exploreOpen = false"
     {{ $attributes }}
 >
@@ -46,13 +51,19 @@
             <a
                 href="{{ route('home') }}"
                 class="pd-marketing-navbar-logo inline-flex items-center transition-opacity duration-300 hover:opacity-85"
-                aria-label="{{ config('app.name') }}"
+                aria-label="{{ config('brand.name') }}"
             >
-                <img
-                    src="{{ asset('images/brand/get-rich-with-paradise-dolls-logo.png') }}"
-                    alt="{{ config('app.name') }}"
-                    class="h-auto w-[102px] object-contain sm:w-[122px] lg:w-[132px]"
-                >
+                <x-brand-logo
+                    variant="horizontal_white"
+                    class="w-[112px] sm:w-[136px] lg:w-[148px]"
+                    x-show="transparent && !scrolled && !navOpen"
+                />
+                <x-brand-logo
+                    variant="horizontal_pink"
+                    class="w-[112px] sm:w-[136px] lg:w-[148px]"
+                    x-cloak
+                    x-show="!transparent || scrolled || navOpen"
+                />
             </a>
 
             <div class="pd-marketing-navbar-links hidden items-center lg:flex" aria-label="{{ __('Primary navigation') }}">
@@ -117,7 +128,7 @@
                     <a
                         href="{{ route('login') }}"
                         title="{{ marketing_content('shared.nav.login_label') }}"
-                        class="pd-marketing-navbar-action pd-marketing-navbar-login hidden rounded-md border border-current px-5 py-2.5 uppercase transition-all duration-300 hover:border-[#EEB4C3] hover:bg-[#EEB4C3] hover:text-white lg:inline-flex"
+                        class="pd-marketing-navbar-action pd-marketing-navbar-login hidden rounded-md border border-current px-5 py-2.5 uppercase transition-all duration-300 hover:border-[#FF0080] hover:bg-[#FF0080] hover:text-[#1A0E14] lg:inline-flex"
                         x-bind:class="transparent && !scrolled && !navOpen ? 'text-white' : 'text-boss-dark'"
                     >
                         {{ marketing_content('shared.nav.login_label') }}
@@ -127,14 +138,14 @@
                 <a
                     href="{{ $applyUrl }}"
                     title="{{ marketing_content('shared.nav.apply_label') }}"
-                    class="pd-marketing-navbar-action pd-marketing-navbar-apply hidden rounded-md bg-[#EEB4C3] px-5 py-2.5 uppercase text-boss-dark transition-colors hover:bg-[#e0a0b5] sm:inline-flex"
+                    class="pd-cta-primary pd-marketing-navbar-action pd-marketing-navbar-apply hidden px-5 py-2.5 sm:inline-flex"
                 >
                     {{ marketing_content('shared.nav.apply_label') }}
                 </a>
 
                 <button
                     type="button"
-                    class="inline-flex h-11 w-11 items-center justify-center rounded-md transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EEB4C3] lg:hidden"
+                    class="inline-flex h-11 w-11 items-center justify-center rounded-md transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF0080] lg:hidden"
                     @click="navOpen = !navOpen"
                     x-bind:aria-expanded="navOpen.toString()"
                     aria-controls="marketing-mobile-menu"
@@ -161,7 +172,7 @@
             class="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-boss-pink/70 bg-white pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl lg:hidden md:max-h-[calc(100dvh-5rem)]"
         >
             <div class="flex items-center justify-between border-b border-boss-pink/60 px-4 py-3 sm:px-6">
-                <p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-boss-dark/55">{{ __('Explore Paradise Dolls') }}</p>
+                <p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-boss-dark/55">{{ __('Explore Boss Doll Creators') }}</p>
                 <x-language-selector />
             </div>
 
@@ -194,7 +205,7 @@
 
                 <a
                     href="{{ $applyUrl }}"
-                    class="block w-full rounded-md bg-[#EEB4C3] py-3 text-center text-[0.7rem] uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#e0a0b5]"
+                    class="pd-cta-primary w-full py-3"
                     @click="navOpen = false"
                 >
                     {{ marketing_content('shared.nav.apply_label') }}

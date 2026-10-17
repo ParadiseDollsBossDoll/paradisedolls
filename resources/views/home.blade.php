@@ -1,8 +1,8 @@
 <x-layouts.marketing
     :transparentNav="true"
-    :title="__('Paradise Dolls Webcam Model Agency & Online Model Jobs')"
-    :description="__('Paradise Dolls is a luxury webcam model agency for women seeking online model jobs, webcam jobs, remote training, multistreaming support, and private onboarding.')"
-    :keywords="['Paradise Dolls', 'webcam jobs', 'webcam agency', 'model agency', 'online model jobs', 'webcam model agency']"
+    :title="__('Boss Doll Creators Webcam Model Agency & Online Model Jobs')"
+    :description="__('Boss Doll Creators is a luxury webcam model agency for women seeking online model jobs, webcam jobs, remote training, multistreaming support, and private onboarding.')"
+    :keywords="['Boss Doll Creators', 'webcam jobs', 'webcam agency', 'model agency', 'online model jobs', 'webcam model agency']"
 >
     @php
         $heroImg = marketing_image('home.hero.image');
@@ -25,7 +25,7 @@
 
         <div class="relative z-10 mx-auto w-full max-w-7xl px-4 pt-24 sm:px-6 lg:px-8">
             <div class="max-w-4xl text-white">
-                <h1 class="pd-marketing-image-hero-title font-display text-[clamp(3.1rem,8vw,7rem)] leading-[0.96] text-[#FFF8F6]">
+                <h1 class="pd-marketing-image-hero-title max-w-[15ch] text-balance font-display text-[clamp(2.8rem,5.2vw,4.8rem)] leading-[1.02] text-[#FFF8F6]">
                     {{ marketing_content('home.hero.title') }}
                 </h1>
                 <p class="pd-marketing-image-hero-body mt-7 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFF8F6]/90">
@@ -34,7 +34,7 @@
                     @endforeach
                 </p>
                 <div class="mt-10 flex flex-wrap gap-3">
-                    <a href="{{ marketing_link('home.hero.primary_url', '#apply') }}" class="rounded-md bg-[#EEB4C3] px-9 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#e0a0b5]">{{ marketing_content('home.hero.primary_label') }}</a>
+                    <a href="{{ marketing_link('home.hero.primary_url', '#apply') }}" class="pd-cta-primary px-9 py-3.5">{{ marketing_content('home.hero.primary_label') }}</a>
                     <a href="{{ marketing_link('home.hero.secondary_url', route('multistreaming')) }}" class="rounded-md border border-white/40 px-9 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white hover:text-boss-dark">{{ marketing_content('home.hero.secondary_label') }}</a>
                 </div>
             </div>
@@ -488,8 +488,8 @@
                     </div>
                     <x-input-error class="-mt-2" :messages="$errors->get('terms_accepted')" />
 
-                    <button type="submit" data-application-submit class="flex w-full items-center justify-center gap-3 rounded-md bg-[#EEB4C3] py-4 text-[0.75rem] uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#e0a0b5] disabled:cursor-not-allowed disabled:opacity-70">
-                        <span data-submit-spinner class="hidden h-4 w-4 rounded-full border-2 border-white/40 border-t-white motion-safe:animate-spin" aria-hidden="true"></span>
+                    <button type="submit" data-application-submit class="pd-cta-primary w-full px-8 py-4">
+                        <span data-submit-spinner class="hidden h-4 w-4 rounded-full border-2 border-boss-dark/25 border-t-boss-dark motion-safe:animate-spin" aria-hidden="true"></span>
                         <span data-submit-label>{{ __('Submit Application') }}</span>
                         <span data-submit-loading-label class="hidden">{{ __('Submitting...') }}</span>
                     </button>

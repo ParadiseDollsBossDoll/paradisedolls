@@ -1,4 +1,4 @@
-﻿<x-member-layout>
+<x-member-layout>
     @php
         $profilePhotoUrl = auth()->user()->profilePhotoUrl();
     @endphp
@@ -8,7 +8,7 @@
             <div>
                 <p class="pd-kicker">{{ __('Success Stories') }}</p>
                 <h1 class="pd-heading pd-text-gradient mt-2 text-[clamp(2rem,4vw,2.6rem)]">{{ __('Share Your Success Story') }}</h1>
-                <p class="mt-2 max-w-2xl text-[0.86rem] leading-relaxed text-boss-ivory/40">{{ __('Submitted success stories go to the Paradise Dolls team for approval before they appear on the public site.') }}</p>
+                <p class="mt-2 max-w-2xl text-[0.86rem] leading-relaxed text-boss-ivory/40">{{ __('Submitted success stories go to the Boss Doll Creators team for approval before they appear on the public site.') }}</p>
             </div>
             <a href="{{ route('success-stories') }}" class="pd-btn-secondary self-start sm:self-auto">{{ __('View public stories') }}</a>
         </header>

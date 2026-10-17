@@ -1,5 +1,17 @@
 # Decisions Log
 
+## 2026-10-17 - Boss Doll Creators Visible Rebrand
+
+- Boss Doll Creators is the primary visible website and application brand, using the client-supplied logo assets and brand-kit palette and typography.
+- The existing `getrichwithparadisedolls.com` domain, email addresses, social profile URLs, server/database identifiers, and Paradise Dolls legal agreement wording remain unchanged until Kayla confirms replacements.
+- Visible branding is centralized in `config/brand.php` and a shared logo component. Database-backed marketing and course copy is updated through a migration so production content does not retain stale display branding.
+- The migration does not automatically roll the retired display brand back because doing so could overwrite later administrator-edited content.
+- Brand typography is self-hosted as DejaVu Sans Regular for body copy and DejaVu Sans Bold for headings and emphasized interface text; declaring the family without shipping the font files is not sufficient.
+- Premium gloss is a shared interface material, strongest on buttons and interactive surfaces. Motion stays brief and purposeful, ordinary content remains static, and `prefers-reduced-motion` disables decorative reveals.
+- The marketing navbar must not inherit the global glass treatment while it is over an image hero. Transparent hero pages start with no navbar background, blur, border, or shadow; the solid glass state activates only after scroll or while a menu is open.
+- Public image heroes own responsive top and bottom padding in the shared hero class so variable titles, descriptions, and CTA rows retain clear space from both the fixed navigation and the next page section.
+- Browser tabs use a dedicated square favicon with the heart/B silhouette instead of the full or `3:2` logo artwork, because fine brand lettering is not legible at 16px and wide artwork appears compressed in a square favicon slot.
+
 ## 2026-10-04 - Client Approval Before Marketing Publication
 
 - The client requested withdrawal of unapproved Webcam Jobs and Guides content. Withdraw the related SEO landing pages and dedicated guides, preserve source for private review, and restore the two established pages rewritten by the guide-cluster commit. Do not publish new/revised marketing copy or restore withdrawn pages without client/head-office approval. This supersedes the September SEO publication decisions. Deployment still requires the user's explicit instruction.

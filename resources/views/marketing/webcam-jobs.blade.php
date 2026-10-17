@@ -1,5 +1,5 @@
 @php
-    $description = 'Explore remote webcam jobs with Paradise Dolls. Learn what the work involves, who can apply, how onboarding works, and what training and support approved models receive.';
+    $description = 'Explore remote webcam jobs with Boss Doll Creators. Learn what the work involves, who can apply, how onboarding works, and what training and support approved models receive.';
     $heroImage = asset('images/2.jpeg');
 
     $requirements = [
@@ -16,12 +16,12 @@
         'The Boss Doll Blueprint training programme',
         'Multistreaming, equipment, presentation, and customer communication education',
         'Privacy, boundaries, account security, and professional support',
-        'Access to the Paradise Dolls model community after approval',
+        'Access to the Boss Doll Creators model community after approval',
     ];
 
     $steps = [
         ['title' => 'Send your application', 'body' => 'Tell us about yourself, your experience level, and how the team can contact you. No previous webcam experience is required.'],
-        ['title' => 'Private team review', 'body' => 'The Paradise Dolls team reviews each application individually. Applying does not guarantee acceptance.'],
+        ['title' => 'Private team review', 'body' => 'The Boss Doll Creators team reviews each application individually. Applying does not guarantee acceptance.'],
         ['title' => 'Verification and onboarding', 'body' => 'Approved applicants complete identity checks, platform preparation, and any required agreements before starting.'],
         ['title' => 'Training before going live', 'body' => 'You receive structured guidance on setup, safety, platform tools, customer communication, and professional working standards.'],
     ];
@@ -29,11 +29,11 @@
     $faqs = [
         [
             'question' => 'What does a webcam model job involve?',
-            'answer' => 'The work involves live online video streaming as an adult creator, speaking with viewers, presenting your profile professionally, using platform earning features, and following each platform\'s rules. Paradise Dolls provides management, training, and support to approved models.',
+            'answer' => 'The work involves live online video streaming as an adult creator, speaking with viewers, presenting your profile professionally, using platform earning features, and following each platform\'s rules. Boss Doll Creators provides management, training, and support to approved models.',
         ],
         [
             'question' => 'Do I need webcam modelling experience?',
-            'answer' => 'No. Paradise Dolls accepts applications from complete beginners and experienced models. Approved beginners receive onboarding and training before they begin working online.',
+            'answer' => 'No. Boss Doll Creators accepts applications from complete beginners and experienced models. Approved beginners receive onboarding and training before they begin working online.',
         ],
         [
             'question' => 'Can I work from home?',
@@ -41,7 +41,7 @@
         ],
         [
             'question' => 'Is this employment or self-employed work?',
-            'answer' => 'Models work as self-employed online creators. You are responsible for your own tax and legal obligations. Paradise Dolls provides agency management, training, account support, marketing guidance, and technical support.',
+            'answer' => 'Models work as self-employed online creators. You are responsible for your own tax and legal obligations. Boss Doll Creators provides agency management, training, account support, marketing guidance, and technical support.',
         ],
         [
             'question' => 'How much can a webcam model earn?',
@@ -52,7 +52,7 @@
             'answer' => 'Submitting an application does not require payment. Approved agency models receive the training programme without an upfront charge subject to the agency terms, including the minimum commitment explained in the application agreement. Read those terms carefully before submitting.',
         ],
         [
-            'question' => 'How do I apply for webcam jobs with Paradise Dolls?',
+            'question' => 'How do I apply for webcam jobs with Boss Doll Creators?',
             'answer' => 'Select Apply Now, complete the private application form, confirm that you are 18 or older, and accept the application terms. The team will contact you if your application is selected for the next stage.',
         ],
     ];
@@ -62,20 +62,20 @@
             '@context' => 'https://schema.org',
             '@type' => 'Organization',
             '@id' => route('home').'#organization',
-            'name' => 'Paradise Dolls',
+            'name' => 'Boss Doll Creators',
             'url' => route('home'),
-            'logo' => asset('images/brand/get-rich-with-paradise-dolls-logo.png'),
+            'logo' => asset(config('brand.logos.horizontal_pink')),
         ],
         [
             '@context' => 'https://schema.org',
             '@type' => 'WebPage',
             '@id' => route('webcam-jobs').'#webpage',
             'url' => route('webcam-jobs'),
-            'name' => 'Webcam Jobs for Women | Paradise Dolls',
+            'name' => 'Webcam Jobs for Women | Boss Doll Creators',
             'description' => $description,
             'isPartOf' => [
                 '@type' => 'WebSite',
-                'name' => 'Paradise Dolls',
+                'name' => 'Boss Doll Creators',
                 'url' => route('home'),
             ],
             'about' => [
@@ -121,10 +121,10 @@
         <div class="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="max-w-3xl text-white">
                 <p class="pd-marketing-image-hero-eyebrow mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-[#F2C7D2]">{{ __('Remote opportunity for women 18+') }}</p>
-                <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.85rem,7vw,5.6rem)] leading-[0.98] text-[#FFF8F6]">{{ __('Webcam jobs with training, privacy, and real support') }}</h1>
-                <p class="pd-marketing-image-hero-body mt-7 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFF8F6]/90">{{ __('Paradise Dolls supports women who want to work remotely as self-employed online creators, with private onboarding, platform education, multistreaming training, and ongoing agency guidance.') }}</p>
+                <h1 class="pd-marketing-image-hero-title font-display text-[clamp(2.85rem,7vw,5.6rem)] leading-[0.98] text-[#FFFFFF]">{{ __('Webcam jobs with training, privacy, and real support') }}</h1>
+                <p class="pd-marketing-image-hero-body mt-7 max-w-2xl text-[1.05rem] leading-relaxed text-[#FFFFFF]/90">{{ __('Boss Doll Creators supports women who want to work remotely as self-employed online creators, with private onboarding, platform education, multistreaming training, and ongoing agency guidance.') }}</p>
                 <div class="mt-10 grid w-full max-w-[26rem] grid-cols-1 gap-3 sm:w-auto sm:grid-cols-[minmax(9.5rem,auto)_minmax(12.75rem,auto)]">
-                    <a href="{{ route('apply') }}" class="inline-flex min-h-12 items-center justify-center rounded-md bg-[#EEB4C3] px-7 py-3 text-center text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-boss-dark transition-colors hover:bg-[#e0a0b5]">{{ __('Apply Now') }}</a>
+                    <a href="{{ route('apply') }}" class="pd-cta-primary px-7 py-3">{{ __('Apply Now') }}</a>
                     <a href="#role-details" class="inline-flex min-h-12 items-center justify-center rounded-md border border-white/40 px-7 py-3 text-center text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white hover:text-boss-dark">{{ __('Read Role Details') }}</a>
                 </div>
             </div>
@@ -151,11 +151,11 @@
         <div class="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[0.88fr_1.12fr] lg:gap-20 lg:px-8">
             <div>
                 <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('The opportunity') }}</p>
-                <h2 class="font-display text-[clamp(2rem,4vw,3.2rem)] leading-tight text-boss-dark">{{ __('What a webcam job with Paradise Dolls involves') }}</h2>
+                <h2 class="font-display text-[clamp(2rem,4vw,3.2rem)] leading-tight text-boss-dark">{{ __('What a webcam job with Boss Doll Creators involves') }}</h2>
             </div>
             <div class="space-y-5 text-[0.98rem] leading-8 text-boss-dark/68">
                 <p>{{ __('This is adult online creator work performed remotely on live-streaming platforms. Models build an audience through live video, conversation, profile presentation, and platform earning features while maintaining their own boundaries and following platform rules.') }}</p>
-                <p>{{ __('Paradise Dolls acts as a management agency. The team helps approved models prepare their accounts, understand the technology, learn professional working methods, protect their privacy, and develop a consistent routine. Models work on a self-employed basis rather than as employees.') }}</p>
+                <p>{{ __('Boss Doll Creators acts as a management agency. The team helps approved models prepare their accounts, understand the technology, learn professional working methods, protect their privacy, and develop a consistent routine. Models work on a self-employed basis rather than as employees.') }}</p>
                 <p class="font-semibold text-boss-dark">{{ __('No agency can honestly guarantee a particular income. Earnings depend on individual effort, consistency, audience engagement, platform performance, and market conditions.') }}</p>
             </div>
         </div>
@@ -180,7 +180,7 @@
 
             <div>
                 <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-rose">{{ __('Agency support') }}</p>
-                <h2 class="font-display text-[clamp(1.85rem,3vw,2.7rem)] leading-tight text-boss-dark">{{ __('What approved Paradise Dolls models receive') }}</h2>
+                <h2 class="font-display text-[clamp(1.85rem,3vw,2.7rem)] leading-tight text-boss-dark">{{ __('What approved Boss Doll Creators models receive') }}</h2>
                 <ul class="mt-8 divide-y divide-boss-pink/60 border-y border-boss-pink/60">
                     @foreach ($support as $item)
                         <li class="flex gap-4 py-4 text-[0.92rem] leading-6 text-boss-dark/70">
@@ -264,7 +264,7 @@
     <section class="bg-boss-pink py-16 text-center sm:py-20">
         <div class="mx-auto max-w-2xl px-4 sm:px-6">
             <p class="mb-4 text-[0.7rem] uppercase tracking-[0.3em] text-boss-dark/55">{{ __('Ready for the next step?') }}</p>
-            <h2 class="font-display text-[clamp(2rem,4vw,3rem)] text-boss-dark">{{ __('Apply privately to Paradise Dolls') }}</h2>
+            <h2 class="font-display text-[clamp(2rem,4vw,3rem)] text-boss-dark">{{ __('Apply privately to Boss Doll Creators') }}</h2>
             <p class="mx-auto mt-5 max-w-xl text-[0.95rem] leading-7 text-boss-dark/65">{{ __('Applications are reviewed individually. You must be 18 or older, and submitting the form does not guarantee acceptance.') }}</p>
             <a href="{{ route('apply') }}" class="mt-9 inline-flex min-h-12 items-center justify-center rounded-md bg-boss-dark px-10 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-white transition-colors hover:bg-black">{{ __('Apply Now') }}</a>
         </div>

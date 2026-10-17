@@ -36,8 +36,8 @@
                 'Who owns or controls platform accounts, content, usernames, social profiles, and customer data.',
                 'What happens to pending earnings, account access, and content when the relationship ends.',
             ],
-            'note_title' => 'Paradise Dolls terms',
-            'note' => 'Paradise Dolls applicants should read the complete application and training terms, including the minimum agency commitment and any early-exit training condition, before agreeing to join.',
+            'note_title' => 'Boss Doll Creators terms',
+            'note' => 'Boss Doll Creators applicants should read the complete application and training terms, including the minimum agency commitment and any early-exit training condition, before agreeing to join.',
         ],
         [
             'id' => 'red-flags',
@@ -97,7 +97,7 @@
     :sections="$sections"
     :faqs="$faqs"
     :related="[
-        ['route' => 'webcam-agency', 'label' => 'Paradise Dolls webcam agency', 'detail' => 'Review the support, responsibilities, process, and published terms'],
+        ['route' => 'webcam-agency', 'label' => 'Boss Doll Creators webcam agency', 'detail' => 'Review the support, responsibilities, process, and published terms'],
         ['route' => 'webcam-model-earnings-payments', 'label' => 'Webcam model earnings and payments', 'detail' => 'Understand gross earnings, deductions, payout timing, and records'],
         ['route' => 'webcam-model-safety-privacy', 'label' => 'Webcam model safety and privacy', 'detail' => 'Compare how each route handles account, privacy, and incident support'],
     ]"

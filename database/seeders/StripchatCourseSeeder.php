@@ -16,11 +16,11 @@ class StripchatCourseSeeder extends Seeder
         $course = Course::query()->updateOrCreate(
             ['slug' => 'stripchat-boss-doll-blueprint'],
             [
-                'title'             => 'Stripchat Boss Doll Blueprint',
-                'platform_label'    => 'Stripchat',
-                'platform_color'    => '#FF3E4D',
+                'title' => 'Stripchat Boss Doll Blueprint',
+                'platform_label' => 'Stripchat',
+                'platform_color' => '#FF3E4D',
                 'short_description' => 'The complete mobile walkthrough for navigating Stripchat, building your database, going live, and maximising every income stream.',
-                'description'       => "A full Phase One training course for the Stripchat platform — covering everything from logging in and understanding the dashboard, to building your customer database with mass messages, setting your rates, going live, and running private and exclusive shows. This is the Boss Doll Blueprint mobile walkthrough: every concept explained in a presentation video, then shown step-by-step in a screen-recorded walkthrough.",
+                'description' => 'A full Phase One training course for the Stripchat platform — covering everything from logging in and understanding the dashboard, to building your customer database with mass messages, setting your rates, going live, and running private and exclusive shows. This is the Boss Doll Blueprint mobile walkthrough: every concept explained in a presentation video, then shown step-by-step in a screen-recorded walkthrough.',
                 'what_you_will_learn' => implode("\n", [
                     'Navigate the Stripchat dashboard and broadcaster interface from your mobile',
                     'Build and message your customer database using Friend Requests and Mass Messages',
@@ -35,7 +35,7 @@ class StripchatCourseSeeder extends Seeder
                     'A Stripchat broadcaster account (set up by the agency before you start)',
                 ]),
                 'is_published' => true,
-                'sort_order'   => 11,
+                'sort_order' => 11,
             ]
         );
 
@@ -54,9 +54,9 @@ class StripchatCourseSeeder extends Seeder
             $module = CourseModule::query()->updateOrCreate(
                 ['course_id' => $course->id, 'title' => $moduleRow['title']],
                 array_merge($moduleRow, [
-                    'course_id'    => $course->id,
+                    'course_id' => $course->id,
                     'is_published' => true,
-                    'sort_order'   => $moduleIndex + 1,
+                    'sort_order' => $moduleIndex + 1,
                 ])
             );
             $syncedModuleIds[] = $module->id;
@@ -68,10 +68,10 @@ class StripchatCourseSeeder extends Seeder
                 $lesson = Lesson::query()->updateOrCreate(
                     ['course_module_id' => $module->id, 'title' => $lessonRow['title']],
                     array_merge($lessonRow, [
-                        'course_id'        => $course->id,
+                        'course_id' => $course->id,
                         'course_module_id' => $module->id,
-                        'is_published'     => true,
-                        'sort_order'       => $lessonIndex + 1,
+                        'is_published' => true,
+                        'sort_order' => $lessonIndex + 1,
                     ])
                 );
                 $syncedLessonIds[] = $lesson->id;
@@ -121,16 +121,16 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 1 ── Introduction ────────────────────────────────────
             [
-                'title'       => 'Introduction',
+                'title' => 'Introduction',
                 'description' => 'A warm welcome from Kayla before you begin your Stripchat training.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Introduction',
-                        'overview' => "Kayla introduces herself and explains what this course covers — how to broadcast and stream on Stripchat, use paid and private features, and sell content directly on the platform. This is Phase One: the basics and setup.",
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Introduction'],
-                            ['block_type' => 'text',    'content' => "Kayla introduces herself and explains what this course covers — how to broadcast and stream on Stripchat, use paid and private features, and sell content directly on the platform. This is Phase One: the basics and setup."],
-                            ['block_type' => 'video',   'title'   => 'Introduction — Presentation Video'],
+                        'title' => 'Introduction',
+                        'overview' => 'Kayla introduces herself and explains what this course covers — how to broadcast and stream on Stripchat, use paid and private features, and sell content directly on the platform. This is Phase One: the basics and setup.',
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Introduction'],
+                            ['block_type' => 'text',    'content' => 'Kayla introduces herself and explains what this course covers — how to broadcast and stream on Stripchat, use paid and private features, and sell content directly on the platform. This is Phase One: the basics and setup.'],
+                            ['block_type' => 'video',   'title' => 'Introduction — Presentation Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Watch the introduction in full before moving to the next lesson',
                                 'Note the two phases: Phase One (this course) is basics and setup; Phase Two covers advanced tips',
@@ -147,18 +147,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 2 ── About Stripchat ─────────────────────────────────
             [
-                'title'       => 'About Stripchat',
+                'title' => 'About Stripchat',
                 'description' => 'Understand the platform, how it works, and why Stripchat is one of the most powerful income opportunities for models.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'About Stripchat',
+                        'title' => 'About Stripchat',
                         'overview' => 'Stripchat is one of the leading live-streaming platforms in the world, attracting over 700 million visitors per month. This lesson covers how the freemium model works, the premium features available to broadcasters, and why the platform is a powerful income opportunity.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'About Stripchat'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'About Stripchat'],
                             ['block_type' => 'text',    'content' => 'Stripchat is one of the leading live-streaming platforms in the world, attracting over 700 million visitors per month. This lesson covers how the freemium model works, the premium features available to broadcasters, and why the platform is a powerful income opportunity.'],
-                            ['block_type' => 'video',   'title'   => 'About Stripchat — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'About Stripchat — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'About Stripchat — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'About Stripchat — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Visit stripchat.com as a viewer to see how the platform looks from a customer perspective',
                                 'Note the model grid, categories, and how broadcasts appear in the listings',
@@ -175,18 +175,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 3 ── Stripchat Login Page ────────────────────────────
             [
-                'title'       => 'Stripchat Login Page',
+                'title' => 'Stripchat Login Page',
                 'description' => 'How to log in to Stripchat on mobile and navigate to your main dashboard.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Stripchat Login Page',
+                        'title' => 'Stripchat Login Page',
                         'overview' => 'How to log in to Stripchat on mobile, what you see on the main homepage dashboard, and how to find the key areas you will use every session — including the Broadcast Center button.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Stripchat Login Page'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Stripchat Login Page'],
                             ['block_type' => 'text',    'content' => 'How to log in to Stripchat on mobile, what you see on the main homepage dashboard, and how to find the key areas you will use every session — including the Broadcast Center button.'],
-                            ['block_type' => 'video',   'title'   => 'Stripchat Login Page — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Stripchat Login Page — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Stripchat Login Page — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Stripchat Login Page — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Go to stripchat.com and tap Login at the top right',
                                 'Enter the username and password provided by the agency — do not create a new account',
@@ -203,18 +203,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 4 ── Live Models & Top Models ────────────────────────
             [
-                'title'       => 'Live Models & Top Models',
+                'title' => 'Live Models & Top Models',
                 'description' => 'Learn how customers discover models and how the Live Models and Top Models sections work.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Live Models & Top Models',
+                        'title' => 'Live Models & Top Models',
                         'overview' => "How to navigate the Live Models section to understand what other broadcasters are doing, how the Top Models rankings work, and what the platform looks like from a viewer's perspective — helping you understand how customers discover and choose who to watch.",
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Live Models & Top Models'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Live Models & Top Models'],
                             ['block_type' => 'text',    'content' => "How to navigate the Live Models section to understand what other broadcasters are doing, how the Top Models rankings work, and what the platform looks like from a viewer's perspective — helping you understand how customers discover and choose who to watch."],
-                            ['block_type' => 'video',   'title'   => 'Live Models & Top Models — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Live Models & Top Models — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Live Models & Top Models — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Live Models & Top Models — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'From the homepage, scroll through the Live Models grid to see who is currently broadcasting',
                                 'Tap Top Models to see the highest-ranked broadcasters on the platform',
@@ -232,18 +232,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 5 ── Chat & User Value ───────────────────────────────
             [
-                'title'       => 'Chat & User Value',
+                'title' => 'Chat & User Value',
                 'description' => 'Learn how to use your messages inbox to identify and prioritise paying users.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Chat & User Value',
+                        'title' => 'Chat & User Value',
                         'overview' => 'Understanding your messages inbox — how to identify which users have tokens, how to find previous tippers using the "With Tokens" filter, and why focusing on paying users is the key to maximising every session.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Chat & User Value'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Chat & User Value'],
                             ['block_type' => 'text',    'content' => 'Understanding your messages inbox — how to identify which users have tokens, how to find previous tippers using the "With Tokens" filter, and why focusing on paying users is the key to maximising every session.'],
-                            ['block_type' => 'video',   'title'   => 'Chat & User Value — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Chat & User Value — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Chat & User Value — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Chat & User Value — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Open your inbox by tapping the white bell icon in the top right of the app',
                                 'Switch between All Chats and With Tokens to see which users hold tokens',
@@ -260,18 +260,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 6 ── Notifications ───────────────────────────────────
             [
-                'title'       => 'Notifications',
+                'title' => 'Notifications',
                 'description' => 'How to track tips, messages, and friend requests in real time using the Notifications tab.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Notifications',
+                        'title' => 'Notifications',
                         'overview' => 'How to use the Notifications tab to track tips, messages, and incoming friend requests in real time — and why keeping an eye on this panel during a live session is essential.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Notifications'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Notifications'],
                             ['block_type' => 'text',    'content' => 'How to use the Notifications tab to track tips, messages, and incoming friend requests in real time — and why keeping an eye on this panel during a live session is essential.'],
-                            ['block_type' => 'video',   'title'   => 'Notifications — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Notifications — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Notifications — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Notifications — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Tap the bell icon and switch to the Notifications tab',
                                 'Review the list — you will see tips, accepted friend requests, and new friend request alerts',
@@ -288,18 +288,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 7 ── Friend Requests & Database ──────────────────────
             [
-                'title'       => 'Friend Requests & Database',
+                'title' => 'Friend Requests & Database',
                 'description' => 'Why accepting every friend request builds your customer database and grows your income potential.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Friend Requests & Database',
+                        'title' => 'Friend Requests & Database',
                         'overview' => 'Why accepting every friend request is one of the most important habits on Stripchat — how it builds your customer database, where to find your full friends list, and how growing this list directly grows your income potential.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Friend Requests & Database'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Friend Requests & Database'],
                             ['block_type' => 'text',    'content' => 'Why accepting every friend request is one of the most important habits on Stripchat — how it builds your customer database, where to find your full friends list, and how growing this list directly grows your income potential.'],
-                            ['block_type' => 'video',   'title'   => 'Friend Requests & Database — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Friend Requests & Database — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Friend Requests & Database — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Friend Requests & Database — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Accept every friend request — each accepted request adds a user to your personal database',
                                 'To view your friends list: tap the 3-dot icon (top right) → scroll down to "My Friends" → tap to open',
@@ -316,18 +316,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 8 ── Mass Message Strategy ───────────────────────────
             [
-                'title'       => 'Mass Message Strategy',
+                'title' => 'Mass Message Strategy',
                 'description' => 'How to send a mass message to your entire database the moment you go live.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Mass Message Strategy',
+                        'title' => 'Mass Message Strategy',
                         'overview' => 'How to send a mass message to all your friends or Fan Club subscribers — the step-by-step process for composing the message, attaching media, selecting your audience, and hitting send. This is how you announce that you are online and bring your database straight back into your room.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Mass Message Strategy'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Mass Message Strategy'],
                             ['block_type' => 'text',    'content' => 'How to send a mass message to all your friends or Fan Club subscribers — the step-by-step process for composing the message, attaching media, selecting your audience, and hitting send. This is how you announce that you are online and bring your database straight back into your room.'],
-                            ['block_type' => 'video',   'title'   => 'Mass Message Strategy — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Mass Message Strategy — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Mass Message Strategy — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Mass Message Strategy — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Tap the bell icon → tap the green pen icon to open Create Mass Message',
                                 'Choose Free Mass Message or Tokens (paid) — you can only send ONE per day',
@@ -347,21 +347,21 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 9 ── Favourites ──────────────────────────────────────
             [
-                'title'       => 'Favourites',
+                'title' => 'Favourites',
                 'description' => 'How the Favourites system works and why growing your Favourites count is one of the best passive marketing tools on Stripchat.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Favourites',
-                        'overview' => "How the Favourites system works on Stripchat — why getting customers to favourite your profile is one of the most powerful passive marketing tools available, how favourites receive notifications when you go live, and how to encourage viewers to tap the heart icon.",
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Favourites'],
-                            ['block_type' => 'text',    'content' => "How the Favourites system works on Stripchat — why getting customers to favourite your profile is one of the most powerful passive marketing tools available, how favourites receive notifications when you go live, and how to encourage viewers to tap the heart icon."],
-                            ['block_type' => 'video',   'title'   => 'Favourites — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Favourites — Walkthrough Video'],
+                        'title' => 'Favourites',
+                        'overview' => 'How the Favourites system works on Stripchat — why getting customers to favourite your profile is one of the most powerful passive marketing tools available, how favourites receive notifications when you go live, and how to encourage viewers to tap the heart icon.',
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Favourites'],
+                            ['block_type' => 'text',    'content' => 'How the Favourites system works on Stripchat — why getting customers to favourite your profile is one of the most powerful passive marketing tools available, how favourites receive notifications when you go live, and how to encourage viewers to tap the heart icon.'],
+                            ['block_type' => 'video',   'title' => 'Favourites — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Favourites — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Encourage viewers to favourite your profile by tapping the heart icon during your live sessions',
-                                "Every customer who favourites you receives a notification when you go live — growing this number grows your automatic audience",
+                                'Every customer who favourites you receives a notification when you go live — growing this number grows your automatic audience',
                                 'Check your Favourites count in the Broadcast Center to track growth over time',
                                 "Mention your Favourites in stream — \"tap the heart to get notified when I'm live\" is a simple and effective call to action",
                             ])],
@@ -376,18 +376,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 10 ── Tokens & Earnings ─────────────────────────────
             [
-                'title'       => 'Tokens & Earnings',
+                'title' => 'Tokens & Earnings',
                 'description' => 'Where to find your earnings dashboard and how to read your token history.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Tokens & Earnings',
+                        'title' => 'Tokens & Earnings',
                         'overview' => 'Where to find your earnings dashboard on Stripchat, how to view your token history across different time periods, and how to read your earnings breakdown by user, date, and income type.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Tokens & Earnings'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Tokens & Earnings'],
                             ['block_type' => 'text',    'content' => 'Where to find your earnings dashboard on Stripchat, how to view your token history across different time periods, and how to read your earnings breakdown by user, date, and income type.'],
-                            ['block_type' => 'video',   'title'   => 'Tokens & Earnings — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Tokens & Earnings — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Tokens & Earnings — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Tokens & Earnings — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Tap the token icon (shown as "0 TK") at the top of your screen',
                                 'Tap the dollar sign / Earnings section to open your earnings dashboard',
@@ -405,18 +405,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 11 ── Tokens & Value (Important) ────────────────────
             [
-                'title'       => 'Tokens & Value (Important)',
+                'title' => 'Tokens & Value (Important)',
                 'description' => 'Understand exactly how tokens convert to dollars and what you take home after agency fees.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Tokens & Value (Important)',
+                        'title' => 'Tokens & Value (Important)',
                         'overview' => 'A clear breakdown of how tokens convert to dollars: one token equals approximately 5 cents, so 1,000 tokens equals $50. This lesson also explains the agency fee structure — 20% with no chatter, 30% with a chatter — so you always know exactly what to expect in your pocket.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Tokens & Value (Important)'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Tokens & Value (Important)'],
                             ['block_type' => 'text',    'content' => 'A clear breakdown of how tokens convert to dollars: one token equals approximately 5 cents, so 1,000 tokens equals $50. This lesson also explains the agency fee structure — 20% with no chatter, 30% with a chatter — so you always know exactly what to expect in your pocket.'],
-                            ['block_type' => 'video',   'title'   => 'Tokens & Value — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Tokens & Value — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Tokens & Value — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Tokens & Value — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Remember the formula: Tokens × 0.05 = your gross dollar amount',
                                 'Then subtract the agency fee: 20% if no chatter, 30% if you have a chatter',
@@ -434,18 +434,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 12 ── Paid Tippers (Whales) ─────────────────────────
             [
-                'title'       => 'Paid Tippers (Whales)',
+                'title' => 'Paid Tippers (Whales)',
                 'description' => 'How to identify your highest-spending customers and why nurturing them is your most reliable income strategy.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Paid Tippers (Whales)',
+                        'title' => 'Paid Tippers (Whales)',
                         'overview' => 'How to identify your highest-spending customers using the Paying Users tab, and why building personal relationships with your top spenders is critical to consistent, growing income on Stripchat.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Paid Tippers (Whales)'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Paid Tippers (Whales)'],
                             ['block_type' => 'text',    'content' => 'How to identify your highest-spending customers using the Paying Users tab, and why building personal relationships with your top spenders is critical to consistent, growing income on Stripchat.'],
-                            ['block_type' => 'video',   'title'   => 'Paid Tippers (Whales) — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Paid Tippers (Whales) — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Paid Tippers (Whales) — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Paid Tippers (Whales) — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Open Earnings → switch from Tokens History to Paying Users',
                                 'Scroll right to see the Total Tokens column — this ranks your biggest spenders',
@@ -462,18 +462,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 13 ── Types of Income ───────────────────────────────
             [
-                'title'       => 'Types of Income',
+                'title' => 'Types of Income',
                 'description' => 'A full breakdown of the four income types on Stripchat and how to maximise each one.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Types of Income',
+                        'title' => 'Types of Income',
                         'overview' => 'A full breakdown of the four income types on Stripchat — public tips, private tips, private shows, and exclusive shows — and how understanding each one helps you maximise every session.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Types of Income'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Types of Income'],
                             ['block_type' => 'text',    'content' => 'A full breakdown of the four income types on Stripchat — public tips, private tips, private shows, and exclusive shows — and how understanding each one helps you maximise every session.'],
-                            ['block_type' => 'video',   'title'   => 'Types of Income — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Types of Income — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Types of Income — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Types of Income — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Understand the four income streams: Public Tips (tokens tipped in your open room), Private Tips (tokens sent in private messages), Private Shows (per-minute sessions viewable by spy viewers), Exclusive Shows (per-minute fully one-to-one sessions)',
                                 'Review your earnings breakdown to see which income type is generating the most for you',
@@ -490,18 +490,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 14 ── Broadcast Center ──────────────────────────────
             [
-                'title'       => 'Broadcast Center',
+                'title' => 'Broadcast Center',
                 'description' => 'A full tour of your Broadcast Center — the command centre you access before every live session.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Broadcast Center',
+                        'title' => 'Broadcast Center',
                         'overview' => 'A full tour of the Broadcast Center — the command centre you access before every live session. This covers your StripScore, Favourites count, Fan Club subscribers, private show rating, income per hour, and weekly earnings tracker.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Broadcast Center'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Broadcast Center'],
                             ['block_type' => 'text',    'content' => 'A full tour of the Broadcast Center — the command centre you access before every live session. This covers your StripScore, Favourites count, Fan Club subscribers, private show rating, income per hour, and weekly earnings tracker.'],
-                            ['block_type' => 'video',   'title'   => 'Broadcast Center — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Broadcast Center — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Broadcast Center — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Broadcast Center — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Open Broadcast Center from the green button on the homepage or from the top navigation bar',
                                 'Locate each metric: StripScore (chart icon), Favourites (heart icon), Fan Club (diamond/heart), Private Show Rating (camera), Income Per Hour (coin icon), Earned This Week (wallet)',
@@ -519,18 +519,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 15 ── Promo Period ───────────────────────────────────
             [
-                'title'       => 'Promo Period',
+                'title' => 'Promo Period',
                 'description' => 'Your first 30 days are peak traffic — understand the Promo Period and how to make the most of it.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Promo Period',
+                        'title' => 'Promo Period',
                         'overview' => 'During your first 30 days after logging in, Stripchat places you at the top of the page for new customers. This is your peak traffic period — going live as much as possible during this window is the single fastest way to build your database and fanbase from the start.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Promo Period'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Promo Period'],
                             ['block_type' => 'text',    'content' => 'During your first 30 days after logging in, Stripchat places you at the top of the page for new customers. This is your peak traffic period — going live as much as possible during this window is the single fastest way to build your database and fanbase from the start.'],
-                            ['block_type' => 'video',   'title'   => 'Promo Period — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Promo Period — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Promo Period — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Promo Period — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Go live as frequently as possible during your first 30 days',
                                 'Each session during this period builds your Friends list, Favourites count, and StripScore simultaneously',
@@ -547,18 +547,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 16 ── Setting Your Rates ────────────────────────────
             [
-                'title'       => 'Setting Your Rates',
+                'title' => 'Setting Your Rates',
                 'description' => 'A clear pricing guide for your private show rates and how to set them correctly.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Setting Your Rates',
+                        'title' => 'Setting Your Rates',
                         'overview' => "A clear pricing guide for your Private Show, Exclusive Private Show, Spy rate, Group Show, and Ticket Show — based on Kayla's personally tested rates. These prices have been set by the agency for you, but this lesson explains what each rate means and when and how to adjust them.",
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Setting Your Rates'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Setting Your Rates'],
                             ['block_type' => 'text',    'content' => "A clear pricing guide for your Private Show, Exclusive Private Show, Spy rate, Group Show, and Ticket Show — based on Kayla's personally tested rates. These prices have been set by the agency for you, but this lesson explains what each rate means and when and how to adjust them."],
-                            ['block_type' => 'video',   'title'   => 'Setting Your Rates — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Setting Your Rates — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Setting Your Rates — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Setting Your Rates — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Locate Your Pricing in the Broadcast Center settings',
                                 'Confirm your rates match the agency-recommended guide: Private Show 44 tk (3-min min), Exclusive Private 60 tk (2-min min), Spy 16 tk, Group Show 32 tk, Ticket Show 90 tk',
@@ -576,18 +576,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 17 ── My Show Controls ──────────────────────────────
             [
-                'title'       => 'My Show Controls',
+                'title' => 'My Show Controls',
                 'description' => 'Set up your show activities, tip goals, interactive toys, and offline status.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'My Show Controls',
+                        'title' => 'My Show Controls',
                         'overview' => "A walkthrough of the My Show Controls section inside the broadcaster — covering your show activities (what you do in public, private, and exclusive shows), tip goals, interactive toys (Lovense/Kiiroo), today's show topic, and how to enable or disable show recording.",
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'My Show Controls'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'My Show Controls'],
                             ['block_type' => 'text',    'content' => "A walkthrough of the My Show Controls section inside the broadcaster — covering your show activities (what you do in public, private, and exclusive shows), tip goals, interactive toys (Lovense/Kiiroo), today's show topic, and how to enable or disable show recording."],
-                            ['block_type' => 'video',   'title'   => 'My Show Controls — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'My Show Controls — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'My Show Controls — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'My Show Controls — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 "Go to My Details → My Show's Activities and select only what you are comfortable performing",
                                 'Set your tip Goal in My Show Controls — start with a small goal and increase it as tipping builds',
@@ -606,18 +606,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 18 ── My Feed ────────────────────────────────────────
             [
-                'title'       => 'My Feed',
+                'title' => 'My Feed',
                 'description' => 'How to use your Stripchat Feed to stay visible to your audience between live sessions.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'My Feed',
+                        'title' => 'My Feed',
                         'overview' => 'How to use your Stripchat Feed like a social media profile — posting photos, videos, updates, and highlights to stay visible to your audience between live sessions. The Feed automatically creates posts when you upload content, keeping your profile active at all times.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'My Feed'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'My Feed'],
                             ['block_type' => 'text',    'content' => 'How to use your Stripchat Feed like a social media profile — posting photos, videos, updates, and highlights to stay visible to your audience between live sessions. The Feed automatically creates posts when you upload content, keeping your profile active at all times.'],
-                            ['block_type' => 'video',   'title'   => 'My Feed — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'My Feed — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'My Feed — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'My Feed — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Navigate to My Feed from the top navigation in the broadcaster area',
                                 'Tap Create Post and upload a photo, video, or short update',
@@ -635,18 +635,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 19 ── Rules & Safety ────────────────────────────────
             [
-                'title'       => 'Rules & Safety',
+                'title' => 'Rules & Safety',
                 'description' => 'The non-negotiable safety rules that keep your account and your income protected.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Rules & Safety',
+                        'title' => 'Rules & Safety',
                         'overview' => 'The non-negotiable safety rules for streaming on Stripchat — including the strict rule that anyone who appears on camera must be age-verified and registered in advance. Appearing on stream with an unverified person can result in an instant account ban.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Rules & Safety'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Rules & Safety'],
                             ['block_type' => 'text',    'content' => 'The non-negotiable safety rules for streaming on Stripchat — including the strict rule that anyone who appears on camera must be age-verified and registered in advance. Appearing on stream with an unverified person can result in an instant account ban.'],
-                            ['block_type' => 'video',   'title'   => 'Rules & Safety — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Rules & Safety — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Rules & Safety — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Rules & Safety — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Never allow anyone on camera who has not been verified and approved in advance',
                                 'If you want to add someone to your stream: contact the admin/team and they will guide you through verification',
@@ -663,18 +663,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 20 ── Going to Live / Camera & Mic / Start Show ─────
             [
-                'title'       => 'Going to Live / Camera & Mic / Start Show',
+                'title' => 'Going to Live / Camera & Mic / Start Show',
                 'description' => 'The complete guide to preparing for your live session, checking your camera and mic, and starting your show.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Going to Live / Camera & Mic / Start Show',
-                        'overview' => "The complete guide to preparing for your live session — from the pre-stream checklist and checking your camera and mic setup, to tapping Start Show and going live with confidence. Everything you need to do before and during the moment you go live.",
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Going to Live / Camera & Mic / Start Show'],
-                            ['block_type' => 'text',    'content' => "The complete guide to preparing for your live session — from the pre-stream checklist and checking your camera and mic setup, to tapping Start Show and going live with confidence. Everything you need to do before and during the moment you go live."],
-                            ['block_type' => 'video',   'title'   => 'Going to Live / Camera & Mic / Start Show — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Going to Live / Camera & Mic / Start Show — Walkthrough Video'],
+                        'title' => 'Going to Live / Camera & Mic / Start Show',
+                        'overview' => 'The complete guide to preparing for your live session — from the pre-stream checklist and checking your camera and mic setup, to tapping Start Show and going live with confidence. Everything you need to do before and during the moment you go live.',
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Going to Live / Camera & Mic / Start Show'],
+                            ['block_type' => 'text',    'content' => 'The complete guide to preparing for your live session — from the pre-stream checklist and checking your camera and mic setup, to tapping Start Show and going live with confidence. Everything you need to do before and during the moment you go live.'],
+                            ['block_type' => 'video',   'title' => 'Going to Live / Camera & Mic / Start Show — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Going to Live / Camera & Mic / Start Show — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Open Broadcast Center and scroll down past the chat window to review your settings',
                                 "Confirm your tip goal, topic of show, and show activities are updated for today's session",
@@ -701,18 +701,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 21 ── Live Room ──────────────────────────────────────
             [
-                'title'       => 'Live Room',
+                'title' => 'Live Room',
                 'description' => 'How to manage your live room, interact with viewers, and read the chat during a stream.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Live Room',
+                        'title' => 'Live Room',
                         'overview' => 'What happens once you are live — how to interact with viewers in the public chat, how to use the viewer panel to track who is in your room, and how to respond to the room to keep energy high and viewers engaged.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Live Room'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Live Room'],
                             ['block_type' => 'text',    'content' => 'What happens once you are live — how to interact with viewers in the public chat, how to use the viewer panel to track who is in your room, and how to respond to the room to keep energy high and viewers engaged.'],
-                            ['block_type' => 'video',   'title'   => 'Live Room — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Live Room — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Live Room — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Live Room — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Monitor the chat box in the centre of the screen — respond to messages by speaking or typing',
                                 'Check the viewer count at the bottom of the screen (e.g. "6 viewers")',
@@ -729,18 +729,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 22 ── Users ──────────────────────────────────────────
             [
-                'title'       => 'Users',
+                'title' => 'Users',
                 'description' => 'How to view individual user information to identify your best potential spenders while live.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Users',
+                        'title' => 'Users',
                         'overview' => 'How to view individual user information while you are live — including their token balance, account age, and location — and how to use this to identify who in your room is most likely to tip or request a private show.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Users'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Users'],
                             ['block_type' => 'text',    'content' => 'How to view individual user information while you are live — including their token balance, account age, and location — and how to use this to identify who in your room is most likely to tip or request a private show.'],
-                            ['block_type' => 'video',   'title'   => 'Users — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Users — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Users — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Users — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 "Tap or hover over a user's name in the live chat to open their profile card",
                                 'Review their token balance, account registration date, and location',
@@ -758,18 +758,18 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 23 ── Private & Exclusive Shows ──────────────────────
             [
-                'title'       => 'Private & Exclusive Shows',
+                'title' => 'Private & Exclusive Shows',
                 'description' => 'Understand the difference between private and exclusive shows and how to manage each type.',
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Private & Exclusive Shows',
+                        'title' => 'Private & Exclusive Shows',
                         'overview' => 'What happens when a viewer requests a private or exclusive show, how to accept quickly, what the session interface looks like, and the key difference between the two: private shows allow spy viewers, while exclusive shows are strictly one-to-one.',
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Private & Exclusive Shows'],
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Private & Exclusive Shows'],
                             ['block_type' => 'text',    'content' => 'What happens when a viewer requests a private or exclusive show, how to accept quickly, what the session interface looks like, and the key difference between the two: private shows allow spy viewers, while exclusive shows are strictly one-to-one.'],
-                            ['block_type' => 'video',   'title'   => 'Private & Exclusive Shows — Presentation Video'],
-                            ['block_type' => 'heading', 'title'   => 'Now Follow Along'],
-                            ['block_type' => 'video',   'title'   => 'Private & Exclusive Shows — Walkthrough Video'],
+                            ['block_type' => 'video',   'title' => 'Private & Exclusive Shows — Presentation Video'],
+                            ['block_type' => 'heading', 'title' => 'Now Follow Along'],
+                            ['block_type' => 'video',   'title' => 'Private & Exclusive Shows — Walkthrough Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'When a private or exclusive show pop-up appears, tap Accept as quickly as possible — most users will not wait long',
                                 'Your public chat room disappears and you enter the private session interface',
@@ -792,21 +792,21 @@ class StripchatCourseSeeder extends Seeder
 
             // ─── MODULE 24 ── Final Words from Boss Doll ────────────────────
             [
-                'title'       => 'Final Words from Boss Doll',
+                'title' => 'Final Words from Boss Doll',
                 'description' => "Kayla's final words as you complete your Stripchat Phase One training.",
-                'lessons'     => [
+                'lessons' => [
                     [
-                        'title'    => 'Final Words from Boss Doll',
-                        'overview' => "You have now completed your full Stripchat walkthrough. You understand how to navigate the platform, build your customer database, go live, manage your room, set your rates, and run private and exclusive shows. This is where you step into your power — stay consistent, stay confident, and watch your results grow.",
-                        'blocks'   => [
-                            ['block_type' => 'heading', 'title'   => 'Final Words from Boss Doll'],
-                            ['block_type' => 'text',    'content' => "You have now completed your full Stripchat walkthrough. You understand how to navigate the platform, build your customer database, go live, manage your room, set your rates, and run private and exclusive shows. This is where you step into your power — stay consistent, stay confident, and watch your results grow."],
-                            ['block_type' => 'video',   'title'   => 'Final Words — Presentation Video'],
+                        'title' => 'Final Words from Boss Doll',
+                        'overview' => 'You have now completed your full Stripchat walkthrough. You understand how to navigate the platform, build your customer database, go live, manage your room, set your rates, and run private and exclusive shows. This is where you step into your power — stay consistent, stay confident, and watch your results grow.',
+                        'blocks' => [
+                            ['block_type' => 'heading', 'title' => 'Final Words from Boss Doll'],
+                            ['block_type' => 'text',    'content' => 'You have now completed your full Stripchat walkthrough. You understand how to navigate the platform, build your customer database, go live, manage your room, set your rates, and run private and exclusive shows. This is where you step into your power — stay consistent, stay confident, and watch your results grow.'],
+                            ['block_type' => 'video',   'title' => 'Final Words — Presentation Video'],
                             ['block_type' => 'steps',   'content' => implode("\n", [
                                 'Review each module before your very first live session',
                                 'Send your first mass message to your Friends list the moment you go live',
                                 'Set a target for your first 30-day Promo Period and commit to streaming consistently',
-                                'Join the Paradise Dolls community and reach out if you ever need support',
+                                'Join the Boss Doll Creators community and reach out if you ever need support',
                             ])],
                             ['block_type' => 'tips',    'content' => implode("\n", [
                                 'Phase Two of this course covers all the advanced tips, tricks, and extras that take your earnings to the next level — complete it once you have found your rhythm',

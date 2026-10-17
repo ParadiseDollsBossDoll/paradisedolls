@@ -1,4 +1,4 @@
-﻿@php $siteTheme = \App\Models\SiteSetting::get('theme', ['mode'=>'dark','primary'=>'#EEB4C3','primaryLight'=>'#F3C3CF']); @endphp
+@php $siteTheme = \App\Models\SiteSetting::get('theme', ['mode'=>'light','primary'=>'#FF0080','primaryLight'=>'#FFE6F0','preset'=>'boss-light']); @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
@@ -6,17 +6,17 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Paradise Dolls') }}</title>
+        <title>{{ config('brand.name') }}</title>
 
-        <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+        <link rel="icon" type="image/png" sizes="512x512" href="{{ asset(config('brand.favicon')) }}">
 
         @include('partials.google-tag-manager-head')
         @include('partials.google-analytics')
 
-        <script>(function(){function hRgb(h){return parseInt(h.slice(1,3),16)+' '+parseInt(h.slice(3,5),16)+' '+parseInt(h.slice(5,7),16);}function lum(h){var r=parseInt(h.slice(1,3),16)/255,g=parseInt(h.slice(3,5),16)/255,b=parseInt(h.slice(5,7),16)/255;return 0.2126*r+0.7152*g+0.0722*b;}function applyVars(s){var h=document.documentElement;h.classList.toggle('light-mode',s.mode==='light');if(s.primary){var p=s.primary,pl=s.primaryLight||p;h.style.setProperty('--pd-primary',p);h.style.setProperty('--pd-gold',p);h.style.setProperty('--pd-gold-rgb',hRgb(p));h.style.setProperty('--pd-gold-light-rgb',hRgb(pl));h.style.setProperty('--pd-gold-hover-rgb',hRgb(pl));h.style.setProperty('--pd-primary-hover',pl);h.style.setProperty('--pd-gold-light',pl);h.style.setProperty('--pd-primary-on',lum(p)>0.35?'#09070A':'#FFF8F6');}}try{applyVars(@json($siteTheme));}catch(e){applyVars({mode:'dark',primary:'#EEB4C3',primaryLight:'#F3C3CF'});}window.pdApplyTheme=function(s){applyVars(s);};}());</script>
+        @include('partials.theme-bootstrap', ['siteTheme' => $siteTheme])
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased pd-dark-surface" data-pd-translation-root>
+    <body class="pd-premium-ui font-sans antialiased pd-dark-surface" data-pd-translation-root>
         @include('partials.google-tag-manager-body')
 
         <div class="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10">
@@ -31,11 +31,7 @@
                     <a href="{{ route('home') }}" class="text-[0.65rem] uppercase tracking-[0.28em] text-boss-gold/70 transition-colors hover:text-boss-gold">
                         {{ __('Back to site') }}
                     </a>
-                    <img
-                        src="{{ asset('images/brand/get-rich-with-paradise-dolls-logo.png') }}"
-                        alt="{{ config('app.name') }}"
-                        class="mx-auto mt-6 h-auto w-[210px] object-contain sm:w-[240px]"
-                    >
+                    <x-brand-logo :variant="($siteTheme['mode'] ?? 'light') === 'light' ? 'horizontal_pink' : 'horizontal_white'" class="mx-auto mt-6 w-[220px] max-w-full sm:w-[250px]" />
                     <p class="mt-2 text-[0.82rem] text-boss-ivory/35">{{ __('Member access and training portal') }}</p>
                 </div>
 

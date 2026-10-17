@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ChatterShift;
 use App\Models\ChatterTimesheet;
-use App\Services\ChatterPlatformEarnings;
 use App\Services\ChatterPayrollService;
+use App\Services\ChatterPlatformEarnings;
 use App\Support\ChatterCurrency;
 use App\Support\DesignedXlsxWorkbook;
 use Carbon\CarbonImmutable;
@@ -139,7 +139,7 @@ class AdminChatterHoursExportController extends Controller
         ]]);
         $contents = $workbook->toBinary();
 
-        return response()->streamDownload(fn () => print ($contents), 'paradise-dolls-payroll-'.$periodStart->format('Y-m-d').'-to-'.$periodEnd->format('Y-m-d').'.xlsx', $this->downloadHeaders('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'));
+        return response()->streamDownload(fn () => print ($contents), 'boss-doll-creators-payroll-'.$periodStart->format('Y-m-d').'-to-'.$periodEnd->format('Y-m-d').'.xlsx', $this->downloadHeaders('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'));
     }
 
     /** @return array{0: CarbonImmutable, 1: CarbonImmutable} */
@@ -163,7 +163,7 @@ class AdminChatterHoursExportController extends Controller
     private function payrollSheet(Collection $attendance, Collection $payrollRows, string $periodLabel, float $exchangeRate, float $gbpToUsdRate): array
     {
         $rows = [
-            $this->row(1, $this->styledRow('PARADISE DOLLS', 24), 30),
+            $this->row(1, $this->styledRow('BOSS DOLL CREATORS', 24), 30),
             $this->row(2, $this->styledRow(null, 24), 30),
             $this->row(3, $this->styledRow('Payroll contact: '.config('paradise.onboarding_email'), 25), 20),
             $this->row(4, $this->cells(['DATE/TIME IN', null, 'DATE/TIME OUT', null, 'EMPLOYEE', null, 'ROLE / SITE / MODEL', null, 'BALANCE IN', 'BALANCE OUT', 'GENERATED', 'COMMISSION', 'HOURS WORKED'], 26), 26),

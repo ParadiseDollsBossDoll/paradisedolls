@@ -12,8 +12,8 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Poppins', ...defaultTheme.fontFamily.sans],
-                display: ['"Playfair Display"', 'Georgia', 'serif'],
+                sans: ['"DejaVu Sans"', 'Arial', ...defaultTheme.fontFamily.sans],
+                display: ['"DejaVu Sans"', 'Arial', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 boss: {
@@ -22,15 +22,15 @@ export default {
                     'gold-light': 'rgb(var(--pd-gold-light-rgb) / <alpha-value>)',
                     'gold-hover': 'rgb(var(--pd-gold-hover-rgb) / <alpha-value>)',
                     // Static brand colors — not affected by theme picker
-                    pink: '#F7D6E0',
-                    rose: '#C4687A',
-                    dark: '#09070A',
-                    ink:  '#09070A',
-                    panel: '#171016',
-                    'panel-strong': '#21161D',
-                    ivory: '#FFF8F6',
-                    cream: '#F5EDE6',
-                    muted: '#FAFAF8',
+                    pink: '#FFE6F0',
+                    rose: '#B00058',
+                    dark: '#29212A',
+                    ink:  '#29212A',
+                    panel: '#342A35',
+                    'panel-strong': '#403341',
+                    ivory: '#FFFFFF',
+                    cream: '#FFF7EF',
+                    muted: '#FFF9FC',
                 },
             },
             boxShadow: {

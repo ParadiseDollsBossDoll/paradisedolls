@@ -870,7 +870,7 @@ class OnboardingFlowTest extends TestCase
             'submitted_by' => $member->id,
             'name' => 'Approved Model',
             'headline' => 'Real story',
-            'quote' => 'Paradise Dolls helped me build confidence.',
+            'quote' => 'Boss Doll Creators helped me build confidence.',
             'image_path' => 'testimonials/approved-model.jpg',
         ]);
         $course = Course::create([
@@ -1957,7 +1957,7 @@ class OnboardingFlowTest extends TestCase
             'work_status' => ModelProfile::WORK_STATUS_INACTIVE,
         ]);
 
-        $dispatcher = new EmailCampaignDispatcher();
+        $dispatcher = new EmailCampaignDispatcher;
 
         $onboardedCampaign = EmailCampaign::create([
             'name' => 'Motivation',

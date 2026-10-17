@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\AdminActivityNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -71,7 +72,7 @@ class MemberChatterPerformanceReviewController extends Controller
             'status' => ChatterPerformanceReview::STATUS_SUBMITTED,
         ]);
 
-        \Illuminate\Support\Facades\Cache::forget('admin_sidebar_counts_v2');
+        Cache::forget('admin_sidebar_counts_v2');
 
         app(AdminActivityNotifier::class)->notify(
             title: __('New chatter performance review'),
@@ -90,7 +91,7 @@ class MemberChatterPerformanceReviewController extends Controller
 
         return redirect()
             ->to($request->fullUrl())
-            ->with('status', __('Your confidential chatter review has been submitted to Paradise Dolls management.'));
+            ->with('status', __('Your confidential chatter review has been submitted to Boss Doll Creators management.'));
     }
 
     private function ratingRules(): array
