@@ -2898,7 +2898,7 @@ html.light-mode .pd-marketing-image-hero .pd-marketing-image-hero-eyebrow {
 html.light-mode .pd-marketing-image-hero.pd-home-hero {
     display: block;
     min-height: auto;
-    padding-top: 0;
+    padding-top: 5rem;
     padding-bottom: 0;
     background: linear-gradient(145deg, #29212A 65%, #482334 85%, #29212A 100%);
 }
@@ -2913,6 +2913,7 @@ html.light-mode .pd-marketing-image-hero.pd-home-hero {
     display: block;
     width: 100%;
     height: auto;
+    mask-image: linear-gradient(to bottom, #000 94%, transparent 100%);
 }
 
 .pd-home-hero-overlay {
@@ -2938,13 +2939,12 @@ html.light-mode .pd-marketing-image-hero.pd-home-hero {
     background:
         linear-gradient(165deg, transparent 20%, rgba(255, 0, 128, 0.08) 46%, transparent 68%),
         linear-gradient(12deg, transparent 35%, rgba(255, 230, 240, 0.06) 55%, transparent 80%);
-    border-top: 1px solid rgba(255, 0, 128, 0.2);
 }
 
 @media (max-width: 767px) {
     .pd-marketing-image-hero.pd-home-hero,
     html.light-mode .pd-marketing-image-hero.pd-home-hero {
-        padding-top: 0;
+        padding-top: 4rem;
     }
 
     .pd-home-hero-media {
