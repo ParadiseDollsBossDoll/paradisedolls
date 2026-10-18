@@ -40,7 +40,7 @@
                         {{ $paragraph }}@if (! $loop->last)<br><br>@endif
                     @endforeach
                 </p>
-                <div class="mt-10 flex flex-wrap gap-3">
+                <div class="pd-home-hero-actions mt-10 flex flex-wrap gap-3">
                     <a href="{{ marketing_link('home.hero.primary_url', '#apply') }}" class="pd-cta-primary px-9 py-3.5">{{ marketing_content('home.hero.primary_label') }}</a>
                     <a href="{{ marketing_link('home.hero.secondary_url', route('multistreaming')) }}" class="rounded-md border border-white/40 px-9 py-3.5 text-[0.72rem] uppercase tracking-[0.16em] text-white transition-colors hover:border-white hover:bg-white hover:text-boss-dark">{{ marketing_content('home.hero.secondary_label') }}</a>
                 </div>
