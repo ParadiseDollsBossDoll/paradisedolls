@@ -6,6 +6,7 @@
 >
     @php
         $heroImg = marketing_image('home.hero.image');
+        $hasThreeModelMobileImage = marketing_content('home.hero.image') === 'images/home/boss-doll-lounge-extended.png';
         $workspaceImg = marketing_image('home.intro.image');
         $heroParagraphs = marketing_paragraphs('home.hero.body');
         $lifestyleCards = marketing_items('home.lifestyle.cards');
@@ -20,8 +21,13 @@
     @endphp
 
     <section class="pd-marketing-image-hero pd-home-hero overflow-hidden">
-        <div class="pd-home-hero-media">
-            <img src="{{ $heroImg }}" alt="" class="pd-home-hero-image" aria-hidden="true">
+        <div @class(['pd-home-hero-media', 'pd-home-hero-media-three' => $hasThreeModelMobileImage])>
+            <picture>
+                @if ($hasThreeModelMobileImage)
+                    <source media="(max-width: 767px)" srcset="{{ asset('images/home/boss-doll-lounge-mobile-three.png') }}">
+                @endif
+                <img src="{{ $heroImg }}" alt="" class="pd-home-hero-image" aria-hidden="true">
+            </picture>
             <div class="pd-home-hero-overlay" aria-hidden="true"></div>
         </div>
 

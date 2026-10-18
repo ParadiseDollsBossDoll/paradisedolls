@@ -95,6 +95,18 @@ class AdminSiteEditorTest extends TestCase
             ->assertSee('pd-home-hero-content', false);
     }
 
+    public function test_approved_hero_uses_three_models_on_mobile_and_original_on_desktop(): void
+    {
+        SiteSetting::set(MarketingContent::SETTINGS_KEY, [
+            'home' => ['hero' => ['image' => 'images/home/boss-doll-lounge-extended.png']],
+        ]);
+
+        $this->get(route('home'))->assertOk()
+            ->assertSee('media="(max-width: 767px)"', false)
+            ->assertSee('images/home/boss-doll-lounge-mobile-three.png', false)
+            ->assertSee('images/home/boss-doll-lounge-extended.png', false);
+    }
+
     public function test_home_hero_hides_the_site_editor_title_placeholder(): void
     {
         SiteSetting::set(MarketingContent::SETTINGS_KEY, [

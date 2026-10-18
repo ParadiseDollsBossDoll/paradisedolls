@@ -2952,6 +2952,10 @@ html.light-mode .pd-marketing-image-hero.pd-home-hero {
         max-height: none;
     }
 
+    .pd-home-hero-media-three {
+        aspect-ratio: 1330 / 1182;
+    }
+
     .pd-home-hero-image {
         position: absolute;
         inset: 0;
