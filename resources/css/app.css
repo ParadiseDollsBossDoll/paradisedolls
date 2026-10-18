@@ -2954,15 +2954,11 @@ html.light-mode .pd-marketing-image-hero.pd-home-hero {
 
     .pd-home-hero-image {
         position: absolute;
-        top: 0;
-        right: auto;
-        bottom: auto;
-        left: 50%;
-        width: 140vw;
-        height: auto;
-        max-width: none;
-        transform: translateX(-50%);
-        object-fit: contain;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center top;
     }
 
     .pd-home-hero-overlay {
