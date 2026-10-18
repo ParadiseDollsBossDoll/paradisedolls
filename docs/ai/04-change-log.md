@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-10-18 - Application Copy Approved By Client
+
+- Updated public agreement and acceptance text to Boss Doll Creators and changed the message placeholder to the client's supplied wording. No saved marketing content or agreement obligations were changed.
+
 ## 2026-10-18 - Responsive Homepage Hero Prepared
 
 - Added the client-supplied extended lounge image as the default hero, removed the separate navbar gap, and adjusted mobile framing for the extra image headroom. Production's saved hero image remains editable and must be selected through Site Editor; no saved text is overwritten.

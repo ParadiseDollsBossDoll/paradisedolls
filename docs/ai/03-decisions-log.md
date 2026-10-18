@@ -1,5 +1,9 @@
 # Decisions Log
 
+## 2026-10-18 - Approved Application Agreement Brand Update
+
+- Client explicitly approved replacing Paradise Dolls with Boss Doll Creators in the public application agreement and acceptance information. Retain Lux Dolls LTD, agreement obligations, amounts, and existing email/social/infrastructure identifiers.
+
 ## 2026-10-18 - Preserve Live Site-Editor Content During Visual Releases
 
 - Kayla's saved `marketing_content` site settings are the source of truth for current public wording and uploaded marketing images.

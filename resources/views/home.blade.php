@@ -483,7 +483,7 @@
 
                     <div>
                         <label for="application-message" class="pd-label-light">{{ __('Message') }}</label>
-                        <textarea id="application-message" name="message" rows="4" class="pd-input-light mt-2" placeholder="{{ __('Tell us what kind of freedom, income, or lifestyle you want to build.') }}">{{ old('message') }}</textarea>
+                        <textarea id="application-message" name="message" rows="4" class="pd-input-light mt-2" placeholder="{{ __('Tell us a little bit about yourself, any experience, goals or specific advice you’re looking for.') }}">{{ old('message') }}</textarea>
                         <x-input-error class="mt-1.5" :messages="$errors->get('message')" />
                     </div>
 
@@ -497,7 +497,7 @@
 
                     <div class="flex items-start gap-3 bg-boss-cream p-4">
                         <input type="checkbox" name="terms_accepted" id="terms-accepted" value="1" required class="mt-1 h-4 w-4 shrink-0 accent-boss-rose" @checked(old('terms_accepted'))>
-                        <label for="terms-accepted" class="text-[0.8rem] leading-relaxed text-boss-dark/70">{{ __('I confirm that I have read, understood and agree to the Paradise Dolls Terms & Conditions, Privacy Policy and Training Programme Terms.') }}</label>
+                        <label for="terms-accepted" class="text-[0.8rem] leading-relaxed text-boss-dark/70">{{ __('I confirm that I have read, understood and agree to the Boss Doll Creators Terms & Conditions, Privacy Policy and Training Programme Terms.') }}</label>
                     </div>
                     <x-input-error class="-mt-2" :messages="$errors->get('terms_accepted')" />
 

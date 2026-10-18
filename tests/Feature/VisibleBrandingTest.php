@@ -18,7 +18,10 @@ class VisibleBrandingTest extends TestCase
         $this->get(route('home'))
             ->assertOk()
             ->assertSeeText('Boss Doll Creators')
-            ->assertSeeText('Paradise Dolls application agreement')
+            ->assertSeeText('Boss Doll Creators application agreement')
+            ->assertSeeText('Boss Doll Creators Terms & Conditions, Privacy Policy and Training Programme Terms.')
+            ->assertSee('Tell us a little bit about yourself, any experience, goals or specific advice you’re looking for.', false)
+            ->assertDontSeeText('Paradise Dolls application agreement')
             ->assertSee('images/brand/boss-doll-creators-logo-horizontal-pink.png', false)
             ->assertSee('https://www.tiktok.com/@paradisedollsstreaming', false);
 
