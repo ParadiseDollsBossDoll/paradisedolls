@@ -2895,26 +2895,50 @@ html.light-mode .pd-marketing-image-hero .pd-marketing-image-hero-eyebrow {
 
 /* Home hero art direction: retain the full group on desktop and the central trio on phones. */
 .pd-home-hero {
+    display: block;
+    min-height: auto;
     background: #29212A;
 }
 
+.pd-home-hero-media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 78dvh;
+    overflow: hidden;
+}
+
 .pd-home-hero-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     object-position: center top;
 }
 
+.pd-home-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 72%, rgba(41, 33, 42, 0.32) 88%, #29212A 100%);
+}
+
+.pd-home-hero-content {
+    padding-top: 2.5rem;
+    padding-bottom: 4.5rem;
+}
+
 @media (max-width: 767px) {
-    .pd-marketing-image-hero.pd-home-hero {
-        display: block;
-        min-height: 100dvh;
-        padding-top: 0;
-        padding-bottom: 0;
+    .pd-home-hero-media {
+        aspect-ratio: 15 / 14;
+        max-height: none;
     }
 
     .pd-home-hero-image {
-        position: relative;
-        inset: auto;
+        top: 0;
+        right: auto;
+        bottom: auto;
         left: 50%;
-        display: block;
         width: 140vw;
         height: auto;
         max-width: none;
@@ -2923,14 +2947,7 @@ html.light-mode .pd-marketing-image-hero .pd-marketing-image-hero-eyebrow {
     }
 
     .pd-home-hero-overlay {
-        background: linear-gradient(
-            to bottom,
-            rgba(18, 10, 16, 0.08) 0,
-            rgba(25, 15, 22, 0.12) 13rem,
-            rgba(41, 33, 42, 0.78) 20rem,
-            #29212A 24rem,
-            #29212A 100%
-        );
+        background: linear-gradient(to bottom, transparent 76%, rgba(41, 33, 42, 0.35) 90%, #29212A 100%);
     }
 
     .pd-home-hero-content {

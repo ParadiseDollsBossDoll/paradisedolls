@@ -90,8 +90,26 @@ class AdminSiteEditorTest extends TestCase
             ->assertSee('Client managed paragraph.')
             ->assertSee('/storage/marketing/site-editor/client-home-hero.webp', false)
             ->assertSee('pd-home-hero', false)
+            ->assertSee('pd-home-hero-media', false)
             ->assertSee('pd-home-hero-image', false)
             ->assertSee('pd-home-hero-content', false);
+    }
+
+    public function test_home_hero_hides_the_site_editor_title_placeholder(): void
+    {
+        SiteSetting::set(MarketingContent::SETTINGS_KEY, [
+            'home' => [
+                'hero' => [
+                    'title' => '.',
+                    'body' => ['Client managed paragraph.'],
+                ],
+            ],
+        ]);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertDontSee('<h1', false)
+            ->assertSee('Client managed paragraph.');
     }
 
     public function test_public_footer_has_social_media_links(): void

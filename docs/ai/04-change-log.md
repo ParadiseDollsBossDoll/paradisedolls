@@ -3,7 +3,7 @@
 ## 2026-10-18 - Responsive Homepage Hero Prepared
 
 - Added homepage-specific responsive art direction for the current Boss Doll Creators group image: the full five-person composition remains visible on desktop and the central three-person composition is prioritized on phones.
-- Moved phone copy below the important part of the photograph, stacked actions within the viewport, and prevented horizontal overflow without changing Kayla's database-managed wording or uploaded image.
+- Moved all hero copy below the photograph, stacked phone actions within the viewport, prevented horizontal overflow, and suppressed the single-dot title placeholder without changing Kayla's database-managed wording or uploaded image.
 - Added regression coverage confirming saved site-editor hero content remains authoritative.
 
 ## 2026-10-17 - Boss Doll Creators Rebrand Prepared

@@ -5,6 +5,7 @@
 - Kayla's saved `marketing_content` site settings are the source of truth for current public wording and uploaded marketing images.
 - Visual-only homepage releases must change Blade structure or CSS without adding a content migration, running a content seeder, or replacing saved site-editor values.
 - The homepage hero uses one uploaded image with responsive art direction: the full group on desktop and the central group on mobile, with mobile copy flowing below the image rather than covering faces.
+- A hero title containing only `.` is treated as an editor placeholder and is not rendered; meaningful saved titles continue to render normally.
 
 ## 2026-10-17 - Boss Doll Creators Visible Rebrand
 
