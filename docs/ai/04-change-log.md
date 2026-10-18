@@ -2,6 +2,7 @@
 
 ## 2026-10-18 - Responsive Homepage Hero Prepared
 
+- Added the client-supplied extended lounge image as the default hero, removed the separate navbar gap, and adjusted mobile framing for the extra image headroom. Production's saved hero image remains editable and must be selected through Site Editor; no saved text is overwritten.
 - Added homepage-specific responsive art direction for the current Boss Doll Creators group image: the full five-person composition remains visible on desktop and the central three-person composition is prioritized on phones.
 - Moved all hero copy below the photograph, stacked phone actions within the viewport, prevented horizontal overflow, and suppressed the single-dot title placeholder without changing Kayla's database-managed wording or uploaded image.
 - Added regression coverage confirming saved site-editor hero content remains authoritative.

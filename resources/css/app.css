@@ -2898,7 +2898,7 @@ html.light-mode .pd-marketing-image-hero .pd-marketing-image-hero-eyebrow {
 html.light-mode .pd-marketing-image-hero.pd-home-hero {
     display: block;
     min-height: auto;
-    padding-top: 5rem;
+    padding-top: 0;
     padding-bottom: 0;
     background: #29212A;
 }
@@ -2944,11 +2944,11 @@ html.light-mode .pd-marketing-image-hero.pd-home-hero {
 @media (max-width: 767px) {
     .pd-marketing-image-hero.pd-home-hero,
     html.light-mode .pd-marketing-image-hero.pd-home-hero {
-        padding-top: 4rem;
+        padding-top: 0;
     }
 
     .pd-home-hero-media {
-        aspect-ratio: 15 / 14;
+        aspect-ratio: 4 / 5;
         max-height: none;
     }
 

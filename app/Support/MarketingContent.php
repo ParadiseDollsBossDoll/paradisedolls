@@ -16,7 +16,7 @@ class MarketingContent
                 'label' => 'Home',
                 'route' => 'home',
                 'fields' => [
-                    ['key' => 'hero.image', 'label' => 'Hero image', 'type' => 'image', 'default' => 'images/home/main-photo-page.jpeg'],
+                    ['key' => 'hero.image', 'label' => 'Hero image', 'type' => 'image', 'default' => 'images/home/boss-doll-lounge-extended.png'],
                     ['key' => 'hero.title', 'label' => 'Hero title', 'type' => 'text', 'default' => 'Welcome to Boss Doll Creators'],
                     ['key' => 'hero.body', 'label' => 'Hero body', 'type' => 'paragraphs', 'default' => [
                         'A luxury feminine community and Academy for beginners, creators, and ambitious women who want remote income, confidence, freedom, friendships and a life they truly love.',
