@@ -1,5 +1,11 @@
 # Change Log
 
+## 2026-10-18 - Responsive Homepage Hero Prepared
+
+- Added homepage-specific responsive art direction for the current Boss Doll Creators group image: the full five-person composition remains visible on desktop and the central three-person composition is prioritized on phones.
+- Moved phone copy below the important part of the photograph, stacked actions within the viewport, and prevented horizontal overflow without changing Kayla's database-managed wording or uploaded image.
+- Added regression coverage confirming saved site-editor hero content remains authoritative.
+
 ## 2026-10-17 - Boss Doll Creators Rebrand Prepared
 
 - Replaced visible Paradise Dolls naming across public pages, application areas, emails, admin/member/chatter layouts, exports, seeded content, and metadata with Boss Doll Creators.

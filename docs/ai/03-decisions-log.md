@@ -1,5 +1,11 @@
 # Decisions Log
 
+## 2026-10-18 - Preserve Live Site-Editor Content During Visual Releases
+
+- Kayla's saved `marketing_content` site settings are the source of truth for current public wording and uploaded marketing images.
+- Visual-only homepage releases must change Blade structure or CSS without adding a content migration, running a content seeder, or replacing saved site-editor values.
+- The homepage hero uses one uploaded image with responsive art direction: the full group on desktop and the central group on mobile, with mobile copy flowing below the image rather than covering faces.
+
 ## 2026-10-17 - Boss Doll Creators Visible Rebrand
 
 - Boss Doll Creators is the primary visible website and application brand, using the client-supplied logo assets and brand-kit palette and typography.

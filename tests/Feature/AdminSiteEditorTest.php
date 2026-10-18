@@ -72,6 +72,28 @@ class AdminSiteEditorTest extends TestCase
             ->assertSee('First editable paragraph.');
     }
 
+    public function test_home_hero_keeps_saved_content_and_uses_responsive_image_layout(): void
+    {
+        SiteSetting::set(MarketingContent::SETTINGS_KEY, [
+            'home' => [
+                'hero' => [
+                    'image' => 'marketing/site-editor/client-home-hero.webp',
+                    'title' => 'Client managed headline',
+                    'body' => ['Client managed paragraph.'],
+                ],
+            ],
+        ]);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Client managed headline')
+            ->assertSee('Client managed paragraph.')
+            ->assertSee('/storage/marketing/site-editor/client-home-hero.webp', false)
+            ->assertSee('pd-home-hero', false)
+            ->assertSee('pd-home-hero-image', false)
+            ->assertSee('pd-home-hero-content', false);
+    }
+
     public function test_public_footer_has_social_media_links(): void
     {
         $this->get(route('home'))

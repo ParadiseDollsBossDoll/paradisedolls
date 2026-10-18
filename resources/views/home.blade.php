@@ -19,11 +19,11 @@
         $selectedPhoneCountry = \App\Support\CountryCallingCodes::normalizeSelection(old('phone_country', 'GB'), $phoneCountries);
     @endphp
 
-    <section class="pd-marketing-image-hero relative flex min-h-screen items-center overflow-hidden">
-        <img src="{{ $heroImg }}" alt="" class="absolute inset-0 h-full w-full object-cover" aria-hidden="true">
-        <div class="absolute inset-0 bg-gradient-to-b from-black/45 via-black/40 to-boss-dark/95"></div>
+    <section class="pd-marketing-image-hero pd-home-hero relative flex min-h-[100dvh] items-center overflow-hidden">
+        <img src="{{ $heroImg }}" alt="" class="pd-home-hero-image absolute inset-0 h-full w-full object-cover" aria-hidden="true">
+        <div class="pd-home-hero-overlay absolute inset-0 bg-gradient-to-b from-black/45 via-black/40 to-boss-dark/95"></div>
 
-        <div class="relative z-10 mx-auto w-full max-w-7xl px-4 pt-24 sm:px-6 lg:px-8">
+        <div class="pd-home-hero-content relative z-10 mx-auto w-full max-w-7xl px-4 pt-24 sm:px-6 lg:px-8">
             <div class="max-w-4xl text-white">
                 <h1 class="pd-marketing-image-hero-title max-w-[15ch] text-balance font-display text-[clamp(2.8rem,5.2vw,4.8rem)] leading-[1.02] text-[#FFF8F6]">
                     {{ marketing_content('home.hero.title') }}
