@@ -117,13 +117,12 @@ class TestimonialManagementTest extends TestCase
 
         $this->get(route('home'))
             ->assertOk()
-            ->assertSee('Training and support helped me feel ready.')
-            ->assertSee('#Confidence')
-            ->assertSee('@neljhanredondo')
-            ->assertSee(route('profile-photos.show', $model, absolute: false), false);
+            ->assertDontSee('Training and support helped me feel ready.')
+            ->assertDontSee('@neljhanredondo')
+            ->assertSee('images/reviews/review-1.jpeg', false);
     }
 
-    public function test_homepage_only_shows_approved_success_stories(): void
+    public function test_homepage_uses_review_photos_instead_of_text_submissions(): void
     {
         Testimonial::create([
             'name' => 'Published Member',
@@ -142,7 +141,8 @@ class TestimonialManagementTest extends TestCase
         $this->get(route('home'))
             ->assertOk()
             ->assertSeeText('Success Stories')
-            ->assertSee('A published testimonial.')
+            ->assertDontSee('A published testimonial.')
+            ->assertSee('images/reviews/review-1.jpeg', false)
             ->assertDontSee('Visible win')
             ->assertDontSee('A draft testimonial.')
             ->assertDontSeeText('Testimonials & Success Stories');

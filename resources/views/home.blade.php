@@ -208,7 +208,7 @@
         </div>
     </section>
 
-    @if ($testimonials->isNotEmpty())
+    @if (collect(marketing_items('success_stories.review_photos'))->contains(fn ($photo) => !empty($photo['image'])))
     <section class="bg-[#f3f3f5] py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mb-12 flex flex-col justify-between gap-5 md:flex-row md:items-end">
@@ -219,44 +219,7 @@
                 <a href="{{ route('success-stories') }}" class="text-[0.72rem] uppercase tracking-[0.16em] text-boss-rose hover:text-boss-dark">{{ marketing_content('home.testimonials.link_label') }} -></a>
             </div>
 
-            @php
-                $testimonialSlides = $testimonials->map(fn ($testimonial) => [
-                    'name' => $testimonial->name,
-                    'handle' => $testimonial->displayHandle(),
-                    'quote' => $testimonial->quote,
-                    'tag' => $testimonial->displayHashtag(),
-                    'image' => $testimonial->displayAvatar(),
-                ]);
-
-                $baseSlides = $testimonialSlides->values();
-                while ($testimonialSlides->count() < 4) {
-                    $testimonialSlides = $testimonialSlides->concat($baseSlides)->values();
-                }
-
-                $carouselSlides = $testimonialSlides->values()->concat($testimonialSlides->values());
-            @endphp
-
-            <div class="pd-testimonial-carousel -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-                <div class="pd-testimonial-track gap-5">
-                    @foreach ($carouselSlides as $story)
-                        <article class="h-[17.5rem] w-[17.5rem] shrink-0 rounded-lg bg-white p-5 shadow-[0_18px_45px_rgba(15,15,20,0.08)] sm:w-[19.5rem]">
-                            <div class="flex items-center gap-3">
-                                <img src="{{ $story['image'] }}" alt="" class="h-11 w-11 shrink-0 rounded-full object-cover">
-                                <div class="min-w-0 flex-1">
-                                    <h3 class="truncate text-[0.86rem] font-semibold leading-tight text-[#06070b]">{{ $story['name'] }}</h3>
-                                    <p class="mt-1 truncate text-[0.78rem] leading-tight text-[#6f7280]">{{ $story['handle'] }}</p>
-                                </div>
-                            </div>
-
-                            <p class="mt-6 line-clamp-5 text-[0.96rem] leading-[1.45] text-[#151821]">{{ $story['quote'] }}</p>
-
-                            @if ($story['tag'])
-                                <p class="mt-2 truncate text-[0.9rem] leading-tight text-boss-rose">{{ $story['tag'] }}</p>
-                            @endif
-                        </article>
-                    @endforeach
-                </div>
-            </div>
+            <x-review-photo-gallery />
         </div>
     </section>
     @endif

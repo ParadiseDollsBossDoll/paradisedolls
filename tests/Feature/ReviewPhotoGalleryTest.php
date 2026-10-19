@@ -13,12 +13,14 @@ class ReviewPhotoGalleryTest extends TestCase
 
     public function test_reviews_page_displays_all_five_supplied_photos(): void
     {
-        $response = $this->get(route('success-stories'))->assertOk();
-        foreach (range(1, 5) as $number) {
-            $response->assertSee("images/reviews/review-{$number}.jpeg", false);
-            $this->assertFileExists(public_path("images/reviews/review-{$number}.jpeg"));
+        foreach (['success-stories', 'home'] as $route) {
+            $response = $this->get(route($route))->assertOk()->assertSee('pd-review-gallery', false);
+            foreach (range(1, 5) as $number) {
+                $response->assertSee("images/reviews/review-{$number}.jpeg", false);
+                $this->assertFileExists(public_path("images/reviews/review-{$number}.jpeg"));
+            }
+            $response->assertSee('Open full-size review:', false);
         }
-        $response->assertSee('Open full-size review:', false);
     }
 
     public function test_site_editor_photo_choices_and_page_copy_remain_authoritative(): void

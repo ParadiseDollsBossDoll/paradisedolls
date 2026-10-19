@@ -21,18 +21,14 @@
                 <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ marketing_content('success_stories.testimonials.title') }}</h2>
             </div>
 
-            <div class="grid items-start gap-6 md:grid-cols-2">
-                @forelse (collect(marketing_items('success_stories.review_photos'))->filter(fn ($photo) => !empty($photo['image'])) as $photo)
-                    <a href="{{ \App\Support\MarketingContent::imageUrl($photo['image']) }}" target="_blank" rel="noopener" class="block rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-boss-pink" aria-label="{{ __('Open full-size review: :name', ['name' => $photo['title'] ?? '']) }}">
-                        <img src="{{ \App\Support\MarketingContent::imageUrl($photo['image']) }}" alt="{{ __('Review from :name', ['name' => $photo['title'] ?? '']) }}" loading="lazy" decoding="async" class="block h-auto w-full rounded-md">
-                    </a>
-                @empty
-                    <div class="col-span-full rounded-lg bg-white px-6 py-16 text-center shadow-[0_18px_45px_rgba(15,15,20,0.08)]">
-                        <p class="font-display text-[1.5rem] text-boss-dark">{{ marketing_content('success_stories.empty.title') }}</p>
-                        <p class="mx-auto mt-3 max-w-lg text-[0.9rem] leading-relaxed text-boss-dark/58">{{ marketing_content('success_stories.empty.body') }}</p>
-                    </div>
-                @endforelse
-            </div>
+            @if (collect(marketing_items('success_stories.review_photos'))->contains(fn ($photo) => !empty($photo['image'])))
+                <x-review-photo-gallery />
+            @else
+                <div class="rounded-lg bg-white px-6 py-16 text-center shadow-[0_18px_45px_rgba(15,15,20,0.08)]">
+                    <p class="font-display text-[1.5rem] text-boss-dark">{{ marketing_content('success_stories.empty.title') }}</p>
+                    <p class="mx-auto mt-3 max-w-lg text-[0.9rem] leading-relaxed text-boss-dark/58">{{ marketing_content('success_stories.empty.body') }}</p>
+                </div>
+            @endif
         </div>
     </section>
 </x-layouts.marketing>

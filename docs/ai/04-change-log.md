@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-10-19 - Uniform Review Gallery On Homepage And Reviews
+
+- Shared one responsive photo gallery across homepage and Success Stories. Equal 4:5 frames are capped at 340px wide with uncropped contained images and full-size links. Added subtle hover lift and progressive scroll reveal, disabled for reduced motion. Removed the homepage's old duplicated text-review carousel and unused testimonial query; existing review records remain intact.
+
 ## 2026-10-19 - Client Review Photo Gallery
 
 - Replaced text testimonial cards on the public Success Stories page with five supplied review photos, displayed uncropped with full-size links. Site Editor supports additional/reordered review photos through the Success Stories fields. Existing testimonial records and member/admin workflows are preserved; no database migration or saved-copy replacement is required.
