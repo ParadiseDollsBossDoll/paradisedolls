@@ -2907,6 +2907,8 @@ html.light-mode .pd-marketing-image-hero.pd-home-hero {
     overflow-x: auto;
     scrollbar-width: none;
     padding-block: 0.5rem 1.5rem;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
 }
 
 .pd-review-viewport::-webkit-scrollbar {
@@ -2929,6 +2931,12 @@ html.light-mode .pd-marketing-image-hero.pd-home-hero {
     width: 330px;
     max-width: none;
     flex: 0 0 330px;
+    overflow: hidden;
+}
+
+.pd-review-group .pd-review-photo img {
+    object-fit: cover;
+    object-position: center top;
 }
 
 .pd-review-marquee:hover .pd-review-moving-track,
