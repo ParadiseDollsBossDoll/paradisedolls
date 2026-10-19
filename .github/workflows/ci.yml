@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Syntax, tests, and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      APP_ENV: testing
+      APP_DEBUG: 'false'
+      APP_URL: https://bossdollcreators.com
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: array
+      BROADCAST_CONNECTION: 'null'
+      TRANSLATION_ENABLED: 'false'
+      CHATTER_EXCHANGE_RATE_ENABLED: 'false'
+      VITE_REVERB_APP_KEY: ci-public-key
+      VITE_REVERB_HOST: bossdollcreators.com
+      VITE_REVERB_PORT: '443'
+      VITE_REVERB_SCHEME: https
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: bcmath, dom, fileinfo, mbstring, pdo_sqlite, sqlite3, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.2'
+          cache: npm
+
+      - name: Check workflow safety contracts
+        run: node --test tests/ci-workflow.test.mjs
+
+      - name: Check PHP and JavaScript syntax
+        run: |
+          git ls-files -z '*.php' | xargs -0 -r -n1 php -l
+          git ls-files -z '*.js' '*.mjs' | xargs -0 -r -n1 node --check
+
+      - name: Install PHP dependencies including tests
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Generate disposable test key
+        run: php -r 'echo "APP_KEY=base64:".base64_encode(random_bytes(32)).PHP_EOL;' >> "$GITHUB_ENV"
+
+      - name: Install locked frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Run unit and feature tests
+        run: php artisan test

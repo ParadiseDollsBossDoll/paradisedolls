@@ -1,5 +1,10 @@
 # Change Log
 
+## 2026-10-20 - Isolated CI Checks
+
+- Added a read-only GitHub CI job for PHP/JavaScript syntax, Laravel tests against disposable SQLite, and locked-dependency frontend builds. Added workflow regression checks, first observed failing before implementation.
+- Removed automatic production deployment on main pushes; the deployment workflow is manual-only and main-only. CI setup is not a production release.
+
 ## 2026-10-19 - Homepage Review Photo Marquee
 
 - Homepage review photos move right to left in a seamless strip, preserving equal frames and full-size image links. Added pause checkbox, hover/focus pause, inert duplicate images, and manual scrolling when reduced motion is enabled. Success Stories retains the static gallery.

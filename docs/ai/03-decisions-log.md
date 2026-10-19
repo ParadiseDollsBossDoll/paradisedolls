@@ -1,5 +1,10 @@
 # Decisions Log
 
+## 2026-10-20 - CI Does Not Publish
+
+- Run tests and builds on GitHub without VPS credentials or production database access. Keep deployment explicitly manual and separate from CI success.
+- Isolate CI setup from unfinished domain-integration work by starting from the code commit currently on the VPS. Require CI for the actual selected release commit, not an earlier or unrelated branch.
+
 ## 2026-10-18 - Approved Application Agreement Brand Update
 
 - Client explicitly approved replacing Paradise Dolls with Boss Doll Creators in the public application agreement and acceptance information. Retain Lux Dolls LTD, agreement obligations, amounts, and existing email/social/infrastructure identifiers.

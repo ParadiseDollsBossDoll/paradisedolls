@@ -1,5 +1,11 @@
 # Current State
 
+## CI Setup In Progress (2026-10-20)
+
+- `codex/ci-safety-checks` starts at the VPS code commit `f68e6be`, without the unfinished domain-integration changes. It adds isolated Linux syntax/test/build checks and makes deployment manual-only on main. See `docs/ci.md`.
+- User screenshots show the new domain serving HTTP 200 over HTTPS directly from Hostinger, with new-domain cookies. Hostinger now manages DNS; earlier Cloudflare cutover plans are not the current production setup.
+- A new-hostname frontend build is staged on the VPS, not published. CI and the remaining deployment gate must finish before publishing; no database content is changed by this CI setup.
+
 Last updated: 2026-10-18
 
 ## Production Context

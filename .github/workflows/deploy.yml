@@ -1,9 +1,6 @@
 name: Deploy to Hostinger VPS
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 concurrency:
@@ -13,6 +10,7 @@ concurrency:
 jobs:
   deploy:
     name: Build and deploy
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
