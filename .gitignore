@@ -20,6 +20,7 @@ deployment/.env.production
 /storage/*.key
 /storage/pail
 /vendor
+/.scanloop-ci/
 Homestead.json
 Homestead.yaml
 Thumbs.db
