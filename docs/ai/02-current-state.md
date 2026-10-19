@@ -3,7 +3,7 @@
 ## Admin Sidebar Badges (2026-10-20)
 
 - Prepared on `codex/admin-unseen-badges`, not deployed: sidebar badges count pending items updated since each administrator last opened that section's list. Successful list visits acknowledge the section, including paginated/filtered lists; no approval or workflow status changes. Detail views do not acknowledge the entire section.
-- New `admin_sidebar_visits` table stores per-admin section watermarks. Do not release the PHP/Blade changes before running the additive migration. Pending totals inside pages and notification-bell read status remain unchanged.
+- New `admin_sidebar_visits` table stores per-admin section snapshots (record fingerprints, not private record contents). Do not release the PHP/Blade changes before running the additive migration. Pending totals inside pages and notification-bell read status remain unchanged.
 
 ## CI Setup In Progress (2026-10-20)
 

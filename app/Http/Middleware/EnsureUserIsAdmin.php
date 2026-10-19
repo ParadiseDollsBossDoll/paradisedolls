@@ -19,10 +19,12 @@ class EnsureUserIsAdmin
             ? (AdminSidebarBadges::ROUTES[$request->route()?->getName()] ?? null)
             : null;
         $startedAt = now();
+        $badges = app(AdminSidebarBadges::class);
+        $snapshot = $section !== null ? $badges->snapshot() : null;
         $response = $next($request);
 
         if ($section !== null && $response->isSuccessful()) {
-            app(AdminSidebarBadges::class)->markViewed($request->user(), $section, $startedAt);
+            $badges->markViewed($request->user(), $section, $startedAt, $snapshot);
         }
 
         return $response;

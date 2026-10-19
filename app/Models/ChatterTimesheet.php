@@ -25,7 +25,7 @@ class ChatterTimesheet extends Model
     public const WORKFLOW_APPROVED = 'approved';
     public const WORKFLOW_CLOSED = 'closed';
 
-    public const WORKFLOW_TIMEZONE = 'Europe/London';
+    private const WORKFLOW_TIMEZONE = 'Europe/London';
 
     protected $fillable = [
         'user_id', 'period_start', 'period_end', 'status', 'submitted_at', 'reviewed_by', 'reviewed_at',

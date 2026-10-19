@@ -27,7 +27,26 @@ class AdminSidebarBadges
 
     public function counts(User $admin, ?string $viewing = null): array
     {
-        $seen = DB::table('admin_sidebar_visits')->where('user_id', $admin->id)->pluck('seen_at', 'section');
+        $seen = DB::table('admin_sidebar_visits')->where('user_id', $admin->id)->pluck('seen_items', 'section');
+        $counts = [];
+        foreach ($this->snapshot() as $section => $items) {
+            $acknowledged = isset($seen[$section]) ? json_decode($seen[$section], true, 512, JSON_THROW_ON_ERROR) : [];
+            $counts[$section] = 0;
+            if ($viewing === $section) {
+                continue;
+            }
+            foreach ($items as $key => $version) {
+                if (($acknowledged[$key] ?? null) !== $version) {
+                    $counts[$section]++;
+                }
+            }
+        }
+
+        return $counts;
+    }
+
+    public function snapshot(): array
+    {
         $queries = [
             'applications' => [ModelApplication::query()->where('status', ModelApplication::STATUS_PENDING)],
             'onboarding' => [ModelProfile::query()->where('verification_status', ModelProfile::VERIFICATION_SUBMITTED)],
@@ -44,31 +63,23 @@ class AdminSidebarBadges
             'model_reviews' => [ChatterModelReview::query()->whereNull('reviewed_at')],
         ];
 
-        $counts = [];
+        $snapshot = [];
         foreach ($queries as $section => $sources) {
-            $counts[$section] = 0;
-            if ($viewing === $section) {
-                continue;
-            }
+            $snapshot[$section] = [];
             foreach ($sources as $query) {
-                if (isset($seen[$section])) {
-                    $cutoff = Carbon::parse($seen[$section]);
-                    $query->where(function (Builder $unseen) use ($cutoff): void {
-                        $unseen->where('updated_at', '>', $cutoff);
-                        // Timesheets become ready as the payroll week ends, without a row update.
-                        if ($unseen->getModel() instanceof ChatterTimesheet) {
-                            $unseen->orWhereDate('period_end', '>=', $cutoff->copy()->timezone(ChatterTimesheet::WORKFLOW_TIMEZONE)->toDateString());
-                        }
-                    });
+                foreach ($query->cursor() as $record) {
+                    $attributes = $record->getAttributes();
+                    ksort($attributes);
+                    $key = class_basename($record).':'.$record->getKey();
+                    $snapshot[$section][$key] = hash('sha256', json_encode($attributes, JSON_THROW_ON_ERROR));
                 }
-                $counts[$section] += $query->count();
             }
         }
 
-        return $counts;
+        return $snapshot;
     }
 
-    public function markViewed(User $admin, string $section, Carbon $startedAt): void
+    public function markViewed(User $admin, string $section, Carbon $startedAt, ?array $snapshot = null): void
     {
         if (! $admin->isAdmin() || ! in_array($section, self::ROUTES, true)) {
             return;
@@ -78,6 +89,7 @@ class AdminSidebarBadges
             'user_id' => $admin->id,
             'section' => $section,
             'seen_at' => $startedAt->format('Y-m-d H:i:s.u'),
+            'seen_items' => json_encode(($snapshot ?? $this->snapshot())[$section], JSON_THROW_ON_ERROR),
         ];
         DB::table('admin_sidebar_visits')->insertOrIgnore($visit);
         // An older tab finishing later must not move the watermark backwards.
@@ -85,6 +97,6 @@ class AdminSidebarBadges
             ->where('user_id', $admin->id)
             ->where('section', $section)
             ->where('seen_at', '<', $visit['seen_at'])
-            ->update(['seen_at' => $visit['seen_at']]);
+            ->update(['seen_at' => $visit['seen_at'], 'seen_items' => $visit['seen_items']]);
     }
 }

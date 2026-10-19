@@ -12,6 +12,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('section', 40);
             $table->timestamp('seen_at', 6);
+            $table->json('seen_items');
             $table->primary(['user_id', 'section']);
         });
     }
