@@ -2931,11 +2931,12 @@ html.light-mode .pd-marketing-image-hero.pd-home-hero {
     width: 330px;
     max-width: none;
     flex: 0 0 330px;
+    aspect-ratio: 2 / 3;
     overflow: hidden;
 }
 
 .pd-review-group .pd-review-photo img {
-    object-fit: cover;
+    object-fit: contain;
     object-position: center top;
 }
 
