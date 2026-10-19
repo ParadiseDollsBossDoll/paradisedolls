@@ -6,7 +6,7 @@ const root = new URL('../', import.meta.url);
 
 test('CI checks tests and a production build without deployment credentials', () => {
     const workflow = readFileSync(new URL('.github/workflows/ci.yml', root), 'utf8');
-    for (const command of ['node --test tests/ci-workflow.test.mjs', 'php artisan test', 'npm ci', 'npm run build']) {
+    for (const command of ['node --test tests/ci-workflow.test.mjs', 'cp .env.example .env', 'php artisan test', 'npm ci', 'npm run build']) {
         assert.ok(workflow.includes(command), `Missing CI check: ${command}`);
     }
     assert.match(workflow, /contents: read/);

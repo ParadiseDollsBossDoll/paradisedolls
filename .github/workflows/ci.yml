@@ -62,6 +62,9 @@ jobs:
           git ls-files -z '*.php' | xargs -0 -r -n1 php -l
           git ls-files -z '*.js' '*.mjs' | xargs -0 -r -n1 node --check
 
+      - name: Create disposable test environment
+        run: cp .env.example .env
+
       - name: Install PHP dependencies including tests
         run: composer install --prefer-dist --no-interaction --no-progress
 

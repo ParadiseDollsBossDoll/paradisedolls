@@ -7,6 +7,11 @@ CI uses disposable test credentials, not production secrets. It cannot publish f
 to the VPS. A green result covers those checks, not a live browser/chat test or a
 security audit of the entire repository.
 
+The first Linux run reproduced an existing course-access regression: enrolled
+models bypassed verification. This branch also restores verification before the
+enrollment allow rule. The existing unverified-member test is retained unchanged;
+this application fix requires its own explicit deployment approval.
+
 The Hostinger deployment workflow is manual-only and restricted to `main`.
 Do not run that workflow to check a branch: it uploads files to production.
 Deployment still requires explicit approval, release review, current site/database

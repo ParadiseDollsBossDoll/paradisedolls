@@ -20,12 +20,12 @@ class EnsureUserIsEnrolledInCourse
 
         $user = $request->user();
 
-        if ($user?->enrolledCourses()->whereKey($course->id)->exists()) {
-            return $next($request);
-        }
-
         if (! $user?->isChatter() && ! $user?->modelProfile()->first()?->isVerified()) {
             return $this->deny($request, $course, __('Verification must be approved before Kayla can unlock this course.'));
+        }
+
+        if ($user?->enrolledCourses()->whereKey($course->id)->exists()) {
+            return $next($request);
         }
 
         return $this->deny($request, $course, __('Locked pending Kayla approval.'));

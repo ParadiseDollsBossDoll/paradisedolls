@@ -4,6 +4,7 @@
 
 - Added a read-only GitHub CI job for PHP/JavaScript syntax, Laravel tests against disposable SQLite, and locked-dependency frontend builds. Added workflow regression checks, first observed failing before implementation.
 - Removed automatic production deployment on main pushes; the deployment workflow is manual-only and main-only. CI setup is not a production release.
+- The first local and Linux full-suite runs reproduced an existing course verification bypass. Moved verification ahead of the enrollment allow rule, retaining the existing failing regression test. This application fix is not deployed.
 
 ## 2026-10-19 - Homepage Review Photo Marquee
 
