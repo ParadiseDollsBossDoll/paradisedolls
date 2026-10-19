@@ -50,9 +50,9 @@ class TestimonialManagementTest extends TestCase
 
         $this->get(route('success-stories'))
             ->assertOk()
-            ->assertSee('@successdoll')
-            ->assertSee('The support system made the opportunity feel achievable.')
-            ->assertSee('#Confidence');
+            ->assertDontSee('@successdoll')
+            ->assertDontSee('The support system made the opportunity feel achievable.')
+            ->assertSee('images/reviews/review-1.jpeg', false);
     }
 
     public function test_model_submitted_testimonial_needs_admin_approval_before_public_display(): void
@@ -175,7 +175,8 @@ class TestimonialManagementTest extends TestCase
             ->assertSeeText('Every Boss Doll Creator’s journey is unique')
             ->assertSeeText('success is about more than reaching your goals')
             ->assertSeeText('Your story starts with a single step')
-            ->assertSee('pd-success-story-scroll', false)
+            ->assertSee('images/reviews/review-5.jpeg', false)
+            ->assertDontSee('pd-success-story-scroll', false)
             ->assertDontSee('Long win')
             ->assertDontSeeText('Community Testimonials');
     }

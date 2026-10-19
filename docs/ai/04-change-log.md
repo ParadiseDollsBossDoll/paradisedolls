@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-10-19 - Client Review Photo Gallery
+
+- Replaced text testimonial cards on the public Success Stories page with five supplied review photos, displayed uncropped with full-size links. Site Editor supports additional/reordered review photos through the Success Stories fields. Existing testimonial records and member/admin workflows are preserved; no database migration or saved-copy replacement is required.
+
 ## 2026-10-19 - Restore Blank Page Layout And Add Navigation
 
 - Restored the original blank-page layout with banner followed by logo, title, and content. Published pages appear under Explore on desktop and in mobile navigation using their saved title; drafts remain hidden. Existing saved fields are not deleted.

@@ -21,25 +21,11 @@
                 <h2 class="font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-boss-dark">{{ marketing_content('success_stories.testimonials.title') }}</h2>
             </div>
 
-            <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                @forelse ($testimonials as $testimonial)
-                    <article class="flex h-[16rem] flex-col rounded-lg bg-white p-5 shadow-[0_18px_45px_rgba(15,15,20,0.08)] sm:h-[17rem]">
-                        <div class="flex shrink-0 items-center gap-3">
-                            <img src="{{ $testimonial->displayAvatar() }}" alt="" class="h-11 w-11 shrink-0 rounded-full object-cover">
-                            <div class="min-w-0 flex-1">
-                                <h3 class="truncate text-[0.86rem] font-semibold leading-tight text-[#06070b]">{{ $testimonial->name }}</h3>
-                                <p class="mt-1 truncate text-[0.78rem] leading-tight text-[#6f7280]">{{ $testimonial->displayHandle() }}</p>
-                            </div>
-                        </div>
-
-                        <div class="pd-success-story-scroll mt-6 min-h-0 flex-1 overflow-y-auto pr-2">
-                            <p class="text-[0.96rem] leading-[1.45] text-[#151821]">{{ $testimonial->quote }}</p>
-                        </div>
-
-                        @if ($testimonial->displayHashtag())
-                            <p class="mt-4 shrink-0 truncate text-[0.9rem] leading-tight text-boss-rose">{{ $testimonial->displayHashtag() }}</p>
-                        @endif
-                    </article>
+            <div class="grid items-start gap-6 md:grid-cols-2">
+                @forelse (collect(marketing_items('success_stories.review_photos'))->filter(fn ($photo) => !empty($photo['image'])) as $photo)
+                    <a href="{{ \App\Support\MarketingContent::imageUrl($photo['image']) }}" target="_blank" rel="noopener" class="block rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-boss-pink" aria-label="{{ __('Open full-size review: :name', ['name' => $photo['title'] ?? '']) }}">
+                        <img src="{{ \App\Support\MarketingContent::imageUrl($photo['image']) }}" alt="{{ __('Review from :name', ['name' => $photo['title'] ?? '']) }}" loading="lazy" decoding="async" class="block h-auto w-full rounded-md">
+                    </a>
                 @empty
                     <div class="col-span-full rounded-lg bg-white px-6 py-16 text-center shadow-[0_18px_45px_rgba(15,15,20,0.08)]">
                         <p class="font-display text-[1.5rem] text-boss-dark">{{ marketing_content('success_stories.empty.title') }}</p>

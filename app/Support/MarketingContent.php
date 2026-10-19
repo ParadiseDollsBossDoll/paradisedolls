@@ -382,6 +382,13 @@ class MarketingContent
                 [
                     ['key' => 'testimonials.eyebrow', 'label' => 'Success stories eyebrow', 'type' => 'text', 'default' => 'Success Stories'],
                     ['key' => 'testimonials.title', 'label' => 'Testimonials title', 'type' => 'text', 'default' => 'Real words from approved Boss Doll Creators members'],
+                    ['key' => 'review_photos', 'label' => 'Review photos', 'type' => 'cards', 'card_fields' => ['image' => 'image', 'title' => 'text'], 'default' => [
+                        ['image' => 'images/reviews/review-1.jpeg', 'title' => 'Nova - Model'],
+                        ['image' => 'images/reviews/review-2.jpeg', 'title' => 'Franky - Model'],
+                        ['image' => 'images/reviews/review-3.jpeg', 'title' => 'Blazing Baddie - Model'],
+                        ['image' => 'images/reviews/review-4.jpeg', 'title' => 'Julius - Staff member / Chatter'],
+                        ['image' => 'images/reviews/review-5.jpeg', 'title' => 'Judie - Staff member / Chatter'],
+                    ]],
                     ['key' => 'empty.title', 'label' => 'Empty state title', 'type' => 'text', 'default' => 'Success stories are coming soon'],
                     ['key' => 'empty.body', 'label' => 'Empty state body', 'type' => 'textarea', 'default' => 'The team can add approved member testimonials from the admin dashboard as the community grows.'],
                 ],
