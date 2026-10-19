@@ -16,6 +16,8 @@ Last updated: 2026-10-18
 
 ## Recent Work In Progress
 
+- Two empty editable pages are available in Site Editor as Blank Page 1 and Blank Page 2. Both default to draft; public URLs return 404 until published, and admin previews are private/noindex. Page uploads use protected storage, with access withdrawn when unpublished. No public navigation/sitemap links are added. This feature is separate from domain cutover and preserves existing homepage content.
+
 - The homepage hero has a dedicated responsive composition for the current five-person Boss Doll image: desktop retains the full group, while mobile centers the main three people and places database-managed copy below the image so it does not cover faces. A single-dot site-editor title placeholder is not rendered. The layout change does not seed or replace Kayla's saved site-editor content.
 - The visible product brand is being changed to Boss Doll Creators using the supplied logo kit, Boss Pink (`#FF0080`), Doll Blush (`#FFE6F0`), Warm Cream (`#FFF7EF`), Deep Ink (`#29212A`), and DejaVu Sans typography.
 - DejaVu Sans Regular and Bold are now self-hosted under `public/fonts/dejavu` and loaded by the shared stylesheet, so public, guest, member, chatter, admin, and community layouts no longer depend on an unavailable system-font fallback.

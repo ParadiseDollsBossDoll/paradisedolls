@@ -5,9 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\SiteSetting;
 use App\Support\MarketingContent;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -16,10 +17,10 @@ class AdminSettingsController extends Controller
     public function editMarketingContent(Request $request): View
     {
         $pages = MarketingContent::pages();
-        $activePage = (string) $request->query('page', array_key_first($pages));
+        $activePage = (string) $request->query('page', 'home');
 
         if (! isset($pages[$activePage])) {
-            $activePage = array_key_first($pages);
+            $activePage = 'home';
         }
 
         return view('admin.site-editor.edit', [
@@ -32,7 +33,7 @@ class AdminSettingsController extends Controller
     public function updateMarketingContent(Request $request): RedirectResponse
     {
         $pages = MarketingContent::pages();
-        $activePage = (string) $request->input('_page', array_key_first($pages));
+        $activePage = (string) $request->input('_page', 'home');
 
         abort_unless(isset($pages[$activePage]), 404);
 
@@ -47,6 +48,11 @@ class AdminSettingsController extends Controller
         $errors = [];
         $settings = SiteSetting::get(MarketingContent::SETTINGS_KEY, []);
         $pageInput = $request->input("content.{$activePage}", []);
+
+        if (in_array($activePage, MarketingContent::blankPageKeys(), true)
+            && $request->boolean("content.{$activePage}.published")) {
+            $request->validate(["content.{$activePage}.title" => ['required', 'string', 'max:300']]);
+        }
 
         foreach ($pages[$activePage]['fields'] as $field) {
             $this->saveMarketingField($request, $settings, $activePage, $field, $pageInput, $errors);
@@ -66,9 +72,9 @@ class AdminSettingsController extends Controller
     public function updateTheme(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'preset'       => ['nullable', 'string', 'max:32'],
-            'mode'         => ['required', 'in:light,dark'],
-            'primary'      => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'preset' => ['nullable', 'string', 'max:32'],
+            'mode' => ['required', 'in:light,dark'],
+            'primary' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'primaryLight' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
         ]);
 
@@ -83,6 +89,13 @@ class AdminSettingsController extends Controller
         $fullKey = "{$pageKey}.{$field['key']}";
         $inputKey = "content.{$pageKey}.{$fieldId}";
         $type = $field['type'];
+
+        if ($type === 'boolean') {
+            $request->validate([$inputKey => ['sometimes', 'boolean']]);
+            data_set($settings, $fullKey, $request->boolean($inputKey));
+
+            return;
+        }
 
         if ($type === 'cards') {
             $cards = [];
@@ -99,7 +112,7 @@ class AdminSettingsController extends Controller
                     if ($subType === 'image') {
                         $file = $request->file("card_image_files.{$pageKey}.{$fieldId}.{$index}.{$subKey}");
                         $value = $file
-                            ? $file->store('marketing/site-editor', 'public')
+                            ? $this->storeMarketingImage($file, $pageKey)
                             : trim((string) ($submittedRow[$subKey] ?? data_get($defaults, "{$index}.{$subKey}", '')));
                     } else {
                         $value = trim((string) ($submittedRow[$subKey] ?? ''));
@@ -126,7 +139,7 @@ class AdminSettingsController extends Controller
         if ($type === 'image') {
             $file = $request->file("image_files.{$pageKey}.{$fieldId}");
             $value = $file
-                ? $file->store('marketing/site-editor', 'public')
+                ? $this->storeMarketingImage($file, $pageKey)
                 : trim((string) ($pageInput[$fieldId] ?? MarketingContent::text($fullKey)));
 
             data_set($settings, $fullKey, $value);
@@ -158,6 +171,15 @@ class AdminSettingsController extends Controller
         }
 
         data_set($settings, $fullKey, $rawValue);
+    }
+
+    private function storeMarketingImage(UploadedFile $file, string $pageKey): string
+    {
+        if (in_array($pageKey, MarketingContent::blankPageKeys(), true)) {
+            return $file->store("marketing/drafts/{$pageKey}", 'local');
+        }
+
+        return $file->store('marketing/site-editor', 'public');
     }
 
     private function rowHasContent(array $row): bool

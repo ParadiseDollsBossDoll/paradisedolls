@@ -1,5 +1,10 @@
 # Change Log
 
+## 2026-10-19 - Two Editable Draft Pages
+
+- Added Blank Page 1 and Blank Page 2 to Site Editor with empty logo, banner, title, introduction, and repeatable content sections. Both default to unpublished and public requests return 404; admin-only previews are private/no-store and noindex.
+- Publishing requires a title and exposes a public link in Site Editor; unpublishing hides the URL again. No public navigation or sitemap links are added. Existing homepage settings are preserved. Uses existing site_settings storage; no database migration required.
+
 ## 2026-10-18 - Application Copy Approved By Client
 
 - Updated public agreement and acceptance text to Boss Doll Creators and changed the message placeholder to the client's supplied wording. No saved marketing content or agreement obligations were changed.

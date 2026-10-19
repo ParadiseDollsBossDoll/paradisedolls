@@ -2,7 +2,7 @@
     use App\Support\MarketingContent;
 
     $activeRoute = $activeDefinition['route'] ?? 'home';
-    $viewPageUrl = route($activeRoute);
+    $viewPageUrl = route($activeRoute, $activeDefinition['parameters'] ?? []);
 
     $inputClasses = 'mt-2 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-[0.88rem] text-boss-ivory outline-none transition-colors placeholder:text-boss-ivory/25 focus:border-boss-gold/50 focus:bg-white/[0.06]';
     $labelClasses = 'text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-boss-ivory/45';
@@ -60,6 +60,15 @@
             @csrf
             @method('PUT')
             <input type="hidden" name="_page" value="{{ $activePage }}">
+
+            @if (in_array($activePage, MarketingContent::blankPageKeys(), true))
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 py-3">
+                    <span class="text-sm text-boss-ivory">{{ MarketingContent::value($activePage.'.published') === true ? __('Published') : __('Draft') }}</span>
+                    @if (MarketingContent::value($activePage.'.published') === true)
+                        <a href="{{ route('editable-page', $activePage) }}" target="_blank" rel="noopener" class="text-sm text-boss-gold">{{ __('Open public page') }}</a>
+                    @endif
+                </div>
+            @endif
 
             <section class="rounded-2xl border border-white/[0.07] bg-boss-panel/80 p-5 shadow-luxe sm:p-6">
                 <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -132,7 +141,10 @@
                             @else
                                 <label for="{{ $activePage }}-{{ $fieldId }}" class="{{ $labelClasses }}">{{ __($field['label']) }}</label>
 
-                                @if ($fieldType === 'image')
+                                @if ($fieldType === 'boolean')
+                                    <input type="hidden" name="content[{{ $activePage }}][{{ $fieldId }}]" value="0">
+                                    <input id="{{ $activePage }}-{{ $fieldId }}" type="checkbox" name="content[{{ $activePage }}][{{ $fieldId }}]" value="1" @checked(old($errorKey, marketing_content($fullKey))) class="ml-3 h-5 w-5 accent-boss-pink">
+                                @elseif ($fieldType === 'image')
                                     @php $imageValue = MarketingContent::text($fullKey); @endphp
                                     @if ($imageValue !== '')
                                         <img src="{{ MarketingContent::imageUrl($imageValue) }}" alt="" class="mt-3 h-48 w-full rounded-xl object-cover">

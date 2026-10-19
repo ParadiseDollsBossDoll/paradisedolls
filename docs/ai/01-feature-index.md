@@ -455,6 +455,8 @@ Related:
 
 Notes: Handles admin dashboard totals/activity, theme settings, marketing content editing, and site-wide configurable content.
 
+Two draft marketing pages reuse Site Editor fields and existing site_settings storage. See `app/Http/Controllers/EditablePageController.php`, `resources/views/marketing/editable-page.blade.php`, and `tests/Feature/EditablePagesTest.php` for private previews, protected uploads, and publishing checks.
+
 ## Translation And Localization
 
 Start here:

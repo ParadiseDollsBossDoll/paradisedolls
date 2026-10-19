@@ -51,6 +51,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
 
+Route::get('/pages/{page}', [\App\Http\Controllers\EditablePageController::class, 'show'])
+    ->where('page', 'blank_page_[12]')->name('editable-page');
+Route::get('/pages/{page}/assets/{file}', [\App\Http\Controllers\EditablePageController::class, 'asset'])
+    ->where(['page' => 'blank_page_[12]', 'file' => '[a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp)'])->name('editable-page.asset');
+
 Route::get('/email-preferences/unsubscribe/{user}', [MarketingPreferenceController::class, 'show'])
     ->middleware('signed')
     ->name('marketing.unsubscribe');
@@ -267,6 +272,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
         Route::patch('/chatter-reviews/{review}', [AdminChatterPerformanceReviewController::class, 'update'])->name('chatter-reviews.update');
     });
     Route::get('/site-editor', [AdminSettingsController::class, 'editMarketingContent'])->name('site-editor.edit');
+    Route::get('/site-editor/{page}/preview', [\App\Http\Controllers\EditablePageController::class, 'preview'])
+        ->where('page', 'blank_page_[12]')->name('site-editor.preview');
     Route::put('/site-editor', [AdminSettingsController::class, 'updateMarketingContent'])
         ->middleware('throttle:admin-actions')
         ->name('site-editor.update');

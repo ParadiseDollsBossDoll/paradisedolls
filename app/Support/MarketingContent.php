@@ -12,6 +12,8 @@ class MarketingContent
     public static function pages(): array
     {
         return [
+            'blank_page_1' => self::blankPage(1),
+            'blank_page_2' => self::blankPage(2),
             'home' => [
                 'label' => 'Home',
                 'route' => 'home',
@@ -479,6 +481,10 @@ class MarketingContent
             return '';
         }
 
+        if (preg_match('~^marketing/drafts/(blank_page_[12])/([a-zA-Z0-9._-]+)$~', $value, $matches)) {
+            return route('editable-page.asset', ['page' => $matches[1], 'file' => $matches[2]]);
+        }
+
         if (preg_match('/^https?:\/\//i', $value) || str_starts_with($value, '//')) {
             return $value;
         }
@@ -562,6 +568,29 @@ class MarketingContent
     public static function splitParagraphs(string $value): array
     {
         return array_values(array_filter(array_map('trim', preg_split('/\R{2,}/u', $value) ?: []), fn ($item) => $item !== ''));
+    }
+
+    public static function blankPageKeys(): array
+    {
+        return ['blank_page_1', 'blank_page_2'];
+    }
+
+    private static function blankPage(int $number): array
+    {
+        return [
+            'label' => "Blank Page {$number}",
+            'route' => 'admin.site-editor.preview',
+            'parameters' => ['page' => "blank_page_{$number}"],
+            'fields' => [
+                ['key' => 'published', 'label' => 'Published', 'type' => 'boolean', 'default' => false],
+                ['key' => 'title', 'label' => 'Page title', 'type' => 'text', 'default' => ''],
+                ['key' => 'description', 'label' => 'Search description', 'type' => 'textarea', 'default' => ''],
+                ['key' => 'logo', 'label' => 'Page logo', 'type' => 'image', 'default' => ''],
+                ['key' => 'hero.image', 'label' => 'Banner image', 'type' => 'image', 'default' => ''],
+                ['key' => 'body', 'label' => 'Introduction', 'type' => 'paragraphs', 'default' => []],
+                ['key' => 'sections', 'label' => 'Content sections', 'type' => 'cards', 'card_fields' => ['image' => 'image', 'title' => 'text', 'body' => 'textarea'], 'default' => []],
+            ],
+        ];
     }
 
     private static function simplePage(string $label, string $route, string $heroImage, string $heroEyebrow, string $heroTitle, string $heroBody, array $extraFields): array
