@@ -34,10 +34,10 @@
                         class="block w-full px-5 py-4 text-left transition hover:bg-white/[0.025] {{ $isUnread ? 'bg-boss-gold/[0.035]' : '' }}"
                     >
                     <div class="flex items-start gap-3">
-                        <span class="mt-1 h-2.5 w-2.5 shrink-0 rounded-full {{ $isUnread ? 'bg-boss-gold' : 'bg-white/15' }}"></span>
+                        <span aria-hidden="true" class="mt-1 h-2.5 w-2.5 shrink-0 rounded-full {{ $isUnread ? 'bg-boss-gold' : 'invisible' }}"></span>
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center justify-between gap-2">
-                                <p class="font-medium text-boss-ivory">{{ $data['title'] ?? __('Notification') }}</p>
+                                <p class="{{ $isUnread ? 'font-semibold text-boss-ivory' : 'font-normal text-boss-ivory/60' }}">{{ $data['title'] ?? __('Notification') }}</p>
                                 <span class="text-[0.68rem] text-boss-ivory/28">{{ $notification->created_at?->diffForHumans() }}</span>
                             </div>
                             @if (filled($data['body'] ?? null))

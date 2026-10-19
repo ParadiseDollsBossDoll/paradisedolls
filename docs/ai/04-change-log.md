@@ -1,5 +1,10 @@
 # Change Log
 
+## 2026-10-20 - Notification Read-State Styling
+
+- Read notification titles use regular weight and muted text in the bell dropdown and notifications page. Unread titles remain semibold with a dot; read dots are hidden without changing alignment. Existing read/open actions remain unchanged.
+- Added a rendered-HTML regression test for both views, observed failing before the styling change. Not deployed.
+
 ## 2026-10-20 - Per-Admin Unseen Sidebar Badges
 
 - Replaced shared pending-work sidebar counts with per-admin unseen counts. Successful section-list visits acknowledge current pending items; new or updated pending records reappear. No approvals, rejections, payroll states, or notification-bell read flags are changed.

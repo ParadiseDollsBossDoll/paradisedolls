@@ -81,10 +81,10 @@
                         @click="open = false"
                     >
                     <div class="flex gap-3">
-                        <span class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full {{ $isUnread ? 'bg-boss-gold shadow-[0_0_16px_rgba(238, 180, 195, 0.55)]' : 'bg-white/12' }}"></span>
+                        <span aria-hidden="true" class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full {{ $isUnread ? 'bg-boss-gold' : 'invisible' }}"></span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-start justify-between gap-3">
-                                <p class="line-clamp-1 text-sm font-semibold text-boss-ivory/82">{{ $data['title'] ?? __('Notification') }}</p>
+                                <p class="line-clamp-1 text-sm {{ $isUnread ? 'font-semibold text-boss-ivory/82' : 'font-normal text-boss-ivory/60' }}">{{ $data['title'] ?? __('Notification') }}</p>
                                 <span class="shrink-0 text-[0.62rem] text-boss-ivory/24">{{ $notification['created_at']?->diffForHumans(null, true) }}</span>
                             </div>
                             @if (filled($data['body'] ?? null))
