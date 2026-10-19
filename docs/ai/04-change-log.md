@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-10-19 - Restore Blank Page Layout And Add Navigation
+
+- Restored the original blank-page layout with banner followed by logo, title, and content. Published pages appear under Explore on desktop and in mobile navigation using their saved title; drafts remain hidden. Existing saved fields are not deleted.
+
 ## 2026-10-19 - Draft Page Image Heroes
 
 - Both editable draft pages now use the existing marketing image-hero layout with transparent top navigation, overlaid page title, optional eyebrow, logo, and separate hero paragraphs. Introduction and image/text sections remain below the banner, matching the Our Story composition. Saved content and draft/publication controls are preserved.

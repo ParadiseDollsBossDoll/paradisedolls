@@ -14,7 +14,7 @@ class EditablePagesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_hero_text_and_lower_content_have_separate_editable_fields(): void
+    public function test_previous_layout_and_published_navigation_titles_are_restored(): void
     {
         SiteSetting::set(MarketingContent::SETTINGS_KEY, ['blank_page_1' => [
             'published' => true,
@@ -25,9 +25,16 @@ class EditablePagesTest extends TestCase
         ]]);
 
         $this->get(route('editable-page', 'blank_page_1'))->assertOk()
-            ->assertSee('pd-marketing-image-hero-title', false)
-            ->assertSee('object-cover object-top', false)
-            ->assertSeeInOrder(['Client eyebrow', 'Banner description', 'Below banner heading', 'Below banner paragraph']);
+            ->assertDontSee('pd-marketing-image-hero-title', false)
+            ->assertSee('block h-auto w-full', false)
+            ->assertSee('Below banner paragraph');
+
+        $this->get('/')->assertOk()
+            ->assertSee('href="'.route('editable-page', 'blank_page_1').'"', false)
+            ->assertSee('Client hero title');
+        SiteSetting::set(MarketingContent::SETTINGS_KEY, ['blank_page_1' => ['published' => false, 'title' => 'Client hero title']]);
+        $this->get('/')->assertDontSee('href="'.route('editable-page', 'blank_page_1').'"', false)
+            ->assertDontSee('Client hero title');
     }
 
     public function test_draft_can_be_edited_and_uploaded_images_do_not_publish_it(): void

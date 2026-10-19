@@ -20,7 +20,19 @@
         ['route' => 'multistreaming', 'label' => marketing_content('shared.nav.multistreaming_label')],
     ];
 
-    $exploreIsActive = collect($exploreLinks)->contains(fn ($link) => request()->routeIs($link['route']));
+    foreach (\App\Support\MarketingContent::blankPageKeys() as $pageKey) {
+        $pageTitle = marketing_content($pageKey.'.title');
+        if (\App\Support\MarketingContent::value($pageKey.'.published') === true && trim($pageTitle) !== '') {
+            $exploreLinks[] = [
+                'route' => 'editable-page',
+                'parameters' => ['page' => $pageKey],
+                'label' => $pageTitle,
+                'active' => request()->routeIs('editable-page') && request()->route('page') === $pageKey,
+            ];
+        }
+    }
+
+    $exploreIsActive = collect($exploreLinks)->contains(fn ($link) => $link['active'] ?? request()->routeIs($link['route']));
 
     $applyUrl = marketing_link('shared.nav.apply_url', route('home').'#apply');
 @endphp
@@ -106,8 +118,8 @@
                     >
                         @foreach ($exploreLinks as $link)
                             <a
-                                href="{{ route($link['route']) }}"
-                                class="flex min-h-11 items-center rounded px-3 py-2.5 text-sm font-medium transition-colors hover:bg-boss-muted hover:text-boss-gold {{ request()->routeIs($link['route']) ? 'bg-boss-muted text-boss-gold' : '' }}"
+                                href="{{ route($link['route'], $link['parameters'] ?? []) }}"
+                                class="flex min-h-11 items-center rounded px-3 py-2.5 text-sm font-medium transition-colors hover:bg-boss-muted hover:text-boss-gold {{ ($link['active'] ?? request()->routeIs($link['route'])) ? 'bg-boss-muted text-boss-gold' : '' }}"
                                 @click="exploreOpen = false"
                             >
                                 {{ $link['label'] }}
@@ -183,8 +195,8 @@
                     @endif
 
                     <a
-                        href="{{ route($link['route']) }}"
-                        class="flex min-h-12 items-center rounded-md px-3 py-3 text-sm font-medium text-boss-dark transition-colors hover:bg-boss-cream hover:text-boss-gold {{ request()->routeIs($link['route']) ? 'bg-boss-muted text-boss-gold' : '' }}"
+                        href="{{ route($link['route'], $link['parameters'] ?? []) }}"
+                        class="flex min-h-12 items-center rounded-md px-3 py-3 text-sm font-medium text-boss-dark transition-colors hover:bg-boss-cream hover:text-boss-gold {{ ($link['active'] ?? request()->routeIs($link['route'])) ? 'bg-boss-muted text-boss-gold' : '' }}"
                         @click="navOpen = false"
                     >
                         {{ $link['label'] }}
