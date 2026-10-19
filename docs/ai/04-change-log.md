@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-10-19 - Homepage Review Photo Marquee
+
+- Homepage review photos move right to left in a seamless strip, preserving equal frames and full-size image links. Added pause checkbox, hover/focus pause, inert duplicate images, and manual scrolling when reduced motion is enabled. Success Stories retains the static gallery.
+
 ## 2026-10-19 - Uniform Review Gallery On Homepage And Reviews
 
 - Shared one responsive photo gallery across homepage and Success Stories. Equal 4:5 frames are capped at 340px wide with uncropped contained images and full-size links. Added subtle hover lift and progressive scroll reveal, disabled for reduced motion. Removed the homepage's old duplicated text-review carousel and unused testimonial query; existing review records remain intact.

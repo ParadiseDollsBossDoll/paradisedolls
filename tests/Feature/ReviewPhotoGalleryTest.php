@@ -14,7 +14,8 @@ class ReviewPhotoGalleryTest extends TestCase
     public function test_reviews_page_displays_all_five_supplied_photos(): void
     {
         foreach (['success-stories', 'home'] as $route) {
-            $response = $this->get(route($route))->assertOk()->assertSee('pd-review-gallery', false);
+            $response = $this->get(route($route))->assertOk()
+                ->assertSee($route === 'home' ? 'pd-review-moving-track' : 'pd-review-gallery', false);
             foreach (range(1, 5) as $number) {
                 $response->assertSee("images/reviews/review-{$number}.jpeg", false);
                 $this->assertFileExists(public_path("images/reviews/review-{$number}.jpeg"));

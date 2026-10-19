@@ -2903,6 +2903,44 @@ html.light-mode .pd-marketing-image-hero.pd-home-hero {
     background: #29212A;
 }
 
+.pd-review-viewport {
+    overflow-x: auto;
+    padding-block: 0.5rem 1.5rem;
+}
+
+.pd-review-moving-track {
+    display: flex;
+    width: max-content;
+    animation: pd-review-slide-left 45s linear infinite;
+}
+
+.pd-review-group {
+    display: flex;
+    gap: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+.pd-review-group .pd-review-photo {
+    width: 280px;
+    flex: 0 0 280px;
+}
+
+.pd-review-marquee:hover .pd-review-moving-track,
+.pd-review-marquee:focus-within .pd-review-moving-track,
+.pd-review-marquee:has(.pd-review-pause:checked) .pd-review-moving-track {
+    animation-play-state: paused;
+}
+
+@keyframes pd-review-slide-left {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pd-review-moving-track { animation: none; }
+    .pd-review-group[aria-hidden="true"] { display: none; }
+}
+
 .pd-review-gallery {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));

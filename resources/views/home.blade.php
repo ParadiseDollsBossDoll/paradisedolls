@@ -219,7 +219,7 @@
                 <a href="{{ route('success-stories') }}" class="text-[0.72rem] uppercase tracking-[0.16em] text-boss-rose hover:text-boss-dark">{{ marketing_content('home.testimonials.link_label') }} -></a>
             </div>
 
-            <x-review-photo-gallery />
+            <x-review-photo-gallery :scrolling="true" />
         </div>
     </section>
     @endif
