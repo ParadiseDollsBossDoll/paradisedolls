@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\AdminSidebarBadges;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,6 +15,16 @@ class EnsureUserIsAdmin
             abort(403);
         }
 
-        return $next($request);
+        $section = $request->isMethod('GET')
+            ? (AdminSidebarBadges::ROUTES[$request->route()?->getName()] ?? null)
+            : null;
+        $startedAt = now();
+        $response = $next($request);
+
+        if ($section !== null && $response->isSuccessful()) {
+            app(AdminSidebarBadges::class)->markViewed($request->user(), $section, $startedAt);
+        }
+
+        return $response;
     }
 }

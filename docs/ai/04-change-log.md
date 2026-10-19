@@ -1,5 +1,10 @@
 # Change Log
 
+## 2026-10-20 - Per-Admin Unseen Sidebar Badges
+
+- Replaced shared pending-work sidebar counts with per-admin unseen counts. Successful section-list visits acknowledge current pending items; new or updated pending records reappear. No approvals, rejections, payroll states, or notification-bell read flags are changed.
+- Added an isolated visit table, guarded admin acknowledgement, and regression coverage for admin isolation, new records, updates, out-of-order tabs, and payroll-week readiness without row writes. Production deployment remains pending.
+
 ## 2026-10-20 - Isolated CI Checks
 
 - Added a read-only GitHub CI job for PHP/JavaScript syntax, Laravel tests against disposable SQLite, and locked-dependency frontend builds. Added workflow regression checks, first observed failing before implementation.

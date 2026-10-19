@@ -455,6 +455,8 @@ Related:
 
 Notes: Handles admin dashboard totals/activity, theme settings, marketing content editing, and site-wide configurable content.
 
+Sidebar unseen badges: `app/Services/AdminSidebarBadges.php`, `app/Http/Middleware/EnsureUserIsAdmin.php`, `tests/Feature/AdminSidebarBadgesTest.php`, and the `admin_sidebar_visits` migration. List visits acknowledge a section per administrator; pending page totals are separate.
+
 Two draft marketing pages reuse Site Editor fields and existing site_settings storage. See `app/Http/Controllers/EditablePageController.php`, `resources/views/marketing/editable-page.blade.php`, and `tests/Feature/EditablePagesTest.php` for private previews, protected uploads, and publishing checks.
 
 ## Translation And Localization

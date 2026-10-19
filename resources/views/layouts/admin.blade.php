@@ -3,38 +3,10 @@
     $initials = $user->initials();
     $profilePhotoUrl = $user->profilePhotoUrl();
 
-    [$pendingLayoutApplications, $pendingLayoutVerification, $referralActionCount, $chatterActionCount, $chatterReviewCount, $modelReviewCount] =
-        \Illuminate\Support\Facades\Cache::remember('admin_sidebar_counts_v3', 60, fn () => [
-            \App\Models\ModelApplication::query()
-                ->where('status', \App\Models\ModelApplication::STATUS_PENDING)
-                ->count(),
-            \App\Models\ModelProfile::query()
-                ->where('verification_status', \App\Models\ModelProfile::VERIFICATION_SUBMITTED)
-                ->count(),
-            \App\Models\ModelReferral::query()
-                ->where(function ($query) {
-                    $query
-                        ->where(function ($leadQuery) {
-                            $leadQuery
-                                ->where('status', \App\Models\ModelReferral::STATUS_REFERRED)
-                                ->whereNull('model_application_id');
-                        })
-                        ->orWhere('reward_status', \App\Models\ModelReferral::REWARD_ELIGIBLE);
-                })
-                ->count(),
-            \App\Models\ChatterRequest::query()
-                ->where('status', \App\Models\ChatterRequest::STATUS_PENDING)
-                ->count()
-                + \App\Models\ChatterTimesheet::query()
-                    ->whereWorkflowStatus(\App\Models\ChatterTimesheet::WORKFLOW_READY_FOR_REVIEW)
-                    ->count(),
-            \App\Models\ChatterPerformanceReview::query()
-                ->where('status', \App\Models\ChatterPerformanceReview::STATUS_SUBMITTED)
-                ->count(),
-            \App\Models\ChatterModelReview::query()
-                ->whereNull('reviewed_at')
-                ->count(),
-        ]);
+    $viewingSection = request()->isMethod('GET')
+        ? (\App\Services\AdminSidebarBadges::ROUTES[request()->route()?->getName()] ?? null)
+        : null;
+    $sidebarBadges = app(\App\Services\AdminSidebarBadges::class)->counts($user, $viewingSection);
 
     $links = [
         [
@@ -49,21 +21,21 @@
             'label'  => __('Applications'),
             'active' => request()->routeIs('admin.applications.*'),
             'icon'   => 'applications',
-            'count'  => $pendingLayoutApplications,
+            'count'  => $sidebarBadges['applications'],
         ],
         [
             'route'  => 'admin.referrals.index',
             'label'  => __('Referrals'),
             'active' => request()->routeIs('admin.referrals.*'),
             'icon'   => 'referrals',
-            'count'  => $referralActionCount,
+            'count'  => $sidebarBadges['referrals'],
         ],
         [
             'route'  => 'admin.onboarding.index',
             'label'  => __('Onboarding'),
             'active' => request()->routeIs('admin.onboarding.*'),
             'icon'   => 'onboarding',
-            'count'  => $pendingLayoutVerification,
+            'count'  => $sidebarBadges['onboarding'],
         ],
         [
             'route'  => 'admin.models.progress',
@@ -98,21 +70,21 @@
             'label'  => __('Chatters'),
             'active' => request()->routeIs('admin.chatter-hours.*'),
             'icon'   => 'chatter-hours',
-            'count'  => $chatterActionCount,
+            'count'  => $sidebarBadges['chatters'],
         ],
         [
             'route'  => 'admin.chatter-reviews.index',
             'label'  => __('Chatter Reviews'),
             'active' => request()->routeIs('admin.chatter-reviews.*'),
             'icon'   => 'stories',
-            'count'  => $chatterReviewCount,
+            'count'  => $sidebarBadges['chatter_reviews'],
         ],
         [
             'route'  => 'admin.chatter-model-reviews.index',
             'label'  => __('Model Reviews'),
             'active' => request()->routeIs('admin.chatter-model-reviews.*'),
             'icon'   => 'stories',
-            'count'  => $modelReviewCount,
+            'count'  => $sidebarBadges['model_reviews'],
         ],
         [
             'route'  => 'admin.site-editor.edit',
