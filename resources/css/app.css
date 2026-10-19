@@ -2928,16 +2928,20 @@ html.light-mode .pd-marketing-image-hero.pd-home-hero {
 }
 
 .pd-review-group .pd-review-photo {
-    width: 330px;
+    width: auto;
+    height: 460px;
     max-width: none;
-    flex: 0 0 330px;
-    aspect-ratio: 2 / 3;
+    flex: 0 0 auto;
+    aspect-ratio: auto;
     overflow: hidden;
 }
 
 .pd-review-group .pd-review-photo img {
+    display: block;
+    width: auto;
+    max-width: none;
+    height: 100%;
     object-fit: contain;
-    object-position: center top;
 }
 
 .pd-review-marquee:hover .pd-review-moving-track,
