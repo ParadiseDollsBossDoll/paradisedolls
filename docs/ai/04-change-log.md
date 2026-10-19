@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-10-19 - Draft Page Image Heroes
+
+- Both editable draft pages now use the existing marketing image-hero layout with transparent top navigation, overlaid page title, optional eyebrow, logo, and separate hero paragraphs. Introduction and image/text sections remain below the banner, matching the Our Story composition. Saved content and draft/publication controls are preserved.
+
 ## 2026-10-19 - Two Editable Draft Pages
 
 - Added Blank Page 1 and Blank Page 2 to Site Editor with empty logo, banner, title, introduction, and repeatable content sections. Both default to unpublished and public requests return 404; admin-only previews are private/no-store and noindex.

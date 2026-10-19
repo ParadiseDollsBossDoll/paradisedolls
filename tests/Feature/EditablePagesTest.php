@@ -14,6 +14,22 @@ class EditablePagesTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_hero_text_and_lower_content_have_separate_editable_fields(): void
+    {
+        SiteSetting::set(MarketingContent::SETTINGS_KEY, ['blank_page_1' => [
+            'published' => true,
+            'title' => 'Client hero title',
+            'hero' => ['image' => 'images/17.jpeg', 'eyebrow' => 'Client eyebrow', 'body' => ['Banner description']],
+            'intro' => ['title' => 'Below banner heading'],
+            'body' => ['Below banner paragraph'],
+        ]]);
+
+        $this->get(route('editable-page', 'blank_page_1'))->assertOk()
+            ->assertSee('pd-marketing-image-hero-title', false)
+            ->assertSee('object-cover object-top', false)
+            ->assertSeeInOrder(['Client eyebrow', 'Banner description', 'Below banner heading', 'Below banner paragraph']);
+    }
+
     public function test_draft_can_be_edited_and_uploaded_images_do_not_publish_it(): void
     {
         Storage::fake('local');
