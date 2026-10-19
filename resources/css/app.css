@@ -2905,7 +2905,12 @@ html.light-mode .pd-marketing-image-hero.pd-home-hero {
 
 .pd-review-viewport {
     overflow-x: auto;
+    scrollbar-width: none;
     padding-block: 0.5rem 1.5rem;
+}
+
+.pd-review-viewport::-webkit-scrollbar {
+    display: none;
 }
 
 .pd-review-moving-track {
@@ -2921,13 +2926,13 @@ html.light-mode .pd-marketing-image-hero.pd-home-hero {
 }
 
 .pd-review-group .pd-review-photo {
-    width: 280px;
-    flex: 0 0 280px;
+    width: 330px;
+    max-width: none;
+    flex: 0 0 330px;
 }
 
 .pd-review-marquee:hover .pd-review-moving-track,
-.pd-review-marquee:focus-within .pd-review-moving-track,
-.pd-review-marquee:has(.pd-review-pause:checked) .pd-review-moving-track {
+.pd-review-marquee:focus-within .pd-review-moving-track {
     animation-play-state: paused;
 }
 
