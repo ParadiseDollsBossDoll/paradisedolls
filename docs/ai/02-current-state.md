@@ -1,5 +1,11 @@
 # Current State
 
+## Dependency Security Update (2026-10-20)
+
+- `codex/frontend-dependency-security` updates PDF.js to 6.4.299 and compatible locked dependencies, with PDF rendering/audit CI checks. No production changes.
+- Full npm audit: 16 -> 7 findings; no critical findings remain; production dependency graph reports zero. User chose to defer the Tailwind 4 migration; seven build-tool findings remain documented in `docs/dependency-security-update.md`.
+- The VPS build staged from 8421a63 is obsolete for this candidate. Credential rotation is user-reported; video/chat confirmation and remaining deployment gates are still pending.
+
 ## Release Checks (2026-10-20)
 
 - Candidate `codex/notification-read-styles` includes CI/manual deployment, the course verification fix, unseen sidebar badges, and read-notification styling. No backend release has been performed.

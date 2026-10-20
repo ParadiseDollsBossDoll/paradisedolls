@@ -1,5 +1,10 @@
 # Change Log
 
+## 2026-10-20 - Focused Frontend Dependency Security Update
+
+- Updated PDF.js across its security-fix major boundary and refreshed compatible locked dependencies without force-upgrading Tailwind. Preserved custom canvas rendering through the documented PDF.js 6 API.
+- Added a patched-version regression (observed failing before update), PDF parse/text/pixel smoke coverage, and production dependency audit in CI. Remaining seven build-tool findings are explicitly deferred by the user, not suppressed. Not deployed.
+
 ## 2026-10-20 - Badge Migration Compatibility
 
 - Deployment review reproduced admin HTTP 500s when the new badge table is absent. Added a narrow schema-availability guard: hide badges and skip acknowledgement until the migration is applied, without swallowing other database errors.

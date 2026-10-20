@@ -77,5 +77,11 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Check production dependency advisories
+        run: npm audit --omit=dev --audit-level=moderate
+
+      - name: Check patched PDF dependency and rendering
+        run: node --test tests/dependency-security.test.mjs
+
       - name: Run unit and feature tests
         run: php artisan test

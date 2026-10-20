@@ -118,7 +118,7 @@ export function pdfLessonViewer(pdfUrl) {
                     pageWrap.appendChild(canvas);
                     pagesRoot.appendChild(pageWrap);
 
-                    await page.render({ canvasContext: context, viewport }).promise;
+                    await page.render({ canvas: null, canvasContext: context, viewport }).promise;
                 }
             } catch (err) {
                 if (token === _renderToken) {
