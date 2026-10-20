@@ -1,5 +1,10 @@
 # Change Log
 
+## 2026-10-20 - Doll After Dark Reference Page
+
+- Added a separate public page matching the client-provided draft's section order, imagery, serif headings, paired persona panels, FAQ, and dark course/agency section. Inherits the Boss Doll Creators navbar/footer and appears under Explore.
+- Agency CTA uses the existing application route; course marked Coming Soon with no active purchase/waitlist. Preserved saved Site Editor values and all application processing. Not deployed.
+
 ## 2026-10-20 - Focused Frontend Dependency Security Update
 
 - Updated PDF.js across its security-fix major boundary and refreshed compatible locked dependencies without force-upgrading Tailwind. Preserved custom canvas rendering through the documented PDF.js 6 API.

@@ -18,6 +18,7 @@
         ['route' => 'work-from-paradise', 'label' => marketing_content('shared.nav.work_from_paradise_label')],
         ['route' => 'perks', 'label' => marketing_content('shared.nav.perks_label')],
         ['route' => 'multistreaming', 'label' => marketing_content('shared.nav.multistreaming_label')],
+        ['route' => 'doll-after-dark', 'label' => 'Doll After Dark'],
     ];
 
     foreach (\App\Support\MarketingContent::blankPageKeys() as $pageKey) {

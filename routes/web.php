@@ -70,6 +70,7 @@ Route::view('/work-from-home', 'marketing.work-from-home')->name('work-from-home
 Route::view('/work-from-paradise', 'marketing.work-from-paradise')->name('work-from-paradise');
 Route::view('/perks', 'marketing.perks')->name('perks');
 Route::view('/multistreaming', 'marketing.multistreaming')->name('multistreaming');
+Route::view('/doll-after-dark', 'marketing.doll-after-dark')->name('doll-after-dark');
 // Withdrawn pending client/head-office approval; retain templates for private review.
 foreach ([
     'webcam-jobs',

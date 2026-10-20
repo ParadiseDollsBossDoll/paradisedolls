@@ -1,3 +1,5 @@
+@import './doll-after-dark.css';
+
 @font-face {
     font-family: "DejaVu Sans";
     src: url("/fonts/dejavu/DejaVuSans.ttf") format("truetype");

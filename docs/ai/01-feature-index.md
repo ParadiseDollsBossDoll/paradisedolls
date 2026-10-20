@@ -6,6 +6,10 @@ Use this file as the first stop before changing a feature. Read the matching ent
 
 ## Public Marketing Site And SEO
 
+Doll After Dark: `/doll-after-dark`, `resources/views/marketing/doll-after-dark.blade.php`,
+`resources/css/doll-after-dark.css`, and client-supplied `public/images/doll-after-dark/`.
+Uses shared navigation; agency CTA links to the existing application and the course is not purchasable.
+
 Start here:
 
 - `app/Http/Controllers/HomeController.php`

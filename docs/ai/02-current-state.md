@@ -1,5 +1,11 @@
 # Current State
 
+## Doll After Dark Page (2026-10-20)
+
+- New `/doll-after-dark` page follows the client-supplied draft layout and four images, reusing the shared marketing navbar/footer. Explore links to the page. Agency CTA uses the existing application route; the course is Coming Soon, without checkout or a fake waitlist.
+- Isolated Blade/CSS; no settings overwrite, migrations, or application workflow changes. Local review only; not deployed.
+- Prior dependency/admin release at `13def4b` was activated in the supplied VPS screenshots; user reports everything works without errors. Earlier pending-release notes below describe historical pre-deployment state, not the current live status. Credential rotation is user-reported, not independently verified.
+
 ## Dependency Security Update (2026-10-20)
 
 - `codex/frontend-dependency-security` updates PDF.js to 6.4.299 and compatible locked dependencies, with PDF rendering/audit CI checks. No production changes.
