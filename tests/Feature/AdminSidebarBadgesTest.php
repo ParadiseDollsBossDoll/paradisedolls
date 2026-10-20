@@ -10,11 +10,24 @@ use App\Services\AdminSidebarBadges;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class AdminSidebarBadgesTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_admin_pages_remain_available_before_the_badge_migration_is_applied(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $application = ModelApplication::create(['name' => 'Pending', 'email' => 'pending@example.com', 'age_confirmed' => true]);
+        Schema::drop('admin_sidebar_visits');
+
+        $this->actingAs($admin)->get(route('admin.dashboard'))->assertOk();
+        $this->actingAs($admin)->get(route('admin.applications.index'))->assertOk();
+        $this->assertSame(array_fill_keys(array_values(AdminSidebarBadges::ROUTES), 0), app(AdminSidebarBadges::class)->counts($admin));
+        $this->assertSame(ModelApplication::STATUS_PENDING, $application->fresh()->status);
+    }
 
     public function test_viewing_a_section_clears_only_that_admins_unseen_badge_without_approving_items(): void
     {

@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AdminSidebarBadges
 {
@@ -27,6 +28,10 @@ class AdminSidebarBadges
 
     public function counts(User $admin, ?string $viewing = null): array
     {
+        if (! Schema::hasTable('admin_sidebar_visits')) {
+            return array_fill_keys(array_values(self::ROUTES), 0);
+        }
+
         $seen = DB::table('admin_sidebar_visits')->where('user_id', $admin->id)->pluck('seen_items', 'section');
         $counts = [];
         foreach ($this->snapshot() as $section => $items) {
@@ -81,7 +86,7 @@ class AdminSidebarBadges
 
     public function markViewed(User $admin, string $section, Carbon $startedAt, ?array $snapshot = null): void
     {
-        if (! $admin->isAdmin() || ! in_array($section, self::ROUTES, true)) {
+        if (! $admin->isAdmin() || ! in_array($section, self::ROUTES, true) || ! Schema::hasTable('admin_sidebar_visits')) {
             return;
         }
 

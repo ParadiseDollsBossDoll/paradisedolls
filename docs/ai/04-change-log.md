@@ -1,5 +1,10 @@
 # Change Log
 
+## 2026-10-20 - Badge Migration Compatibility
+
+- Deployment review reproduced admin HTTP 500s when the new badge table is absent. Added a narrow schema-availability guard: hide badges and skip acknowledgement until the migration is applied, without swallowing other database errors.
+- Regression test first failed with the table removed, then checks both dashboard and application-list availability and unchanged pending status. Release remains blocked on historical credential triage and fresh VPS preflight evidence; nothing deployed.
+
 ## 2026-10-20 - Notification Read-State Styling
 
 - Read notification titles use regular weight and muted text in the bell dropdown and notifications page. Unread titles remain semibold with a dot; read dots are hidden without changing alignment. Existing read/open actions remain unchanged.

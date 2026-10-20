@@ -1,5 +1,12 @@
 # Current State
 
+## Release Checks (2026-10-20)
+
+- Candidate `codex/notification-read-styles` includes CI/manual deployment, the course verification fix, unseen sidebar badges, and read-notification styling. No backend release has been performed.
+- Preflight confirms pushed code and passing exact-commit CI, but live `version.json` is missing. The VPS baseline, migration state, services, current backups, and rollback still require fresh server confirmation.
+- Whole-release review found the new badge table could be absent during deployment. Badges now temporarily return zero and skip acknowledgement until the table exists, keeping admin pages available. The additive migration remains required to enable badge tracking.
+- Historical Bunny API and Reverb private-secret exposures remain unresolved; user confirmed rotation is not done or uncertain. Never print these values or treat a candidate-only scan as clearing historical exposure.
+
 ## Admin Sidebar Badges (2026-10-20)
 
 - Prepared on `codex/admin-unseen-badges`, not deployed: sidebar badges count pending items updated since each administrator last opened that section's list. Successful list visits acknowledge the section, including paginated/filtered lists; no approval or workflow status changes. Detail views do not acknowledge the entire section.
@@ -9,7 +16,7 @@
 
 - `codex/ci-safety-checks` starts at the VPS code commit `f68e6be`, without the unfinished domain-integration changes. It adds isolated Linux syntax/test/build checks and makes deployment manual-only on main. See `docs/ci.md`.
 - User screenshots show the new domain serving HTTP 200 over HTTPS directly from Hostinger, with new-domain cookies. Hostinger now manages DNS; earlier Cloudflare cutover plans are not the current production setup.
-- A new-hostname frontend build is staged on the VPS, not published. CI and the remaining deployment gate must finish before publishing; no database content is changed by this CI setup.
+- User screenshots confirmed the new-hostname frontend manifest was published and the homepage returned HTTP 200. Backend candidate changes remain unshipped; this does not prove live chat works.
 - First full-suite runs caught an existing enrolled-model verification bypass. The CI branch includes a narrow middleware ordering fix, not deployed; the earlier frontend-only approval does not authorize publishing this backend change.
 
 Last updated: 2026-10-18
