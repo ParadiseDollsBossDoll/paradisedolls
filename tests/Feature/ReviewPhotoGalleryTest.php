@@ -61,6 +61,7 @@ class ReviewPhotoGalleryTest extends TestCase
         ]);
 
         $migration = require database_path('migrations/2026_10_22_000000_add_four_supplied_review_photos.php');
+        SiteSetting::get(MarketingContent::SETTINGS_KEY);
         $migration->up();
         $migration->up();
         $migration->down();
