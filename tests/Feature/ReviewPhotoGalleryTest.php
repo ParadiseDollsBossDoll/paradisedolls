@@ -35,4 +35,57 @@ class ReviewPhotoGalleryTest extends TestCase
             ->assertSee('marketing/site-editor/new-review.png', false)
             ->assertDontSee('images/reviews/review-1.jpeg', false);
     }
+
+    public function test_four_additional_reviews_appear_on_both_public_pages(): void
+    {
+        foreach (['home', 'success-stories'] as $route) {
+            $response = $this->get(route($route))->assertOk();
+            foreach (['ruby' => 'Ruby - Model', 'precious' => 'Precious - Chatter', 'jhon-paul' => 'Jhon Paul - Chatter', 'alina' => 'Alina - Model'] as $file => $title) {
+                $path = "images/reviews/{$file}.jpeg";
+                $response->assertSee($path, false)->assertSee($title);
+                $this->assertFileExists(public_path($path));
+            }
+        }
+    }
+
+    public function test_review_update_preserves_editor_content_and_does_not_duplicate_photos(): void
+    {
+        $existing = ['image' => 'marketing/site-editor/custom.png', 'title' => 'Custom review'];
+        $ruby = ['image' => 'images/reviews/ruby.jpeg', 'title' => 'Edited Ruby title'];
+        SiteSetting::set(MarketingContent::SETTINGS_KEY, [
+            'home' => ['hero' => ['title' => 'Keep my homepage']],
+            'success_stories' => [
+                'hero' => ['title' => 'Keep my review headline'],
+                'review_photos' => [$existing, $ruby],
+            ],
+        ]);
+
+        $migration = require database_path('migrations/2026_10_22_000000_add_four_supplied_review_photos.php');
+        $migration->up();
+        $migration->up();
+        $migration->down();
+
+        $content = SiteSetting::get(MarketingContent::SETTINGS_KEY);
+        $this->assertSame('Keep my homepage', $content['home']['hero']['title']);
+        $this->assertSame('Keep my review headline', $content['success_stories']['hero']['title']);
+        $photos = $content['success_stories']['review_photos'];
+        $this->assertCount(5, $photos);
+        $this->assertSame([$existing, $ruby], array_slice($photos, 0, 2));
+        foreach (['home', 'success-stories'] as $route) {
+            $this->get(route($route))->assertOk()
+                ->assertSee('marketing/site-editor/custom.png', false)
+                ->assertSee('images/reviews/alina.jpeg', false);
+        }
+    }
+
+    public function test_review_update_leaves_default_backed_settings_untouched(): void
+    {
+        foreach ([[], ['success_stories' => ['review_photos' => []]]] as $content) {
+            SiteSetting::set(MarketingContent::SETTINGS_KEY, $content);
+            $migration = require database_path('migrations/2026_10_22_000000_add_four_supplied_review_photos.php');
+            $migration->up();
+            $this->assertSame($content, SiteSetting::get(MarketingContent::SETTINGS_KEY));
+            $this->assertCount(9, MarketingContent::items('success_stories.review_photos'));
+        }
+    }
 }

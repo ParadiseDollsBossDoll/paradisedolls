@@ -1,5 +1,11 @@
 # Current State
 
+## Four Additional Review Images (2026-10-22)
+
+- Added original Ruby, Precious, Jhon Paul, and Alina images to the shared homepage/Success Stories gallery defaults. Existing five images remain unchanged. No layout changes.
+- Additive content migration appends missing new images to an existing saved review list without replacing custom reviews, titles, or other Site Editor content. Default-backed lists remain default-backed. Rollback intentionally retains approved review content.
+- Not deployed. The previous Doll After Dark release at `71d6414` was activated and its public page/application link were checked live.
+
 ## Doll After Dark Page (2026-10-20)
 
 - New `/doll-after-dark` page follows the client-supplied draft layout and four images, reusing the shared marketing navbar/footer. Explore links to the page. Agency CTA uses the existing application route; the course is Coming Soon, without checkout or a fake waitlist.

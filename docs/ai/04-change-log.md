@@ -1,5 +1,10 @@
 # Change Log
 
+## 2026-10-22 - Four Supplied Review Images
+
+- Added unchanged Ruby/Precious/Jhon Paul/Alina image files and gallery defaults. Shared gallery displays them on homepage and Success Stories.
+- Added an idempotent saved-content migration and regressions for both pages, preserving custom content and existing reviews. No production update yet.
+
 ## 2026-10-20 - Doll After Dark Reference Page
 
 - Added a separate public page matching the client-provided draft's section order, imagery, serif headings, paired persona panels, FAQ, and dark course/agency section. Inherits the Boss Doll Creators navbar/footer and appears under Explore.
