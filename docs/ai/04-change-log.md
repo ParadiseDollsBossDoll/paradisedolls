@@ -199,3 +199,8 @@
   - Decisions log
   - Change log
 - Added git ignore rule for Obsidian workspace layout state.
+# 2026-10-22: Review Photo Dropzone
+
+- Added batch photo selection/drop handling to the Success Stories Site Editor, preserving existing reviews and append-only row indices.
+- Added JavaScript validation/append tests and CI execution, plus review-only control assertions in the Site Editor integration tests. No production deployment.
+

@@ -107,7 +107,21 @@
                                     <p class="mt-1 text-[0.75rem] text-boss-ivory/35">{{ __('Edit each card row. Empty rows will not show on the public page.') }}</p>
                                 </div>
 
-                                <div class="space-y-4" @if ($fullKey === 'success_stories.review_photos') x-data="{ addedReviews: [], nextIndex: {{ count($cardRows) }} }" @endif>
+                                <div class="space-y-4" @if ($fullKey === 'success_stories.review_photos') x-data="reviewUploadEditor({{ count($cardRows) }})" @endif>
+                                    @if ($fullKey === 'success_stories.review_photos')
+                                        <div class="rounded-lg border-2 border-dashed border-boss-gold/40 p-6 text-center"
+                                            :class="dragging ? 'bg-boss-gold/10' : ''"
+                                            @dragover.prevent.stop="dragging = true"
+                                            @dragleave.prevent="dragging = false"
+                                            @drop.prevent.stop="dragging = false; addFiles($event.dataTransfer.files)">
+                                            <p class="mb-3 font-semibold">{{ __('Drop review photos here') }}</p>
+                                            <input type="file" x-ref="reviewPicker" multiple accept=".jpg,.jpeg,.png,.webp" class="hidden"
+                                                @change="addFiles(Array.from($event.target.files)); $event.target.value = ''">
+                                            <button type="button" class="pd-btn-secondary" @click="$refs.reviewPicker.click()">{{ __('Choose photos') }}</button>
+                                            <p class="mt-3 text-sm text-boss-ivory/55">{{ __('JPG, PNG or WEBP. Up to 5 MB per photo.') }}</p>
+                                        </div>
+                                        <p role="alert" class="text-sm text-red-400" x-show="error" x-text="error" x-cloak></p>
+                                    @endif
                                     @foreach ($cardRows as $index => $card)
                                         <div class="rounded-xl border border-white/[0.06] bg-black/10 p-4">
                                             <p class="mb-4 text-[0.68rem] uppercase tracking-[0.16em] text-boss-gold/80">

@@ -57,6 +57,9 @@ jobs:
       - name: Check workflow safety contracts
         run: node --test tests/ci-workflow.test.mjs
 
+      - name: Check review upload controls
+        run: node --test tests/review-upload-editor.test.mjs
+
       - name: Check PHP and JavaScript syntax
         run: |
           git ls-files -z '*.php' | xargs -0 -r -n1 php -l

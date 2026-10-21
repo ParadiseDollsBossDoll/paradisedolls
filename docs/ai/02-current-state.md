@@ -1,5 +1,11 @@
 # Current State
 
+## Review Photo Dropzone (2026-10-22)
+
+- Success Stories Site Editor adds a multi-file picker and drag-and-drop target. Both append one existing-format upload/title row per accepted image; Add Review and existing reviews are retained.
+- JPG/JPEG, PNG and WEBP, maximum 5 MB each; backend validation remains authoritative. Normal server request/upload limits still apply, so large collections may need separate saves.
+- No new packages, migrations or upload endpoints. Prepared locally, not deployed.
+
 ## Review Upload Batches (2026-10-22)
 
 - Site Editor's Success Stories review-photo section now has Add Review, which appends uniquely indexed upload/title rows before one Save Site Content submission. Other card editors are unchanged.

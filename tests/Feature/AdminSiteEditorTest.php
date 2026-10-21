@@ -223,10 +223,12 @@ class AdminSiteEditorTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $this->actingAs($admin)->get(route('admin.site-editor.edit', ['page' => 'success_stories']))
-            ->assertOk()->assertSee('Add Review')->assertSee('addedReviews', false);
+            ->assertOk()->assertSee('Add Review')->assertSee('addedReviews', false)
+            ->assertSee('Drop review photos here')->assertSee('Choose photos')
+            ->assertSee('multiple accept=".jpg,.jpeg,.png,.webp"', false);
 
         $this->get(route('admin.site-editor.edit', ['page' => 'home']))
-            ->assertOk()->assertDontSee('Add Review');
+            ->assertOk()->assertDontSee('Add Review')->assertDontSee('Choose photos');
     }
 
     public function test_admin_can_publish_five_review_photos_in_one_save(): void
