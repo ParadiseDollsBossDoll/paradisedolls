@@ -1,5 +1,12 @@
 # Current State
 
+## Review Upload Batches (2026-10-22)
+
+- Site Editor's Success Stories review-photo section now has Add Review, which appends uniquely indexed upload/title rows before one Save Site Content submission. Other card editors are unchanged.
+- Validation failures retain all submitted review titles/rows; file inputs must be selected again as normal browser behavior. Existing 5 MB/type validation and admin authorization remain unchanged. No schema migration or backend endpoint added.
+- Tests cover five uploads in one save, existing reviews/home copy preservation, and invalid-batch recovery. Browser UI checked with disposable, generated admin HTML and five selected files; save handling checked by HTTP integration tests. Not deployed.
+- Prior four-review release and HTTPS old-domain redirects are confirmed by user/server output. Old Bunny/Reverb secrets are revoked per user confirmation; historical scanner entries remain in Git history.
+
 ## Four Additional Review Images (2026-10-22)
 
 - Added original Ruby, Precious, Jhon Paul, and Alina images to the shared homepage/Success Stories gallery defaults. Existing five images remain unchanged. No layout changes.

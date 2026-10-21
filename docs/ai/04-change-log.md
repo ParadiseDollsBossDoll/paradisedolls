@@ -1,5 +1,10 @@
 # Change Log
 
+## 2026-10-22 - Add Review Upload Rows
+
+- Added Add Review to the Success Stories Site Editor, allowing more than two new photo reviews in a single save. Preserves existing review rows and restores extra titles/rows after validation failures.
+- Added regressions for controls, five uploads/public rendering, preservation, and rejected-batch recovery. Reuses existing Alpine and upload endpoint. No production deployment.
+
 ## 2026-10-22 - Four Supplied Review Images
 
 - Added unchanged Ruby/Precious/Jhon Paul/Alina image files and gallery defaults. Shared gallery displays them on homepage and Success Stories.

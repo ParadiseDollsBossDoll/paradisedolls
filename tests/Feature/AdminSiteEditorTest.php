@@ -219,6 +219,74 @@ class AdminSiteEditorTest extends TestCase
             ]);
     }
 
+    public function test_review_editor_offers_additional_upload_rows(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin)->get(route('admin.site-editor.edit', ['page' => 'success_stories']))
+            ->assertOk()->assertSee('Add Review')->assertSee('addedReviews', false);
+
+        $this->get(route('admin.site-editor.edit', ['page' => 'home']))
+            ->assertOk()->assertDontSee('Add Review');
+    }
+
+    public function test_admin_can_publish_five_review_photos_in_one_save(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['role' => 'admin']);
+        $reviews = MarketingContent::items('success_stories.review_photos');
+        $existing = $reviews;
+        $files = [];
+        for ($number = 1; $number <= 5; $number++) {
+            $index = count($reviews);
+            $reviews[] = ['image' => '', 'title' => "New review {$number}"];
+            $files[$index] = ['image' => $this->fakePng("review-{$number}.png")];
+        }
+        SiteSetting::set(MarketingContent::SETTINGS_KEY, ['home' => ['hero' => ['title' => 'Keep homepage']]]);
+        $this->actingAs($admin)->put(route('admin.site-editor.update'), [
+            '_page' => 'success_stories',
+            'content' => ['success_stories' => [
+                'hero__title' => 'Keep review headline',
+                'review_photos' => $reviews,
+            ]],
+            'card_image_files' => ['success_stories' => ['review_photos' => $files]],
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $saved = MarketingContent::items('success_stories.review_photos');
+        $this->assertCount(count($existing) + 5, $saved);
+        $this->assertSame($existing, array_slice($saved, 0, count($existing)));
+        $this->assertSame('Keep homepage', MarketingContent::text('home.hero.title'));
+        $this->assertSame('Keep review headline', MarketingContent::text('success_stories.hero.title'));
+        foreach (array_slice($saved, count($existing)) as $photo) {
+            Storage::disk('public')->assertExists($photo['image']);
+            foreach (['home', 'success-stories'] as $route) {
+                $this->get(route($route))->assertOk()->assertSee($photo['image'], false)->assertSee($photo['title']);
+            }
+        }
+    }
+
+    public function test_invalid_batch_keeps_all_draft_titles_and_does_not_publish(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['role' => 'admin']);
+        $reviews = MarketingContent::items('success_stories.review_photos');
+        $original = $reviews;
+        for ($number = 1; $number <= 5; $number++) {
+            $reviews[] = ['image' => '', 'title' => "Draft review {$number}"];
+        }
+        $last = count($reviews) - 1;
+        $editor = route('admin.site-editor.edit', ['page' => 'success_stories']);
+        $this->actingAs($admin)->from($editor)->put(route('admin.site-editor.update'), [
+            '_page' => 'success_stories',
+            'content' => ['success_stories' => ['review_photos' => $reviews]],
+            'card_image_files' => ['success_stories' => ['review_photos' => [
+                $last => ['image' => UploadedFile::fake()->createWithContent('invalid.txt', 'not an image')],
+            ]]],
+        ])->assertRedirect($editor)->assertSessionHasErrors("card_image_files.success_stories.review_photos.{$last}.image");
+        $this->assertSame($original, MarketingContent::items('success_stories.review_photos'));
+        $this->get($editor)->assertOk()->assertSee('Draft review 5')->assertSee('Card 14');
+        $this->assertCount(0, Storage::disk('public')->allFiles());
+    }
+
     private function fakePng(string $name): UploadedFile
     {
         return UploadedFile::fake()->createWithContent(

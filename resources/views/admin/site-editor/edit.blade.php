@@ -97,6 +97,9 @@
                                     $cardFields = $field['card_fields'] ?? [];
                                     $blankCard = array_fill_keys(array_keys($cardFields), '');
                                     $cardRows = array_merge($cards, [$blankCard, $blankCard]);
+                                    if ($fullKey === 'success_stories.review_photos') {
+                                        $cardRows = old($errorKey, $cardRows);
+                                    }
                                 @endphp
 
                                 <div class="mb-4">
@@ -104,7 +107,7 @@
                                     <p class="mt-1 text-[0.75rem] text-boss-ivory/35">{{ __('Edit each card row. Empty rows will not show on the public page.') }}</p>
                                 </div>
 
-                                <div class="space-y-4">
+                                <div class="space-y-4" @if ($fullKey === 'success_stories.review_photos') x-data="{ addedReviews: [], nextIndex: {{ count($cardRows) }} }" @endif>
                                     @foreach ($cardRows as $index => $card)
                                         <div class="rounded-xl border border-white/[0.06] bg-black/10 p-4">
                                             <p class="mb-4 text-[0.68rem] uppercase tracking-[0.16em] text-boss-gold/80">
@@ -137,6 +140,24 @@
                                             </div>
                                         </div>
                                     @endforeach
+                                    @if ($fullKey === 'success_stories.review_photos')
+                                        <template x-for="index in addedReviews" :key="index">
+                                            <div class="rounded-lg border border-white/[0.06] bg-black/10 p-4">
+                                                <h3 class="mb-4 text-sm font-semibold text-boss-gold" x-text="@js(__('Review')) + ' ' + (index + 1)"></h3>
+                                                <div>
+                                                    <label :for="'review-image-' + index" class="{{ $labelClasses }}">{{ __('Image') }}</label>
+                                                    <input type="hidden" :name="'content[success_stories][review_photos][' + index + '][image]'" value="">
+                                                    <input type="file" :id="'review-image-' + index" :name="'card_image_files[success_stories][review_photos][' + index + '][image]'" accept=".jpg,.jpeg,.png,.webp" class="mt-3 block w-full text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-boss-gold file:px-4 file:py-2 file:font-semibold file:text-boss-dark">
+                                                </div>
+                                                <div class="mt-4">
+                                                    <label :for="'review-title-' + index" class="{{ $labelClasses }}">{{ __('Title') }}</label>
+                                                    <input type="text" :id="'review-title-' + index" :name="'content[success_stories][review_photos][' + index + '][title]'" maxlength="300" class="{{ $inputClasses }}">
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <button type="button" class="pd-btn-secondary" @click="addedReviews.push(nextIndex++)">{{ __('Add Review') }}</button>
+                                        <p class="text-sm text-boss-ivory/55" aria-live="polite" x-show="addedReviews.length" x-cloak x-text="addedReviews.length + ' ' + @js(__('additional review rows'))"></p>
+                                    @endif
                                 </div>
                             @else
                                 <label for="{{ $activePage }}-{{ $fieldId }}" class="{{ $labelClasses }}">{{ __($field['label']) }}</label>
