@@ -204,3 +204,8 @@
 - Added batch photo selection/drop handling to the Success Stories Site Editor, preserving existing reviews and append-only row indices.
 - Added JavaScript validation/append tests and CI execution, plus review-only control assertions in the Site Editor integration tests. No production deployment.
 
+# 2026-10-27: Doll After Dark Site Editor
+
+- Registered Doll After Dark in the existing editor and connected public copy, images, lists, FAQs and button labels to shared marketing settings. Preserved defaults, navigation, application destination and disabled course status.
+- Added integration tests for page registration, saves/uploads, other-page preservation, every field rendering, authorization and escaped content. No migration or deployment.
+

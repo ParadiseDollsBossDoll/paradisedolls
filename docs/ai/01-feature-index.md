@@ -9,6 +9,7 @@ Use this file as the first stop before changing a feature. Read the matching ent
 Doll After Dark: `/doll-after-dark`, `resources/views/marketing/doll-after-dark.blade.php`,
 `resources/css/doll-after-dark.css`, and client-supplied `public/images/doll-after-dark/`.
 Uses shared navigation; agency CTA links to the existing application and the course is not purchasable.
+Site Editor fields/defaults live in `MarketingContent::dollAfterDarkPage()`; the public template reads the shared marketing helpers. Regression coverage: `tests/Feature/DollAfterDarkEditorTest.php`.
 
 Start here:
 

@@ -14,6 +14,7 @@ class MarketingContent
         return [
             'blank_page_1' => self::blankPage(1),
             'blank_page_2' => self::blankPage(2),
+            'doll_after_dark' => self::dollAfterDarkPage(),
             'home' => [
                 'label' => 'Home',
                 'route' => 'home',
@@ -584,6 +585,72 @@ class MarketingContent
     public static function blankPageKeys(): array
     {
         return ['blank_page_1', 'blank_page_2'];
+    }
+
+    private static function dollAfterDarkPage(): array
+    {
+        return [
+            'label' => 'Doll After Dark',
+            'route' => 'doll-after-dark',
+            'fields' => [
+                ['key' => 'hero.title', 'label' => 'Page title', 'type' => 'text', 'default' => 'Doll After Dark'],
+                ['key' => 'hero.image', 'label' => 'Hero image', 'type' => 'image', 'default' => 'images/doll-after-dark/hero.png'],
+                ['key' => 'hero.alt', 'label' => 'Hero image description', 'type' => 'text', 'default' => 'Boss Doll Creators presents Doll After Dark: pink Angel and black Devil holding phones. Heavenly feet. Devilish heels.'],
+                ['key' => 'hero.body', 'label' => 'Hero body / search description', 'type' => 'textarea', 'default' => 'Find your creator identity and learn how to build an online brand around your personality, style and boundaries.'],
+                ['key' => 'hero.course_label', 'label' => 'Explore course button', 'type' => 'text', 'default' => 'EXPLORE THE COURSE'],
+                ['key' => 'hero.agency_label', 'label' => 'Explore agency button', 'type' => 'text', 'default' => 'EXPLORE AGENCY SUPPORT'],
+                ['key' => 'about.eyebrow', 'label' => 'About eyebrow', 'type' => 'text', 'default' => 'Two sides. Your choice.'],
+                ['key' => 'about.title', 'label' => 'About title', 'type' => 'text', 'default' => 'Which Doll are you?'],
+                ['key' => 'about.body', 'label' => 'About body', 'type' => 'textarea', 'default' => 'Soft, spoiled and a little bratty. Bold, confident and commanding. Or a little of both.'],
+                ['key' => 'angel.image', 'label' => 'Angel image', 'type' => 'image', 'default' => 'images/doll-after-dark/angel.jpg'],
+                ['key' => 'angel.alt', 'label' => 'Angel image description', 'type' => 'text', 'default' => 'Angel styling with white feathered wings and an embellished ivory outfit'],
+                ['key' => 'angel.title', 'label' => 'Angel title', 'type' => 'text', 'default' => 'Angel energy'],
+                ['key' => 'angel.body', 'label' => 'Angel body', 'type' => 'textarea', 'default' => 'Pretty details, playful personality and pampered princess energy. From bare feet to cosy collections, explore a softer style with standards of your own.'],
+                ['key' => 'devil.image', 'label' => 'Devil image', 'type' => 'image', 'default' => 'images/doll-after-dark/devil.jpg'],
+                ['key' => 'devil.alt', 'label' => 'Devil image description', 'type' => 'text', 'default' => 'Darker fashion styling with a black corset'],
+                ['key' => 'devil.title', 'label' => 'Devil title', 'type' => 'text', 'default' => 'Devil attitude'],
+                ['key' => 'devil.body', 'label' => 'Devil body', 'type' => 'textarea', 'default' => 'Statement heels, darker styling and confident Goddess energy. Bring your presence, individuality and attitude — with your own limits leading the way.'],
+                ['key' => 'about.note', 'label' => 'About closing note', 'type' => 'textarea', 'default' => 'You can explore either mood or combine both. Your look never decides what you have to offer. That choice stays with you.'],
+                ['key' => 'styles.eyebrow', 'label' => 'Styles eyebrow', 'type' => 'text', 'default' => 'Make it yours'],
+                ['key' => 'styles.title', 'label' => 'Styles title', 'type' => 'textarea', 'default' => "Your personality.\nYour brand."],
+                ['key' => 'styles.body', 'label' => 'Styles body', 'type' => 'textarea', 'default' => 'Discover a creative direction that fits your interests, comfort and confidence. Start with one style or bring a few together.'],
+                ['key' => 'styles.items', 'label' => 'Creator styles', 'type' => 'list', 'default' => ['Barefoot Angel', 'Sporty Brat', 'Spoiled Princess', 'Stiletto Goddess', 'Devil Doll', 'Alternative Doll']],
+                ['key' => 'training.image', 'label' => 'Training image', 'type' => 'image', 'default' => 'images/doll-after-dark/lifestyle.jpg'],
+                ['key' => 'training.alt', 'label' => 'Training image description', 'type' => 'text', 'default' => 'Kayla in a grey coat, photographed in a car'],
+                ['key' => 'training.eyebrow', 'label' => 'Training eyebrow', 'type' => 'text', 'default' => 'Personality meets practical skills'],
+                ['key' => 'training.title', 'label' => 'Training title', 'type' => 'textarea', 'default' => "You bring the ideas.\nLearn the business."],
+                ['key' => 'training.body', 'label' => 'Training body', 'type' => 'textarea', 'default' => 'Build your direction with practical training designed to help you move from inspiration to a clear starting plan.'],
+                ['key' => 'training.items', 'label' => 'Training bullets', 'type' => 'list', 'default' => ['Develop your creator identity and page', 'Plan content with a simple setup', 'Build clear offers and understand pricing', 'Write captions and communicate confidently', 'Promote your page and stay organised', 'Protect your privacy and boundaries']],
+                ['key' => 'join.eyebrow', 'label' => 'Join eyebrow', 'type' => 'text', 'default' => 'Choose your way in'],
+                ['key' => 'join.title', 'label' => 'Join title', 'type' => 'textarea', 'default' => "Build independently.\nOr build with support."],
+                ['key' => 'join.body', 'label' => 'Join body', 'type' => 'textarea', 'default' => 'Two routes into Doll After Dark, depending on how you want to run your brand.'],
+                ['key' => 'course.eyebrow', 'label' => 'Course eyebrow', 'type' => 'text', 'default' => 'The course'],
+                ['key' => 'course.title', 'label' => 'Course title', 'type' => 'text', 'default' => 'Your brand, your way.'],
+                ['key' => 'course.body', 'label' => 'Course body', 'type' => 'textarea', 'default' => 'Learn at your own pace and manage your business independently. The course is in preparation and is not available to purchase yet.'],
+                ['key' => 'course.items', 'label' => 'Course bullets', 'type' => 'list', 'default' => ['Structured training and practical exercises', 'Develop your own content direction', 'Manage your page and customer conversations']],
+                ['key' => 'course.button_label', 'label' => 'Disabled course button label', 'type' => 'text', 'default' => 'COURSE COMING SOON'],
+                ['key' => 'agency.eyebrow', 'label' => 'Agency eyebrow', 'type' => 'text', 'default' => 'The agency'],
+                ['key' => 'agency.title', 'label' => 'Agency title', 'type' => 'text', 'default' => 'A team behind your ideas.'],
+                ['key' => 'agency.body', 'label' => 'Agency body', 'type' => 'textarea', 'default' => 'Training included, ongoing guidance and a dedicated chat team as part of your agreed agency package.'],
+                ['key' => 'agency.items', 'label' => 'Agency bullets', 'type' => 'list', 'default' => ['Support with persona and content direction', 'Approved offers and boundaries agreed together', 'Responsibilities and revenue share explained before joining']],
+                ['key' => 'agency.button_label', 'label' => 'Application button label', 'type' => 'text', 'default' => 'APPLY TO THE AGENCY'],
+                ['key' => 'faq.eyebrow', 'label' => 'FAQ eyebrow', 'type' => 'text', 'default' => 'A few things to know'],
+                ['key' => 'faq.title', 'label' => 'FAQ title', 'type' => 'text', 'default' => 'Your questions, answered.'],
+                ['key' => 'faq.items', 'label' => 'FAQs', 'type' => 'cards', 'card_fields' => ['question' => 'text', 'answer' => 'textarea'], 'default' => [
+                    ['question' => 'Do I need previous experience or a following?', 'answer' => 'No previous experience or established following is needed to start learning. Building your brand takes practice, time and consistency.'],
+                    ['question' => 'Do I have to show my face or create nude content?', 'answer' => 'No. You can explore faceless and non-nude approaches. Platform identity-verification requirements still apply.'],
+                    ['question' => 'Do I have to choose Angel or Devil?', 'answer' => 'No. They are moods to explore. You can choose one, combine both or develop your own style.'],
+                    ['question' => 'Is joining the agency compulsory?', 'answer' => 'No. The standalone course is a separate route for women who want to manage their own page. The course is coming soon.'],
+                    ['question' => 'Are earnings guaranteed?', 'answer' => 'No. Results depend on your content, audience, consistency, time and effort.'],
+                ]],
+                ['key' => 'closing.eyebrow', 'label' => 'Closing eyebrow', 'type' => 'text', 'default' => 'Doll After Dark'],
+                ['key' => 'closing.title', 'label' => 'Closing title', 'type' => 'text', 'default' => 'Find your Doll energy.'],
+                ['key' => 'closing.body', 'label' => 'Closing body', 'type' => 'textarea', 'default' => "Heavenly feet. Devilish heels.\nLearn the business of soles and stilettos."],
+                ['key' => 'closing.button_label', 'label' => 'Closing button label', 'type' => 'text', 'default' => 'CHOOSE YOUR NEXT STEP'],
+                ['key' => 'disclaimer.age', 'label' => 'Age and consent notice', 'type' => 'textarea', 'default' => 'For women aged 18+. All interactions must be consensual.'],
+                ['key' => 'disclaimer.terms', 'label' => 'Platform and earnings notice', 'type' => 'textarea', 'default' => 'Platform rules apply. Earnings are not guaranteed. Agency terms apply.'],
+            ],
+        ];
     }
 
     private static function blankPage(int $number): array

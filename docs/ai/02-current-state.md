@@ -1,5 +1,12 @@
 # Current State
 
+## Doll After Dark Site Editor (2026-10-27)
+
+- Adds Doll After Dark to Site Editor with page copy, four image uploads/alt text, lists, FAQ rows and button labels using existing marketing settings. Existing public defaults and layout are preserved.
+- Application link and section anchors stay fixed; course button remains disabled. No checkout, schema changes, new endpoints or new dependencies. Not deployed.
+- Related editor/public/draft-page HTTP tests cover saved content, uploads, isolation, authorization and escaped output. Browser editor checked using generated disposable admin HTML; saving covered by HTTP integration tests.
+- Prior review-dropzone release at 42752c2 was activated per VPS output. PHP-FPM restart and homepage HTTP 200 were confirmed in user screenshots after the security package check; this is not a compromise audit.
+
 ## Review Photo Dropzone (2026-10-22)
 
 - Success Stories Site Editor adds a multi-file picker and drag-and-drop target. Both append one existing-format upload/title row per accepted image; Add Review and existing reviews are retained.

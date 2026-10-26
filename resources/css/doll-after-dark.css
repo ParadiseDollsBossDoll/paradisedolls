@@ -3,6 +3,7 @@
 .dad *, .dad *::before, .dad *::after { box-sizing: border-box; letter-spacing: 0; }
 .dad [id] { scroll-margin-top: 100px; }
 .dad h2 { font: 400 48px/1.15 Georgia, serif; margin: 12px 0 20px; color: inherit; }
+.dad h2, .dad-last p { white-space: pre-line; }
 .dad h3 { font: 400 32px/1.25 Georgia, serif; color: inherit; }
 .dad p { margin: 1em 0; }
 .dad-hero { max-width: 1100px; margin: auto; text-align: center; padding: 10px 24px 55px; }
