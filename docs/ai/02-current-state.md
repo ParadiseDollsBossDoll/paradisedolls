@@ -1,5 +1,11 @@
 # Current State
 
+## Multistreaming Comparison Removal (2026-10-27)
+
+- Removed the client-identified Premium/freemium comparison heading and two cards from the public template and their editor field definitions. Other Multistreaming sections remain unchanged.
+- Old stored values are retained but no longer rendered; no production data deletion or migration. Tests cover defaults and old saved content. Not deployed.
+- User confirms Doll After Dark now appears in the live Site Editor.
+
 ## Doll After Dark Site Editor (2026-10-27)
 
 - Adds Doll After Dark to Site Editor with page copy, four image uploads/alt text, lists, FAQ rows and button labels using existing marketing settings. Existing public defaults and layout are preserved.

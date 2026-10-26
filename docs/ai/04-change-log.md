@@ -209,3 +209,8 @@
 - Registered Doll After Dark in the existing editor and connected public copy, images, lists, FAQs and button labels to shared marketing settings. Preserved defaults, navigation, application destination and disabled course status.
 - Added integration tests for page registration, saves/uploads, other-page preservation, every field rendering, authorization and escaped content. No migration or deployment.
 
+# 2026-10-27: Remove Multistreaming Comparison
+
+- Removed the requested Premium/freemium comparison band and obsolete editor fields. Existing saved data is not deleted; the template no longer reads it.
+- Regression tests cover default and saved comparisons staying absent, with surrounding content retained. No deployment.
+
